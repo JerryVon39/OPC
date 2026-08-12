@@ -27,6 +27,7 @@
             <el-button type="primary" size="medium" icon="el-icon-notebook-2" @click="goBook">图书信息管理</el-button>
             <el-button type="success" size="medium" icon="el-icon-plus" @click="goBookAdd">新增图书</el-button>
             <el-button type="warning" size="medium" icon="el-icon-collection-tag" @click="goDict">字典管理</el-button>
+            <el-button type="danger" size="medium" icon="el-icon-reading" @click="goBorrow">借阅记录</el-button>
           </div>
         </el-card>
       </el-col>
@@ -129,6 +130,9 @@ export default {
     },
     goDict() {
       this.$router.push('/system/dict')
+    },
+    goBorrow() {
+      this.$router.push('/system/borrow')
     }
   }
 }
