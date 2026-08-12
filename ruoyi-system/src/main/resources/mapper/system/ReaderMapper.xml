@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ReaderMapper">
+    
+    <resultMap type="Reader" id="ReaderResult">
+        <result property="readerId"    column="reader_id"    />
+        <result property="readerName"    column="reader_name"    />
+        <result property="phone"    column="phone"    />
+        <result property="cardNo"    column="card_no"    />
+        <result property="readerType"    column="reader_type"    />
+        <result property="sex"    column="sex"    />
+        <result property="birthDate"    column="birth_date"    />
+        <result property="status"    column="status"    />
+        <result property="remark"    column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectReaderVo">
+        select reader_id, reader_name, phone, card_no, reader_type, sex, birth_date, status, remark, create_by, create_time, update_by, update_time from reader
+    </sql>
+
+    <select id="selectReaderList" parameterType="Reader" resultMap="ReaderResult">
+        <include refid="selectReaderVo"/>
+        <where>  
+            <if test="readerName != null  and readerName != ''"> and reader_name like concat('%', #{readerName}, '%')</if>
+            <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
+            <if test="cardNo != null  and cardNo != ''"> and card_no = #{cardNo}</if>
+            <if test="readerType != null  and readerType != ''"> and reader_type = #{readerType}</if>
+            <if test="sex != null  and sex != ''"> and sex = #{sex}</if>
+            <if test="birthDate != null "> and birth_date = #{birthDate}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectReaderByReaderId" parameterType="Long" resultMap="ReaderResult">
+        <include refid="selectReaderVo"/>
+        where reader_id = #{readerId}
+    </select>
+
+    <insert id="insertReader" parameterType="Reader" useGeneratedKeys="true" keyProperty="readerId">
+        insert into reader
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="readerName != null and readerName != ''">reader_name,</if>
+            <if test="phone != null">phone,</if>
+            <if test="cardNo != null">card_no,</if>
+            <if test="readerType != null">reader_type,</if>
+            <if test="sex != null">sex,</if>
+            <if test="birthDate != null">birth_date,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="readerName != null and readerName != ''">#{readerName},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="cardNo != null">#{cardNo},</if>
+            <if test="readerType != null">#{readerType},</if>
+            <if test="sex != null">#{sex},</if>
+            <if test="birthDate != null">#{birthDate},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateReader" parameterType="Reader">
+        update reader
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="readerName != null and readerName != ''">reader_name = #{readerName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="cardNo != null">card_no = #{cardNo},</if>
+            <if test="readerType != null">reader_type = #{readerType},</if>
+            <if test="sex != null">sex = #{sex},</if>
+            <if test="birthDate != null">birth_date = #{birthDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where reader_id = #{readerId}
+    </update>
+
+    <delete id="deleteReaderByReaderId" parameterType="Long">
+        delete from reader where reader_id = #{readerId}
+    </delete>
+
+    <delete id="deleteReaderByReaderIds" parameterType="String">
+        delete from reader where reader_id in 
+        <foreach item="readerId" collection="array" open="(" separator="," close=")">
+            #{readerId}
+        </foreach>
+    </delete>
+</mapper>

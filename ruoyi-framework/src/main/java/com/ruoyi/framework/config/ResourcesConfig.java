@@ -45,7 +45,9 @@ public class ResourcesConfig implements WebMvcConfigurer
     @Override
     public void addInterceptors(InterceptorRegistry registry)
     {
-        registry.addInterceptor(repeatSubmitInterceptor).addPathPatterns("/**");
+        registry.addInterceptor(repeatSubmitInterceptor).addPathPatterns("/**")
+                // 匿名接口（前台登记）不经过防重复提交拦截器，避免取不到用户信息
+                .excludePathPatterns("/system/reader");
     }
 
     /**

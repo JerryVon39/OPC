@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阅海书店 · 在线购书</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; }
+  /* 顶部导航 */
+  .navbar { background: #2d3a4b; color: #fff; padding: 0 40px; display: flex; align-items: center; height: 56px; }
+  .navbar .logo { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+  .navbar .logo span { color: #ffc107; }
+  .navbar .nav-links { margin-left: 40px; display: flex; gap: 24px; }
+  .navbar .nav-links a { color: #cfd8e3; text-decoration: none; font-size: 14px; }
+  .navbar .nav-links a:hover { color: #fff; }
+  .navbar .cart { margin-left: auto; color: #ffc107; font-size: 14px; }
+  /* 横幅 */
+  .banner { background: linear-gradient(135deg, #2d3a4b 0%, #455a75 60%, #5b7a9d 100%); color: #fff; padding: 60px 40px; text-align: center; }
+  .banner h1 { font-size: 36px; margin-bottom: 12px; }
+  .banner p { font-size: 16px; opacity: 0.85; }
+  .banner .badge { display: inline-block; margin-top: 18px; background: rgba(255,255,255,0.15); padding: 6px 18px; border-radius: 20px; font-size: 13px; }
+  /* 图书网格 */
+  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+  .section-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid #ffc107; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .book-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; }
+  .book-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+  .book-cover { height: 140px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 42px; margin-bottom: 14px; }
+  .book-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
+  .book-author { font-size: 13px; color: #888; margin-bottom: 8px; }
+  .book-meta { font-size: 12px; color: #999; margin-bottom: 12px; }
+  .book-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .book-price { color: #e64340; font-size: 20px; font-weight: bold; }
+  .book-price small { font-size: 12px; }
+  .btn-buy { background: #ffc107; border: none; color: #333; padding: 8px 18px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
+  .btn-buy:hover { background: #ffd54f; }
+  .btn-buy.disabled { background: #ccc; cursor: not-allowed; }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 10px; margin-right: 6px; }
+  .tag-sale { background: #f0f9eb; color: #67c23a; }
+  .tag-off { background: #fef0f0; color: #f56c6c; }
+  .footer { text-align: center; color: #999; font-size: 13px; padding: 30px 0 40px; }
+  .loading { text-align: center; padding: 60px; color: #999; }
+  /* 购物车提示 */
+  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #2d3a4b; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .3s; z-index: 999; }
+  .toast.show { opacity: 1; }
+  /* 登记弹窗 */
+  .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: #fff; border-radius: 12px; padding: 28px 32px; width: 340px; }
+  .modal-box h3 { margin-bottom: 6px; }
+  .modal-tip { color: #999; font-size: 13px; margin-bottom: 16px; }
+  .modal-input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; font-size: 14px; box-sizing: border-box; }
+  .modal-btns { display: flex; gap: 12px; margin-top: 6px; }
+  .modal-msg { margin-top: 10px; font-size: 13px; color: #67c23a; min-height: 18px; }
+</style>
+</head>
+<body>
+  <!-- 顶部导航（顾客视角：没有"系统管理"） -->
+  <div class="navbar">
+    <div class="logo">阅海<span>书店</span></div>
+    <div class="nav-links">
+      <a href="#">首页</a>
+      <a href="#">全部图书</a>
+      <a href="#">新书上架</a>
+      <a href="#">关于我们</a>
+    </div>
+    <div class="cart" style="cursor:pointer" onclick="openRegister()">📝 读者登记</div>
+    <div class="cart" style="margin-left:20px">🛒 购物车 (0)</div>
+  </div>
+
+  <!-- 横幅 -->
+  <div class="banner">
+    <h1>📚 阅海书店</h1>
+    <p>每一本好书，都是一片海</p>
+    <div class="badge">🔥 本店数据实时来自「图书管理系统」后台</div>
+  </div>
+
+  <!-- 图书列表 -->
+  <div class="container">
+    <div class="section-title">全部图书</div>
+    <div id="bookGrid" class="grid">
+      <div class="loading">正在加载图书…</div>
+    </div>
+  </div>
+
+  <div class="footer">© 2026 阅海书店 · 演示页面：前端界面与后台管理共用同一数据库</div>
+
+  <!-- 读者登记弹窗（顾客视角：不登录也能登记） -->
+  <div id="regModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📝 读者登记</h3>
+      <p class="modal-tip">登记后可在本店借阅图书</p>
+      <input id="regName" class="modal-input" placeholder="读者姓名" />
+      <input id="regPhone" class="modal-input" placeholder="手机号码" />
+      <select id="regType" class="modal-input">
+        <option value="">请选择读者类型</option>
+        <option value="1">学生</option>
+        <option value="2">教师</option>
+        <option value="3">普通读者</option>
+      </select>
+      <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="submitRegister()">提交登记</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeRegister()">取消</button>
+      </div>
+      <div id="regMsg" class="modal-msg"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+<script>
+  // ★ 这就是"一体两面"的关键：顾客页面直接调用若依后端的公开接口
+  // 通过前端 dev server 代理（/dev-api → http://localhost:8080），无需登录、无需 token
+  const API = '/dev-api/system/book/list';
+
+  // 图书类型字典（用于把类型编号翻译成中文）
+  const TYPE_MAP = { '1': '文学', '2': '科技', '3': '历史' };
+  const STATUS_MAP = { '0': '在售', '1': '已下架' };
+  const COVER_COLORS = ['#e8f4fd', '#fdf1e8', '#eef9ef', '#f9e8f4', '#e8f0fd', '#fdf8e8'];
+
+  async function loadBooks() {
+    try {
+      const res = await fetch(API + '?pageNum=1&pageSize=20');
+      const data = await res.json();
+      const books = data.rows || [];
+      if (!books.length) {
+        document.getElementById('bookGrid').innerHTML = '<div class="loading">书店暂时没有图书</div>';
+        return;
+      }
+      document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
+        const onSale = b.status === '0';
+        return `
+          <div class="book-card">
+            <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">📕</div>
+            <div class="book-name">${b.bookName}</div>
+            <div class="book-author">作者：${b.author || '未知'}</div>
+            <div class="book-meta">
+              <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
+              <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
+              ${b.publisher ? '出版社：' + b.publisher : ''}
+            </div>
+            <div class="book-bottom">
+              <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
+              <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="addCart('${b.bookName}')">
+                ${onSale ? '加入购物车' : '已下架'}
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      document.getElementById('bookGrid').innerHTML = '<div class="loading">加载失败：' + e.message + '</div>';
+    }
+  }
+
+  let cartCount = 0;
+  function addCart(name) {
+    cartCount++;
+    document.querySelector('.cart').textContent = '🛒 购物车 (' + cartCount + ')';
+    const toast = document.getElementById('toast');
+    toast.textContent = '已加入购物车：' + name;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // ===== 读者登记（调用若依后端的匿名接口，不登录也能提交）=====
+  const REG_API = '/dev-api/system/reader';
+  function openRegister() { document.getElementById('regModal').style.display = 'flex'; }
+  function closeRegister() { document.getElementById('regModal').style.display = 'none'; }
+  async function submitRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const type = document.getElementById('regType').value;
+    const msg = document.getElementById('regMsg');
+    if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#e64340'; return; }
+    try {
+      // 系统自动分配借书证号（顾客无需填写）
+      const cardNo = 'JS' + Date.now().toString().slice(-8);
+      const res = await fetch(REG_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ readerName: name, phone: phone, readerType: type, cardNo: cardNo, remark: document.getElementById('regRemark').value.trim() })
+      });
+      const d = await res.json();
+      if (d.code === 200) {
+        msg.textContent = '登记成功！您的借书证号：' + cardNo + '（后台读者管理可查看）';
+        msg.style.color = '#67c23a';
+        document.getElementById('regName').value = '';
+        document.getElementById('regPhone').value = '';
+        document.getElementById('regType').value = '';
+        document.getElementById('regRemark').value = '';
+      } else {
+        msg.textContent = '登记失败：' + (d.msg || '未知错误');
+        msg.style.color = '#e64340';
+      }
+    } catch (e) {
+      msg.textContent = '登记失败：' + e.message;
+      msg.style.color = '#e64340';
+    }
+  }
+
+  loadBooks();
+</script>
+</body>
+</html>
