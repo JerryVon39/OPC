@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BorrowRecordMapper">
+
+    <resultMap type="BorrowRecord" id="BorrowRecordResult">
+        <result property="borrowId"    column="borrow_id"    />
+        <result property="readerId"    column="reader_id"    />
+        <result property="bookId"      column="book_id"      />
+        <result property="borrowDate"  column="borrow_date"  />
+        <result property="dueDate"     column="due_date"     />
+        <result property="returnDate"  column="return_date"  />
+        <result property="status"      column="status"       />
+        <result property="remark"      column="remark"       />
+        <result property="readerName"  column="readerName"   />
+        <result property="cardNo"      column="cardNo"       />
+        <result property="bookName"    column="bookName"     />
+    </resultMap>
+
+    <sql id="selectBorrowRecordVo">
+        select b.borrow_id, b.reader_id, b.book_id, b.borrow_date, b.due_date, b.return_date, b.status, b.remark,
+               r.reader_name as readerName, r.card_no as cardNo, k.book_name as bookName
+        from borrow_record b
+        left join reader r on b.reader_id = r.reader_id
+        left join book k on b.book_id = k.book_id
+    </sql>
+
+    <select id="selectBorrowRecordList" parameterType="BorrowRecord" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        <where>
+            <if test="readerId != null"> and b.reader_id = #{readerId}</if>
+            <if test="bookId != null"> and b.book_id = #{bookId}</if>
+            <if test="status != null and status != ''"> and b.status = #{status}</if>
+            <if test="borrowDate != null"> and b.borrow_date = #{borrowDate}</if>
+            <if test="readerName != null and readerName != ''"> and r.reader_name like concat('%', #{readerName}, '%')</if>
+            <if test="bookName != null and bookName != ''"> and k.book_name like concat('%', #{bookName}, '%')</if>
+        </where>
+        order by b.borrow_id desc
+    </select>
+
+    <select id="selectBorrowRecordByBorrowId" parameterType="Long" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        where b.borrow_id = #{borrowId}
+    </select>
+
+    <insert id="insertBorrowRecord" parameterType="BorrowRecord" useGeneratedKeys="true" keyProperty="borrowId">
+        insert into borrow_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="readerId != null">reader_id,</if>
+            <if test="bookId != null">book_id,</if>
+            <if test="borrowDate != null">borrow_date,</if>
+            <if test="dueDate != null">due_date,</if>
+            <if test="returnDate != null">return_date,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="readerId != null">#{readerId},</if>
+            <if test="bookId != null">#{bookId},</if>
+            <if test="borrowDate != null">#{borrowDate},</if>
+            <if test="dueDate != null">#{dueDate},</if>
+            <if test="returnDate != null">#{returnDate},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBorrowRecord" parameterType="BorrowRecord">
+        update borrow_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="readerId != null">reader_id = #{readerId},</if>
+            <if test="bookId != null">book_id = #{bookId},</if>
+            <if test="borrowDate != null">borrow_date = #{borrowDate},</if>
+            <if test="dueDate != null">due_date = #{dueDate},</if>
+            <if test="returnDate != null">return_date = #{returnDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where borrow_id = #{borrowId}
+    </update>
+
+    <delete id="deleteBorrowRecordByBorrowId" parameterType="Long">
+        delete from borrow_record where borrow_id = #{borrowId}
+    </delete>
+
+    <delete id="deleteBorrowRecordByBorrowIds" parameterType="String">
+        delete from borrow_record where borrow_id in
+        <foreach item="borrowId" collection="array" open="(" separator="," close=")">
+            #{borrowId}
+        </foreach>
+    </delete>
+</mapper>

@@ -60,6 +60,7 @@
 
 <script>
 import { listBook } from '@/api/system/book'
+import { listBorrow } from '@/api/system/borrow'
 import { getDicts } from '@/api/system/dict/data'
 
 export default {
@@ -70,6 +71,7 @@ export default {
       statCards: [
         { label: '图书总数', value: 0, color: '#409EFF' },
         { label: '在架图书', value: 0, color: '#67C23A' },
+        { label: '借出中', value: 0, color: '#E6A23C' },
         { label: '已下架', value: 0, color: '#F56C6C' }
       ],
       bookTypes: [],
@@ -99,6 +101,9 @@ export default {
         this.statCards[1].value = res.total || 0
       })
       listBook({ pageNum: 1, pageSize: 1, status: '1' }).then(res => {
+        this.statCards[3].value = res.total || 0
+      })
+      listBorrow({ pageNum: 1, pageSize: 1, status: '0' }).then(res => {
         this.statCards[2].value = res.total || 0
       })
     },
