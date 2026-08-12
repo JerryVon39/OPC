@@ -118,6 +118,33 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     }
 
     @Override
+    public List<BorrowRecord> selectBorrowListByCard(String cardNo)
+    {
+        List<BorrowRecord> list = borrowRecordMapper.selectBorrowListByCard(cardNo);
+        Date today = new Date();
+        for (BorrowRecord br : list)
+        {
+            if ("0".equals(br.getStatus()) && br.getDueDate() != null && br.getDueDate().before(today))
+            {
+                br.setStatus("2");
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public java.util.List<java.util.Map<String, Object>> selectTopBooks()
+    {
+        return borrowRecordMapper.selectTopBooks(new BorrowRecord());
+    }
+
+    @Override
+    public java.util.List<java.util.Map<String, Object>> selectTopReaders()
+    {
+        return borrowRecordMapper.selectTopReaders(new BorrowRecord());
+    }
+
+    @Override
     public int deleteBorrowRecordByBorrowIds(Long[] borrowIds)
     {
         return borrowRecordMapper.deleteBorrowRecordByBorrowIds(borrowIds);

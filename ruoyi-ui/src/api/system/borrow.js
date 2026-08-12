@@ -25,6 +25,11 @@ export function returnBorrow(borrowId) {
   return request({ url: '/system/borrow/return/' + borrowId, method: 'put' })
 }
 
+// 借阅统计（热门图书+读者排行）
+export function borrowStats() {
+  return request({ url: '/system/borrow/stats', method: 'get' })
+}
+
 // 删除借阅记录
 export function delBorrow(borrowId) {
   return request({ url: '/system/borrow/' + borrowId, method: 'delete' })

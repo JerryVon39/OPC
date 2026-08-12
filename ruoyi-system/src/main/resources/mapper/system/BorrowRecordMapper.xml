@@ -88,6 +88,33 @@
         delete from borrow_record where borrow_id = #{borrowId}
     </delete>
 
+    <!-- 按借书证号查询借阅记录 -->
+    <select id="selectBorrowListByCard" parameterType="String" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        where r.card_no = #{cardNo}
+        order by b.borrow_id desc
+    </select>
+
+    <!-- 热门图书 Top10：按借阅次数统计 -->
+    <select id="selectTopBooks" parameterType="BorrowRecord" resultType="java.util.Map">
+        SELECT k.book_id AS bookId, k.book_name AS bookName, COUNT(b.borrow_id) AS borrowCount
+        FROM borrow_record b
+        LEFT JOIN book k ON b.book_id = k.book_id
+        GROUP BY k.book_id, k.book_name
+        ORDER BY borrowCount DESC
+        LIMIT 10
+    </select>
+
+    <!-- 读者借阅排行 Top10 -->
+    <select id="selectTopReaders" parameterType="BorrowRecord" resultType="java.util.Map">
+        SELECT r.reader_id AS readerId, r.reader_name AS readerName, r.card_no AS cardNo, COUNT(b.borrow_id) AS borrowCount
+        FROM borrow_record b
+        LEFT JOIN reader r ON b.reader_id = r.reader_id
+        GROUP BY r.reader_id, r.reader_name, r.card_no
+        ORDER BY borrowCount DESC
+        LIMIT 10
+    </select>
+
     <delete id="deleteBorrowRecordByBorrowIds" parameterType="String">
         delete from borrow_record where borrow_id in
         <foreach item="borrowId" collection="array" open="(" separator="," close=")">

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
@@ -59,6 +60,28 @@ public class BorrowRecordController extends BaseController
     public AjaxResult edit(@RequestBody BorrowRecord borrowRecord)
     {
         return toAjax(borrowRecordService.updateBorrowRecord(borrowRecord));
+    }
+
+    /** 前台"我的借阅"：按借书证号查询（匿名公开接口） */
+    @Anonymous
+    @GetMapping("/queryByCard")
+    public AjaxResult queryByCard(String cardNo)
+    {
+        if (cardNo == null || cardNo.trim().isEmpty())
+        {
+            return error("请输入借书证号");
+        }
+        return success(borrowRecordService.selectBorrowListByCard(cardNo.trim()));
+    }
+
+    /** 借阅统计：热门图书 + 读者排行 */
+    @GetMapping("/stats")
+    public AjaxResult stats()
+    {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("topBooks", borrowRecordService.selectTopBooks());
+        result.put("topReaders", borrowRecordService.selectTopReaders());
+        return success(result);
     }
 
     /** 还书：恢复库存 */

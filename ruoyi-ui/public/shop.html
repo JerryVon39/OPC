@@ -65,6 +65,7 @@
       <a href="#">关于我们</a>
     </div>
     <div class="cart" style="cursor:pointer" onclick="openRegister()">📝 读者登记</div>
+    <div class="cart" style="margin-left:20px;cursor:pointer" onclick="openMyBorrow()">📖 我的借阅</div>
     <div class="cart" style="margin-left:20px">🛒 购物车 (0)</div>
   </div>
 
@@ -104,6 +105,19 @@
         <button class="btn-buy" style="background:#ccc" onclick="closeRegister()">取消</button>
       </div>
       <div id="regMsg" class="modal-msg"></div>
+    </div>
+  </div>
+  <!-- 我的借阅弹窗（输入借书证号查询） -->
+  <div id="borrowModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📖 我的借阅</h3>
+      <p class="modal-tip">输入登记时获得的借书证号查询借阅记录</p>
+      <input id="qCardNo" class="modal-input" placeholder="借书证号（如 JS12345678）" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="queryMyBorrow()">查询</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeMyBorrow()">关闭</button>
+      </div>
+      <div id="borrowResult" style="margin-top:14px;max-height:280px;overflow-y:auto"></div>
     </div>
   </div>
   <div id="toast" class="toast"></div>
@@ -195,6 +209,35 @@
     } catch (e) {
       msg.textContent = '登记失败：' + e.message;
       msg.style.color = '#e64340';
+    }
+  }
+
+  // ===== 我的借阅（按借书证号查询匿名接口）=====
+  const CARD_API = '/dev-api/system/borrow/queryByCard';
+  const STATUS_TEXT = { '0': '借出中', '1': '已归还', '2': '已逾期' };
+  const STATUS_CLASS = { '0': 'tag-sale', '1': 'tag-sale', '2': 'tag-off' };
+  function openMyBorrow() { document.getElementById('borrowModal').style.display = 'flex'; }
+  function closeMyBorrow() { document.getElementById('borrowModal').style.display = 'none'; }
+  async function queryMyBorrow() {
+    const cardNo = document.getElementById('qCardNo').value.trim();
+    const box = document.getElementById('borrowResult');
+    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
+    box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
+    try {
+      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
+      const d = await res.json();
+      if (d.code !== 200 || !d.data || !d.data.length) {
+        box.innerHTML = '<div class="loading" style="padding:10px">未查询到借阅记录（请确认证号）</div>';
+        return;
+      }
+      box.innerHTML = d.data.map(b => `
+        <div style="border:1px solid #eee;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px">
+          <div style="font-weight:bold;margin-bottom:4px">《${b.bookName || '未知图书'}》</div>
+          <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
+          <span class="tag ${STATUS_CLASS[b.status] || 'tag-sale'}">${STATUS_TEXT[b.status] || '未知'}</span>
+        </div>`).join('');
+    } catch (e) {
+      box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
     }
   }
 

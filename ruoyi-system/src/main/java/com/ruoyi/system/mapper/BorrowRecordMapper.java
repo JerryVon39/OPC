@@ -25,4 +25,13 @@ public interface BorrowRecordMapper
 
     /** 批量删除借阅记录 */
     public int deleteBorrowRecordByBorrowIds(Long[] borrowIds);
+
+    /** 按借书证号查询借阅记录（前台"我的借阅"用） */
+    public List<BorrowRecord> selectBorrowListByCard(String cardNo);
+
+    /** 热门图书统计（按借阅次数） */
+    public java.util.List<java.util.Map<String, Object>> selectTopBooks(BorrowRecord borrowRecord);
+
+    /** 读者借阅排行（按借阅次数） */
+    public java.util.List<java.util.Map<String, Object>> selectTopReaders(BorrowRecord borrowRecord);
 }

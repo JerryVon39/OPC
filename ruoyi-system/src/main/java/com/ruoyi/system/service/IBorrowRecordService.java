@@ -22,4 +22,13 @@ public interface IBorrowRecordService
 
     /** 还书：置归还日期并恢复图书库存 */
     public int returnBook(Long borrowId);
+
+    /** 按借书证号查询借阅记录 */
+    public List<BorrowRecord> selectBorrowListByCard(String cardNo);
+
+    /** 热门图书统计 */
+    public java.util.List<java.util.Map<String, Object>> selectTopBooks();
+
+    /** 读者借阅排行 */
+    public java.util.List<java.util.Map<String, Object>> selectTopReaders();
 }
