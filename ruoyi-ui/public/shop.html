@@ -251,13 +251,6 @@
         msg.textContent = '借书成功！应还日期已自动设置为 30 天后，可在"我的借阅"查看';
         msg.style.color = '#67c23a';
         setTimeout(closeBorrow, 2500);
-        // 借阅按钮事件委托（避免内嵌引号问题）
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.btn-borrow');
-    if (btn) openBorrow(btn.dataset.id, btn.dataset.name);
-  });
-
-  loadBooks();
       } else {
         msg.textContent = '借书失败：' + (d.msg || '未知错误');
         msg.style.color = '#e64340';
@@ -267,6 +260,12 @@
       msg.style.color = '#e64340';
     }
   }
+
+  // ===== 借阅按钮事件委托（script 顶层，页面加载即注册）=====
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-borrow');
+    if (btn) openBorrow(btn.dataset.id, btn.dataset.name);
+  });
 
   // ===== 我的借阅（按借书证号查询匿名接口）=====
   const CARD_API = '/dev-api/system/borrow/queryByCard';
