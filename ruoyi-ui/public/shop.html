@@ -16,8 +16,8 @@
   .nav-links { display: flex; gap: 16px; }
   .nav-links a { color: #cfd8e3; text-decoration: none; font-size: 14px; cursor: pointer; }
   .nav-links a:hover, .nav-links a.active { color: #ffc107; }
-  .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; }
-  .nav-right span { color: #ffc107; font-size: 14px; cursor: pointer; }
+  .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; row-gap: 4px; }
+  .nav-right span { color: #ffc107; font-size: 14px; cursor: pointer; white-space: nowrap; }
   .notice-bar { background: #fff8e1; color: #8a6d3b; font-size: 13px; padding: 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; }
   .notice-bar .n-title { color: #e64340; font-weight: bold; margin-right: 10px; }
   .banner { background: linear-gradient(135deg, #2d3a4b 0%, #455a75 60%, #5b7a9d 100%); color: #fff; padding: 40px 40px; text-align: center; }
@@ -260,7 +260,7 @@
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
               <div style="display:flex;gap:8px">
-                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '">借阅</button>' : ''}
+                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation()">借阅</button>' : ''}
                 <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="event.stopPropagation();addCart('${b.bookName}')">购物车</button>
               </div>
             </div>
