@@ -133,7 +133,12 @@
           <span>{{ parseTime(scope.row.publishDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="库存数量" align="center" prop="stock" />
+      <el-table-column label="库存数量" align="center" width="100">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.stock <= 3" type="danger" size="mini">仅剩 {{ scope.row.stock }} 本</el-tag>
+          <span v-else>{{ scope.row.stock }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态(0在架 1下架)" align="center" prop="status" />
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">

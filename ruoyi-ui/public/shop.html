@@ -256,6 +256,7 @@
             <div class="book-meta">
               <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
               <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
+              ${onSale && b.stock <= 3 ? '<span class="tag tag-off" style="background:#fef0f0;color:#e64340">库存紧张</span>' : ''}
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
