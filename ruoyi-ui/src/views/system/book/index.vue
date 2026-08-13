@@ -238,6 +238,7 @@
 
 <script>
 import { listBook, getBook, delBook, addBook, updateBook } from "@/api/system/book"
+import { getToken } from "@/utils/auth"
 import { getDicts } from "@/api/system/dict/data"
 
 export default {
@@ -264,6 +265,8 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
+      uploadHeaders: { Authorization: "Bearer " + getToken() },
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -329,6 +332,14 @@ export default {
       this.resetForm("form")
     },
     /** 搜索按钮操作 */
+    handleCoverSuccess(res) {
+      if (res.code === 200) {
+        this.form.cover = res.fileName || res.url
+        this.$modal.msgSuccess("封面上传成功")
+      } else {
+        this.$modal.msgError("上传失败：" + (res.msg || ""))
+      }
+    },
     handleQuery() {
       this.queryParams.pageNum = 1
       this.getList()

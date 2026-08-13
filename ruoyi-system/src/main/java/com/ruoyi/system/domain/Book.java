@@ -54,6 +54,35 @@ public class Book extends BaseEntity
     @Excel(name = "状态(0在架 1下架)")
     private String status;
 
+    private String remark;
+
+    /** 封面图片 */
+    private String cover;
+
+    /** ISBN */
+    private String isbn;
+
+    /** 图书简介 */
+    private String intro;
+
+    /** 查询关键字（书名或作者） */
+    private String keyword;
+
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
+
+    public String getCover() { return cover; }
+    public void setCover(String cover) { this.cover = cover; }
+
+    public String getIsbn() { return isbn; }
+    public void setIsbn(String isbn) { this.isbn = isbn; }
+
+    public String getIntro() { return intro; }
+    public void setIntro(String intro) { this.intro = intro; }
+
+    public String getKeyword() { return keyword; }
+    public void setKeyword(String keyword) { this.keyword = keyword; }
+
     public void setBookId(Long bookId) 
     {
         this.bookId = bookId;

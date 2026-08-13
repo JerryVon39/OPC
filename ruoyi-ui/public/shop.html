@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>阅海书店 · 在线购书</title>
+<title>万事屋 · 在线购书</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; }
@@ -73,7 +73,7 @@
 <body>
   <!-- 顶部导航 -->
   <div class="navbar">
-    <div class="logo">阅海<span>书店</span></div>
+    <div class="logo">万事<span>屋</span></div>
     <div class="nav-search">
       <input id="searchInput" placeholder="搜索书名 / 作者" onkeydown="if(event.key==='Enter')loadBooks()" />
       <button onclick="loadBooks()">搜索</button>
@@ -100,8 +100,8 @@
 
   <!-- 横幅 -->
   <div class="banner">
-    <h1>📚 阅海书店</h1>
-    <p>每一本好书，都是一片海 ｜ 借书自助，还书请到服务台</p>
+    <h1>📚 万事屋</h1>
+    <p>万事屋，万事皆可办 ｜ 借书自助，还书请到服务台</p>
   </div>
 
   <!-- 热门推荐 -->
@@ -118,7 +118,7 @@
     </div>
   </div>
 
-  <div class="footer">© 2026 阅海书店 · 前端界面与后台管理共用同一数据库</div>
+  <div class="footer">© 2026 万事屋 · 前端界面与后台管理共用同一数据库</div>
 
   <!-- 图书详情弹窗 -->
   <div id="detailModal" class="modal" style="display:none">
@@ -132,6 +132,8 @@
       <div class="detail-row"><span class="d-label">价格</span><span class="d-value" id="detailPrice"></span></div>
       <div class="detail-row"><span class="d-label">库存</span><span class="d-value" id="detailStock"></span></div>
       <div class="detail-row"><span class="d-label">状态</span><span class="d-value" id="detailStatus"></span></div>
+      <div class="detail-row"><span class="d-label">ISBN</span><span class="d-value" id="detailIsbn"></span></div>
+      <div class="detail-row"><span class="d-label">简介</span><span class="d-value" id="detailIntro" style="line-height:1.6"></span></div>
       <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
       <div class="modal-btns">
         <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
@@ -234,7 +236,7 @@
   async function loadBooks() {
     const kw = document.getElementById('searchInput').value.trim();
     const params = new URLSearchParams({ pageNum: 1, pageSize: 30 });
-    if (kw) params.set('bookName', kw);
+    if (kw) params.set('keyword', kw);
     if (currentType) params.set('bookType', currentType);
     try {
       const res = await fetch(API + '?' + params.toString());
@@ -250,7 +252,9 @@
         const onSale = b.status === '0';
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
-            <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">📕</div>
+            <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
+              ${b.cover ? '<img src="' + b.cover + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px" />' : '📕'}
+            </div>
             <div class="book-name">${b.bookName}</div>
             <div class="book-author">作者：${b.author || '未知'}</div>
             <div class="book-meta">
@@ -292,6 +296,7 @@
     const onSale = b.status === '0';
     document.getElementById('detailName').textContent = b.bookName;
     document.getElementById('detailCover').style.background = COVER_COLORS[(bookCache.indexOf(b)) % COVER_COLORS.length];
+    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + b.cover + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" />' : '📕';
     document.getElementById('detailAuthor').textContent = b.author || '未知';
     document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
     document.getElementById('detailPublisher').textContent = b.publisher || '—';
@@ -299,6 +304,8 @@
     document.getElementById('detailPrice').textContent = '¥' + (b.price ?? '—');
     document.getElementById('detailStock').textContent = (b.stock ?? 0) + ' 本';
     document.getElementById('detailStatus').textContent = onSale ? '在售' : '已下架';
+    document.getElementById('detailIsbn').textContent = b.isbn || '—';
+    document.getElementById('detailIntro').textContent = b.intro || '—';
     document.getElementById('detailRemark').textContent = b.remark || '—';
     const btn = document.getElementById('detailBorrowBtn');
     if (onSale && b.stock > 0) {
