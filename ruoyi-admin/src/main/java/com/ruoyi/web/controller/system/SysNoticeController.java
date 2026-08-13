@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
@@ -86,6 +87,14 @@ public class SysNoticeController extends BaseController
     /**
      * 首页顶部公告列表（返回全部正常公告，带当前用户已读标记，最多5条）
      */
+    /** 前台公告列表（匿名公开接口）：不依赖登录用户 */
+    @Anonymous
+    @GetMapping("/publicList")
+    public AjaxResult publicList()
+    {
+        return AjaxResult.success(noticeService.selectNoticeList(new SysNotice()));
+    }
+
     @GetMapping("/listTop")
     @ResponseBody
     public AjaxResult listTop()

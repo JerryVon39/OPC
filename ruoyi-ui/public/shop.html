@@ -7,86 +7,139 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; }
-  /* 顶部导航 */
-  .navbar { background: #2d3a4b; color: #fff; padding: 0 40px; display: flex; align-items: center; height: 56px; }
-  .navbar .logo { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+  .navbar { background: #2d3a4b; color: #fff; padding: 0 40px; display: flex; align-items: center; height: 56px; gap: 20px; }
+  .navbar .logo { font-size: 20px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
   .navbar .logo span { color: #ffc107; }
-  .navbar .nav-links { margin-left: 40px; display: flex; gap: 24px; }
-  .navbar .nav-links a { color: #cfd8e3; text-decoration: none; font-size: 14px; }
-  .navbar .nav-links a:hover { color: #fff; }
-  .navbar .cart { margin-left: auto; color: #ffc107; font-size: 14px; }
-  /* 横幅 */
-  .banner { background: linear-gradient(135deg, #2d3a4b 0%, #455a75 60%, #5b7a9d 100%); color: #fff; padding: 60px 40px; text-align: center; }
-  .banner h1 { font-size: 36px; margin-bottom: 12px; }
-  .banner p { font-size: 16px; opacity: 0.85; }
-  .banner .badge { display: inline-block; margin-top: 18px; background: rgba(255,255,255,0.15); padding: 6px 18px; border-radius: 20px; font-size: 13px; }
-  /* 图书网格 */
-  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+  .nav-search { flex: 1; max-width: 380px; display: flex; }
+  .nav-search input { flex: 1; padding: 8px 14px; border: none; border-radius: 6px 0 0 6px; font-size: 14px; outline: none; }
+  .nav-search button { padding: 8px 18px; border: none; background: #ffc107; color: #333; font-size: 14px; font-weight: bold; border-radius: 0 6px 6px 0; cursor: pointer; }
+  .nav-links { display: flex; gap: 16px; }
+  .nav-links a { color: #cfd8e3; text-decoration: none; font-size: 14px; cursor: pointer; }
+  .nav-links a:hover, .nav-links a.active { color: #ffc107; }
+  .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; }
+  .nav-right span { color: #ffc107; font-size: 14px; cursor: pointer; }
+  .notice-bar { background: #fff8e1; color: #8a6d3b; font-size: 13px; padding: 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; }
+  .notice-bar .n-title { color: #e64340; font-weight: bold; margin-right: 10px; }
+  .banner { background: linear-gradient(135deg, #2d3a4b 0%, #455a75 60%, #5b7a9d 100%); color: #fff; padding: 40px 40px; text-align: center; }
+  .banner h1 { font-size: 34px; margin-bottom: 10px; }
+  .banner p { font-size: 15px; opacity: 0.85; }
+  .hot-bar { max-width: 1200px; margin: 24px auto 0; padding: 0 20px; }
+  .hot-bar .hot-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-left: 10px; border-left: 4px solid #e64340; }
+  .hot-items { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hot-item { background: #fff; border-radius: 8px; padding: 10px 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); font-size: 13px; cursor: pointer; }
+  .hot-item:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+  .hot-item .rank { color: #e64340; font-weight: bold; margin-right: 6px; }
+  .hot-item .cnt { color: #999; margin-left: 6px; }
+  .container { max-width: 1200px; margin: 24px auto 30px; padding: 0 20px; }
   .section-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid #ffc107; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-  .book-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; }
+  .book-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; cursor: pointer; }
   .book-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-  .book-cover { height: 140px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 42px; margin-bottom: 14px; }
+  .book-cover { height: 130px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; }
   .book-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
   .book-author { font-size: 13px; color: #888; margin-bottom: 8px; }
   .book-meta { font-size: 12px; color: #999; margin-bottom: 12px; }
   .book-bottom { display: flex; align-items: center; justify-content: space-between; }
   .book-price { color: #e64340; font-size: 20px; font-weight: bold; }
   .book-price small { font-size: 12px; }
-  .btn-buy { background: #ffc107; border: none; color: #333; padding: 8px 18px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
+  .btn-buy { background: #ffc107; border: none; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
   .btn-buy:hover { background: #ffd54f; }
   .btn-buy.disabled { background: #ccc; cursor: not-allowed; }
+  .btn-borrow { background: #409eff !important; color: #fff !important; }
   .tag { display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 10px; margin-right: 6px; }
   .tag-sale { background: #f0f9eb; color: #67c23a; }
   .tag-off { background: #fef0f0; color: #f56c6c; }
   .footer { text-align: center; color: #999; font-size: 13px; padding: 30px 0 40px; }
   .loading { text-align: center; padding: 60px; color: #999; }
-  /* 购物车提示 */
   .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #2d3a4b; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .3s; z-index: 999; }
   .toast.show { opacity: 1; }
-  /* 登记弹窗 */
   .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-  .modal-box { background: #fff; border-radius: 12px; padding: 28px 32px; width: 340px; }
+  .modal-box { background: #fff; border-radius: 12px; padding: 28px 32px; width: 400px; max-height: 85vh; overflow-y: auto; }
   .modal-box h3 { margin-bottom: 6px; }
   .modal-tip { color: #999; font-size: 13px; margin-bottom: 16px; }
   .modal-input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; font-size: 14px; box-sizing: border-box; }
   .modal-btns { display: flex; gap: 12px; margin-top: 6px; }
   .modal-msg { margin-top: 10px; font-size: 13px; color: #67c23a; min-height: 18px; }
+  .detail-row { display: flex; margin-bottom: 10px; font-size: 14px; }
+  .detail-row .d-label { color: #999; width: 80px; flex-shrink: 0; }
+  .detail-row .d-value { flex: 1; }
+  .detail-cover { height: 150px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 16px; }
+  .borrow-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+  .days-left { font-weight: bold; }
+  .days-danger { color: #e64340; }
+  .days-ok { color: #67c23a; }
 </style>
 </head>
 <body>
-  <!-- 顶部导航（顾客视角：没有"系统管理"） -->
+  <!-- 顶部导航 -->
   <div class="navbar">
     <div class="logo">阅海<span>书店</span></div>
-    <div class="nav-links">
-      <a href="#">首页</a>
-      <a href="#">全部图书</a>
-      <a href="#">新书上架</a>
-      <a href="#">关于我们</a>
+    <div class="nav-search">
+      <input id="searchInput" placeholder="搜索书名 / 作者" onkeydown="if(event.key==='Enter')loadBooks()" />
+      <button onclick="loadBooks()">搜索</button>
     </div>
-    <div class="cart" style="cursor:pointer" onclick="openRegister()">📝 读者登记</div>
-    <div class="cart" style="margin-left:20px;cursor:pointer" onclick="openMyBorrow()">📖 我的借阅</div>
-    <div class="cart" style="margin-left:20px">🛒 购物车 (0)</div>
+    <div class="nav-links" id="typeTabs">
+      <a class="active" data-type="" onclick="switchType(this)">全部</a>
+      <a data-type="1" onclick="switchType(this)">文学</a>
+      <a data-type="2" onclick="switchType(this)">科技</a>
+      <a data-type="3" onclick="switchType(this)">历史</a>
+    </div>
+    <div class="nav-right">
+      <span onclick="openRegister()">📝 读者登记</span>
+      <span onclick="openMyBorrow()">📖 我的借阅</span>
+      <span>🛒 购物车 (0)</span>
+    </div>
+  </div>
+
+  <!-- 公告横幅 -->
+  <div class="notice-bar" id="noticeBar" style="display:none">
+    <span class="n-title">📢 公告</span>
+    <span id="noticeText">加载中…</span>
   </div>
 
   <!-- 横幅 -->
   <div class="banner">
     <h1>📚 阅海书店</h1>
-    <p>每一本好书，都是一片海</p>
-    <div class="badge">🔥 本店数据实时来自「图书管理系统」后台</div>
+    <p>每一本好书，都是一片海 ｜ 借书自助，还书请到服务台</p>
+  </div>
+
+  <!-- 热门推荐 -->
+  <div class="hot-bar" id="hotBar" style="display:none">
+    <div class="hot-title">🔥 热门推荐</div>
+    <div class="hot-items" id="hotItems"></div>
   </div>
 
   <!-- 图书列表 -->
   <div class="container">
-    <div class="section-title">全部图书</div>
+    <div class="section-title" id="listTitle">全部图书</div>
     <div id="bookGrid" class="grid">
       <div class="loading">正在加载图书…</div>
     </div>
   </div>
 
-  <div class="footer">© 2026 阅海书店 · 演示页面：前端界面与后台管理共用同一数据库</div>
+  <div class="footer">© 2026 阅海书店 · 前端界面与后台管理共用同一数据库</div>
 
-  <!-- 读者登记弹窗（顾客视角：不登录也能登记） -->
+  <!-- 图书详情弹窗 -->
+  <div id="detailModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 id="detailName">图书详情</h3>
+      <div class="detail-cover" id="detailCover">📕</div>
+      <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor"></span></div>
+      <div class="detail-row"><span class="d-label">类型</span><span class="d-value" id="detailType"></span></div>
+      <div class="detail-row"><span class="d-label">出版社</span><span class="d-value" id="detailPublisher"></span></div>
+      <div class="detail-row"><span class="d-label">出版日期</span><span class="d-value" id="detailDate"></span></div>
+      <div class="detail-row"><span class="d-label">价格</span><span class="d-value" id="detailPrice"></span></div>
+      <div class="detail-row"><span class="d-label">库存</span><span class="d-value" id="detailStock"></span></div>
+      <div class="detail-row"><span class="d-label">状态</span><span class="d-value" id="detailStatus"></span></div>
+      <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
+      <div class="modal-btns">
+        <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('detailModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 读者登记弹窗 -->
   <div id="regModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>📝 读者登记</h3>
@@ -102,12 +155,13 @@
       <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitRegister()">提交登记</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeRegister()">取消</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('regModal')">取消</button>
       </div>
       <div id="regMsg" class="modal-msg"></div>
     </div>
   </div>
-  <!-- 我的借阅弹窗（输入借书证号查询） -->
+
+  <!-- 我的借阅弹窗 -->
   <div id="borrowModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>📖 我的借阅</h3>
@@ -115,12 +169,13 @@
       <input id="qCardNo" class="modal-input" placeholder="借书证号（如 JS12345678）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="queryMyBorrow()">查询</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeMyBorrow()">关闭</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('borrowModal')">关闭</button>
       </div>
-      <div id="borrowResult" style="margin-top:14px;max-height:280px;overflow-y:auto"></div>
+      <div id="borrowResult" style="margin-top:14px"></div>
     </div>
   </div>
-  <!-- 借书弹窗（输入借书证号借书） -->
+
+  <!-- 借书弹窗 -->
   <div id="borrowBookModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>📖 借书</h3>
@@ -128,51 +183,67 @@
       <input id="borrowCardNo" class="modal-input" placeholder="请输入借书证号（登记时获得）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitBorrow()">确认借书</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeBorrow()">取消</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('borrowBookModal')">取消</button>
       </div>
       <div id="borrowBookMsg" class="modal-msg"></div>
     </div>
   </div>
+
   <div id="toast" class="toast"></div>
 
 <script>
-  // ★ 这就是"一体两面"的关键：顾客页面直接调用若依后端的公开接口
-  // 通过前端 dev server 代理（/dev-api → http://localhost:8080），无需登录、无需 token
+  // ===== 接口地址（匿名公开接口）=====
   const API = '/dev-api/system/book/list';
+  const STATS_API = '/dev-api/system/borrow/stats';
+  const NOTICE_API = '/dev-api/system/notice/publicList';
+  const REG_API = '/dev-api/system/reader';
+  const BORROW_API = '/dev-api/system/borrow/borrowByCard';
+  const CARD_API = '/dev-api/system/borrow/queryByCard';
 
-  // 图书类型字典（用于把类型编号翻译成中文）
+  // ===== 字典翻译 =====
   const TYPE_MAP = { '1': '文学', '2': '科技', '3': '历史' };
   const STATUS_MAP = { '0': '在售', '1': '已下架' };
+  const BORROW_STATUS = { '0': '借出中', '1': '已归还', '2': '已逾期' };
   const COVER_COLORS = ['#e8f4fd', '#fdf1e8', '#eef9ef', '#f9e8f4', '#e8f0fd', '#fdf8e8'];
 
+  // ===== 全局状态 =====
+  let currentType = '';
+  let borrowBookId = null;
+  let borrowBookName = '';
+  let cartCount = 0;
+
+  // ===== 图书列表（支持搜索 + 分类）=====
   async function loadBooks() {
+    const kw = document.getElementById('searchInput').value.trim();
+    const params = new URLSearchParams({ pageNum: 1, pageSize: 30 });
+    if (kw) params.set('bookName', kw);
+    if (currentType) params.set('bookType', currentType);
     try {
-      const res = await fetch(API + '?pageNum=1&pageSize=20');
+      const res = await fetch(API + '?' + params.toString());
       const data = await res.json();
       const books = data.rows || [];
+      const title = document.getElementById('listTitle');
+      title.textContent = currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + kw : '全部图书');
       if (!books.length) {
-        document.getElementById('bookGrid').innerHTML = '<div class="loading">书店暂时没有图书</div>';
+        document.getElementById('bookGrid').innerHTML = '<div class="loading">没有找到相关图书</div>';
         return;
       }
       document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
         const onSale = b.status === '0';
         return `
-          <div class="book-card">
+          <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">📕</div>
             <div class="book-name">${b.bookName}</div>
             <div class="book-author">作者：${b.author || '未知'}</div>
             <div class="book-meta">
               <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
               <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
-              ${b.publisher ? '出版社：' + b.publisher : ''}
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
               <div style="display:flex;gap:8px">
-                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" style="background:#409eff;color:#fff">借阅</button>' : ''}
-                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="addCart('${b.bookName}')">
-                  ${onSale ? '购物车' : '已下架'}
-                </button>
+                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '">借阅</button>' : ''}
+                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="event.stopPropagation();addCart('${b.bookName}')">购物车</button>
               </div>
             </div>
           </div>`;
@@ -182,20 +253,83 @@
     }
   }
 
-  let cartCount = 0;
-  function addCart(name) {
-    cartCount++;
-    document.querySelector('.cart').textContent = '🛒 购物车 (' + cartCount + ')';
-    const toast = document.getElementById('toast');
-    toast.textContent = '已加入购物车：' + name;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
+  // ===== 分类切换 =====
+  function switchType(el) {
+    document.querySelectorAll('#typeTabs a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    currentType = el.dataset.type;
+    loadBooks();
   }
 
-  // ===== 读者登记（调用若依后端的匿名接口，不登录也能提交）=====
-  const REG_API = '/dev-api/system/reader';
+  // ===== 图书详情弹窗 =====
+  let bookCache = [];
+  async function showDetail(bookId, idx) {
+    if (!bookCache.length) {
+      const res = await fetch(API + '?pageNum=1&pageSize=30');
+      bookCache = (await res.json()).rows || [];
+    }
+    const b = bookCache.find(x => x.bookId === bookId);
+    if (!b) return;
+    const onSale = b.status === '0';
+    document.getElementById('detailName').textContent = b.bookName;
+    document.getElementById('detailCover').style.background = COVER_COLORS[(bookCache.indexOf(b)) % COVER_COLORS.length];
+    document.getElementById('detailAuthor').textContent = b.author || '未知';
+    document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
+    document.getElementById('detailPublisher').textContent = b.publisher || '—';
+    document.getElementById('detailDate').textContent = b.publishDate || '—';
+    document.getElementById('detailPrice').textContent = '¥' + (b.price ?? '—');
+    document.getElementById('detailStock').textContent = (b.stock ?? 0) + ' 本';
+    document.getElementById('detailStatus').textContent = onSale ? '在售' : '已下架';
+    document.getElementById('detailRemark').textContent = b.remark || '—';
+    const btn = document.getElementById('detailBorrowBtn');
+    if (onSale && b.stock > 0) {
+      btn.style.display = 'inline-block';
+      btn.dataset.id = b.bookId;
+      btn.dataset.name = b.bookName;
+    } else {
+      btn.style.display = 'none';
+    }
+    document.getElementById('detailModal').style.display = 'flex';
+  }
+
+  // ===== 热门推荐 =====
+  async function loadHot() {
+    try {
+      const res = await fetch(STATS_API);
+      const d = await res.json();
+      const tops = (d.data && d.data.topBooks) || [];
+      if (!tops.length) return;
+      document.getElementById('hotBar').style.display = 'block';
+      document.getElementById('hotItems').innerHTML = tops.slice(0, 5).map((t, i) =>
+        '<span class="hot-item" onclick="searchBook(\'' + (t.bookName || '') + '\')"><span class="rank">TOP' + (i + 1) + '</span>' + (t.bookName || '未知') + '<span class="cnt">借阅' + t.borrowCount + '次</span></span>'
+      ).join('');
+    } catch (e) { /* 热门加载失败不影响主列表 */ }
+  }
+
+  function searchBook(name) {
+    document.getElementById('searchInput').value = name;
+    loadBooks();
+  }
+
+  // ===== 公告横幅 =====
+  async function loadNotices() {
+    try {
+      const res = await fetch(NOTICE_API);
+      const d = await res.json();
+      const list = d.data || [];
+      if (!list.length) return;
+      const texts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || '').substring(0, 30));
+      const bar = document.getElementById('noticeBar');
+      bar.style.display = 'block';
+      const textEl = document.getElementById('noticeText');
+      let i = 0;
+      textEl.textContent = texts[0];
+      setInterval(() => { i = (i + 1) % texts.length; textEl.textContent = texts[i]; }, 5000);
+    } catch (e) { /* 公告失败不影响 */ }
+  }
+
+  // ===== 读者登记 =====
   function openRegister() { document.getElementById('regModal').style.display = 'flex'; }
-  function closeRegister() { document.getElementById('regModal').style.display = 'none'; }
   async function submitRegister() {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
@@ -203,7 +337,6 @@
     const msg = document.getElementById('regMsg');
     if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#e64340'; return; }
     try {
-      // 系统自动分配借书证号（顾客无需填写）
       const cardNo = 'JS' + Date.now().toString().slice(-8);
       const res = await fetch(REG_API, {
         method: 'POST',
@@ -212,12 +345,8 @@
       });
       const d = await res.json();
       if (d.code === 200) {
-        msg.textContent = '登记成功！您的借书证号：' + cardNo + '（后台读者管理可查看）';
+        msg.textContent = '登记成功！您的借书证号：' + cardNo;
         msg.style.color = '#67c23a';
-        document.getElementById('regName').value = '';
-        document.getElementById('regPhone').value = '';
-        document.getElementById('regType').value = '';
-        document.getElementById('regRemark').value = '';
       } else {
         msg.textContent = '登记失败：' + (d.msg || '未知错误');
         msg.style.color = '#e64340';
@@ -228,17 +357,15 @@
     }
   }
 
-  // ===== 前台借书（匿名接口）=====
-  const BORROW_API = '/dev-api/system/borrow/borrowByCard';
-  let borrowBookId = null;
+  // ===== 借书 =====
   function openBorrow(bookId, bookName) {
     borrowBookId = bookId;
+    borrowBookName = bookName;
     document.getElementById('borrowBookName').textContent = '确认借阅《' + bookName + '》？应还日期为借出后 30 天';
     document.getElementById('borrowBookMsg').textContent = '';
     document.getElementById('borrowCardNo').value = '';
     document.getElementById('borrowBookModal').style.display = 'flex';
   }
-  function closeBorrow() { document.getElementById('borrowBookModal').style.display = 'none'; }
   async function submitBorrow() {
     const cardNo = document.getElementById('borrowCardNo').value.trim();
     const msg = document.getElementById('borrowBookMsg');
@@ -250,7 +377,8 @@
       if (d.code === 200) {
         msg.textContent = '借书成功！应还日期已自动设置为 30 天后，可在"我的借阅"查看';
         msg.style.color = '#67c23a';
-        setTimeout(closeBorrow, 2500);
+        setTimeout(() => closeModal('borrowBookModal'), 2500);
+        loadBooks();
       } else {
         msg.textContent = '借书失败：' + (d.msg || '未知错误');
         msg.style.color = '#e64340';
@@ -261,18 +389,8 @@
     }
   }
 
-  // ===== 借阅按钮事件委托（script 顶层，页面加载即注册）=====
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.btn-borrow');
-    if (btn) openBorrow(btn.dataset.id, btn.dataset.name);
-  });
-
-  // ===== 我的借阅（按借书证号查询匿名接口）=====
-  const CARD_API = '/dev-api/system/borrow/queryByCard';
-  const STATUS_TEXT = { '0': '借出中', '1': '已归还', '2': '已逾期' };
-  const STATUS_CLASS = { '0': 'tag-sale', '1': 'tag-sale', '2': 'tag-off' };
+  // ===== 我的借阅（含剩余天数）=====
   function openMyBorrow() { document.getElementById('borrowModal').style.display = 'flex'; }
-  function closeMyBorrow() { document.getElementById('borrowModal').style.display = 'none'; }
   async function queryMyBorrow() {
     const cardNo = document.getElementById('qCardNo').value.trim();
     const box = document.getElementById('borrowResult');
@@ -285,18 +403,57 @@
         box.innerHTML = '<div class="loading" style="padding:10px">未查询到借阅记录（请确认证号）</div>';
         return;
       }
-      box.innerHTML = d.data.map(b => `
-        <div style="border:1px solid #eee;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px">
-          <div style="font-weight:bold;margin-bottom:4px">《${b.bookName || '未知图书'}》</div>
-          <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
-          <span class="tag ${STATUS_CLASS[b.status] || 'tag-sale'}">${STATUS_TEXT[b.status] || '未知'}</span>
-        </div>`).join('');
+      const today = new Date();
+      box.innerHTML = d.data.map(b => {
+        let daysHtml = '';
+        if (b.status === '0' && b.dueDate) {
+          const days = Math.ceil((new Date(b.dueDate) - today) / 86400000);
+          daysHtml = '<span class="days-left ' + (days < 0 ? 'days-danger' : 'days-ok') + '">' + (days < 0 ? '已逾期 ' + (-days) + ' 天' : '剩余 ' + days + ' 天') + '</span>';
+        }
+        return `
+          <div class="borrow-item">
+            <div style="font-weight:bold;margin-bottom:4px">《${b.bookName || '未知图书'}》 ${daysHtml}</div>
+            <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
+            <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
+            ${b.status !== '1' ? '<div style="color:#999;font-size:12px;margin-top:4px">如需还书请到服务台办理</div>' : ''}
+          </div>`;
+      }).join('');
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
     }
   }
 
+  // ===== 购物车 =====
+  function addCart(name) {
+    cartCount++;
+    document.querySelector('.nav-right span:last-child').textContent = '🛒 购物车 (' + cartCount + ')';
+    const toast = document.getElementById('toast');
+    toast.textContent = '已加入购物车：' + name;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // ===== 通用 =====
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  // ===== 借阅按钮事件委托（顶层注册，页面加载即生效）=====
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-borrow');
+    if (btn) {
+      e.stopPropagation();
+      openBorrow(btn.dataset.id, btn.dataset.name);
+      return;
+    }
+    const dbtn = e.target.closest('.btn-borrow-detail');
+    if (dbtn) {
+      openBorrow(dbtn.dataset.id, dbtn.dataset.name);
+    }
+  });
+
+  // ===== 初始化 =====
   loadBooks();
+  loadHot();
+  loadNotices();
 </script>
 </body>
 </html>

@@ -90,7 +90,8 @@ public class BorrowRecordController extends BaseController
         return success(borrowRecordService.selectBorrowListByCard(cardNo.trim()));
     }
 
-    /** 借阅统计：热门图书 + 读者排行 */
+    /** 借阅统计：热门图书 + 读者排行（匿名：前台热门推荐用） */
+    @Anonymous
     @GetMapping("/stats")
     public AjaxResult stats()
     {
