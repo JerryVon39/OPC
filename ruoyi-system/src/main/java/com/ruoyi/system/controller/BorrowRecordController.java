@@ -20,6 +20,7 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBorrowRecordService;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 
 /**
  * 借阅记录Controller
@@ -30,6 +31,17 @@ public class BorrowRecordController extends BaseController
 {
     @Autowired
     private IBorrowRecordService borrowRecordService;
+
+    /** 导出借阅记录 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:export')")
+    @Log(title = "借阅记录", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, BorrowRecord borrowRecord)
+    {
+        List<BorrowRecord> list = borrowRecordService.selectBorrowRecordList(borrowRecord);
+        ExcelUtil<BorrowRecord> util = new ExcelUtil<BorrowRecord>(BorrowRecord.class);
+        util.exportExcel(response, list, "借阅记录数据");
+    }
 
     /** 查询借阅记录列表 */
     @PreAuthorize("@ss.hasPermi('system:borrow:list')")

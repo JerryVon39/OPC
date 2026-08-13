@@ -48,12 +48,15 @@ public class BorrowRecord extends BaseEntity
     private String remark;
 
     /** 联表查询：读者姓名 */
+    @Excel(name = "读者姓名")
     private String readerName;
 
     /** 联表查询：借书证号 */
+    @Excel(name = "借书证号")
     private String cardNo;
 
     /** 联表查询：图书名称 */
+    @Excel(name = "图书名称")
     private String bookName;
 
     public Long getBorrowId() { return borrowId; }

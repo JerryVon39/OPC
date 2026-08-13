@@ -110,6 +110,9 @@ SELECT '读者登记',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业�
 -- 借阅记录
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '借阅记录',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),4,'borrow','system/borrow/index',1,0,'C','0','0','system:borrow:list','reading','admin',NOW(),'借阅管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='借阅记录');
+-- 借阅导出（按钮权限点）
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '借阅导出',(SELECT menu_id FROM sys_menu WHERE menu_name='借阅记录'),6,'','',1,0,'F','0','0','system:borrow:export','#','admin',NOW(),'借阅记录导出按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='借阅导出');
 -- 借阅统计
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '借阅统计',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),5,'borrow/stats','system/borrow/stats',1,0,'C','0','0','system:borrow:stats','chart','admin',NOW(),'借阅统计报表' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='借阅统计');

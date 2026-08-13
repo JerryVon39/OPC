@@ -22,6 +22,9 @@
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:borrow:add']">借书</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['system:borrow:export']">导出</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -152,6 +155,9 @@ export default {
     loadOptions() {
       listReader({ pageNum: 1, pageSize: 100 }).then(res => { this.readerOptions = res.rows || [] })
       listBook({ pageNum: 1, pageSize: 100 }).then(res => { this.bookOptions = res.rows || [] })
+    },
+    handleExport() {
+      this.download('system/borrow/export', { ...this.queryParams }, `borrow_${new Date().getTime()}.xlsx`)
     },
     handleQuery() { this.queryParams.pageNum = 1; this.getList() },
     resetQuery() {
