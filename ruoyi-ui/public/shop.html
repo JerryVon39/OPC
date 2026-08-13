@@ -184,16 +184,22 @@
   .skeleton-line { height: 14px; border-radius: 4px; margin-bottom: 10px; }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-  /* ================= 中等窗口适配（769~1024px：导航多行，避免单行挤压换行难看） ================= */
-  @media (max-width: 1024px) and (min-width: 769px) {
+  /* ================= 中等窗口适配（769~1500px：导航多行，避免按钮挤压成参差两行）
+     8 个功能按钮需约 1500px 才能单行放下，低于此一律多行整齐排列 ================= */
+  @media (max-width: 1500px) and (min-width: 769px) {
     .navbar { flex-wrap: wrap; height: auto; padding: 10px 20px; gap: 8px; }
     .navbar .logo { font-size: 19px; }
     .nav-search { order: 3; flex-basis: 100%; max-width: none; margin-top: 4px; }
     .nav-links { order: 4; flex-basis: 100%; justify-content: flex-start; gap: 8px; }
-    .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 14px; }
+    .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 12px; flex-wrap: wrap; row-gap: 6px; }
     .nav-right span { font-size: 13px; }
     .banner::before, .banner::after { display: none; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  }
+  /* 更窄的中等窗口（769~920px）：按钮更紧凑，保证一行放下不参差 */
+  @media (max-width: 920px) and (min-width: 769px) {
+    .nav-right { gap: 8px; }
+    .nav-right span { font-size: 12px; }
   }
 
   /* ================= 手机版适配（≤768px 自动生效） ================= */
