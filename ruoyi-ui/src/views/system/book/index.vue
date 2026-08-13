@@ -118,7 +118,7 @@
       <el-table-column label="价格(元)" align="center" prop="price" />
       <el-table-column label="库存数量" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.stock <= 3" type="danger" size="mini">仅剩 {{ scope.row.stock }} 本</el-tag>
+          <el-tag v-if="scope.row.stock <= warnThreshold" type="danger" size="mini">仅剩 {{ scope.row.stock }} 本</el-tag>
           <span v-else>{{ scope.row.stock }}</span>
         </template>
       </el-table-column>
@@ -261,6 +261,7 @@
 import { listBook, getBook, delBook, addBook, updateBook } from "@/api/system/book"
 import { getToken } from "@/utils/auth"
 import { getDicts } from "@/api/system/dict/data"
+import { getConfigKey } from "@/api/system/config"
 
 export default {
   name: "Book",
@@ -289,6 +290,8 @@ export default {
       // 封面上传地址与请求头（携带登录令牌）
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
       uploadHeaders: { Authorization: "Bearer " + getToken() },
+      // 库存预警阈值（系统参数 book.stock.warn，后台参数设置可改）
+      warnThreshold: 3,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -322,6 +325,11 @@ export default {
     this.getDicts("book_type").then(response => {
       this.bookTypeOptions = response.data;
     });
+    // 读取库存预警阈值参数（RuoYi 该接口把参数值放在 msg 字段）
+    getConfigKey('book.stock.warn').then(res => {
+      const v = parseInt(res.msg, 10)
+      if (!isNaN(v)) this.warnThreshold = v
+    })
     this.getList()
   },
   methods: {

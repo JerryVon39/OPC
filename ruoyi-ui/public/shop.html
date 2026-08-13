@@ -256,6 +256,9 @@
   const CARD_API = '/dev-api/system/borrow/queryByCard';
   const ORDER_CREATE = '/dev-api/system/order/create';
   const ORDER_QUERY = '/dev-api/system/order/queryByCard';
+  const ORDER_CANCEL = '/dev-api/system/order/cancelByCard';
+  const RENEW_API = '/dev-api/system/borrow/renewByCard';
+  const CONFIG_API = '/dev-api/system/config/configKey/book.stock.warn';
 
   // ===== 字典翻译 =====
   const TYPE_MAP = { '1': '文学', '2': '科技', '3': '历史' };
@@ -270,7 +273,23 @@
   let currentUser = null;
   let detailBook = null;
   let cart = [];
+  let warnThreshold = 3;   // 库存预警阈值（从系统参数读取，后台可改）
   const CART_KEY = 'wswCart';
+  const PLACEHOLDER = 'img/book-placeholder.svg';
+
+  // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
+  async function loadConfig() {
+    try {
+      const res = await fetch(CONFIG_API);
+      const d = await res.json();
+      // 注意：RuoYi 该接口把参数值放在 msg 字段（success(字符串) 走 msg 重载）
+      const raw = (d.code === 200 && d.msg != null) ? d.msg : d.data;
+      if (raw != null) {
+        const v = parseInt(raw, 10);
+        if (!isNaN(v)) warnThreshold = v;
+      }
+    } catch (e) { }
+  }
 
   // ===== 图书列表（keyword 搜索 + 分类）=====
   let currentBooks = [];   // 当前渲染的图书列表（详情弹窗从这里取数，保证与搜索/分类同步）
@@ -296,14 +315,14 @@
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
-              ${b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '📕'}
+              ${b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />'}
             </div>
             <div class="book-name">${b.bookName}</div>
             <div class="book-author">作者：${b.author || '未知'}</div>
             <div class="book-meta">
               <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
               <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
-              ${onSale && b.stock <= 3 ? '<span class="tag tag-off" style="background:#fef0f0;color:#e64340">库存紧张</span>' : ''}
+              ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fef0f0;color:#e64340">库存紧张</span>' : ''}
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
@@ -347,7 +366,7 @@
     const onSale = b.status === '0';
     document.getElementById('detailName').textContent = b.bookName;
     document.getElementById('detailCover').style.background = COVER_COLORS[(b.bookId || 0) % COVER_COLORS.length];
-    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15)" />' : '📕';
+    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15)" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%;border-radius:6px" />';
     document.getElementById('detailAuthor').textContent = b.author || '未知';
     document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
     document.getElementById('detailPublisher').textContent = b.publisher || '—';
@@ -619,10 +638,25 @@
           <div style="color:#999">订单号：${o.orderNo || '-'} ｜ ${o.createTime || ''}</div>
           <span style="color:#e64340;font-weight:bold">¥${o.totalPrice}</span>
           <span class="tag ${o.status === '0' ? 'tag-off' : 'tag-sale'}" style="margin-left:8px">${ORDER_STATUS[o.status] || '未知'}</span>
+          ${o.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-left:8px" onclick="cancelOrder(' + o.orderId + ')">取消订单</button>' : ''}
         </div>`).join('');
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
     }
+  }
+
+  // ===== 取消订单（仅待处理，自动回滚库存）=====
+  async function cancelOrder(orderId) {
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qOrderCard').value.trim();
+    if (!cardNo) { toast('请先输入借书证号'); return; }
+    if (!confirm('确认取消该订单吗？取消后库存自动恢复')) return;
+    try {
+      const body = new URLSearchParams({ cardNo: cardNo, orderId: orderId });
+      const res = await fetch(ORDER_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) { toast('订单已取消，库存已恢复'); queryMyOrders(); }
+      else toast(d.msg || '取消失败');
+    } catch (e) { toast('取消失败：' + e.message); }
   }
 
   // ===== 借书 =====
@@ -700,12 +734,27 @@
             <div style="font-weight:bold;margin-bottom:4px">《${b.bookName || '未知图书'}》 ${daysHtml}</div>
             <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
             <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
+            ${b.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px" onclick="renewBorrow(' + b.borrowId + ')">续借30天</button>' : ''}
             ${b.status !== '1' ? '<div style="background:#fff8e1;border:1px solid #f0e6c8;border-radius:6px;padding:6px 10px;font-size:12px;color:#8a6d3b;margin-top:6px">📖 还书请携带借书证到服务台办理</div>' : ''}
           </div>`;
       }).join('');
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
     }
+  }
+
+  // ===== 续借（仅借出中且未逾期，应还日期 +30 天）=====
+  async function renewBorrow(borrowId) {
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qCardNo').value.trim();
+    if (!cardNo) { toast('请先输入借书证号'); return; }
+    if (!confirm('确认续借该图书吗？应还日期将顺延 30 天')) return;
+    try {
+      const body = new URLSearchParams({ cardNo: cardNo, borrowId: borrowId });
+      const res = await fetch(RENEW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) { toast('续借成功，应还日期顺延 30 天'); queryMyBorrow(); }
+      else toast(d.msg || '续借失败');
+    } catch (e) { toast('续借失败：' + e.message); }
   }
 
   // ===== 通用 =====
@@ -732,6 +781,7 @@
   } catch (e) {}
   renderLoginState();
   loadCart();
+  loadConfig();
   loadBooks();
   loadHot();
   loadNotices();

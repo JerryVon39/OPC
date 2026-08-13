@@ -68,6 +68,14 @@ public class ShopOrderController extends BaseController
         return success(shopOrderService.selectOrdersByCard(cardNo.trim()));
     }
 
+    /** 前台取消订单（匿名）：证号+订单号，仅待处理可取消，自动回滚库存 */
+    @Anonymous
+    @PostMapping("/cancelByCard")
+    public AjaxResult cancelByCard(String cardNo, Long orderId)
+    {
+        return toAjax(shopOrderService.cancelByCard(cardNo, orderId));
+    }
+
     /** 修改订单（状态流转） */
     @PreAuthorize("@ss.hasPermi('system:order:edit')")
     @Log(title = "购书订单", businessType = BusinessType.UPDATE)

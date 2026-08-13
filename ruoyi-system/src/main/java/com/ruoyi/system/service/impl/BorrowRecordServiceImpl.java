@@ -284,6 +284,45 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return insertBorrowRecord(borrow);
     }
 
+    /** 前台续借：证号归属校验 + 借出中 + 未逾期 → 应还日期 +30 天 */
+    @Override
+    @Transactional
+    public int renewByCard(String cardNo, Long borrowId)
+    {
+        if (cardNo == null || cardNo.trim().isEmpty() || borrowId == null)
+        {
+            throw new ServiceException("参数不完整");
+        }
+        BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowId);
+        if (record == null)
+        {
+            throw new ServiceException("借阅记录不存在");
+        }
+        // 证号归属校验：只能续借自己的书
+        Reader reader = readerMapper.selectReaderByReaderId(record.getReaderId());
+        if (reader == null || !cardNo.trim().equals(reader.getCardNo()))
+        {
+            throw new ServiceException("该借阅记录不属于此证号");
+        }
+        if ("1".equals(record.getStatus()))
+        {
+            throw new ServiceException("该图书已归还，无需续借");
+        }
+        if (record.getDueDate() == null)
+        {
+            throw new ServiceException("应还日期缺失，无法续借");
+        }
+        // 逾期判断（真实日期，逾期状态"2"不落库）
+        if (record.getDueDate().before(new Date()))
+        {
+            throw new ServiceException("该记录已逾期，请先归还后再借");
+        }
+        Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);
+        record.setDueDate(newDue);
+        record.setUpdateTime(new Date());
+        return borrowRecordMapper.updateBorrowRecord(record);
+    }
+
     @Override
     public int deleteBorrowRecordByBorrowIds(Long[] borrowIds)
     {

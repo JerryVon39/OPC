@@ -29,6 +29,9 @@ public interface IBorrowRecordService
     /** 前台借书：按借书证号（匿名接口） */
     public int borrowByCard(String cardNo, Long bookId);
 
+    /** 前台续借：证号归属校验 + 未逾期 + 应还日期 +30 天 */
+    public int renewByCard(String cardNo, Long borrowId);
+
     /** 按借书证号查询借阅记录 */
     public List<BorrowRecord> selectBorrowListByCard(String cardNo);
 

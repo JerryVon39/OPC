@@ -53,6 +53,18 @@ public class ReaderServiceImpl implements IReaderService
     @Override
     public int insertReader(Reader reader)
     {
+        // 证号唯一性校验：有证号的登记/添加必须先查重（防止同证号多条记录）
+        if (reader.getCardNo() != null && !reader.getCardNo().trim().isEmpty())
+        {
+            Reader query = new Reader();
+            query.setCardNo(reader.getCardNo().trim());
+            List<Reader> exists = readerMapper.selectReaderList(query);
+            if (exists != null && !exists.isEmpty())
+            {
+                throw new com.ruoyi.common.exception.ServiceException("该借书证号已被使用，请更换");
+            }
+            reader.setCardNo(reader.getCardNo().trim());
+        }
         reader.setCreateTime(DateUtils.getNowDate());
         return readerMapper.insertReader(reader);
     }

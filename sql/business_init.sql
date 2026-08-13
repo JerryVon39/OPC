@@ -168,3 +168,48 @@ SELECT '订单删除',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管�
 DELETE FROM book WHERE book_name='哇奥' AND price=576;
 DELETE FROM reader WHERE reader_name='前台登记测试';
 DELETE FROM reader WHERE reader_name='test2';
+
+-- ============================================
+-- 以下为后续版本补充（幂等）：证号唯一索引、库存预警参数、演示图书
+-- ============================================
+
+-- ---------- 读者证号唯一索引 ----------
+SET @idx = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='reader' AND index_name='uk_card_no');
+SET @sql_idx = IF(@idx=0, 'ALTER TABLE reader ADD UNIQUE INDEX uk_card_no (card_no)', 'SELECT 1');
+PREPARE st_idx FROM @sql_idx; EXECUTE st_idx; DEALLOCATE PREPARE st_idx;
+
+-- ---------- 库存预警阈值参数 ----------
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '库存预警阈值','book.stock.warn','3','Y','admin',NOW(),'库存低于或等于该值时，前后台显示库存预警标签' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.stock.warn');
+
+-- ---------- 演示图书扩充（幂等：按 ISBN 判重） ----------
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '平凡的世界','路遥','1','北京十月文艺出版社',79.60,'2017-06-01',30,'0','9787530216781','全景式展现中国当代城乡社会生活，茅盾文学奖获奖作品','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787530216781');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '红楼梦','曹雪芹','1','人民文学出版社',59.70,'1996-12-01',25,'0','9787020002207','中国古典四大名著之首，封建社会的百科全书','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020002207');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '西游记','吴承恩','1','人民文学出版社',47.20,'1980-05-01',28,'0','9787020008735','中国古典神魔小说巅峰，唐僧师徒西天取经','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008735');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '三国演义','罗贯中','1','人民文学出版社',39.50,'1992-06-01',26,'0','9787020008728','中国第一部长篇章回体历史演义小说','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008728');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '水浒传','施耐庵','1','人民文学出版社',50.60,'1997-01-01',24,'0','9787020008759','一百零八将聚义梁山，中国古典英雄传奇','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008759');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '小王子','圣埃克苏佩里','1','人民文学出版社',22.00,'2003-08-01',40,'0','9787020042494','写给大人的童话，关于爱与责任的寓言','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020042494');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '老人与海','海明威','1','上海译文出版社',25.00,'2009-07-01',35,'0','9787532748662','硬汉文学经典，人可以被毁灭但不能被打败','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787532748662');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '白夜行','东野圭吾','2','南海出版公司',59.60,'2013-01-01',18,'0','9787544270878','东野圭吾巅峰之作，绝望与救赎的悲歌','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544270878');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '解忧杂货店','东野圭吾','2','南海出版公司',39.50,'2014-05-01',22,'0','9787544270879','温暖治愈的推理小说，穿越时空的回信','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544270879');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '呐喊','鲁迅','1','人民文学出版社',22.00,'1973-03-01',30,'0','9787020008742','中国现代小说奠基之作，唤醒沉睡的灵魂','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008742');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '边城','沈从文','1','北岳文艺出版社',18.00,'2002-04-01',32,'0','9787537812249','湘西田园牧歌，翠翠与傩送的爱情','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787537812249');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '骆驼祥子','老舍','1','人民文学出版社',25.00,'1962-11-01',27,'0','9787020009626','旧社会人力车夫的命运，现实主义经典','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020009626');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '代码大全（第2版）','Steve McConnell','2','电子工业出版社',128.00,'2006-03-01',12,'0','9787121022982','软件构建的百科全书，程序员必读','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787121022982');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '算法导论（第3版）','Thomas H. Cormen','2','机械工业出版社',128.00,'2012-12-01',10,'0','9787111407010','算法领域的经典教材','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787111407010');
+INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
+SELECT '万历十五年','黄仁宇','3','中华书局',18.00,'2007-01-01',20,'0','9787101054033','大历史观代表作，以小事见大时代','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787101054033');

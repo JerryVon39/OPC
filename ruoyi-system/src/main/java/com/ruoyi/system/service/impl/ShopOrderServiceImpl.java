@@ -136,4 +136,38 @@ public class ShopOrderServiceImpl implements IShopOrderService
         query.setCardNo(cardNo);
         return shopOrderMapper.selectShopOrderList(query);
     }
+
+    /** 前台取消订单：证号归属校验 + 仅"待处理"可取消 + 回滚库存
+     * 注意：直接用 mapper 更新，不走 updateShopOrder（避免二次回补库存） */
+    @Override
+    @Transactional
+    public int cancelByCard(String cardNo, Long orderId)
+    {
+        if (cardNo == null || cardNo.trim().isEmpty() || orderId == null)
+        {
+            throw new ServiceException("参数不完整");
+        }
+        ShopOrder order = shopOrderMapper.selectShopOrderByOrderId(orderId);
+        if (order == null)
+        {
+            throw new ServiceException("订单不存在");
+        }
+        if (!cardNo.trim().equals(order.getCardNo()))
+        {
+            throw new ServiceException("该订单不属于此证号");
+        }
+        if (!"0".equals(order.getStatus()))
+        {
+            throw new ServiceException("该订单已处理，无法取消");
+        }
+        // 回滚库存
+        Book book = bookMapper.selectBookByBookId(order.getBookId());
+        if (book != null)
+        {
+            book.setStock((book.getStock() == null ? 0 : book.getStock()) + order.getQuantity());
+            bookMapper.updateBook(book);
+        }
+        order.setStatus("2");
+        return shopOrderMapper.updateShopOrder(order);
+    }
 }

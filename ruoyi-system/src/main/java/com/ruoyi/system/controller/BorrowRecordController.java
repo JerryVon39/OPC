@@ -96,6 +96,14 @@ public class BorrowRecordController extends BaseController
         return success(borrowRecordService.selectBorrowListByCard(cardNo.trim()));
     }
 
+    /** 前台续借（匿名）：证号+借阅记录号，未逾期可续 30 天 */
+    @Anonymous
+    @PostMapping("/renewByCard")
+    public AjaxResult renewByCard(String cardNo, Long borrowId)
+    {
+        return toAjax(borrowRecordService.renewByCard(cardNo, borrowId));
+    }
+
     /** 借阅统计：热门图书 + 读者排行（匿名：前台热门推荐用） */
     @Anonymous
     @GetMapping("/stats")
