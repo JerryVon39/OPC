@@ -127,6 +127,19 @@ export default {
     this.getList()
     this.loadOptions()
   },
+  watch: {
+    // 从图书/读者管理再次跳转（路径相同、仅 query 变化）时组件会被复用、created 不再触发，
+    // 这里监听路由变化同步筛选条件并刷新列表
+    '$route'(to) {
+      if (to.path === '/business/borrow') {
+        const q = to.query || {}
+        this.queryParams.readerId = q.readerId || null
+        this.queryParams.bookId = q.bookId || null
+        this.queryParams.pageNum = 1
+        this.getList()
+      }
+    }
+  },
   methods: {
     getList() {
       this.loading = true
@@ -141,7 +154,13 @@ export default {
       listBook({ pageNum: 1, pageSize: 100 }).then(res => { this.bookOptions = res.rows || [] })
     },
     handleQuery() { this.queryParams.pageNum = 1; this.getList() },
-    resetQuery() { this.resetForm("queryForm"); this.handleQuery() },
+    resetQuery() {
+      // 重置时一并清掉跳转带来的读者/图书筛选，避免"看不见的筛选条件"
+      this.queryParams.readerId = null
+      this.queryParams.bookId = null
+      this.resetForm("queryForm")
+      this.handleQuery()
+    },
     handleAdd() {
       this.reset()
       this.open = true
