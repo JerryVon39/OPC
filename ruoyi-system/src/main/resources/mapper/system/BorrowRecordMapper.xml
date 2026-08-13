@@ -14,10 +14,13 @@
         <result property="readerName"  column="readerName"   />
         <result property="cardNo"      column="cardNo"       />
         <result property="bookName"    column="bookName"     />
+        <result property="fineAmount"  column="fine_amount"  />
+        <result property="finePaid"    column="fine_paid"    />
     </resultMap>
 
     <sql id="selectBorrowRecordVo">
         select b.borrow_id, b.reader_id, b.book_id, b.borrow_date, b.due_date, b.return_date, b.status, b.remark,
+               b.fine_amount, b.fine_paid,
                -- 快照优先，JOIN 兜底（旧数据无快照时仍能显示；删除读者/图书后快照保证历史完整）
                COALESCE(b.reader_name, r.reader_name) as readerName,
                COALESCE(b.card_no, r.card_no) as cardNo,
@@ -36,6 +39,7 @@
             <if test="borrowDate != null"> and b.borrow_date = #{borrowDate}</if>
             <if test="readerName != null and readerName != ''"> and COALESCE(b.reader_name, r.reader_name) like concat('%', #{readerName}, '%')</if>
             <if test="bookName != null and bookName != ''"> and COALESCE(b.book_name, k.book_name) like concat('%', #{bookName}, '%')</if>
+            <if test="finePaid != null and finePaid != ''"> and b.fine_paid = #{finePaid}</if>
         </where>
         order by b.borrow_id desc
     </select>
@@ -90,6 +94,8 @@
             <if test="readerName != null">reader_name = #{readerName},</if>
             <if test="cardNo != null">card_no = #{cardNo},</if>
             <if test="bookName != null">book_name = #{bookName},</if>
+            <if test="fineAmount != null">fine_amount = #{fineAmount},</if>
+            <if test="finePaid != null">fine_paid = #{finePaid},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
@@ -156,6 +162,7 @@
           (SELECT COUNT(*) FROM borrow_record WHERE status = '2' OR (status = '0' AND due_date &lt; CURDATE())) AS overdueCount,
           (SELECT COUNT(*) FROM borrow_record WHERE DATE(borrow_date) = CURDATE()) AS borrowToday,
           (SELECT COUNT(*) FROM shop_order) AS orderTotal,
-          (SELECT COUNT(*) FROM shop_order WHERE DATE(create_time) = CURDATE()) AS orderToday
+          (SELECT COUNT(*) FROM shop_order WHERE DATE(create_time) = CURDATE()) AS orderToday,
+          (SELECT COALESCE(SUM(fine_amount), 0) FROM borrow_record WHERE fine_paid = '0' AND fine_amount > 0) AS fineTotal
     </select>
 </mapper>

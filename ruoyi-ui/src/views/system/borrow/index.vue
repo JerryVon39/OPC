@@ -51,11 +51,22 @@
           <el-tag v-else type="danger">已逾期</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="罚款" align="center" width="110">
+        <template slot-scope="scope">
+          <template v-if="scope.row.fineAmount && scope.row.fineAmount > 0">
+            <span style="color:#c65d43;font-weight:bold">¥{{ scope.row.fineAmount }}</span>
+            <el-tag v-if="scope.row.finePaid === '0'" type="danger" size="mini" style="margin-left:4px">未缴</el-tag>
+            <el-tag v-else type="success" size="mini" style="margin-left:4px">已缴</el-tag>
+          </template>
+          <span v-else style="color:#ccc">—</span>
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
-      <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button v-if="scope.row.status === '0'" size="mini" type="primary" @click="handleRenew(scope.row)" v-hasPermi="['system:borrow:edit']">续借</el-button>
           <el-button v-if="scope.row.status === '0' || scope.row.status === '2'" size="mini" type="success" @click="handleReturn(scope.row)" v-hasPermi="['system:borrow:edit']">还书</el-button>
+          <el-button v-if="scope.row.fineAmount > 0 && scope.row.finePaid === '0'" size="mini" type="warning" @click="handlePayFine(scope.row)" v-hasPermi="['system:borrow:edit']">收款</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:borrow:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:borrow:remove']">删除</el-button>
         </template>
@@ -93,7 +104,7 @@
 </template>
 
 <script>
-import { listBorrow, addBorrow, updateBorrow, returnBorrow, renewBorrow, delBorrow } from "@/api/system/borrow"
+import { listBorrow, addBorrow, updateBorrow, returnBorrow, renewBorrow, payFine, delBorrow } from "@/api/system/borrow"
 import { listReader } from "@/api/system/reader"
 import { listBook } from "@/api/system/book"
 
@@ -186,11 +197,19 @@ export default {
         this.getList()
       }).catch(() => {})
     },
+    handlePayFine(row) {
+      this.$modal.confirm('确认已收到《' + (row.bookName || '') + '》的逾期罚款 ¥' + row.fineAmount + ' 吗？').then(() => {
+        return payFine(row.borrowId)
+      }).then(() => {
+        this.$modal.msgSuccess("收款成功，读者欠费已清零")
+        this.getList()
+      }).catch(() => {})
+    },
     handleReturn(row) {
       this.$modal.confirm('确认还书《' + (row.bookName || '') + '》吗？归还后库存自动+1').then(() => {
         return returnBorrow(row.borrowId)
       }).then(() => {
-        this.$modal.msgSuccess("还书成功，库存已恢复")
+        this.$modal.msgSuccess("还书成功，库存已恢复（逾期将自动结算罚款）")
         this.getList()
       }).catch(() => {})
     },

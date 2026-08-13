@@ -36,7 +36,8 @@
       </el-table-column>
       <el-table-column label="状态" align="center" width="90">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="warning">待处理</el-tag>
+          <el-tag v-if="scope.row.status === '0'" type="warning">待付款</el-tag>
+          <el-tag v-else-if="scope.row.status === '3'" type="primary">已收款</el-tag>
           <el-tag v-else-if="scope.row.status === '1'" type="success">已完成</el-tag>
           <el-tag v-else type="info">已取消</el-tag>
         </template>
@@ -44,8 +45,9 @@
       <el-table-column label="下单时间" align="center" prop="createTime" width="160" />
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button v-if="scope.row.status === '0'" size="mini" type="success" @click="handleStatus(scope.row, '1')" v-hasPermi="['system:order:edit']">完成</el-button>
+          <el-button v-if="scope.row.status === '0'" size="mini" type="warning" @click="handleStatus(scope.row, '3')" v-hasPermi="['system:order:edit']">收款</el-button>
           <el-button v-if="scope.row.status === '0'" size="mini" type="info" @click="handleStatus(scope.row, '2')" v-hasPermi="['system:order:edit']">取消</el-button>
+          <el-button v-if="scope.row.status === '3'" size="mini" type="success" @click="handleStatus(scope.row, '1')" v-hasPermi="['system:order:edit']">完成</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:order:remove']">删除</el-button>
         </template>
       </el-table-column>
@@ -67,7 +69,8 @@ export default {
       orderList: [],
       total: 0,
       statusOptions: [
-        { dictValue: '0', dictLabel: '待处理' },
+        { dictValue: '0', dictLabel: '待付款' },
+        { dictValue: '3', dictLabel: '已收款' },
         { dictValue: '1', dictLabel: '已完成' },
         { dictValue: '2', dictLabel: '已取消' }
       ],
@@ -89,7 +92,7 @@ export default {
     handleQuery() { this.queryParams.pageNum = 1; this.getList() },
     resetQuery() { this.resetForm("queryForm"); this.handleQuery() },
     handleStatus(row, status) {
-      const text = status === '1' ? '确认该订单已完成？' : '确认取消该订单？'
+      const text = status === '1' ? '确认该订单已完成？' : status === '3' ? '确认已收到该订单款项？' : '确认取消该订单？'
       this.$modal.confirm(text).then(() => {
         return updateOrder({ orderId: row.orderId, status: status })
       }).then(() => {

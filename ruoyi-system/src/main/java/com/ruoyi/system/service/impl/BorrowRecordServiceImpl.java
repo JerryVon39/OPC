@@ -87,6 +87,18 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("该读者证号已停用/挂失，无法借书");
         }
+        // 业务规则：欠费冻结（有未缴罚款的读者不能借书）
+        BorrowRecord fineQ = new BorrowRecord();
+        fineQ.setReaderId(borrowRecord.getReaderId());
+        fineQ.setFinePaid("0");
+        List<BorrowRecord> unpaid = borrowRecordMapper.selectBorrowRecordList(fineQ);
+        for (BorrowRecord fr : unpaid)
+        {
+            if (fr.getFineAmount() != null && fr.getFineAmount().compareTo(java.math.BigDecimal.ZERO) > 0)
+            {
+                throw new ServiceException("该读者有未缴罚款（" + fr.getFineAmount() + " 元），请先到服务台缴费");
+            }
+        }
         // 业务规则：重复借阅校验（同一本书未还不可再借）
         java.util.List<BorrowRecord> exists = borrowRecordMapper.selectBorrowingByReaderAndBook(
                 borrowRecord.getReaderId(), borrowRecord.getBookId());
@@ -162,6 +174,19 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         record.setReturnDate(new Date());
         record.setStatus("1");
+        // 还书结算：逾期超过免罚天数，按天计罚（参数 book.fine.perDay / book.fine.graceDays）
+        if (record.getDueDate() != null && record.getDueDate().before(new Date()))
+        {
+            int grace = configInt("book.fine.graceDays", 0);
+            long overdueDays = (new Date().getTime() - record.getDueDate().getTime()) / (24L * 3600 * 1000);
+            if (overdueDays > grace)
+            {
+                java.math.BigDecimal perDay = java.math.BigDecimal.valueOf(configDouble("book.fine.perDay", 0.1));
+                java.math.BigDecimal fine = perDay.multiply(java.math.BigDecimal.valueOf(overdueDays - grace));
+                record.setFineAmount(fine.setScale(2, java.math.RoundingMode.HALF_UP));
+                record.setFinePaid("0");
+            }
+        }
         // 库存 +1（原子回补）
         if (record.getBookId() != null)
         {
@@ -171,6 +196,25 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         // 归还后同步逾期催还公告：还清了就删公告，还有逾期就重新汇总
         syncOverdueNotice();
         return rows;
+    }
+
+    /** 罚款收款：标记已缴（收银台操作） */
+    @Override
+    public int payFine(Long borrowId)
+    {
+        BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowId);
+        if (record == null)
+        {
+            throw new ServiceException("借阅记录不存在");
+        }
+        if (record.getFineAmount() == null || record.getFineAmount().compareTo(java.math.BigDecimal.ZERO) <= 0
+                || "1".equals(record.getFinePaid()))
+        {
+            throw new ServiceException("该记录无待缴罚款");
+        }
+        record.setFinePaid("1");
+        record.setUpdateTime(new Date());
+        return borrowRecordMapper.updateBorrowRecord(record);
     }
 
     /**
@@ -330,6 +374,21 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             if (v != null && !v.isEmpty())
             {
                 return Integer.parseInt(v);
+            }
+        }
+        catch (Exception ignore) { }
+        return def;
+    }
+
+    /** 读取参数小数（如罚款单价 0.10），异常/空回退默认值 */
+    private double configDouble(String key, double def)
+    {
+        try
+        {
+            String v = configService.selectConfigByKey(key);
+            if (v != null && !v.isEmpty())
+            {
+                return Double.parseDouble(v);
             }
         }
         catch (Exception ignore) { }

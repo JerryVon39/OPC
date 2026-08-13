@@ -127,13 +127,22 @@ public class BorrowRecordController extends BaseController
         return success(result);
     }
 
-    /** 还书：恢复库存 */
+    /** 还书：恢复库存 + 自动结算逾期罚款 */
     @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
     @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
     @PutMapping("/return/{borrowId}")
     public AjaxResult returnBook(@PathVariable("borrowId") Long borrowId)
     {
         return toAjax(borrowRecordService.returnBook(borrowId));
+    }
+
+    /** 罚款收款：缴纳逾期罚款（收银台操作） */
+    @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
+    @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
+    @PutMapping("/payFine/{borrowId}")
+    public AjaxResult payFine(@PathVariable("borrowId") Long borrowId)
+    {
+        return toAjax(borrowRecordService.payFine(borrowId));
     }
 
     /** 删除借阅记录 */

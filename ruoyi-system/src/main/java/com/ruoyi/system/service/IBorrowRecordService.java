@@ -23,6 +23,9 @@ public interface IBorrowRecordService
     /** 还书：置归还日期并恢复图书库存 */
     public int returnBook(Long borrowId);
 
+    /** 罚款收款：标记已缴（收银台操作） */
+    public int payFine(Long borrowId);
+
     /** 续借：应还日期 +30 天（逾期不可续借） */
     public int renewBook(Long borrowId);
 

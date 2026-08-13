@@ -1,6 +1,7 @@
 package com.ruoyi.system.domain;
 
 import java.util.Date;
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
@@ -59,6 +60,14 @@ public class BorrowRecord extends BaseEntity
     @Excel(name = "图书名称")
     private String bookName;
 
+    /** 逾期罚款金额(元) */
+    @Excel(name = "罚款金额")
+    private BigDecimal fineAmount;
+
+    /** 罚款是否已缴(0未缴 1已缴) */
+    @Excel(name = "罚款状态", readConverterExp = "0=未缴,1=已缴")
+    private String finePaid;
+
     public Long getBorrowId() { return borrowId; }
     public void setBorrowId(Long borrowId) { this.borrowId = borrowId; }
 
@@ -91,4 +100,10 @@ public class BorrowRecord extends BaseEntity
 
     public String getBookName() { return bookName; }
     public void setBookName(String bookName) { this.bookName = bookName; }
+
+    public BigDecimal getFineAmount() { return fineAmount; }
+    public void setFineAmount(BigDecimal fineAmount) { this.fineAmount = fineAmount; }
+
+    public String getFinePaid() { return finePaid; }
+    public void setFinePaid(String finePaid) { this.finePaid = finePaid; }
 }

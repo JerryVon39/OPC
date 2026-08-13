@@ -68,7 +68,8 @@ export default {
         { label: '逾期图书', value: 0, color: '#F56C6C' },
         { label: '今日借出', value: 0, color: '#409EFF' },
         { label: '今日订单', value: 0, color: '#67C23A' },
-        { label: '订单总数', value: 0, color: '#E6A23C' }
+        { label: '订单总数', value: 0, color: '#E6A23C' },
+        { label: '欠费总额', value: 0, color: '#F56C6C' }
       ],
       topBooks: [],
       bookTypes: [],
@@ -104,6 +105,7 @@ export default {
         this.statCards[5].value = s.borrowToday || 0
         this.statCards[6].value = s.orderToday || 0
         this.statCards[7].value = s.orderTotal || 0
+        this.statCards[8].value = '¥' + (s.fineTotal || 0)
         this.topBooks = (s.topBooks || []).slice(0, 5)
         this.initChart()
       })

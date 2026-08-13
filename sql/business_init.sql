@@ -210,6 +210,19 @@ SET @bc3 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=D
 SET @bs3 = IF(@bc3=0, 'ALTER TABLE borrow_record ADD COLUMN book_name varchar(100) DEFAULT NULL COMMENT ''图书名称(快照)''', 'SELECT 1');
 PREPARE bst3 FROM @bs3; EXECUTE bst3; DEALLOCATE PREPARE bst3;
 
+-- ---------- 逾期罚款字段（老库自动补齐） ----------
+SET @fc1 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='fine_amount');
+SET @fs1 = IF(@fc1=0, 'ALTER TABLE borrow_record ADD COLUMN fine_amount decimal(10,2) DEFAULT 0.00 COMMENT ''逾期罚款金额(元)''', 'SELECT 1');
+PREPARE fst1 FROM @fs1; EXECUTE fst1; DEALLOCATE PREPARE fst1;
+SET @fc2 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='fine_paid');
+SET @fs2 = IF(@fc2=0, 'ALTER TABLE borrow_record ADD COLUMN fine_paid char(1) DEFAULT ''0'' COMMENT ''罚款是否已缴(0未缴 1已缴)''', 'SELECT 1');
+PREPARE fst2 FROM @fs2; EXECUTE fst2; DEALLOCATE PREPARE fst2;
+-- 罚款参数
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '逾期罚款单价','book.fine.perDay','0.10','Y','admin',NOW(),'逾期每天罚款金额(元)' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.fine.perDay');
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '罚款免罚天数','book.fine.graceDays','0','Y','admin',NOW(),'逾期超过该天数才计罚' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.fine.graceDays');
+
 -- ---------- 库存预警阈值参数 ----------
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
 SELECT '库存预警阈值','book.stock.warn','3','Y','admin',NOW(),'库存低于或等于该值时，前后台显示库存预警标签' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.stock.warn');

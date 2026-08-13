@@ -26,6 +26,11 @@ export function returnBorrow(borrowId) {
 }
 
 // 续借
+// 罚款收款（缴纳逾期罚款）
+export function payFine(borrowId) {
+  return request({ url: '/system/borrow/payFine/' + borrowId, method: 'put' })
+}
+
 export function renewBorrow(borrowId) {
   return request({ url: '/system/borrow/renew/' + borrowId, method: 'put' })
 }
