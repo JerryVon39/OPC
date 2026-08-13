@@ -88,7 +88,7 @@
       <span onclick="openRegister()">📝 读者登记</span>
       <span onclick="openMyBorrow()">📖 我的借阅</span>
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
-      <span>🛒 购物车 (0)</span>
+      <span id="cartArea">🛒 购物车 (0)</span>
     </div>
   </div>
 
@@ -260,8 +260,8 @@
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
               <div style="display:flex;gap:8px">
-                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation()">借阅</button>' : ''}
-                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="event.stopPropagation();addCart('${b.bookName}')">购物车</button>
+                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>' : ''}
+                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-name="${b.bookName}" onclick="event.stopPropagation();addCart(this.dataset.name)">购物车</button>
               </div>
             </div>
           </div>`;
@@ -501,7 +501,7 @@
   // ===== 购物车 =====
   function addCart(name) {
     cartCount++;
-    document.querySelector('.nav-right span:last-child').textContent = '🛒 购物车 (' + cartCount + ')';
+    document.getElementById('cartArea').textContent = '🛒 购物车 (' + cartCount + ')';
     toast('已加入购物车：' + name);
   }
 
@@ -515,13 +515,8 @@
   }
 
   // ===== 借阅按钮事件委托（顶层注册，页面加载即生效）=====
+  // 详情弹窗内"借阅"按钮的委托（卡片按钮已内联处理，不走这里）
   document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.btn-borrow');
-    if (btn) {
-      e.stopPropagation();
-      openBorrow(btn.dataset.id, btn.dataset.name);
-      return;
-    }
     const dbtn = e.target.closest('.btn-borrow-detail');
     if (dbtn) {
       openBorrow(dbtn.dataset.id, dbtn.dataset.name);
