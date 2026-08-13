@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>万事屋 · 在线购书</title>
+<title>万事屋 · 在线书店</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; }
@@ -35,7 +35,7 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
   .book-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; cursor: pointer; }
   .book-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-  .book-cover { height: 130px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; }
+  .book-cover { height: 130px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; overflow: hidden; }
   .book-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
   .book-author { font-size: 13px; color: #888; margin-bottom: 8px; }
   .book-meta { font-size: 12px; color: #999; margin-bottom: 12px; }
@@ -63,7 +63,7 @@
   .detail-row { display: flex; margin-bottom: 10px; font-size: 14px; }
   .detail-row .d-label { color: #999; width: 80px; flex-shrink: 0; }
   .detail-row .d-value { flex: 1; }
-  .detail-cover { height: 150px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 16px; }
+  .detail-cover { height: 150px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 16px; overflow: hidden; }
   .borrow-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
   .days-left { font-weight: bold; }
   .days-danger { color: #e64340; }
@@ -88,7 +88,8 @@
       <span onclick="openRegister()">📝 读者登记</span>
       <span onclick="openMyBorrow()">📖 我的借阅</span>
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
-      <span id="cartArea">🛒 购物车 (0)</span>
+      <span id="cartArea" style="cursor:pointer" onclick="openCart()">🛒 购物车 (0)</span>
+      <span style="cursor:pointer" onclick="openMyOrders()">📦 我的订单</span>
     </div>
   </div>
 
@@ -137,8 +138,26 @@
       <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
       <div class="modal-btns">
         <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
+        <button class="btn-buy" onclick="detailAddCart()" id="detailCartBtn" style="display:none">加入购物车</button>
         <button class="btn-buy" style="background:#ccc" onclick="closeModal('detailModal')">关闭</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 购物车弹窗 -->
+  <div id="cartModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>🛒 购物车</h3>
+      <p class="modal-tip" id="cartEmpty" style="display:none">购物车是空的，去挑选几本好书吧</p>
+      <div id="cartItems" style="margin-bottom:12px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-weight:bold">合计：<span style="color:#e64340;font-size:18px" id="cartTotal">¥0</span></span>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="checkout()">结算</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('cartModal')">关闭</button>
+      </div>
+      <div id="cartMsg" class="modal-msg"></div>
     </div>
   </div>
 
@@ -178,11 +197,25 @@
     </div>
   </div>
 
+  <!-- 我的订单弹窗 -->
+  <div id="orderModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📦 我的订单</h3>
+      <p class="modal-tip">登录后自动显示；未登录请输入借书证号</p>
+      <input id="qOrderCard" class="modal-input" placeholder="借书证号" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="queryMyOrders()">查询</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('orderModal')">关闭</button>
+      </div>
+      <div id="orderResult" style="margin-top:14px"></div>
+    </div>
+  </div>
+
   <!-- 登录弹窗 -->
   <div id="loginModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>👤 读者登录</h3>
-      <p class="modal-tip">使用登记时填写的姓名与借书证号登录，登录后可一键借书</p>
+      <p class="modal-tip">使用登记时填写的姓名与借书证号登录，登录后可一键借书、购书</p>
       <input id="loginName" class="modal-input" placeholder="读者姓名" />
       <input id="loginCard" class="modal-input" placeholder="借书证号" />
       <div class="modal-btns">
@@ -219,20 +252,25 @@
   const LOGIN_API = '/dev-api/system/reader/login';
   const BORROW_API = '/dev-api/system/borrow/borrowByCard';
   const CARD_API = '/dev-api/system/borrow/queryByCard';
+  const ORDER_CREATE = '/dev-api/system/order/create';
+  const ORDER_QUERY = '/dev-api/system/order/queryByCard';
 
   // ===== 字典翻译 =====
   const TYPE_MAP = { '1': '文学', '2': '科技', '3': '历史' };
   const STATUS_MAP = { '0': '在售', '1': '已下架' };
   const BORROW_STATUS = { '0': '借出中', '1': '已归还', '2': '已逾期' };
+  const ORDER_STATUS = { '0': '待处理', '1': '已完成', '2': '已取消' };
   const COVER_COLORS = ['#e8f4fd', '#fdf1e8', '#eef9ef', '#f9e8f4', '#e8f0fd', '#fdf8e8'];
 
   // ===== 全局状态 =====
   let currentType = '';
   let borrowBookId = null;
-  let cartCount = 0;
   let currentUser = null;
+  let detailBook = null;
+  let cart = [];
+  const CART_KEY = 'wswCart';
 
-  // ===== 图书列表（支持搜索 + 分类）=====
+  // ===== 图书列表（keyword 搜索 + 分类）=====
   async function loadBooks() {
     const kw = document.getElementById('searchInput').value.trim();
     const params = new URLSearchParams({ pageNum: 1, pageSize: 30 });
@@ -253,7 +291,7 @@
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
-              ${b.cover ? '<img src="' + b.cover + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px" />' : '📕'}
+              ${b.cover ? '<img src="' + b.cover + '" style="width:100%;height:100%;object-fit:cover" />' : '📕'}
             </div>
             <div class="book-name">${b.bookName}</div>
             <div class="book-author">作者：${b.author || '未知'}</div>
@@ -266,7 +304,7 @@
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
               <div style="display:flex;gap:8px">
                 ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>' : ''}
-                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-name="${b.bookName}" onclick="event.stopPropagation();addCart(this.dataset.name)">购物车</button>
+                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-name="${b.bookName}" data-price="${b.price || 0}" onclick="event.stopPropagation();addCart(this.dataset.name, parseFloat(this.dataset.price))">购物车</button>
               </div>
             </div>
           </div>`;
@@ -284,7 +322,7 @@
     loadBooks();
   }
 
-  // ===== 图书详情弹窗 =====
+  // ===== 图书详情 =====
   let bookCache = [];
   async function showDetail(bookId, idx) {
     if (!bookCache.length) {
@@ -293,6 +331,7 @@
     }
     const b = bookCache.find(x => x.bookId === bookId);
     if (!b) return;
+    detailBook = b;
     const onSale = b.status === '0';
     document.getElementById('detailName').textContent = b.bookName;
     document.getElementById('detailCover').style.background = COVER_COLORS[(bookCache.indexOf(b)) % COVER_COLORS.length];
@@ -307,15 +346,21 @@
     document.getElementById('detailIsbn').textContent = b.isbn || '—';
     document.getElementById('detailIntro').textContent = b.intro || '—';
     document.getElementById('detailRemark').textContent = b.remark || '—';
-    const btn = document.getElementById('detailBorrowBtn');
+    const bBtn = document.getElementById('detailBorrowBtn');
+    const cBtn = document.getElementById('detailCartBtn');
     if (onSale && b.stock > 0) {
-      btn.style.display = 'inline-block';
-      btn.dataset.id = b.bookId;
-      btn.dataset.name = b.bookName;
+      bBtn.style.display = 'inline-block';
+      bBtn.dataset.id = b.bookId;
+      bBtn.dataset.name = b.bookName;
+      cBtn.style.display = 'inline-block';
     } else {
-      btn.style.display = 'none';
+      bBtn.style.display = 'none';
+      cBtn.style.display = 'none';
     }
     document.getElementById('detailModal').style.display = 'flex';
+  }
+  function detailAddCart() {
+    if (detailBook) addCart(detailBook.bookName, detailBook.price || 0);
   }
 
   // ===== 热门推荐 =====
@@ -329,9 +374,8 @@
       document.getElementById('hotItems').innerHTML = tops.slice(0, 5).map((t, i) =>
         '<span class="hot-item" onclick="searchBook(\'' + (t.bookName || '') + '\')"><span class="rank">TOP' + (i + 1) + '</span>' + (t.bookName || '未知') + '<span class="cnt">借阅' + t.borrowCount + '次</span></span>'
       ).join('');
-    } catch (e) { /* 热门加载失败不影响主列表 */ }
+    } catch (e) { }
   }
-
   function searchBook(name) {
     document.getElementById('searchInput').value = name;
     loadBooks();
@@ -351,7 +395,7 @@
       let i = 0;
       textEl.textContent = texts[0];
       setInterval(() => { i = (i + 1) % texts.length; textEl.textContent = texts[i]; }, 5000);
-    } catch (e) { /* 公告失败不影响 */ }
+    } catch (e) { }
   }
 
   // ===== 登录 =====
@@ -423,7 +467,139 @@
     }
   }
 
-  // ===== 借书（已登录一键借，未登录输证号）=====
+  // ===== 购物车（localStorage 持久化）=====
+  function loadCart() {
+    try { cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (e) { cart = []; }
+    renderCartCount();
+  }
+  function saveCart() {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    renderCartCount();
+  }
+  function renderCartCount() {
+    const total = cart.reduce((s, i) => s + (i.qty || 1), 0);
+    document.getElementById('cartArea').textContent = '🛒 购物车 (' + total + ')';
+  }
+  function addCart(name, price) {
+    const item = cart.find(i => i.bookName === name);
+    if (item) item.qty = (item.qty || 1) + 1;
+    else cart.push({ bookName: name, price: price || 0, qty: 1 });
+    saveCart();
+    toast('已加入购物车：' + name);
+  }
+  function openCart() {
+    document.getElementById('cartItems').innerHTML = '';
+    document.getElementById('cartMsg').textContent = '';
+    if (!cart.length) {
+      document.getElementById('cartEmpty').style.display = 'block';
+      document.getElementById('cartTotal').textContent = '¥0';
+      document.getElementById('cartModal').style.display = 'flex';
+      return;
+    }
+    document.getElementById('cartEmpty').style.display = 'none';
+    let total = 0;
+    document.getElementById('cartItems').innerHTML = cart.map((i, idx) => {
+      const sub = (i.price || 0) * (i.qty || 1);
+      total += sub;
+      return '<div class="borrow-item" style="display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="font-weight:bold">《' + i.bookName + '》</span>' +
+        '<span style="display:flex;align-items:center;gap:8px">' +
+        '<button class="btn-buy" style="padding:3px 10px" onclick="cartQty(' + idx + ',-1)">-</button>' +
+        '<span>' + i.qty + '</span>' +
+        '<button class="btn-buy" style="padding:3px 10px" onclick="cartQty(' + idx + ',1)">+</button>' +
+        '<button class="btn-buy" style="padding:3px 10px;background:#e64340;color:#fff" onclick="cartRemove(' + idx + ')">×</button>' +
+        '</span></div>';
+    }).join('');
+    document.getElementById('cartTotal').textContent = '¥' + total.toFixed(2);
+    document.getElementById('cartModal').style.display = 'flex';
+  }
+  function cartQty(idx, delta) {
+    cart[idx].qty = Math.max(1, (cart[idx].qty || 1) + delta);
+    saveCart();
+    openCart();
+  }
+  function cartRemove(idx) {
+    cart.splice(idx, 1);
+    saveCart();
+    openCart();
+  }
+  // ===== 结算（登录状态逐项下单，库存-1）=====
+  async function checkout() {
+    const msg = document.getElementById('cartMsg');
+    if (!currentUser) {
+      msg.textContent = '请先登录后再结算';
+      msg.style.color = '#e64340';
+      closeModal('cartModal');
+      openLogin();
+      return;
+    }
+    if (!cart.length) { msg.textContent = '购物车是空的'; msg.style.color = '#e64340'; return; }
+    msg.textContent = '下单中…'; msg.style.color = '#999';
+    try {
+      let ok = 0, fail = 0, failMsg = '';
+      for (const item of cart) {
+        const res = await fetch(API + '?pageNum=1&pageSize=30&bookName=' + encodeURIComponent(item.bookName));
+        const data = await res.json();
+        const book = (data.rows || []).find(b => b.bookName === item.bookName);
+        if (!book) { fail++; failMsg = '未找到《' + item.bookName + '》'; continue; }
+        const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: book.bookId, quantity: item.qty || 1 });
+        const o = await fetch(ORDER_CREATE, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+        const od = await o.json();
+        if (od.code === 200) ok++; else { fail++; failMsg = od.msg || '下单失败'; }
+      }
+      if (fail === 0) {
+        msg.textContent = '下单成功 ' + ok + ' 件！可在"我的订单"查看';
+        msg.style.color = '#67c23a';
+        cart = [];
+        saveCart();
+        setTimeout(() => closeModal('cartModal'), 2500);
+      } else {
+        msg.textContent = '部分成功：' + ok + ' 件成功，' + fail + ' 件失败（' + failMsg + '）';
+        msg.style.color = '#e64340';
+      }
+      loadBooks();
+    } catch (e) {
+      msg.textContent = '下单失败：' + e.message;
+      msg.style.color = '#e64340';
+    }
+  }
+
+  // ===== 我的订单 =====
+  function openMyOrders() {
+    document.getElementById('orderModal').style.display = 'flex';
+    if (currentUser) {
+      document.getElementById('qOrderCard').value = currentUser.cardNo;
+      document.getElementById('qOrderCard').style.display = 'none';
+      queryMyOrders();
+    } else {
+      document.getElementById('qOrderCard').style.display = 'block';
+    }
+  }
+  async function queryMyOrders() {
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qOrderCard').value.trim();
+    const box = document.getElementById('orderResult');
+    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
+    box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
+    try {
+      const res = await fetch(ORDER_QUERY + '?cardNo=' + encodeURIComponent(cardNo));
+      const d = await res.json();
+      if (d.code !== 200 || !d.data || !d.data.length) {
+        box.innerHTML = '<div class="loading" style="padding:10px">暂无订单</div>';
+        return;
+      }
+      box.innerHTML = d.data.map(o => `
+        <div class="borrow-item">
+          <div style="font-weight:bold;margin-bottom:4px">《${o.bookName || '未知图书'}》 × ${o.quantity || 1}</div>
+          <div style="color:#999">订单号：${o.orderNo || '-'} ｜ ${o.createTime || ''}</div>
+          <span style="color:#e64340;font-weight:bold">¥${o.totalPrice}</span>
+          <span class="tag ${o.status === '0' ? 'tag-off' : 'tag-sale'}" style="margin-left:8px">${ORDER_STATUS[o.status] || '未知'}</span>
+        </div>`).join('');
+    } catch (e) {
+      box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
+    }
+  }
+
+  // ===== 借书 =====
   function openBorrow(bookId, bookName) {
     borrowBookId = bookId;
     document.getElementById('borrowBookName').textContent = '确认借阅《' + bookName + '》？应还日期为借出后 30 天';
@@ -463,7 +639,7 @@
     }
   }
 
-  // ===== 我的借阅（登录后自动查询 + 剩余天数 + 还书引导）=====
+  // ===== 我的借阅 =====
   function openMyBorrow() {
     document.getElementById('borrowModal').style.display = 'flex';
     if (currentUser) {
@@ -506,13 +682,6 @@
     }
   }
 
-  // ===== 购物车 =====
-  function addCart(name) {
-    cartCount++;
-    document.getElementById('cartArea').textContent = '🛒 购物车 (' + cartCount + ')';
-    toast('已加入购物车：' + name);
-  }
-
   // ===== 通用 =====
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
   function toast(text) {
@@ -522,8 +691,7 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
 
-  // ===== 借阅按钮事件委托（顶层注册，页面加载即生效）=====
-  // 详情弹窗内"借阅"按钮的委托（卡片按钮已内联处理，不走这里）
+  // ===== 详情弹窗内借阅按钮（委托）=====
   document.addEventListener('click', function (e) {
     const dbtn = e.target.closest('.btn-borrow-detail');
     if (dbtn) {
@@ -531,12 +699,13 @@
     }
   });
 
-  // ===== 初始化（恢复登录状态）=====
+  // ===== 初始化 =====
   try {
     const saved = localStorage.getItem('shopUser');
     if (saved) currentUser = JSON.parse(saved);
   } catch (e) {}
   renderLoginState();
+  loadCart();
   loadBooks();
   loadHot();
   loadNotices();
