@@ -54,9 +54,24 @@ public class BorrowTask
      */
     public void remindOverdue()
     {
+        // 同时查"已逾期(2)"和"借出中(0)"，再按真实日期过滤：
+        // 即使 0 点的逾期标记任务因服务宕机没跑，9 点也能发现真正逾期的记录
         BorrowRecord query = new BorrowRecord();
         query.setStatus("2");
         List<BorrowRecord> overdue = borrowRecordMapper.selectBorrowRecordList(query);
+        query.setStatus("0");
+        List<BorrowRecord> borrowing = borrowRecordMapper.selectBorrowRecordList(query);
+        Date now = new Date();
+        if (borrowing != null)
+        {
+            for (BorrowRecord br : borrowing)
+            {
+                if (br.getDueDate() != null && br.getDueDate().before(now))
+                {
+                    overdue.add(br);
+                }
+            }
+        }
         if (overdue == null || overdue.isEmpty())
         {
             System.out.println("催还检查：无逾期记录");

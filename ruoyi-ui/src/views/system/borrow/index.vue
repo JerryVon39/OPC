@@ -20,7 +20,7 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd">借书</el-button>
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:borrow:add']">借书</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -51,10 +51,10 @@
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
       <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button v-if="scope.row.status === '0'" size="mini" type="primary" @click="handleRenew(scope.row)">续借</el-button>
-          <el-button v-if="scope.row.status === '0' || scope.row.status === '2'" size="mini" type="success" @click="handleReturn(scope.row)">还书</el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.status === '0'" size="mini" type="primary" @click="handleRenew(scope.row)" v-hasPermi="['system:borrow:edit']">续借</el-button>
+          <el-button v-if="scope.row.status === '0' || scope.row.status === '2'" size="mini" type="success" @click="handleReturn(scope.row)" v-hasPermi="['system:borrow:edit']">还书</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:borrow:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:borrow:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

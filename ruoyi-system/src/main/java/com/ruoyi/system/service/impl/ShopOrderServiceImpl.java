@@ -45,7 +45,7 @@ public class ShopOrderServiceImpl implements IShopOrderService
         return shopOrderMapper.insertShopOrder(shopOrder);
     }
 
-    /** 修改订单：状态变为"已取消"时自动回滚库存（防重复取消双倍回补） */
+    /** 修改订单：状态变为"已取消"时自动回滚库存（防重复取消双倍回补；已完成订单不可取消） */
     @Override
     @Transactional
     public int updateShopOrder(ShopOrder shopOrder)
@@ -53,13 +53,20 @@ public class ShopOrderServiceImpl implements IShopOrderService
         if ("2".equals(shopOrder.getStatus()))
         {
             ShopOrder old = shopOrderMapper.selectShopOrderByOrderId(shopOrder.getOrderId());
-            if (old != null && !"2".equals(old.getStatus()))
+            if (old != null)
             {
-                Book book = bookMapper.selectBookByBookId(old.getBookId());
-                if (book != null)
+                if ("1".equals(old.getStatus()))
                 {
-                    book.setStock((book.getStock() == null ? 0 : book.getStock()) + old.getQuantity());
-                    bookMapper.updateBook(book);
+                    throw new ServiceException("该订单已完成，不可取消");
+                }
+                if (!"2".equals(old.getStatus()))
+                {
+                    Book book = bookMapper.selectBookByBookId(old.getBookId());
+                    if (book != null)
+                    {
+                        book.setStock((book.getStock() == null ? 0 : book.getStock()) + old.getQuantity());
+                        bookMapper.updateBook(book);
+                    }
                 }
             }
         }
