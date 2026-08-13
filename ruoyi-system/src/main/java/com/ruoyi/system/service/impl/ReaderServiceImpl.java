@@ -142,6 +142,8 @@ public class ReaderServiceImpl implements IReaderService
         reader.setStatus("0");
         reader.setUpdateTime(DateUtils.getNowDate());
         readerMapper.updateReader(reader);
+        // 同步历史借阅快照证号（同一人换证号，历史记录归到新证号下，"我的借阅"仍可查全）
+        borrowRecordMapper.updateCardNoSnapshot(readerId, newCard);
         return newCard;
     }
 

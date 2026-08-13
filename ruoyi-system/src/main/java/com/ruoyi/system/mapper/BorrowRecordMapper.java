@@ -1,6 +1,7 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.BorrowRecord;
 
 /**
@@ -40,6 +41,9 @@ public interface BorrowRecordMapper
 
     /** 首页数据看板：图书/读者/借阅/订单聚合统计 */
     public java.util.Map<String, Object> selectDashboard();
+
+    /** 补办换证号：同步该读者历史借阅的快照证号 */
+    public int updateCardNoSnapshot(@Param("readerId") Long readerId, @Param("newCardNo") String newCardNo);
 
     /** 读者借阅排行（按借阅次数） */
     public java.util.List<java.util.Map<String, Object>> selectTopReaders(BorrowRecord borrowRecord);

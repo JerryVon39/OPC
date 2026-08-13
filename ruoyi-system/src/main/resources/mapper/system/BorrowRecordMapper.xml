@@ -152,6 +152,12 @@
         </foreach>
     </delete>
 
+    <!-- 补办换证号：同步该读者历史借阅的快照证号（同一人换证号，"我的借阅"仍可查全） -->
+    <update id="updateCardNoSnapshot">
+        update borrow_record set card_no = #{newCardNo}
+        where reader_id = #{readerId} and card_no is not null
+    </update>
+
     <!-- 首页数据看板：图书/读者/借阅/订单聚合统计 -->
     <select id="selectDashboard" resultType="java.util.Map">
         SELECT

@@ -128,13 +128,51 @@ public class ReaderController extends BaseController
         return success(result);
     }
 
-    /** 挂失补办：生成新证号并恢复状态（旧证号作废） */
+    /** 挂失补办：生成新证号并恢复状态（旧证号作废）
+     * 注意：success(字符串) 会走 msg 字段，前端取 data 拿不到，必须显式放 data */
     @PreAuthorize("@ss.hasPermi('system:reader:edit')")
     @Log(title = "读者管理", businessType = BusinessType.UPDATE)
     @PutMapping("/reissue/{readerId}")
     public AjaxResult reissue(@PathVariable("readerId") Long readerId)
     {
-        return success(readerService.reissueCard(readerId));
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("data", readerService.reissueCard(readerId));
+        return ajax;
+    }
+
+    /** 前台补办借书证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废） */
+    @Anonymous
+    @PostMapping("/applyReissue")
+    public AjaxResult applyReissue(String readerName, String phone)
+    {
+        if (readerName == null || readerName.trim().isEmpty() || phone == null || phone.trim().isEmpty())
+        {
+            return error("请输入姓名和登记手机号");
+        }
+        Reader nameQuery = new Reader();
+        nameQuery.setReaderName(readerName.trim());
+        java.util.List<Reader> list = readerService.selectReaderList(nameQuery);
+        if (list == null || list.isEmpty())
+        {
+            return error("未找到该姓名的读者，请确认是否已登记");
+        }
+        // 手机号精确匹配（reader_name 是模糊查询，这里必须精确比对）
+        Reader matched = null;
+        for (Reader r : list)
+        {
+            if (phone.trim().equals(r.getPhone()))
+            {
+                matched = r;
+                break;
+            }
+        }
+        if (matched == null)
+        {
+            return error("手机号与登记信息不匹配");
+        }
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("data", readerService.reissueCard(matched.getReaderId()));
+        return ajax;
     }
 
     /** 前台修改个人信息（匿名）：按证号+姓名校验后更新手机号 */

@@ -47,11 +47,12 @@ CREATE TABLE `reader` (
   PRIMARY KEY (`reader_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='读者信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
--- 测试读者（名字即用途说明：学生/教师/普通 三种类型，对应差异化借阅规则）
+-- 测试读者（名字即用途说明：学生/教师/普通/挂失 四种类型，对应差异化借阅规则与补办演示）
 INSERT INTO `reader` (reader_id, reader_name, phone, card_no, reader_type, sex, status, remark, create_by, create_time) VALUES
 (1, '学生测试', '13800000001', 'JS20260001', '1', '1', '0', '测试数据-学生读者(借阅上限5本/借期30天)', 'admin', NOW()),
 (2, '教师测试', '13800000002', 'JS20260002', '2', '0', '0', '测试数据-教师读者(借阅上限10本/借期60天)', 'admin', NOW()),
-(3, '普通测试', '13800000003', 'JS20260003', '3', '0', '0', '测试数据-普通读者(借阅上限3本/借期30天)', 'admin', NOW());
+(3, '普通测试', '13800000003', 'JS20260003', '3', '0', '0', '测试数据-普通读者(借阅上限3本/借期30天)', 'admin', NOW()),
+(4, '挂失测试', '13800000004', 'JS20260004', '3', '0', '1', '测试数据-挂失读者(可演示前台申请补办)', 'admin', NOW());
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `borrow_record` (
@@ -80,11 +81,15 @@ INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date,
 (3, 2, 2, '2026-08-13', '2026-10-12', NULL, '0', '教师测试', 'JS20260002', '深入理解计算机系统', 'system', NOW()),
 (4, 3, 4, '2026-07-01', '2026-07-31', '2026-07-20', '1', '普通测试', 'JS20260003', '活着', 'system', NOW()),
 (5, 3, 13, '2026-07-02', '2026-08-01', NULL, '2', '普通测试', 'JS20260003', '小王子', 'system', NOW());
--- 测试订单（三种状态齐全：待处理/已完成/已取消）
+-- 测试订单（四种状态齐全：待付款/已收款/已完成/已取消）
 INSERT INTO shop_order (order_no, reader_id, reader_name, card_no, book_id, book_name, quantity, total_price, status, create_by, create_time) VALUES
 ('WSW20260813001', 1, '学生测试', 'JS20260001', 13, '小王子', 1, 22.00, '0', '学生测试', NOW()),
+('WSW20260810001', 1, '学生测试', 'JS20260001', 15, '白夜行', 1, 59.60, '3', '学生测试', DATE_SUB(NOW(), INTERVAL 3 DAY)),
 ('WSW20260812001', 2, '教师测试', 'JS20260002', 21, '算法导论（第3版）', 1, 128.00, '1', '教师测试', DATE_SUB(NOW(), INTERVAL 1 DAY)),
 ('WSW20260811001', 3, '普通测试', 'JS20260003', 7, '围城', 2, 78.00, '2', '普通测试', DATE_SUB(NOW(), INTERVAL 2 DAY));
+-- 挂失测试历史借阅（已归还，演示补办后历史保留）
+INSERT INTO borrow_record (reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time) VALUES
+(4, 18, '2026-07-10', '2026-08-09', '2026-07-25', '1', '挂失测试', 'JS20260004', '边城', 'system', NOW());
 
 -- ============================================
 -- 图书管理系统 业务初始化 SQL（幂等，可重复执行）

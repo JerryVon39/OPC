@@ -231,7 +231,8 @@
       <a class="active" data-type="" onclick="switchType(this)">全部</a>
     </div>
     <div class="nav-right">
-      <span onclick="openRegister()">📝 读者登记</span>
+      <span id="registerEntry" onclick="openRegister()">📝 读者登记</span>
+      <span onclick="openReissue()">🪪 补办证号</span>
       <span onclick="openMyBorrow()">📖 我的借阅</span>
       <span onclick="openFavs()">❤️ 收藏</span>
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
@@ -413,6 +414,21 @@
     </div>
   </div>
 
+  <!-- 补办借书证弹窗 -->
+  <div id="reissueModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>🪪 补办借书证</h3>
+      <p class="modal-tip">借书证遗失可在线上补办，生成新证号（旧证号立即作废）</p>
+      <input id="reissueName" class="modal-input" placeholder="👤 读者姓名" />
+      <input id="reissuePhone" class="modal-input" placeholder="📱 登记手机号" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="applyReissue()">申请补办</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('reissueModal')">取消</button>
+      </div>
+      <div id="reissueMsg" class="modal-msg"></div>
+    </div>
+  </div>
+
   <!-- 我的收藏弹窗 -->
   <div id="favModal" class="modal" style="display:none">
     <div class="modal-box">
@@ -457,6 +473,7 @@
   const RENEW_API = '/dev-api/system/borrow/renewByCard';
   const CONFIG_API = '/dev-api/system/config/configKey/book.stock.warn';
   const MYINFO_API = '/dev-api/system/reader/updateMyInfo';
+  const REISSUE_API = '/dev-api/system/reader/applyReissue';
   const DICT_API = '/dev-api/system/dict/data/type/book_type';
   const RELATED_API = '/dev-api/system/book/related';
 
@@ -826,6 +843,8 @@
     area.innerHTML = currentUser
       ? '<span style="cursor:pointer" onclick="logout()">你好，' + currentUser.readerName + '（退出）</span>'
       : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
+    // 已登录用户不再需要"读者登记"（登记过的读者才能登录）
+    document.getElementById('registerEntry').style.display = currentUser ? 'none' : '';
   }
 
   // ===== 读者登记 =====
@@ -1102,6 +1121,42 @@
       }).join('');
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
+    }
+  }
+
+  // ===== 补办借书证（姓名+登记手机号校验，证号丢失也能补办）=====
+  function openReissue() {
+    document.getElementById('reissueModal').style.display = 'flex';
+    document.getElementById('reissueMsg').textContent = '';
+    // 已登录自动填姓名
+    document.getElementById('reissueName').value = currentUser ? currentUser.readerName : '';
+    document.getElementById('reissuePhone').value = '';
+  }
+  async function applyReissue() {
+    const name = document.getElementById('reissueName').value.trim();
+    const phone = document.getElementById('reissuePhone').value.trim();
+    const msg = document.getElementById('reissueMsg');
+    if (!name || !phone) { msg.textContent = '请输入姓名和登记手机号'; msg.style.color = '#c65d43'; return; }
+    if (!confirm('确认补办借书证？新证号生成后旧证号立即作废')) return;
+    try {
+      const body = new URLSearchParams({ readerName: name, phone: phone });
+      const res = await fetch(REISSUE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        msg.textContent = '补办成功！新证号：' + d.data + '，请使用新证号登录（旧证号已作废）';
+        msg.style.color = '#4f8a62';
+        // 若是本人补办，同步更新当前登录态证号
+        if (currentUser && currentUser.readerName === name) {
+          currentUser.cardNo = d.data;
+          localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        }
+      } else {
+        msg.textContent = d.msg || '补办失败';
+        msg.style.color = '#c65d43';
+      }
+    } catch (e) {
+      msg.textContent = '补办失败：' + e.message;
+      msg.style.color = '#c65d43';
     }
   }
 
