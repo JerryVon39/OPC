@@ -39,7 +39,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="publishDate != null "> and publish_date = #{publishDate}</if>
             <if test="stock != null "> and stock = #{stock}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
-            <if test="keyword != null  and keyword != ''"> and (book_name like concat('%', #{keyword}, '%') or author like concat('%', #{keyword}, '%'))</if>
+            <if test="keyword != null  and keyword != ''"> and (book_name like concat('%', #{keyword}, '%') or author like concat('%', #{keyword}, '%') or isbn like concat('%', #{keyword}, '%'))</if>
         </where>
     </select>
     

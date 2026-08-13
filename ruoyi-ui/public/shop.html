@@ -42,7 +42,7 @@
   .nav-right span:hover { color: var(--accent-light); }
 
   /* ================= 公告栏（可关闭） ================= */
-  .notice-bar { background: #fdf6e7; color: #8a6d3b; font-size: 13px; padding: 8px 48px 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; position: relative; }
+  .notice-bar { background: #fdf6e7; color: #8a6d3b; font-size: 13px; padding: 8px 48px 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; position: relative; cursor: pointer; }
   .notice-bar .n-title { color: var(--danger); font-weight: bold; margin-right: 10px; display: inline-block; vertical-align: middle; }
   #noticeText { display: inline-block; vertical-align: middle; }
   .notice-close { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #b99b5f; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
@@ -197,7 +197,7 @@
   <div class="navbar">
     <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部图书">万事<span>屋</span></div>
     <div class="nav-search">
-      <input id="searchInput" placeholder="搜索书名 / 作者" onkeydown="if(event.key==='Enter')loadBooks()" />
+      <input id="searchInput" placeholder="搜索书名 / 作者 / ISBN" onkeydown="if(event.key==='Enter')loadBooks()" />
       <button onclick="loadBooks()">搜索</button>
     </div>
     <div class="nav-links" id="typeTabs">
@@ -215,10 +215,21 @@
   </div>
 
   <!-- 公告横幅（可关闭） -->
-  <div class="notice-bar" id="noticeBar" style="display:none">
+  <div class="notice-bar" id="noticeBar" style="display:none" onclick="openNoticeDetail(event)">
     <span class="n-title">📢 公告</span>
     <span id="noticeText">加载中…</span>
-    <span class="notice-close" onclick="closeNotice()">✕</span>
+    <span class="notice-close" onclick="event.stopPropagation();closeNotice()">✕</span>
+  </div>
+
+  <!-- 公告详情弹窗 -->
+  <div id="noticeDetailModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📢 公告详情</h3>
+      <div id="noticeDetailText" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap"></div>
+      <div class="modal-btns">
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('noticeDetailModal')">关闭</button>
+      </div>
+    </div>
   </div>
 
   <!-- 横幅 -->
@@ -427,6 +438,9 @@
   let detailBook = null;
   let cart = [];
   let warnThreshold = 3;   // 库存预警阈值（从系统参数读取，后台可改）
+  let noticeTexts = [];    // 公告全文列表（点击横幅看全文）
+  let noticeIdx = 0;       // 当前显示的公告下标
+  let borrowedIds = [];    // 当前登录读者未还的图书ID（"已借"标识）
   const CART_KEY = 'wswCart';
   const FAV_KEY = 'wswFav';
   const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
@@ -500,6 +514,19 @@
     }
   }
 
+  // ===== 当前读者的未还借阅（"已借"标识，登录后加载）=====
+  async function loadBorrowed() {
+    borrowedIds = [];
+    if (!currentUser) return;
+    try {
+      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const d = await res.json();
+      (d.data || []).forEach(b => {
+        if (b.status === '0' || b.status === '2') borrowedIds.push(b.bookId);
+      });
+    } catch (e) { }
+  }
+
   // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
   async function loadConfig() {
     try {
@@ -551,11 +578,14 @@
               <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
               <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
               ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">库存紧张</span>' : ''}
+              ${onSale && borrowedIds.includes(b.bookId) ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已借</span>' : ''}
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
               <div style="display:flex;gap:8px">
-                ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>' : ''}
+                ${onSale ? (borrowedIds.includes(b.bookId)
+                  ? '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>'
+                  : '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>') : ''}
                 <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-id="${b.bookId}" data-name="${b.bookName}" data-price="${b.price || 0}" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>
               </div>
             </div>
@@ -620,7 +650,7 @@
     document.getElementById('detailRemark').textContent = b.remark || '—';
     const bBtn = document.getElementById('detailBorrowBtn');
     const cBtn = document.getElementById('detailCartBtn');
-    if (onSale && b.stock > 0) {
+    if (onSale && b.stock > 0 && !borrowedIds.includes(b.bookId)) {
       bBtn.style.display = 'inline-block';
       bBtn.dataset.id = b.bookId;
       bBtn.dataset.name = b.bookName;
@@ -685,13 +715,13 @@
       const list = d.data || [];
       if (!list.length) return;
       // 完整内容，不再截断
-      const texts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || ''));
+      noticeTexts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || ''));
       const bar = document.getElementById('noticeBar');
       bar.style.display = 'block';
       const textEl = document.getElementById('noticeText');
-      let i = 0;
-      showNotice(textEl, texts[0]);
-      setInterval(() => { i = (i + 1) % texts.length; showNotice(textEl, texts[i]); }, 6000);
+      noticeIdx = 0;
+      showNotice(textEl, noticeTexts[0]);
+      setInterval(() => { noticeIdx = (noticeIdx + 1) % noticeTexts.length; showNotice(textEl, noticeTexts[noticeIdx]); }, 6000);
     } catch (e) { }
   }
   // 显示公告：内容超宽时跑马灯滚动（完整显示），否则静态展示
@@ -706,6 +736,12 @@
     } else {
       el.style.paddingLeft = '0';
     }
+  }
+  // 点击公告栏：查看当前公告全文（关闭按钮已 stopPropagation 不会触发）
+  function openNoticeDetail(event) {
+    if (!noticeTexts.length) return;
+    document.getElementById('noticeDetailText').textContent = noticeTexts[noticeIdx];
+    document.getElementById('noticeDetailModal').style.display = 'flex';
   }
   // 关闭公告：当天不再显示
   function closeNotice() {
@@ -731,6 +767,9 @@
         closeModal('loginModal');
         msg.textContent = '';
         toast('登录成功，欢迎 ' + currentUser.readerName + '！');
+        // 加载未还借阅（"已借"标识）并刷新列表
+        await loadBorrowed();
+        loadBooks();
       } else {
         msg.textContent = d.msg || '登录失败';
         msg.style.color = '#c65d43';
@@ -743,8 +782,10 @@
   function logout() {
     currentUser = null;
     localStorage.removeItem('shopUser');
+    borrowedIds = [];
     renderLoginState();
     toast('已退出登录');
+    loadBooks();
   }
   function renderLoginState() {
     const area = document.getElementById('loginArea');
@@ -958,6 +999,8 @@
         msg.textContent = '借书成功！应还日期已自动设置为 30 天后，可在"我的借阅"查看';
         msg.style.color = '#4f8a62';
         setTimeout(() => closeModal('borrowBookModal'), 2500);
+        // 同步"已借"标识并刷新
+        await loadBorrowed();
         loadBooks();
       } else {
         msg.textContent = '借书失败：' + (d.msg || '未知错误');
@@ -1056,8 +1099,11 @@
   loadFavs();
   loadCart();
   loadConfig();
-  // 先加载分类字典（Tab 与类型标签依赖它），再加载图书
-  loadTypes().then(() => { loadBooks(); });
+  // 先加载分类字典与"已借"标识（依赖登录态），再加载图书
+  loadTypes().then(async () => {
+    await loadBorrowed();
+    loadBooks();
+  });
   loadHot();
   loadNotices();
 </script>
