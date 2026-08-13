@@ -47,7 +47,10 @@ CREATE TABLE `reader` (
   PRIMARY KEY (`reader_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='读者信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `reader` VALUES (1,'哇奥','13800138000','JZ20260001','1','0',NULL,'0',NULL,'','2026-08-12 15:33:04','','2026-08-12 15:36:30'),(2,'Jerry','13937262834',NULL,'2','0',NULL,'0',NULL,'','2026-08-12 16:40:58','',NULL),(4,'前台登记测试','13700002222',NULL,'2','0',NULL,'0','通过浏览器模拟前台登记','','2026-08-12 16:48:14','',NULL),(5,'证号测试','13600003333','JS25455819','1','0',NULL,'0','','','2026-08-12 17:04:16','',NULL),(6,'test2','13424532324','JS25551661','3','0',NULL,'0',NULL,'','2026-08-12 17:05:52','','2026-08-12 17:06:17');
+INSERT INTO `reader` (reader_id, reader_name, phone, card_no, reader_type, sex, status, remark, create_by, create_time) VALUES
+(1, '王小美', '13800000001', 'JS20260001', '1', '1', '0', '演示读者-学生', 'admin', NOW()),
+(2, '李老师', '13800000002', 'JS20260002', '2', '0', '0', '演示读者-教师', 'admin', NOW()),
+(3, '张伟', '13800000003', 'JS20260003', '3', '0', '0', '演示读者-普通读者', 'admin', NOW());
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `borrow_record` (
@@ -69,7 +72,18 @@ CREATE TABLE `borrow_record` (
   PRIMARY KEY (`borrow_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='借阅记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `borrow_record` VALUES (1,2,1,'2026-08-12','2026-09-11','2026-08-12','1','借阅测试','',NULL,'',NULL),(2,1,1,'2026-08-12','2026-08-01',NULL,'2','保留借出状态','',NULL,'','2026-08-12 17:27:49');
+-- 演示借阅记录（有故事线：学生2本/教师60天借期/普通读者已还+逾期）
+INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time) VALUES
+(1, 1, 1, '2026-08-13', '2026-09-12', NULL, '0', '王小美', 'JS20260001', '三体', 'system', NOW()),
+(2, 1, 9, '2026-07-21', '2026-08-20', NULL, '0', '王小美', 'JS20260001', '红楼梦', 'system', NOW()),
+(3, 2, 2, '2026-08-13', '2026-10-12', NULL, '0', '李老师', 'JS20260002', '深入理解计算机系统', 'system', NOW()),
+(4, 3, 4, '2026-07-01', '2026-07-31', '2026-07-20', '1', '张伟', 'JS20260003', '活着', 'system', NOW()),
+(5, 3, 13, '2026-07-02', '2026-08-01', NULL, '2', '张伟', 'JS20260003', '小王子', 'system', NOW());
+-- 演示订单（三种状态齐全：待处理/已完成/已取消）
+INSERT INTO shop_order (order_no, reader_id, reader_name, card_no, book_id, book_name, quantity, total_price, status, create_by, create_time) VALUES
+('WSW20260813001', 1, '王小美', 'JS20260001', 13, '小王子', 1, 22.00, '0', '王小美', NOW()),
+('WSW20260812001', 2, '李老师', 'JS20260002', 21, '算法导论（第3版）', 1, 128.00, '1', '李老师', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+('WSW20260811001', 3, '张伟', 'JS20260003', 7, '围城', 2, 78.00, '2', '张伟', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 -- ============================================
 -- 图书管理系统 业务初始化 SQL（幂等，可重复执行）
