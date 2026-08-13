@@ -200,6 +200,7 @@
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
       <span id="cartArea" style="cursor:pointer" onclick="openCart()">🛒 购物车 (0)</span>
       <span style="cursor:pointer" onclick="openMyOrders()">📦 我的订单</span>
+      <span style="cursor:pointer" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</span>
     </div>
   </div>
 
@@ -911,6 +912,8 @@
 
   // ===== 通用 =====
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  // 跳转后台管理（同源根路径，未登录会引导登录）
+  function goAdmin() { location.href = '/'; }
   function toast(text) {
     const t = document.getElementById('toast');
     t.textContent = text;

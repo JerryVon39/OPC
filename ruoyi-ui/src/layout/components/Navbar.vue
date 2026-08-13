@@ -30,6 +30,10 @@
 
       </template>
 
+      <el-tooltip content="前台万事屋（新标签打开）" effect="dark" placement="bottom">
+        <span class="right-menu-item hover-effect" style="font-size:14px;cursor:pointer" @click="goShop">🏪 前台</span>
+      </el-tooltip>
+
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="hover">
         <div class="avatar-wrapper">
           <img :src="avatar" class="user-avatar">
@@ -113,6 +117,10 @@ export default {
       this.$store.dispatch('lock/lockScreen', currentPath).then(() => {
         this.$router.push('/lock')
       })
+    },
+    goShop() {
+      // 前台万事屋（新标签打开，便于来回切换）
+      window.open('/shop.html')
     },
     logout() {
       this.$confirm('确定注销并退出系统吗？', '提示', {
