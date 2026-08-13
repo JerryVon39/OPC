@@ -76,6 +76,8 @@
   /* ================= 图书网格与卡片 ================= */
   .container { max-width: 1200px; margin: 24px auto 30px; padding: 0 20px; }
   .section-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid var(--accent); }
+  #clearSearch { font-size: 13px; color: var(--accent-deep); margin-left: 12px; cursor: pointer; font-weight: normal; vertical-align: middle; }
+  #clearSearch:hover { color: var(--danger); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
   .book-card { background: var(--card); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(60,50,30,0.05), 0 4px 14px rgba(60,50,30,0.06); transition: transform .25s, box-shadow .25s; cursor: pointer; }
   .book-card:hover { transform: translateY(-6px); box-shadow: 0 8px 24px rgba(60,50,30,0.14); }
@@ -181,7 +183,7 @@
 <body>
   <!-- 顶部导航 -->
   <div class="navbar">
-    <div class="logo">万事<span>屋</span></div>
+    <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部图书">万事<span>屋</span></div>
     <div class="nav-search">
       <input id="searchInput" placeholder="搜索书名 / 作者" onkeydown="if(event.key==='Enter')loadBooks()" />
       <button onclick="loadBooks()">搜索</button>
@@ -222,7 +224,7 @@
 
   <!-- 图书列表 -->
   <div class="container">
-    <div class="section-title" id="listTitle">全部图书</div>
+    <div class="section-title" id="listTitle">全部图书 <a id="clearSearch" style="display:none" onclick="resetAll()">✕ 清除筛选</a></div>
     <div id="bookGrid" class="grid"></div>
   </div>
 
@@ -433,7 +435,9 @@
       const books = (data.rows || []).filter(b => b.status === '0');
       currentBooks = books;
       const title = document.getElementById('listTitle');
-      title.textContent = currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + kw : '全部图书');
+      // 标题文字 + "清除筛选"快捷入口（有搜索词或分类时显示）
+      title.innerHTML = (currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + kw : '全部图书'))
+        + '<a id="clearSearch" style="' + ((kw || currentType) ? '' : 'display:none') + '" onclick="resetAll()">✕ 清除筛选</a>';
       if (!books.length) {
         document.getElementById('bookGrid').innerHTML = '<div class="loading">没有找到相关图书</div>';
         return;
@@ -471,6 +475,19 @@
     document.querySelectorAll('#typeTabs a').forEach(a => a.classList.remove('active'));
     el.classList.add('active');
     currentType = el.dataset.type;
+    // 点"全部"时同时清空搜索词，真正回到全部书籍
+    if (currentType === '') {
+      document.getElementById('searchInput').value = '';
+    }
+    loadBooks();
+  }
+
+  // ===== 返回全部图书（logo / "清除筛选"链接）=====
+  function resetAll() {
+    document.getElementById('searchInput').value = '';
+    currentType = '';
+    document.querySelectorAll('#typeTabs a').forEach(a => a.classList.remove('active'));
+    document.querySelector('#typeTabs a[data-type=""]').classList.add('active');
     loadBooks();
   }
 
