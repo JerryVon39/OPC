@@ -87,6 +87,7 @@
     <div class="nav-right">
       <span onclick="openRegister()">📝 读者登记</span>
       <span onclick="openMyBorrow()">📖 我的借阅</span>
+      <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
       <span>🛒 购物车 (0)</span>
     </div>
   </div>
@@ -165,7 +166,7 @@
   <div id="borrowModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>📖 我的借阅</h3>
-      <p class="modal-tip">输入登记时获得的借书证号查询借阅记录</p>
+      <p class="modal-tip">登录后自动显示；未登录请输入借书证号查询</p>
       <input id="qCardNo" class="modal-input" placeholder="借书证号（如 JS12345678）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="queryMyBorrow()">查询</button>
@@ -175,12 +176,28 @@
     </div>
   </div>
 
+  <!-- 登录弹窗 -->
+  <div id="loginModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>👤 读者登录</h3>
+      <p class="modal-tip">使用登记时填写的姓名与借书证号登录，登录后可一键借书</p>
+      <input id="loginName" class="modal-input" placeholder="读者姓名" />
+      <input id="loginCard" class="modal-input" placeholder="借书证号" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="submitLogin()">登 录</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeModal('loginModal')">取消</button>
+      </div>
+      <div id="loginMsg" class="modal-msg"></div>
+    </div>
+  </div>
+
   <!-- 借书弹窗 -->
   <div id="borrowBookModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>📖 借书</h3>
       <p class="modal-tip" id="borrowBookName">请确认借阅</p>
-      <input id="borrowCardNo" class="modal-input" placeholder="请输入借书证号（登记时获得）" />
+      <div id="borrowLoginInfo" style="margin-bottom:12px"></div>
+      <input id="borrowCardNo" class="modal-input" placeholder="未登录时请输入借书证号" style="display:none" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitBorrow()">确认借书</button>
         <button class="btn-buy" style="background:#ccc" onclick="closeModal('borrowBookModal')">取消</button>
@@ -197,6 +214,7 @@
   const STATS_API = '/dev-api/system/borrow/stats';
   const NOTICE_API = '/dev-api/system/notice/publicList';
   const REG_API = '/dev-api/system/reader';
+  const LOGIN_API = '/dev-api/system/reader/login';
   const BORROW_API = '/dev-api/system/borrow/borrowByCard';
   const CARD_API = '/dev-api/system/borrow/queryByCard';
 
@@ -209,8 +227,8 @@
   // ===== 全局状态 =====
   let currentType = '';
   let borrowBookId = null;
-  let borrowBookName = '';
   let cartCount = 0;
+  let currentUser = null;
 
   // ===== 图书列表（支持搜索 + 分类）=====
   async function loadBooks() {
@@ -328,6 +346,46 @@
     } catch (e) { /* 公告失败不影响 */ }
   }
 
+  // ===== 登录 =====
+  function openLogin() { document.getElementById('loginModal').style.display = 'flex'; }
+  async function submitLogin() {
+    const name = document.getElementById('loginName').value.trim();
+    const card = document.getElementById('loginCard').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if (!name || !card) { msg.textContent = '请输入姓名和借书证号'; msg.style.color = '#e64340'; return; }
+    try {
+      const body = new URLSearchParams({ readerName: name, cardNo: card });
+      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
+        closeModal('loginModal');
+        msg.textContent = '';
+        toast('登录成功，欢迎 ' + currentUser.readerName + '！');
+      } else {
+        msg.textContent = d.msg || '登录失败';
+        msg.style.color = '#e64340';
+      }
+    } catch (e) {
+      msg.textContent = '登录失败：' + e.message;
+      msg.style.color = '#e64340';
+    }
+  }
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('shopUser');
+    renderLoginState();
+    toast('已退出登录');
+  }
+  function renderLoginState() {
+    const area = document.getElementById('loginArea');
+    area.innerHTML = currentUser
+      ? '<span style="cursor:pointer" onclick="logout()">你好，' + currentUser.readerName + '（退出）</span>'
+      : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
+  }
+
   // ===== 读者登记 =====
   function openRegister() { document.getElementById('regModal').style.display = 'flex'; }
   async function submitRegister() {
@@ -345,7 +403,7 @@
       });
       const d = await res.json();
       if (d.code === 200) {
-        msg.textContent = '登记成功！您的借书证号：' + cardNo;
+        msg.textContent = '登记成功！您的借书证号：' + cardNo + '，请记住并登录';
         msg.style.color = '#67c23a';
       } else {
         msg.textContent = '登记失败：' + (d.msg || '未知错误');
@@ -357,18 +415,26 @@
     }
   }
 
-  // ===== 借书 =====
+  // ===== 借书（已登录一键借，未登录输证号）=====
   function openBorrow(bookId, bookName) {
     borrowBookId = bookId;
-    borrowBookName = bookName;
     document.getElementById('borrowBookName').textContent = '确认借阅《' + bookName + '》？应还日期为借出后 30 天';
     document.getElementById('borrowBookMsg').textContent = '';
-    document.getElementById('borrowCardNo').value = '';
+    const loginInfo = document.getElementById('borrowLoginInfo');
+    const cardInput = document.getElementById('borrowCardNo');
+    if (currentUser) {
+      loginInfo.innerHTML = '<div style="background:#f0f9eb;border-radius:6px;padding:8px 12px;font-size:13px;color:#67c23a">将以 <b>' + currentUser.readerName + '</b>（' + currentUser.cardNo + '）的身份借阅</div>';
+      cardInput.style.display = 'none';
+    } else {
+      loginInfo.innerHTML = '<div style="background:#fff8e1;border-radius:6px;padding:8px 12px;font-size:13px;color:#8a6d3b">未登录：请输入借书证号，或先 <span style="color:#409eff;cursor:pointer" onclick="closeModal(\'borrowBookModal\');openLogin()">登录</span></div>';
+      cardInput.style.display = 'block';
+      cardInput.value = '';
+    }
     document.getElementById('borrowBookModal').style.display = 'flex';
   }
   async function submitBorrow() {
-    const cardNo = document.getElementById('borrowCardNo').value.trim();
     const msg = document.getElementById('borrowBookMsg');
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('borrowCardNo').value.trim();
     if (!cardNo) { msg.textContent = '请输入借书证号'; msg.style.color = '#e64340'; return; }
     msg.textContent = '借书中…'; msg.style.color = '#999';
     try {
@@ -389,10 +455,19 @@
     }
   }
 
-  // ===== 我的借阅（含剩余天数）=====
-  function openMyBorrow() { document.getElementById('borrowModal').style.display = 'flex'; }
+  // ===== 我的借阅（登录后自动查询 + 剩余天数 + 还书引导）=====
+  function openMyBorrow() {
+    document.getElementById('borrowModal').style.display = 'flex';
+    if (currentUser) {
+      document.getElementById('qCardNo').value = currentUser.cardNo;
+      document.getElementById('qCardNo').style.display = 'none';
+      queryMyBorrow();
+    } else {
+      document.getElementById('qCardNo').style.display = 'block';
+    }
+  }
   async function queryMyBorrow() {
-    const cardNo = document.getElementById('qCardNo').value.trim();
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qCardNo').value.trim();
     const box = document.getElementById('borrowResult');
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
@@ -415,7 +490,7 @@
             <div style="font-weight:bold;margin-bottom:4px">《${b.bookName || '未知图书'}》 ${daysHtml}</div>
             <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
             <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
-            ${b.status !== '1' ? '<div style="color:#999;font-size:12px;margin-top:4px">如需还书请到服务台办理</div>' : ''}
+            ${b.status !== '1' ? '<div style="background:#fff8e1;border:1px solid #f0e6c8;border-radius:6px;padding:6px 10px;font-size:12px;color:#8a6d3b;margin-top:6px">📖 还书请携带借书证到服务台办理</div>' : ''}
           </div>`;
       }).join('');
     } catch (e) {
@@ -427,14 +502,17 @@
   function addCart(name) {
     cartCount++;
     document.querySelector('.nav-right span:last-child').textContent = '🛒 购物车 (' + cartCount + ')';
-    const toast = document.getElementById('toast');
-    toast.textContent = '已加入购物车：' + name;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
+    toast('已加入购物车：' + name);
   }
 
   // ===== 通用 =====
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  function toast(text) {
+    const t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
 
   // ===== 借阅按钮事件委托（顶层注册，页面加载即生效）=====
   document.addEventListener('click', function (e) {
@@ -450,7 +528,12 @@
     }
   });
 
-  // ===== 初始化 =====
+  // ===== 初始化（恢复登录状态）=====
+  try {
+    const saved = localStorage.getItem('shopUser');
+    if (saved) currentUser = JSON.parse(saved);
+  } catch (e) {}
+  renderLoginState();
   loadBooks();
   loadHot();
   loadNotices();

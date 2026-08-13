@@ -73,6 +73,32 @@ public class ReaderController extends BaseController
     /**
      * 新增读者管理
      */
+    /** 前台读者登录（匿名）：姓名+借书证号验证 */
+    @Anonymous
+    @PostMapping("/login")
+    public AjaxResult login(String readerName, String cardNo)
+    {
+        if (readerName == null || readerName.trim().isEmpty() || cardNo == null || cardNo.trim().isEmpty())
+        {
+            return error("请输入姓名和借书证号");
+        }
+        Reader query = new Reader();
+        query.setReaderName(readerName.trim());
+        query.setCardNo(cardNo.trim());
+        java.util.List<Reader> list = readerService.selectReaderList(query);
+        if (list == null || list.isEmpty())
+        {
+            return error("姓名与借书证号不匹配，请确认后重试");
+        }
+        Reader r = list.get(0);
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("readerId", r.getReaderId());
+        result.put("readerName", r.getReaderName());
+        result.put("cardNo", r.getCardNo());
+        result.put("readerType", r.getReaderType());
+        return success(result);
+    }
+
     @Anonymous
     @PostMapping
     public AjaxResult add(@RequestBody Reader reader)
