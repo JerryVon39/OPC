@@ -19,7 +19,9 @@
   .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; row-gap: 4px; }
   .nav-right span { color: #ffc107; font-size: 14px; cursor: pointer; white-space: nowrap; }
   .notice-bar { background: #fff8e1; color: #8a6d3b; font-size: 13px; padding: 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; }
-  .notice-bar .n-title { color: #e64340; font-weight: bold; margin-right: 10px; }
+  .notice-bar .n-title { color: #e64340; font-weight: bold; margin-right: 10px; display: inline-block; vertical-align: middle; }
+  #noticeText { display: inline-block; vertical-align: middle; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
   .banner { background: linear-gradient(135deg, #2d3a4b 0%, #455a75 60%, #5b7a9d 100%); color: #fff; padding: 40px 40px; text-align: center; }
   .banner h1 { font-size: 34px; margin-bottom: 10px; }
   .banner p { font-size: 15px; opacity: 0.85; }
@@ -390,21 +392,35 @@
     loadBooks();
   }
 
-  // ===== 公告横幅 =====
+  // ===== 公告横幅（完整内容 + 长公告跑马灯滚动）=====
   async function loadNotices() {
     try {
       const res = await fetch(NOTICE_API);
       const d = await res.json();
       const list = d.data || [];
       if (!list.length) return;
-      const texts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || '').substring(0, 30));
+      // 完整内容，不再截断
+      const texts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || ''));
       const bar = document.getElementById('noticeBar');
       bar.style.display = 'block';
       const textEl = document.getElementById('noticeText');
       let i = 0;
-      textEl.textContent = texts[0];
-      setInterval(() => { i = (i + 1) % texts.length; textEl.textContent = texts[i]; }, 5000);
+      showNotice(textEl, texts[0]);
+      setInterval(() => { i = (i + 1) % texts.length; showNotice(textEl, texts[i]); }, 6000);
     } catch (e) { }
+  }
+  // 显示公告：内容超宽时跑马灯滚动（完整显示），否则静态展示
+  function showNotice(el, text) {
+    el.textContent = text;
+    el.style.animation = 'none';
+    if (el.scrollWidth > el.parentElement.clientWidth) {
+      const dur = (el.scrollWidth + el.parentElement.clientWidth) / 50; // 约50px/秒匀速滚动
+      el.style.paddingLeft = '100%';
+      void el.offsetWidth; // 强制重排，重置动画
+      el.style.animation = 'marquee ' + dur + 's linear infinite';
+    } else {
+      el.style.paddingLeft = '0';
+    }
   }
 
   // ===== 登录 =====
