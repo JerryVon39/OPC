@@ -133,4 +133,17 @@
             #{borrowId}
         </foreach>
     </delete>
+
+    <!-- 首页数据看板：图书/读者/借阅/订单聚合统计 -->
+    <select id="selectDashboard" resultType="java.util.Map">
+        SELECT
+          (SELECT COUNT(*) FROM book) AS bookTotal,
+          (SELECT COUNT(*) FROM book WHERE status = '0') AS bookOnSale,
+          (SELECT COUNT(*) FROM reader) AS readerTotal,
+          (SELECT COUNT(*) FROM borrow_record WHERE status IN ('0','2')) AS borrowingCount,
+          (SELECT COUNT(*) FROM borrow_record WHERE status = '2' OR (status = '0' AND due_date &lt; CURDATE())) AS overdueCount,
+          (SELECT COUNT(*) FROM borrow_record WHERE DATE(borrow_date) = CURDATE()) AS borrowToday,
+          (SELECT COUNT(*) FROM shop_order) AS orderTotal,
+          (SELECT COUNT(*) FROM shop_order WHERE DATE(create_time) = CURDATE()) AS orderToday
+    </select>
 </mapper>

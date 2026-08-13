@@ -130,6 +130,13 @@
   .detail-row .d-label { color: var(--text-light); width: 80px; flex-shrink: 0; }
   .detail-row .d-value { flex: 1; }
   .detail-intro { font-size: 13px; color: #666; line-height: 1.9; background: #faf8f3; border-radius: 8px; padding: 12px 14px; }
+  .related-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .related-item { cursor: pointer; text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; transition: all .2s; background: #fff; }
+  .related-item:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(60,50,30,0.12); }
+  .related-cover { height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 6px; border-radius: 6px; background: #f2efe8; }
+  .related-name { font-size: 12px; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .related-price { font-size: 12px; color: var(--danger); font-weight: bold; }
+  .related-empty { color: var(--text-light); font-size: 13px; padding: 8px 0; text-align: center; }
 
   /* ================= 借阅/订单条目 ================= */
   .borrow-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; background: #fff; }
@@ -176,6 +183,7 @@
 
     .modal-box { width: calc(100vw - 28px); max-width: 400px; padding: 20px; }
     .detail-cover { height: 210px; font-size: 44px; }
+    .related-grid { grid-template-columns: repeat(2, 1fr); }
     .footer-cols { grid-template-columns: 1fr; gap: 16px; }
   }
 </style>
@@ -190,9 +198,6 @@
     </div>
     <div class="nav-links" id="typeTabs">
       <a class="active" data-type="" onclick="switchType(this)">全部</a>
-      <a data-type="1" onclick="switchType(this)">文学</a>
-      <a data-type="2" onclick="switchType(this)">科技</a>
-      <a data-type="3" onclick="switchType(this)">历史</a>
     </div>
     <div class="nav-right">
       <span onclick="openRegister()">📝 读者登记</span>
@@ -265,6 +270,8 @@
       <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
       <div class="detail-section-title">内容简介</div>
       <div class="detail-intro" id="detailIntro">—</div>
+      <div class="detail-section-title">同类好书</div>
+      <div id="relatedBooks" class="related-grid"><div class="related-empty">加载中…</div></div>
       <div class="modal-btns">
         <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
         <button class="btn-buy" onclick="detailAddCart()" id="detailCartBtn" style="display:none">加入购物车</button>
@@ -386,9 +393,11 @@
   const ORDER_CANCEL = '/dev-api/system/order/cancelByCard';
   const RENEW_API = '/dev-api/system/borrow/renewByCard';
   const CONFIG_API = '/dev-api/system/config/configKey/book.stock.warn';
+  const DICT_API = '/dev-api/system/dict/data/type/book_type';
+  const RELATED_API = '/dev-api/system/book/related';
 
-  // ===== 字典翻译 =====
-  const TYPE_MAP = { '1': '文学', '2': '科技', '3': '历史' };
+  // ===== 字典翻译（分类由后台字典动态加载）=====
+  let TYPE_MAP = {};
   const STATUS_MAP = { '0': '在售', '1': '已下架' };
   const BORROW_STATUS = { '0': '借出中', '1': '已归还', '2': '已逾期' };
   const ORDER_STATUS = { '0': '待处理', '1': '已完成', '2': '已取消' };
@@ -405,6 +414,23 @@
   const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
   const PLACEHOLDER = 'img/book-placeholder.svg';
   const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
+
+  // ===== 图书分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
+  async function loadTypes() {
+    try {
+      const res = await fetch(DICT_API);
+      const d = await res.json();
+      const list = d.data || [];
+      if (!list.length) return;
+      const tabs = document.getElementById('typeTabs');
+      let html = '<a class="active" data-type="" onclick="switchType(this)">全部</a>';
+      list.forEach(v => {
+        TYPE_MAP[v.dictValue] = v.dictLabel;
+        html += '<a data-type="' + v.dictValue + '" onclick="switchType(this)">' + v.dictLabel + '</a>';
+      });
+      tabs.innerHTML = html;
+    } catch (e) { }
+  }
 
   // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
   async function loadConfig() {
@@ -535,6 +561,28 @@
       cBtn.style.display = 'none';
     }
     document.getElementById('detailModal').style.display = 'flex';
+    loadRelated(b);
+  }
+  // ===== 同类好书（同分类在架书，最多4本）=====
+  async function loadRelated(book) {
+    const box = document.getElementById('relatedBooks');
+    if (!book.bookType) { box.innerHTML = '<div class="related-empty">暂无同类图书</div>'; return; }
+    box.innerHTML = '<div class="related-empty">加载中…</div>';
+    try {
+      const res = await fetch(RELATED_API + '?bookId=' + book.bookId + '&bookType=' + encodeURIComponent(book.bookType));
+      const d = await res.json();
+      const list = (d.data || []).slice(0, 4);
+      if (!list.length) { box.innerHTML = '<div class="related-empty">暂无同类图书</div>'; return; }
+      box.innerHTML = list.map(b =>
+        '<div class="related-item" onclick="showDetail(' + b.bookId + ',0)">' +
+          '<div class="related-cover">' + (b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />') + '</div>' +
+          '<div class="related-name">' + b.bookName + '</div>' +
+          '<div class="related-price">¥' + (b.price ?? '--') + '</div>' +
+        '</div>'
+      ).join('');
+    } catch (e) {
+      box.innerHTML = '<div class="related-empty">暂无同类图书</div>';
+    }
   }
   function detailAddCart() {
     if (detailBook) addCart(detailBook.bookId, detailBook.bookName, detailBook.price || 0);
@@ -938,7 +986,8 @@
   renderLoginState();
   loadCart();
   loadConfig();
-  loadBooks();
+  // 先加载分类字典（Tab 与类型标签依赖它），再加载图书
+  loadTypes().then(() => { loadBooks(); });
   loadHot();
   loadNotices();
 </script>

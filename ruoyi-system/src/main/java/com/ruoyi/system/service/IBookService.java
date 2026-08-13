@@ -19,6 +19,9 @@ public interface IBookService
      */
     public Book selectBookByBookId(Long bookId);
 
+    /** 同类图书推荐：同分类在架书（最多4本） */
+    public java.util.List<Book> selectRelatedBooks(Long bookId, String bookType);
+
     /**
      * 查询图书信息列表
      * 

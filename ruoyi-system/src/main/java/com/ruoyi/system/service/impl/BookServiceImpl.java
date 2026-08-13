@@ -42,6 +42,13 @@ public class BookServiceImpl implements IBookService
         return bookMapper.selectBookByBookId(bookId);
     }
 
+    /** 同类图书推荐：同分类在架书（最多4本） */
+    @Override
+    public java.util.List<Book> selectRelatedBooks(Long bookId, String bookType)
+    {
+        return bookMapper.selectRelatedBooks(bookId, bookType);
+    }
+
     /**
      * 查询图书信息列表
      * 

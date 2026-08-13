@@ -49,6 +49,20 @@ public class BookController extends BaseController
     }
 
     /**
+     * 同类图书推荐（匿名）：同分类在架书，排除自身
+     */
+    @Anonymous
+    @GetMapping("/related")
+    public AjaxResult related(Long bookId, String bookType)
+    {
+        if (bookId == null || bookType == null || bookType.trim().isEmpty())
+        {
+            return error("参数不完整");
+        }
+        return success(bookService.selectRelatedBooks(bookId, bookType.trim()));
+    }
+
+    /**
      * 导出图书信息列表
      */
     @PreAuthorize("@ss.hasPermi('system:book:export')")

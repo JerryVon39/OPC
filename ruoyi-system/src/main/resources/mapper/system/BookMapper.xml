@@ -133,4 +133,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update book set stock = stock + #{quantity}
         where book_id = #{bookId}
     </update>
+
+    <!-- 同类图书推荐：同分类在架书（排除自身，库存充足优先，最多4本） -->
+    <select id="selectRelatedBooks" resultMap="BookResult">
+        <include refid="selectBookVo"/>
+        where book_id != #{bookId} and book_type = #{bookType} and status = '0'
+        order by stock desc, book_id asc
+        limit 4
+    </select>
 </mapper>

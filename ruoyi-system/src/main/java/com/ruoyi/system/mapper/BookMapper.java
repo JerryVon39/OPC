@@ -65,4 +65,7 @@ public interface BookMapper
 
     /** 回补库存（归还/取消订单） */
     public int restoreStock(@Param("bookId") Long bookId, @Param("quantity") Long quantity);
+
+    /** 同类图书推荐：同分类在架书（排除自身，最多4本） */
+    public java.util.List<Book> selectRelatedBooks(@Param("bookId") Long bookId, @Param("bookType") String bookType);
 }

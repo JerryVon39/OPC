@@ -38,6 +38,9 @@ public interface BorrowRecordMapper
     /** 热门图书统计（按借阅次数） */
     public java.util.List<java.util.Map<String, Object>> selectTopBooks(BorrowRecord borrowRecord);
 
+    /** 首页数据看板：图书/读者/借阅/订单聚合统计 */
+    public java.util.Map<String, Object> selectDashboard();
+
     /** 读者借阅排行（按借阅次数） */
     public java.util.List<java.util.Map<String, Object>> selectTopReaders(BorrowRecord borrowRecord);
 }
