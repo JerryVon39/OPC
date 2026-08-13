@@ -118,9 +118,11 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         Date due = new Date(borrowRecord.getBorrowDate().getTime() + 30L * 24 * 3600 * 1000);
         borrowRecord.setDueDate(due);
         borrowRecord.setStatus("0");
-        // 库存 -1
-        book.setStock(book.getStock() - 1);
-        bookMapper.updateBook(book);
+        // 库存 -1：原子条件更新（上方校验负责友好提示，此处兜底并发抢书）
+        if (bookMapper.updateStock(book.getBookId(), 1L) == 0)
+        {
+            throw new ServiceException("图书库存不足，无法借出");
+        }
         return borrowRecordMapper.insertBorrowRecord(borrowRecord);
     }
 
@@ -145,17 +147,15 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         record.setReturnDate(new Date());
         record.setStatus("1");
-        // 库存 +1
-        Book book = bookMapper.selectBookByBookId(record.getBookId());
-        if (book != null)
+        // 库存 +1（原子回补）
+        if (record.getBookId() != null)
         {
-            book.setStock((book.getStock() == null ? 0 : book.getStock()) + 1);
-            bookMapper.updateBook(book);
+            bookMapper.restoreStock(record.getBookId(), 1L);
         }
-        borrowRecordMapper.updateBorrowRecord(record);
+        int rows = borrowRecordMapper.updateBorrowRecord(record);
         // 归还后同步逾期催还公告：还清了就删公告，还有逾期就重新汇总
         syncOverdueNotice();
-        return 1;
+        return rows;
     }
 
     /**

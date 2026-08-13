@@ -1,6 +1,7 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.Book;
 
 /**
@@ -58,4 +59,10 @@ public interface BookMapper
      * @return 结果
      */
     public int deleteBookByBookIds(Long[] bookIds);
+
+    /** 原子扣减库存：仅当库存充足才扣（并发下不超卖），返回影响行数（0=库存不足） */
+    public int updateStock(@Param("bookId") Long bookId, @Param("quantity") Long quantity);
+
+    /** 回补库存（归还/取消订单） */
+    public int restoreStock(@Param("bookId") Long bookId, @Param("quantity") Long quantity);
 }

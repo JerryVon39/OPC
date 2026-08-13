@@ -61,11 +61,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
                 }
                 if (!"2".equals(old.getStatus()))
                 {
-                    Book book = bookMapper.selectBookByBookId(old.getBookId());
-                    if (book != null)
+                    if (old.getBookId() != null && old.getQuantity() != null)
                     {
-                        book.setStock((book.getStock() == null ? 0 : book.getStock()) + old.getQuantity());
-                        bookMapper.updateBook(book);
+                        bookMapper.restoreStock(old.getBookId(), old.getQuantity());
                     }
                 }
             }
@@ -130,9 +128,11 @@ public class ShopOrderServiceImpl implements IShopOrderService
         order.setStatus("0");
         order.setCreateBy(reader.getReaderName());
         order.setCreateTime(new Date());
-        // 库存-1（购买=售出）
-        book.setStock(book.getStock() - quantity);
-        bookMapper.updateBook(book);
+        // 库存-1（购买=售出）：原子条件更新，并发下不超卖（0行=期间库存被抢光）
+        if (bookMapper.updateStock(book.getBookId(), quantity) == 0)
+        {
+            throw new ServiceException("库存不足，无法购买");
+        }
         return shopOrderMapper.insertShopOrder(order);
     }
 
@@ -167,12 +167,10 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("该订单已处理，无法取消");
         }
-        // 回滚库存
-        Book book = bookMapper.selectBookByBookId(order.getBookId());
-        if (book != null)
+        // 回滚库存（原子回补）
+        if (order.getBookId() != null && order.getQuantity() != null)
         {
-            book.setStock((book.getStock() == null ? 0 : book.getStock()) + order.getQuantity());
-            bookMapper.updateBook(book);
+            bookMapper.restoreStock(order.getBookId(), order.getQuantity());
         }
         order.setStatus("2");
         return shopOrderMapper.updateShopOrder(order);

@@ -5,7 +5,11 @@ import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.BookMapper;
+import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.domain.Book;
+import com.ruoyi.system.domain.BorrowRecord;
+import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IBookService;
 
 /**
@@ -19,6 +23,12 @@ public class BookServiceImpl implements IBookService
 {
     @Autowired
     private BookMapper bookMapper;
+
+    @Autowired
+    private BorrowRecordMapper borrowRecordMapper;
+
+    @Autowired
+    private ShopOrderMapper shopOrderMapper;
 
     /**
      * 查询图书信息
@@ -79,6 +89,29 @@ public class BookServiceImpl implements IBookService
     @Override
     public int deleteBookByBookIds(Long[] bookIds)
     {
+        for (Long bookId : bookIds)
+        {
+            // 有未归还借阅（借出中/逾期）的图书不可删
+            BorrowRecord q = new BorrowRecord();
+            q.setBookId(bookId);
+            List<BorrowRecord> records = borrowRecordMapper.selectBorrowRecordList(q);
+            for (BorrowRecord r : records)
+            {
+                if ("0".equals(r.getStatus()) || "2".equals(r.getStatus()))
+                {
+                    throw new com.ruoyi.common.exception.ServiceException("《" + (r.getBookName() == null ? "该图书" : r.getBookName()) + "》存在未归还的借阅记录，无法删除");
+                }
+            }
+            // 有待处理订单的图书不可删
+            ShopOrder oq = new ShopOrder();
+            oq.setBookId(bookId);
+            oq.setStatus("0");
+            List<ShopOrder> orders = shopOrderMapper.selectShopOrderList(oq);
+            if (orders != null && !orders.isEmpty())
+            {
+                throw new com.ruoyi.common.exception.ServiceException("该图书存在待处理订单，无法删除");
+            }
+        }
         return bookMapper.deleteBookByBookIds(bookIds);
     }
 

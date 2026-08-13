@@ -250,7 +250,7 @@
   const API = '/dev-api/system/book/list';
   const STATS_API = '/dev-api/system/borrow/stats';
   const NOTICE_API = '/dev-api/system/notice/publicList';
-  const REG_API = '/dev-api/system/reader';
+  const REG_API = '/dev-api/system/reader/register';
   const LOGIN_API = '/dev-api/system/reader/login';
   const BORROW_API = '/dev-api/system/borrow/borrowByCard';
   const CARD_API = '/dev-api/system/borrow/queryByCard';
@@ -492,15 +492,15 @@
     const msg = document.getElementById('regMsg');
     if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#e64340'; return; }
     try {
-      const cardNo = 'JS' + Date.now().toString().slice(-8);
+      // 证号由后端生成（防伪造/占坑）
       const res = await fetch(REG_API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ readerName: name, phone: phone, readerType: type, cardNo: cardNo, remark: document.getElementById('regRemark').value.trim() })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ readerName: name, phone: phone, readerType: type, remark: document.getElementById('regRemark').value.trim() }).toString()
       });
       const d = await res.json();
-      if (d.code === 200) {
-        msg.textContent = '登记成功！您的借书证号：' + cardNo + '，请记住并登录';
+      if (d.code === 200 && d.data) {
+        msg.textContent = '登记成功！您的借书证号：' + d.data.cardNo + '，请记住并登录';
         msg.style.color = '#67c23a';
       } else {
         msg.textContent = '登记失败：' + (d.msg || '未知错误');

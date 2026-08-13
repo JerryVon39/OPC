@@ -35,6 +35,9 @@ public interface IReaderService
      */
     public int insertReader(Reader reader);
 
+    /** 前台自助登记：证号后端生成（防伪造/占坑） */
+    public Reader register(String readerName, String phone, String readerType, String remark);
+
     /**
      * 修改读者管理
      * 

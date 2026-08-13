@@ -116,9 +116,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteBookByBookIds" parameterType="String">
-        delete from book where book_id in 
+        delete from book where book_id in
         <foreach item="bookId" collection="array" open="(" separator="," close=")">
             #{bookId}
         </foreach>
     </delete>
+
+    <!-- 原子扣减库存：单条 UPDATE 条件判断，并发安全 -->
+    <update id="updateStock">
+        update book set stock = stock - #{quantity}
+        where book_id = #{bookId} and stock >= #{quantity}
+    </update>
+
+    <!-- 回补库存（归还/取消订单） -->
+    <update id="restoreStock">
+        update book set stock = stock + #{quantity}
+        where book_id = #{bookId}
+    </update>
 </mapper>

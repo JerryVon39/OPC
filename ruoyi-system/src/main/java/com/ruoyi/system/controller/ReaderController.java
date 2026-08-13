@@ -105,7 +105,28 @@ public class ReaderController extends BaseController
         return success(result);
     }
 
+    /** 前台自助登记（匿名）：证号由后端生成，防止客户端伪造/占用证号 */
     @Anonymous
+    @PostMapping("/register")
+    public AjaxResult register(String readerName, String phone, String readerType, String remark)
+    {
+        if (readerName == null || readerName.trim().isEmpty()
+                || phone == null || phone.trim().isEmpty()
+                || readerType == null || readerType.trim().isEmpty())
+        {
+            return error("请填写姓名、手机号和读者类型");
+        }
+        Reader r = readerService.register(readerName.trim(), phone.trim(), readerType.trim(), remark);
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("readerId", r.getReaderId());
+        result.put("readerName", r.getReaderName());
+        result.put("cardNo", r.getCardNo());
+        return success(result);
+    }
+
+    /** 后台添加读者（需要权限） */
+    @PreAuthorize("@ss.hasPermi('system:reader:add')")
+    @Log(title = "读者管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Reader reader)
     {
