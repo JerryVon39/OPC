@@ -282,7 +282,8 @@
     try {
       const res = await fetch(API + '?' + params.toString());
       const data = await res.json();
-      const books = data.rows || [];
+      // 前台只展示在售图书（下架书不出现在列表）
+      const books = (data.rows || []).filter(b => b.status === '0');
       currentBooks = books;
       const title = document.getElementById('listTitle');
       title.textContent = currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + kw : '全部图书');
@@ -308,7 +309,7 @@
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
               <div style="display:flex;gap:8px">
                 ${onSale ? '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>' : ''}
-                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-name="${b.bookName}" data-price="${b.price || 0}" onclick="event.stopPropagation();addCart(this.dataset.name, parseFloat(this.dataset.price))">购物车</button>
+                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-id="${b.bookId}" data-name="${b.bookName}" data-price="${b.price || 0}" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>
               </div>
             </div>
           </div>`;
@@ -337,9 +338,9 @@
   async function showDetail(bookId, idx) {
     let b = currentBooks.find(x => x.bookId === bookId);
     if (!b) {
-      // 兜底：当前列表没有这本书（分页/搜索场景），全量拉一次
+      // 兜底：当前列表没有这本书（分页/搜索场景），全量拉一次（仅看在售）
       const res = await fetch(API + '?pageNum=1&pageSize=100');
-      b = ((await res.json()).rows || []).find(x => x.bookId === bookId);
+      b = ((await res.json()).rows || []).filter(x => x.status === '0').find(x => x.bookId === bookId);
       if (!b) return;
     }
     detailBook = b;
@@ -371,7 +372,7 @@
     document.getElementById('detailModal').style.display = 'flex';
   }
   function detailAddCart() {
-    if (detailBook) addCart(detailBook.bookName, detailBook.price || 0);
+    if (detailBook) addCart(detailBook.bookId, detailBook.bookName, detailBook.price || 0);
   }
 
   // ===== 热门推荐 =====
@@ -492,9 +493,11 @@
     }
   }
 
-  // ===== 购物车（localStorage 持久化）=====
+  // ===== 购物车（localStorage 持久化，按 bookId 存，防重名书下错单）=====
   function loadCart() {
     try { cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (e) { cart = []; }
+    // 兼容旧版购物车（只存了书名没有 bookId，无法下单）：直接清理
+    cart = cart.filter(i => i.bookId != null);
     renderCartCount();
   }
   function saveCart() {
@@ -505,10 +508,11 @@
     const total = cart.reduce((s, i) => s + (i.qty || 1), 0);
     document.getElementById('cartArea').textContent = '🛒 购物车 (' + total + ')';
   }
-  function addCart(name, price) {
-    const item = cart.find(i => i.bookName === name);
+  function addCart(bookId, name, price) {
+    bookId = Number(bookId);
+    const item = cart.find(i => i.bookId === bookId);
     if (item) item.qty = (item.qty || 1) + 1;
-    else cart.push({ bookName: name, price: price || 0, qty: 1 });
+    else cart.push({ bookId: bookId, bookName: name, price: price || 0, qty: 1 });
     saveCart();
     toast('已加入购物车：' + name);
   }
@@ -563,11 +567,8 @@
     try {
       let ok = 0, fail = 0, failMsg = '';
       for (const item of cart) {
-        const res = await fetch(API + '?pageNum=1&pageSize=30&bookName=' + encodeURIComponent(item.bookName));
-        const data = await res.json();
-        const book = (data.rows || []).find(b => b.bookName === item.bookName);
-        if (!book) { fail++; failMsg = '未找到《' + item.bookName + '》'; continue; }
-        const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: book.bookId, quantity: item.qty || 1 });
+        // 直接按 bookId 下单（书名校验/库存校验由后端 createOrder 负责）
+        const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: item.bookId, quantity: item.qty || 1 });
         const o = await fetch(ORDER_CREATE, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
         const od = await o.json();
         if (od.code === 200) ok++; else { fail++; failMsg = od.msg || '下单失败'; }

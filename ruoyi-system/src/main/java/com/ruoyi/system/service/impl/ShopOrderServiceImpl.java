@@ -45,9 +45,24 @@ public class ShopOrderServiceImpl implements IShopOrderService
         return shopOrderMapper.insertShopOrder(shopOrder);
     }
 
+    /** 修改订单：状态变为"已取消"时自动回滚库存（防重复取消双倍回补） */
     @Override
+    @Transactional
     public int updateShopOrder(ShopOrder shopOrder)
     {
+        if ("2".equals(shopOrder.getStatus()))
+        {
+            ShopOrder old = shopOrderMapper.selectShopOrderByOrderId(shopOrder.getOrderId());
+            if (old != null && !"2".equals(old.getStatus()))
+            {
+                Book book = bookMapper.selectBookByBookId(old.getBookId());
+                if (book != null)
+                {
+                    book.setStock((book.getStock() == null ? 0 : book.getStock()) + old.getQuantity());
+                    bookMapper.updateBook(book);
+                }
+            }
+        }
         return shopOrderMapper.updateShopOrder(shopOrder);
     }
 

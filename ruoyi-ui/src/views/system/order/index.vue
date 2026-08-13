@@ -44,9 +44,9 @@
       <el-table-column label="下单时间" align="center" prop="createTime" width="160" />
       <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="success" @click="handleStatus(scope.row, '1')">完成</el-button>
-          <el-button size="mini" type="info" @click="handleStatus(scope.row, '2')">取消</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="mini" type="success" @click="handleStatus(scope.row, '1')" v-hasPermi="['system:order:edit']">完成</el-button>
+          <el-button size="mini" type="info" @click="handleStatus(scope.row, '2')" v-hasPermi="['system:order:edit']">取消</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:order:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
