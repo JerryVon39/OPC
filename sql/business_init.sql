@@ -58,6 +58,9 @@ CREATE TABLE `borrow_record` (
   `due_date` date DEFAULT NULL COMMENT '应还日期',
   `return_date` date DEFAULT NULL COMMENT '归还日期',
   `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0借出中 1已归还 2已逾期)',
+  `reader_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '读者姓名(快照)',
+  `card_no` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '借书证号(快照)',
+  `book_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '图书名称(快照)',
   `remark` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '备注',
   `create_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -180,6 +183,17 @@ DELETE FROM reader WHERE reader_name='test2';
 SET @idx = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='reader' AND index_name='uk_card_no');
 SET @sql_idx = IF(@idx=0, 'ALTER TABLE reader ADD UNIQUE INDEX uk_card_no (card_no)', 'SELECT 1');
 PREPARE st_idx FROM @sql_idx; EXECUTE st_idx; DEALLOCATE PREPARE st_idx;
+
+-- ---------- 借阅记录快照列（老库自动补齐：读者/图书删除后历史记录仍完整） ----------
+SET @bc1 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='reader_name');
+SET @bs1 = IF(@bc1=0, 'ALTER TABLE borrow_record ADD COLUMN reader_name varchar(50) DEFAULT NULL COMMENT ''读者姓名(快照)''', 'SELECT 1');
+PREPARE bst1 FROM @bs1; EXECUTE bst1; DEALLOCATE PREPARE bst1;
+SET @bc2 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='card_no');
+SET @bs2 = IF(@bc2=0, 'ALTER TABLE borrow_record ADD COLUMN card_no varchar(30) DEFAULT NULL COMMENT ''借书证号(快照)''', 'SELECT 1');
+PREPARE bst2 FROM @bs2; EXECUTE bst2; DEALLOCATE PREPARE bst2;
+SET @bc3 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='book_name');
+SET @bs3 = IF(@bc3=0, 'ALTER TABLE borrow_record ADD COLUMN book_name varchar(100) DEFAULT NULL COMMENT ''图书名称(快照)''', 'SELECT 1');
+PREPARE bst3 FROM @bs3; EXECUTE bst3; DEALLOCATE PREPARE bst3;
 
 -- ---------- 库存预警阈值参数 ----------
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)

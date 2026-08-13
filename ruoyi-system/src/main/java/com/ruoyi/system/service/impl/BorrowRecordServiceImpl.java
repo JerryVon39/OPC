@@ -111,6 +111,10 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         Date due = new Date(borrowRecord.getBorrowDate().getTime() + days * 24L * 3600 * 1000);
         borrowRecord.setDueDate(due);
         borrowRecord.setStatus("0");
+        // 快照冗余：读者姓名/证号/书名写入借阅记录（删除读者/图书后历史记录仍完整，与订单快照语义一致）
+        borrowRecord.setReaderName(reader.getReaderName());
+        borrowRecord.setCardNo(reader.getCardNo());
+        borrowRecord.setBookName(book.getBookName());
         // 库存 -1：原子条件更新（上方校验负责友好提示，此处兜底并发抢书）
         if (bookMapper.updateStock(book.getBookId(), 1L) == 0)
         {

@@ -18,7 +18,10 @@
 
     <sql id="selectBorrowRecordVo">
         select b.borrow_id, b.reader_id, b.book_id, b.borrow_date, b.due_date, b.return_date, b.status, b.remark,
-               r.reader_name as readerName, r.card_no as cardNo, k.book_name as bookName
+               -- 快照优先，JOIN 兜底（旧数据无快照时仍能显示；删除读者/图书后快照保证历史完整）
+               COALESCE(b.reader_name, r.reader_name) as readerName,
+               COALESCE(b.card_no, r.card_no) as cardNo,
+               COALESCE(b.book_name, k.book_name) as bookName
         from borrow_record b
         left join reader r on b.reader_id = r.reader_id
         left join book k on b.book_id = k.book_id
@@ -31,8 +34,8 @@
             <if test="bookId != null"> and b.book_id = #{bookId}</if>
             <if test="status != null and status != ''"> and b.status = #{status}</if>
             <if test="borrowDate != null"> and b.borrow_date = #{borrowDate}</if>
-            <if test="readerName != null and readerName != ''"> and r.reader_name like concat('%', #{readerName}, '%')</if>
-            <if test="bookName != null and bookName != ''"> and k.book_name like concat('%', #{bookName}, '%')</if>
+            <if test="readerName != null and readerName != ''"> and COALESCE(b.reader_name, r.reader_name) like concat('%', #{readerName}, '%')</if>
+            <if test="bookName != null and bookName != ''"> and COALESCE(b.book_name, k.book_name) like concat('%', #{bookName}, '%')</if>
         </where>
         order by b.borrow_id desc
     </select>
@@ -52,6 +55,9 @@
             <if test="returnDate != null">return_date,</if>
             <if test="status != null">status,</if>
             <if test="remark != null">remark,</if>
+            <if test="readerName != null">reader_name,</if>
+            <if test="cardNo != null">card_no,</if>
+            <if test="bookName != null">book_name,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
         </trim>
@@ -63,6 +69,9 @@
             <if test="returnDate != null">#{returnDate},</if>
             <if test="status != null">#{status},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="readerName != null">#{readerName},</if>
+            <if test="cardNo != null">#{cardNo},</if>
+            <if test="bookName != null">#{bookName},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
         </trim>
@@ -100,19 +109,19 @@
         where b.reader_id = #{readerId} and b.book_id = #{bookId} and b.status in ('0','2')
     </select>
 
-    <!-- 按借书证号查询借阅记录 -->
+    <!-- 按借书证号查询借阅记录（快照优先，读者删除后历史记录仍可查） -->
     <select id="selectBorrowListByCard" parameterType="String" resultMap="BorrowRecordResult">
         <include refid="selectBorrowRecordVo"/>
-        where r.card_no = #{cardNo}
+        where COALESCE(b.card_no, r.card_no) = #{cardNo}
         order by b.borrow_id desc
     </select>
 
-    <!-- 热门图书 Top10：按借阅次数统计 -->
+    <!-- 热门图书 Top10：按借阅次数统计（书名快照优先，图书删除后历史借阅仍计入） -->
     <select id="selectTopBooks" parameterType="BorrowRecord" resultType="java.util.Map">
-        SELECT k.book_id AS bookId, k.book_name AS bookName, COUNT(b.borrow_id) AS borrowCount
+        SELECT k.book_id AS bookId, COALESCE(k.book_name, b.book_name) AS bookName, COUNT(b.borrow_id) AS borrowCount
         FROM borrow_record b
         LEFT JOIN book k ON b.book_id = k.book_id
-        GROUP BY k.book_id, k.book_name
+        GROUP BY k.book_id, COALESCE(k.book_name, b.book_name)
         ORDER BY borrowCount DESC
         LIMIT 10
     </select>
