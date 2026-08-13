@@ -128,6 +128,41 @@ public class ReaderController extends BaseController
         return success(result);
     }
 
+    /** 挂失补办：生成新证号并恢复状态（旧证号作废） */
+    @PreAuthorize("@ss.hasPermi('system:reader:edit')")
+    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/reissue/{readerId}")
+    public AjaxResult reissue(@PathVariable("readerId") Long readerId)
+    {
+        return success(readerService.reissueCard(readerId));
+    }
+
+    /** 前台修改个人信息（匿名）：按证号+姓名校验后更新手机号 */
+    @Anonymous
+    @PostMapping("/updateMyInfo")
+    public AjaxResult updateMyInfo(String cardNo, String readerName, String phone)
+    {
+        if (cardNo == null || cardNo.trim().isEmpty() || readerName == null || readerName.trim().isEmpty()
+                || phone == null || phone.trim().isEmpty())
+        {
+            return error("参数不完整");
+        }
+        Reader query = new Reader();
+        query.setCardNo(cardNo.trim());
+        java.util.List<Reader> list = readerService.selectReaderList(query);
+        if (list == null || list.isEmpty())
+        {
+            return error("借书证号不存在");
+        }
+        Reader r = list.get(0);
+        if (!readerName.trim().equals(r.getReaderName()))
+        {
+            return error("姓名与借书证号不匹配");
+        }
+        r.setPhone(phone.trim());
+        return toAjax(readerService.updateReader(r));
+    }
+
     /** 后台添加读者（需要权限） */
     @PreAuthorize("@ss.hasPermi('system:reader:add')")
     @Log(title = "读者管理", businessType = BusinessType.INSERT)

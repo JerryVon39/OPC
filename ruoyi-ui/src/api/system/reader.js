@@ -36,6 +36,11 @@ export function updateReader(data) {
 }
 
 // 删除读者管理
+// 挂失补办（生成新证号）
+export function reissueCard(readerId) {
+  return request({ url: '/system/reader/reissue/' + readerId, method: 'put' })
+}
+
 export function delReader(readerId) {
   return request({
     url: '/system/reader/' + readerId,

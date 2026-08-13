@@ -374,6 +374,13 @@
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('borrowModal')">关闭</button>
       </div>
       <div id="borrowResult" style="margin-top:14px"></div>
+      <!-- 我的信息：登录态显示，可修改手机号 -->
+      <div id="myInfoArea" style="display:none;margin-top:14px;border-top:1px solid #efe9dd;padding-top:12px">
+        <div style="font-weight:bold;margin-bottom:8px">📱 我的信息</div>
+        <input id="myPhone" class="modal-input" placeholder="📱 修改手机号码" />
+        <button class="btn-buy" onclick="updateMyInfo()" style="width:100%">保存修改</button>
+        <div id="myInfoMsg" class="modal-msg"></div>
+      </div>
     </div>
   </div>
 
@@ -449,6 +456,7 @@
   const ORDER_CANCEL = '/dev-api/system/order/cancelByCard';
   const RENEW_API = '/dev-api/system/borrow/renewByCard';
   const CONFIG_API = '/dev-api/system/config/configKey/book.stock.warn';
+  const MYINFO_API = '/dev-api/system/reader/updateMyInfo';
   const DICT_API = '/dev-api/system/dict/data/type/book_type';
   const RELATED_API = '/dev-api/system/book/related';
 
@@ -1049,6 +1057,9 @@
   // ===== 我的借阅 =====
   function openMyBorrow() {
     document.getElementById('borrowModal').style.display = 'flex';
+    document.getElementById('myPhone').value = '';
+    document.getElementById('myInfoMsg').textContent = '';
+    document.getElementById('myInfoArea').style.display = currentUser ? 'block' : 'none';
     if (currentUser) {
       document.getElementById('qCardNo').value = currentUser.cardNo;
       document.getElementById('qCardNo').style.display = 'none';
@@ -1092,6 +1103,21 @@
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
     }
+  }
+
+  // ===== 我的信息：修改手机号（证号+姓名校验）=====
+  async function updateMyInfo() {
+    const phone = document.getElementById('myPhone').value.trim();
+    const msg = document.getElementById('myInfoMsg');
+    if (!currentUser) { msg.textContent = '请先登录'; msg.style.color = '#c65d43'; return; }
+    if (!phone) { msg.textContent = '请输入新手机号'; msg.style.color = '#c65d43'; return; }
+    try {
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone });
+      const res = await fetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) { msg.textContent = '手机号修改成功'; msg.style.color = '#4f8a62'; }
+      else { msg.textContent = d.msg || '修改失败'; msg.style.color = '#c65d43'; }
+    } catch (e) { msg.textContent = '修改失败：' + e.message; msg.style.color = '#c65d43'; }
   }
 
   // ===== 续借（仅借出中且未逾期，应还日期 +30 天）=====

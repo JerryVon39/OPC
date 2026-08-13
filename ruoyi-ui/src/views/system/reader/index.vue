@@ -119,6 +119,13 @@
           <el-button
             size="mini"
             type="text"
+            icon="el-icon-refresh"
+            @click="handleReissue(scope.row)"
+            v-hasPermi="['system:reader:edit']"
+          >补办</el-button>
+          <el-button
+            size="mini"
+            type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:reader:edit']"
@@ -217,7 +224,7 @@
 </template>
 
 <script>
-import { listReader, getReader, delReader, addReader, updateReader } from "@/api/system/reader"
+import { listReader, getReader, delReader, addReader, updateReader, reissueCard } from "@/api/system/reader"
 import { getDicts } from "@/api/system/dict/data"
 
 export default {
@@ -331,6 +338,15 @@ export default {
     /** 修改按钮操作 */
     handleBorrow(row) {
       this.$router.push({ path: '/business/borrow', query: { readerId: row.readerId } })
+    },
+    /** 挂失补办：生成新证号并恢复状态 */
+    handleReissue(row) {
+      this.$modal.confirm('确认给《' + row.readerName + '》补办借书证吗？将生成新证号，旧证号作废').then(() => {
+        return reissueCard(row.readerId)
+      }).then(res => {
+        this.$modal.msgSuccess('补办成功！新证号：' + res.data + '（旧证号已作废）')
+        this.getList()
+      }).catch(() => {})
     },
     handleUpdate(row) {
       this.reset()

@@ -128,9 +128,26 @@ public class ReaderServiceImpl implements IReaderService
         return readerMapper.updateReader(reader);
     }
 
+    /** 挂失补办：生成新证号 + 状态恢复正常（旧证号作废，历史记录快照保留） */
+    @Override
+    public String reissueCard(Long readerId)
+    {
+        Reader reader = readerMapper.selectReaderByReaderId(readerId);
+        if (reader == null)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("读者不存在");
+        }
+        String newCard = generateCardNo();
+        reader.setCardNo(newCard);
+        reader.setStatus("0");
+        reader.setUpdateTime(DateUtils.getNowDate());
+        readerMapper.updateReader(reader);
+        return newCard;
+    }
+
     /**
      * 批量删除读者管理
-     * 
+     *
      * @param readerIds 需要删除的读者管理主键
      * @return 结果
      */
