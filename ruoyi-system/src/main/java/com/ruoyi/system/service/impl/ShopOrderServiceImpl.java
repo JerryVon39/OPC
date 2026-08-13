@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.Reader;
@@ -56,8 +57,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
         return shopOrderMapper.deleteShopOrderByOrderIds(orderIds);
     }
 
-    /** 前台购书：校验读者/图书/库存 → 创建订单 → 库存-1 */
+    /** 前台购书：校验读者/图书/库存 → 创建订单 → 库存-1（事务：下单与扣库存同生共死） */
     @Override
+    @Transactional
     public int createOrder(String cardNo, Long bookId, Long quantity)
     {
         if (cardNo == null || cardNo.trim().isEmpty())

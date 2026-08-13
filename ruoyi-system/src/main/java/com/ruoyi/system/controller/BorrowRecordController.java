@@ -3,6 +3,7 @@ package com.ruoyi.system.controller;
 import java.util.List;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,6 +32,7 @@ public class BorrowRecordController extends BaseController
     private IBorrowRecordService borrowRecordService;
 
     /** 查询借阅记录列表 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:list')")
     @GetMapping("/list")
     public TableDataInfo list(BorrowRecord borrowRecord)
     {
@@ -40,6 +42,7 @@ public class BorrowRecordController extends BaseController
     }
 
     /** 获取借阅记录详细信息 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:query')")
     @GetMapping(value = "/{borrowId}")
     public AjaxResult getInfo(@PathVariable("borrowId") Long borrowId)
     {
@@ -47,6 +50,7 @@ public class BorrowRecordController extends BaseController
     }
 
     /** 新增借阅记录（借书：自动校验库存并减1） */
+    @PreAuthorize("@ss.hasPermi('system:borrow:add')")
     @Log(title = "借阅记录", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody BorrowRecord borrowRecord)
@@ -55,6 +59,7 @@ public class BorrowRecordController extends BaseController
     }
 
     /** 修改借阅记录 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
     @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody BorrowRecord borrowRecord)
@@ -71,6 +76,7 @@ public class BorrowRecordController extends BaseController
     }
 
     /** 续借：应还日期 +30 天 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
     @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
     @PutMapping("/renew/{borrowId}")
     public AjaxResult renew(@PathVariable("borrowId") Long borrowId)
@@ -102,6 +108,7 @@ public class BorrowRecordController extends BaseController
     }
 
     /** 还书：恢复库存 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
     @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
     @PutMapping("/return/{borrowId}")
     public AjaxResult returnBook(@PathVariable("borrowId") Long borrowId)
@@ -110,6 +117,7 @@ public class BorrowRecordController extends BaseController
     }
 
     /** 删除借阅记录 */
+    @PreAuthorize("@ss.hasPermi('system:borrow:remove')")
     @Log(title = "借阅记录", businessType = BusinessType.DELETE)
     @DeleteMapping("/{borrowIds}")
     public AjaxResult remove(@PathVariable Long[] borrowIds)

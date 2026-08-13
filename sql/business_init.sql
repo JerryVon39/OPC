@@ -16,6 +16,9 @@ CREATE TABLE `book` (
   `publish_date` date DEFAULT NULL COMMENT '出版日期',
   `stock` int DEFAULT '0' COMMENT '库存数量',
   `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0在架 1下架)',
+  `cover` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '封面图片',
+  `isbn` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'ISBN书号',
+  `intro` varchar(1000) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '图书简介',
   `remark` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '备注',
   `create_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -114,3 +117,54 @@ SELECT '借阅统计',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业�
 -- ---------- 定时任务：逾期检查 ----------
 INSERT INTO sys_job (job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, remark)
 SELECT '逾期检查','SYSTEM','borrowTask.updateOverdueStatus()','0 0 0 * * ?','3','1','0','admin',NOW(),'每天0点自动标记逾期借阅' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='逾期检查');
+
+-- ============================================
+-- 以下为后续版本补充（幂等）：图书封面/ISBN/简介列、购书订单表、订单菜单
+-- ============================================
+
+-- ---------- 幂等补列：book 表封面/ISBN/简介（老库自动补齐，新库跳过） ----------
+SET @c1 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='cover');
+SET @s1 = IF(@c1=0, 'ALTER TABLE book ADD COLUMN cover varchar(255) DEFAULT NULL COMMENT ''封面图片''', 'SELECT 1');
+PREPARE st1 FROM @s1; EXECUTE st1; DEALLOCATE PREPARE st1;
+SET @c2 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='isbn');
+SET @s2 = IF(@c2=0, 'ALTER TABLE book ADD COLUMN isbn varchar(20) DEFAULT NULL COMMENT ''ISBN书号''', 'SELECT 1');
+PREPARE st2 FROM @s2; EXECUTE st2; DEALLOCATE PREPARE st2;
+SET @c3 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='intro');
+SET @s3 = IF(@c3=0, 'ALTER TABLE book ADD COLUMN intro varchar(1000) DEFAULT NULL COMMENT ''图书简介''', 'SELECT 1');
+PREPARE st3 FROM @s3; EXECUTE st3; DEALLOCATE PREPARE st3;
+
+-- ---------- 购书订单表 ----------
+CREATE TABLE IF NOT EXISTS `shop_order` (
+  `order_id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+  `order_no` varchar(30) DEFAULT NULL COMMENT '订单号',
+  `reader_id` bigint DEFAULT NULL COMMENT '读者ID',
+  `reader_name` varchar(50) DEFAULT NULL COMMENT '读者姓名',
+  `card_no` varchar(30) DEFAULT NULL COMMENT '借书证号',
+  `book_id` bigint DEFAULT NULL COMMENT '图书ID',
+  `book_name` varchar(100) DEFAULT NULL COMMENT '图书名称',
+  `quantity` int DEFAULT '1' COMMENT '购买数量',
+  `total_price` decimal(10,2) DEFAULT NULL COMMENT '订单总价(元)',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0待处理 1已完成 2已取消)',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='购书订单表';
+
+-- ---------- 菜单：订单管理（图书业务目录下） ----------
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '订单管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),6,'order','system/order/index',1,0,'C','0','0','system:order:list','shopping','admin',NOW(),'购书订单管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单管理');
+-- 订单权限点（按钮）
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '订单查询',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管理'),1,'','',1,0,'F','0','0','system:order:query','#','admin',NOW(),'订单查询按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单查询');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '订单修改',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管理'),2,'','',1,0,'F','0','0','system:order:edit','#','admin',NOW(),'订单状态流转按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单修改');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '订单删除',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管理'),3,'','',1,0,'F','0','0','system:order:remove','#','admin',NOW(),'订单删除按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单删除');
+
+-- ---------- 清理测试残留数据（精确匹配，不影响正式数据） ----------
+DELETE FROM book WHERE book_name='哇奥' AND price=576;
+DELETE FROM reader WHERE reader_name='前台登记测试';
+DELETE FROM reader WHERE reader_name='test2';

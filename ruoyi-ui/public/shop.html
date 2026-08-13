@@ -271,6 +271,7 @@
   const CART_KEY = 'wswCart';
 
   // ===== 图书列表（keyword 搜索 + 分类）=====
+  let currentBooks = [];   // 当前渲染的图书列表（详情弹窗从这里取数，保证与搜索/分类同步）
   async function loadBooks() {
     const kw = document.getElementById('searchInput').value.trim();
     const params = new URLSearchParams({ pageNum: 1, pageSize: 30 });
@@ -280,6 +281,7 @@
       const res = await fetch(API + '?' + params.toString());
       const data = await res.json();
       const books = data.rows || [];
+      currentBooks = books;
       const title = document.getElementById('listTitle');
       title.textContent = currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + kw : '全部图书');
       if (!books.length) {
@@ -291,7 +293,7 @@
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
-              ${b.cover ? '<img src="' + b.cover + '" style="width:100%;height:100%;object-fit:cover" />' : '📕'}
+              ${b.cover ? '<img src="' + imgSrc(b.cover) + '" style="width:100%;height:100%;object-fit:cover" />' : '📕'}
             </div>
             <div class="book-name">${b.bookName}</div>
             <div class="book-author">作者：${b.author || '未知'}</div>
@@ -323,19 +325,26 @@
   }
 
   // ===== 图书详情 =====
-  let bookCache = [];
+  // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /dev-api 代理到后端才能加载
+  function imgSrc(url) {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('/dev-api')) return url;
+    if (url.startsWith('/')) return '/dev-api' + url;
+    return url;
+  }
   async function showDetail(bookId, idx) {
-    if (!bookCache.length) {
-      const res = await fetch(API + '?pageNum=1&pageSize=30');
-      bookCache = (await res.json()).rows || [];
+    let b = currentBooks.find(x => x.bookId === bookId);
+    if (!b) {
+      // 兜底：当前列表没有这本书（分页/搜索场景），全量拉一次
+      const res = await fetch(API + '?pageNum=1&pageSize=100');
+      b = ((await res.json()).rows || []).find(x => x.bookId === bookId);
+      if (!b) return;
     }
-    const b = bookCache.find(x => x.bookId === bookId);
-    if (!b) return;
     detailBook = b;
     const onSale = b.status === '0';
     document.getElementById('detailName').textContent = b.bookName;
-    document.getElementById('detailCover').style.background = COVER_COLORS[(bookCache.indexOf(b)) % COVER_COLORS.length];
-    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + b.cover + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" />' : '📕';
+    document.getElementById('detailCover').style.background = COVER_COLORS[(b.bookId || 0) % COVER_COLORS.length];
+    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + imgSrc(b.cover) + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" />' : '📕';
     document.getElementById('detailAuthor').textContent = b.author || '未知';
     document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
     document.getElementById('detailPublisher').textContent = b.publisher || '—';

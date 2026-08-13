@@ -91,11 +91,17 @@ public class ReaderController extends BaseController
             return error("姓名与借书证号不匹配，请确认后重试");
         }
         Reader r = list.get(0);
+        // 停用/挂失的证号不允许登录前台（借书、购书前就把问题拦下）
+        if (!"0".equals(r.getStatus()))
+        {
+            return error("该借书证号已停用/挂失，请联系管理员");
+        }
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("readerId", r.getReaderId());
         result.put("readerName", r.getReaderName());
         result.put("cardNo", r.getCardNo());
         result.put("readerType", r.getReaderType());
+        result.put("status", r.getStatus());
         return success(result);
     }
 

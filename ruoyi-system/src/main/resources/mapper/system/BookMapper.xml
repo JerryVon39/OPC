@@ -60,6 +60,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="stock != null">stock,</if>
             <if test="status != null">status,</if>
             <if test="remark != null">remark,</if>
+            <if test="cover != null">cover,</if>
+            <if test="isbn != null">isbn,</if>
+            <if test="intro != null">intro,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateBy != null">update_by,</if>
@@ -75,6 +78,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="stock != null">#{stock},</if>
             <if test="status != null">#{status},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="cover != null">#{cover},</if>
+            <if test="isbn != null">#{isbn},</if>
+            <if test="intro != null">#{intro},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateBy != null">#{updateBy},</if>
@@ -94,6 +100,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="stock != null">stock = #{stock},</if>
             <if test="status != null">status = #{status},</if>
             <if test="remark != null">remark = #{remark},</if>
+            <if test="cover != null">cover = #{cover},</if>
+            <if test="isbn != null">isbn = #{isbn},</if>
+            <if test="intro != null">intro = #{intro},</if>
             <if test="createBy != null">create_by = #{createBy},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>

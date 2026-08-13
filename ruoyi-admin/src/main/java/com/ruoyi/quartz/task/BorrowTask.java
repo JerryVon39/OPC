@@ -62,6 +62,20 @@ public class BorrowTask
             System.out.println("催还检查：无逾期记录");
             return;
         }
+        // 去重：今天已发布过催还公告则跳过（避免同一条逾期记录每天重复催收）
+        com.ruoyi.system.domain.SysNotice sentQuery = new com.ruoyi.system.domain.SysNotice();
+        sentQuery.setNoticeTitle("逾期催还通知");
+        java.util.List<com.ruoyi.system.domain.SysNotice> sentList = noticeMapper.selectNoticeList(sentQuery);
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        String today = sdf.format(new Date());
+        for (com.ruoyi.system.domain.SysNotice sn : sentList)
+        {
+            if (sn.getCreateTime() != null && today.equals(sdf.format(sn.getCreateTime())))
+            {
+                System.out.println("催还检查：今日已发布过催还公告，跳过");
+                return;
+            }
+        }
         // 汇总逾期信息
         String books = "";
         int max = Math.min(overdue.size(), 5);

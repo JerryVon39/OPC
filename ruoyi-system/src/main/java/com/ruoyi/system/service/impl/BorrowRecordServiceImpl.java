@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.BorrowRecord;
@@ -55,8 +56,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return list;
     }
 
-    /** 借书：创建记录 + 图书库存-1 */
+    /** 借书：创建记录 + 图书库存-1（事务：库存与记录同生共死） */
     @Override
+    @Transactional
     public int insertBorrowRecord(BorrowRecord borrowRecord)
     {
         Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());
@@ -125,7 +127,8 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.updateBorrowRecord(borrowRecord);
     }
 
-    /** 还书：置归还日期 + 状态已归还 + 图书库存+1 */
+    /** 还书：置归还日期 + 状态已归还 + 图书库存+1（事务） */
+    @Transactional
     public int returnBook(Long borrowId)
     {
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowId);
@@ -196,6 +199,12 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         if (record.getDueDate() == null)
         {
             throw new ServiceException("应还日期缺失，无法续借");
+        }
+        // 已逾期（真实日期判断）：逾期状态"2"是查询时动态算的、不落库，
+        // 这里必须直接比较日期，否则逾期记录会漏过上面的 status 检查
+        if (record.getDueDate().before(new Date()))
+        {
+            throw new ServiceException("该记录已逾期，请先归还后再借");
         }
         // 应还日期 +30 天
         Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);

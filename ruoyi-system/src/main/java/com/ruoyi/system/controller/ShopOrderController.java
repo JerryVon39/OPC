@@ -2,6 +2,7 @@ package com.ruoyi.system.controller;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,6 +31,7 @@ public class ShopOrderController extends BaseController
     private IShopOrderService shopOrderService;
 
     /** 订单列表 */
+    @PreAuthorize("@ss.hasPermi('system:order:list')")
     @GetMapping("/list")
     public TableDataInfo list(ShopOrder shopOrder)
     {
@@ -39,6 +41,7 @@ public class ShopOrderController extends BaseController
     }
 
     /** 订单详情 */
+    @PreAuthorize("@ss.hasPermi('system:order:query')")
     @GetMapping(value = "/{orderId}")
     public AjaxResult getInfo(@PathVariable("orderId") Long orderId)
     {
@@ -66,6 +69,7 @@ public class ShopOrderController extends BaseController
     }
 
     /** 修改订单（状态流转） */
+    @PreAuthorize("@ss.hasPermi('system:order:edit')")
     @Log(title = "购书订单", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody ShopOrder shopOrder)
@@ -74,6 +78,7 @@ public class ShopOrderController extends BaseController
     }
 
     /** 删除订单 */
+    @PreAuthorize("@ss.hasPermi('system:order:remove')")
     @Log(title = "购书订单", businessType = BusinessType.DELETE)
     @DeleteMapping("/{orderIds}")
     public AjaxResult remove(@PathVariable Long[] orderIds)

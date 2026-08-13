@@ -40,29 +40,11 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="价格(元)" prop="price">
-        <el-input
-          v-model="queryParams.price"
-          placeholder="请输入价格(元)"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="出版日期" prop="publishDate">
-        <el-date-picker clearable
-          v-model="queryParams.publishDate"
-          type="date"
-          value-format="yyyy-MM-dd"
-          placeholder="请选择出版日期">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="库存数量" prop="stock">
-        <el-input
-          v-model="queryParams.stock"
-          placeholder="请输入库存数量"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+      <el-form-item label="状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
+          <el-option label="在架" value="0" />
+          <el-option label="下架" value="1" />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -118,8 +100,14 @@
 
     <el-table v-loading="loading" :data="bookList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="图书ID" align="center" prop="bookId" />
-      <el-table-column label="图书名称" align="center" prop="bookName" />
+      <el-table-column label="图书ID" align="center" prop="bookId" width="70" />
+      <el-table-column label="封面" align="center" width="80">
+        <template slot-scope="scope">
+          <el-image v-if="scope.row.cover" :src="imgUrl(scope.row.cover)" style="width:44px;height:58px" fit="cover" :preview-src-list="[imgUrl(scope.row.cover)]" />
+          <span v-else>📕</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="图书名称" align="center" prop="bookName" min-width="140" />
       <el-table-column label="作者" align="center" prop="author" />
       <el-table-column label="图书类型" align="center" prop="bookType" width="80">
         <template slot-scope="scope">
@@ -128,22 +116,22 @@
       </el-table-column>
       <el-table-column label="出版社" align="center" prop="publisher" />
       <el-table-column label="价格(元)" align="center" prop="price" />
-      <el-table-column label="出版日期" align="center" prop="publishDate" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.publishDate, '{y}-{m}-{d}') }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="库存数量" align="center" width="100">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.stock <= 3" type="danger" size="mini">仅剩 {{ scope.row.stock }} 本</el-tag>
           <span v-else>{{ scope.row.stock }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态(0在架 1下架)" align="center" prop="status" />
-      <el-table-column label="备注" align="center" prop="remark" />
+      <el-table-column label="状态" align="center" width="70">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">在架</el-tag>
+          <el-tag v-else type="info" size="mini">下架</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(row)">借阅历史</el-button>
+          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)">借阅历史</el-button>
           <el-button
             size="mini"
             type="text"
@@ -161,7 +149,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -171,27 +159,27 @@
     />
 
     <!-- 添加或修改图书信息对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="图书名称" prop="bookName">
               <el-input v-model="form.bookName" placeholder="请输入图书名称" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="作者" prop="author">
               <el-input v-model="form.author" placeholder="请输入作者" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="出版社" prop="publisher">
               <el-input v-model="form.publisher" placeholder="请输入出版社" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="图书类型" prop="bookType">
-              <el-select v-model="form.bookType" placeholder="请选择图书类型">
+              <el-select v-model="form.bookType" placeholder="请选择图书类型" style="width:100%">
                 <el-option
                   v-for="dict in bookTypeOptions"
                   :key="dict.dictValue"
@@ -201,24 +189,57 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="价格(元)" prop="price">
               <el-input v-model="form.price" placeholder="请输入价格(元)" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="出版日期" prop="publishDate">
               <el-date-picker clearable
                 v-model="form.publishDate"
                 type="date"
                 value-format="yyyy-MM-dd"
-                placeholder="请选择出版日期">
+                placeholder="请选择出版日期"
+                style="width:100%">
               </el-date-picker>
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="库存数量" prop="stock">
               <el-input v-model="form.stock" placeholder="请输入库存数量" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="form.status">
+                <el-radio label="0">在架</el-radio>
+                <el-radio label="1">下架</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="ISBN" prop="isbn">
+              <el-input v-model="form.isbn" placeholder="请输入 ISBN 书号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="封面图片" prop="cover">
+              <el-upload
+                class="avatar-uploader"
+                :action="uploadUrl"
+                :headers="uploadHeaders"
+                :show-file-list="false"
+                :on-success="handleCoverSuccess"
+              >
+                <img v-if="form.cover" :src="coverFullUrl" class="cover-preview" />
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+              </el-upload>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="图书简介" prop="intro">
+              <el-input v-model="form.intro" type="textarea" :rows="3" placeholder="请输入图书简介" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -265,6 +286,7 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 封面上传地址与请求头（携带登录令牌）
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
       uploadHeaders: { Authorization: "Bearer " + getToken() },
       // 查询参数
@@ -290,6 +312,12 @@ export default {
       }
     }
   },
+  computed: {
+    // 封面上传预览：相对路径需拼接口前缀才能显示
+    coverFullUrl() {
+      return this.imgUrl(this.form.cover)
+    }
+  },
   created() {
     this.getDicts("book_type").then(response => {
       this.bookTypeOptions = response.data;
@@ -297,6 +325,12 @@ export default {
     this.getList()
   },
   methods: {
+    /** 封面相对路径转完整地址（http 开头的不处理） */
+    imgUrl(url) {
+      if (!url) return ''
+      if (url.startsWith('http') || url.startsWith('/dev-api')) return url
+      return process.env.VUE_APP_BASE_API + url
+    },
     /** 查询图书信息列表 */
     getList() {
       this.loading = true
@@ -322,8 +356,11 @@ export default {
         price: null,
         publishDate: null,
         stock: null,
-        status: null,
+        status: '0',
         remark: null,
+        cover: null,
+        isbn: null,
+        intro: null,
         createBy: null,
         createTime: null,
         updateBy: null,
@@ -331,7 +368,7 @@ export default {
       }
       this.resetForm("form")
     },
-    /** 搜索按钮操作 */
+    /** 封面上传成功回调（存相对路径 fileName，通过 /dev-api 代理加载，换端口/部署不写死主机名） */
     handleCoverSuccess(res) {
       if (res.code === 200) {
         this.form.cover = res.fileName || res.url
@@ -340,6 +377,7 @@ export default {
         this.$modal.msgError("上传失败：" + (res.msg || ""))
       }
     },
+    /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1
       this.getList()
@@ -361,10 +399,11 @@ export default {
       this.open = true
       this.title = "添加图书信息"
     },
-    /** 修改按钮操作 */
+    /** 跳转借阅历史（带图书ID过滤） */
     handleBorrow(row) {
       this.$router.push({ path: '/system/borrow', query: { bookId: row.bookId } })
     },
+    /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset()
       const bookId = row.bookId || this.ids
@@ -413,3 +452,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.cover-preview {
+  width: 100px;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
+}
+</style>
