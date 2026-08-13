@@ -130,11 +130,12 @@
   .detail-row .d-label { color: var(--text-light); width: 80px; flex-shrink: 0; }
   .detail-row .d-value { flex: 1; }
   .detail-intro { font-size: 13px; color: #666; line-height: 1.9; background: #faf8f3; border-radius: 8px; padding: 12px 14px; }
-  .related-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .related-item { cursor: pointer; text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; transition: all .2s; background: #fff; }
+  /* minmax(0,1fr)：允许列收缩，长标题不会把列撑宽（grid 默认最小宽度是内容宽度） */
+  .related-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .related-item { cursor: pointer; text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; transition: all .2s; background: #fff; min-width: 0; }
   .related-item:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(60,50,30,0.12); }
   .related-cover { height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 6px; border-radius: 6px; background: #f2efe8; }
-  .related-name { font-size: 12px; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .related-name { font-size: 12px; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .related-price { font-size: 12px; color: var(--danger); font-weight: bold; }
   .related-empty { color: var(--text-light); font-size: 13px; padding: 8px 0; text-align: center; }
 
@@ -183,7 +184,7 @@
 
     .modal-box { width: calc(100vw - 28px); max-width: 400px; padding: 20px; }
     .detail-cover { height: 210px; font-size: 44px; }
-    .related-grid { grid-template-columns: repeat(2, 1fr); }
+    .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .footer-cols { grid-template-columns: 1fr; gap: 16px; }
   }
 </style>
