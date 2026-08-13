@@ -29,6 +29,12 @@ public interface BorrowRecordMapper
     /** 按借书证号查询借阅记录（前台"我的借阅"用） */
     public List<BorrowRecord> selectBorrowListByCard(String cardNo);
 
+    /** 统计读者未归还的借阅数量 */
+    public int selectBorrowingCount(Long readerId);
+
+    /** 查询读者是否已借某本未还的书（防重复借阅） */
+    public List<BorrowRecord> selectBorrowingByReaderAndBook(Long readerId, Long bookId);
+
     /** 热门图书统计（按借阅次数） */
     public java.util.List<java.util.Map<String, Object>> selectTopBooks(BorrowRecord borrowRecord);
 

@@ -12,6 +12,7 @@ import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.service.IBorrowRecordService;
+import com.ruoyi.system.service.ISysConfigService;
 
 /**
  * 借阅记录Service业务层处理
@@ -28,6 +29,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
 
     @Autowired
     private ReaderMapper readerMapper;
+
+    @Autowired
+    private ISysConfigService configService;
 
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
@@ -72,6 +76,34 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         if (reader == null)
         {
             throw new ServiceException("读者不存在");
+        }
+        // 业务规则：证号状态校验（0正常可借，停用/挂失不可借）
+        if (!"0".equals(reader.getStatus()))
+        {
+            throw new ServiceException("该读者证号已停用/挂失，无法借书");
+        }
+        // 业务规则：重复借阅校验（同一本书未还不可再借）
+        java.util.List<BorrowRecord> exists = borrowRecordMapper.selectBorrowingByReaderAndBook(
+                borrowRecord.getReaderId(), borrowRecord.getBookId());
+        if (exists != null && !exists.isEmpty())
+        {
+            throw new ServiceException("该读者已借阅本书且未归还，请先还书");
+        }
+        // 业务规则：借阅数量上限（参数 book.borrow.maxCount，默认 5）
+        int maxCount = 5;
+        try
+        {
+            String cfg = configService.selectConfigByKey("book.borrow.maxCount");
+            if (!cfg.isEmpty())
+            {
+                maxCount = Integer.parseInt(cfg);
+            }
+        }
+        catch (Exception ignore) { }
+        int borrowing = borrowRecordMapper.selectBorrowingCount(borrowRecord.getReaderId());
+        if (borrowing >= maxCount)
+        {
+            throw new ServiceException("借阅数量已达上限（" + maxCount + " 本），请先归还部分图书");
         }
         // 借出日期默认今天，应还日期 = 借出 + 30 天
         if (borrowRecord.getBorrowDate() == null)

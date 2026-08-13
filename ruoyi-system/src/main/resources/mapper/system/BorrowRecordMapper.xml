@@ -88,6 +88,18 @@
         delete from borrow_record where borrow_id = #{borrowId}
     </delete>
 
+    <!-- 统计读者未归还数量 -->
+    <select id="selectBorrowingCount" parameterType="Long" resultType="int">
+        select count(1) from borrow_record
+        where reader_id = #{readerId} and status in ('0','2')
+    </select>
+
+    <!-- 查询读者某本书未还记录（防重复借阅） -->
+    <select id="selectBorrowingByReaderAndBook" parameterType="Long" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        where b.reader_id = #{readerId} and b.book_id = #{bookId} and b.status in ('0','2')
+    </select>
+
     <!-- 按借书证号查询借阅记录 -->
     <select id="selectBorrowListByCard" parameterType="String" resultMap="BorrowRecordResult">
         <include refid="selectBorrowRecordVo"/>

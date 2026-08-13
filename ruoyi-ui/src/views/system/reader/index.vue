@@ -106,6 +106,7 @@
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(row)">借阅记录</el-button>
           <el-button
             size="mini"
             type="text"
@@ -313,6 +314,9 @@ export default {
       this.title = "添加读者管理"
     },
     /** 修改按钮操作 */
+    handleBorrow(row) {
+      this.$router.push({ path: '/system/borrow', query: { readerId: row.readerId } })
+    },
     handleUpdate(row) {
       this.reset()
       const readerId = row.readerId || this.ids

@@ -120,6 +120,10 @@ export default {
     }
   },
   created() {
+    // 支持从读者/图书管理跳转并自动筛选
+    const q = this.$route.query
+    if (q.readerId) this.queryParams.readerId = q.readerId
+    if (q.bookId) this.queryParams.bookId = q.bookId
     this.getList()
     this.loadOptions()
   },
