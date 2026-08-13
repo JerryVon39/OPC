@@ -47,7 +47,7 @@ public class ResourcesConfig implements WebMvcConfigurer
     {
         registry.addInterceptor(repeatSubmitInterceptor).addPathPatterns("/**")
                 // 匿名接口（前台登记）不经过防重复提交拦截器，避免取不到用户信息
-                .excludePathPatterns("/system/reader");
+                .excludePathPatterns("/system/reader", "/system/borrow/borrowByCard");
     }
 
     /**

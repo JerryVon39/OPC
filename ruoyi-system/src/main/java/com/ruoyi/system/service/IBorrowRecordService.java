@@ -23,6 +23,12 @@ public interface IBorrowRecordService
     /** 还书：置归还日期并恢复图书库存 */
     public int returnBook(Long borrowId);
 
+    /** 续借：应还日期 +30 天（逾期不可续借） */
+    public int renewBook(Long borrowId);
+
+    /** 前台借书：按借书证号（匿名接口） */
+    public int borrowByCard(String cardNo, Long bookId);
+
     /** 按借书证号查询借阅记录 */
     public List<BorrowRecord> selectBorrowListByCard(String cardNo);
 

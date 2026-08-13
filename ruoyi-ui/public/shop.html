@@ -120,6 +120,19 @@
       <div id="borrowResult" style="margin-top:14px;max-height:280px;overflow-y:auto"></div>
     </div>
   </div>
+  <!-- 借书弹窗（输入借书证号借书） -->
+  <div id="borrowBookModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📖 借书</h3>
+      <p class="modal-tip" id="borrowBookName">请确认借阅</p>
+      <input id="borrowCardNo" class="modal-input" placeholder="请输入借书证号（登记时获得）" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="submitBorrow()">确认借书</button>
+        <button class="btn-buy" style="background:#ccc" onclick="closeBorrow()">取消</button>
+      </div>
+      <div id="borrowBookMsg" class="modal-msg"></div>
+    </div>
+  </div>
   <div id="toast" class="toast"></div>
 
 <script>
@@ -155,9 +168,12 @@
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
-              <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="addCart('${b.bookName}')">
-                ${onSale ? '加入购物车' : '已下架'}
-              </button>
+              <div style="display:flex;gap:8px">
+                ${onSale ? '<button class="btn-buy" style="background:#409eff;color:#fff" onclick="openBorrow(' + b.bookId + ', '' + b.bookName + '')">借阅</button>' : ''}
+                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} onclick="addCart('${b.bookName}')">
+                  ${onSale ? '购物车' : '已下架'}
+                </button>
+              </div>
             </div>
           </div>`;
       }).join('');
@@ -208,6 +224,40 @@
       }
     } catch (e) {
       msg.textContent = '登记失败：' + e.message;
+      msg.style.color = '#e64340';
+    }
+  }
+
+  // ===== 前台借书（匿名接口）=====
+  const BORROW_API = '/dev-api/system/borrow/borrowByCard';
+  let borrowBookId = null;
+  function openBorrow(bookId, bookName) {
+    borrowBookId = bookId;
+    document.getElementById('borrowBookName').textContent = '确认借阅《' + bookName + '》？应还日期为借出后 30 天';
+    document.getElementById('borrowBookMsg').textContent = '';
+    document.getElementById('borrowCardNo').value = '';
+    document.getElementById('borrowBookModal').style.display = 'flex';
+  }
+  function closeBorrow() { document.getElementById('borrowBookModal').style.display = 'none'; }
+  async function submitBorrow() {
+    const cardNo = document.getElementById('borrowCardNo').value.trim();
+    const msg = document.getElementById('borrowBookMsg');
+    if (!cardNo) { msg.textContent = '请输入借书证号'; msg.style.color = '#e64340'; return; }
+    msg.textContent = '借书中…'; msg.style.color = '#999';
+    try {
+      const res = await fetch(BORROW_API + '?cardNo=' + encodeURIComponent(cardNo) + '&bookId=' + borrowBookId, { method: 'POST' });
+      const d = await res.json();
+      if (d.code === 200) {
+        msg.textContent = '借书成功！应还日期已自动设置为 30 天后，可在"我的借阅"查看';
+        msg.style.color = '#67c23a';
+        setTimeout(closeBorrow, 2500);
+        loadBooks();
+      } else {
+        msg.textContent = '借书失败：' + (d.msg || '未知错误');
+        msg.style.color = '#e64340';
+      }
+    } catch (e) {
+      msg.textContent = '借书失败：' + e.message;
       msg.style.color = '#e64340';
     }
   }

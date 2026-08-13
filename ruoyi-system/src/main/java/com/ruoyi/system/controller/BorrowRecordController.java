@@ -62,6 +62,22 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.updateBorrowRecord(borrowRecord));
     }
 
+    /** 前台借书（匿名公开接口）：按借书证号借书 */
+    @Anonymous
+    @PostMapping("/borrowByCard")
+    public AjaxResult borrowByCard(String cardNo, Long bookId)
+    {
+        return toAjax(borrowRecordService.borrowByCard(cardNo, bookId));
+    }
+
+    /** 续借：应还日期 +30 天 */
+    @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
+    @PutMapping("/renew/{borrowId}")
+    public AjaxResult renew(@PathVariable("borrowId") Long borrowId)
+    {
+        return toAjax(borrowRecordService.renewBook(borrowId));
+    }
+
     /** 前台"我的借阅"：按借书证号查询（匿名公开接口） */
     @Anonymous
     @GetMapping("/queryByCard")

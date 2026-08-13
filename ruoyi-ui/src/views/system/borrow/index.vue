@@ -51,6 +51,7 @@
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
       <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button v-if="scope.row.status === '0'" size="mini" type="primary" @click="handleRenew(scope.row)">续借</el-button>
           <el-button v-if="scope.row.status === '0' || scope.row.status === '2'" size="mini" type="success" @click="handleReturn(scope.row)">还书</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
@@ -89,7 +90,7 @@
 </template>
 
 <script>
-import { listBorrow, addBorrow, updateBorrow, returnBorrow, delBorrow } from "@/api/system/borrow"
+import { listBorrow, addBorrow, updateBorrow, returnBorrow, renewBorrow, delBorrow } from "@/api/system/borrow"
 import { listReader } from "@/api/system/reader"
 import { listBook } from "@/api/system/book"
 
@@ -147,6 +148,14 @@ export default {
       this.form = { ...row }
       this.open = true
       this.title = "修改借阅记录"
+    },
+    handleRenew(row) {
+      this.$modal.confirm('确认续借《' + (row.bookName || '') + '》吗？应还日期将顺延 30 天').then(() => {
+        return renewBorrow(row.borrowId)
+      }).then(() => {
+        this.$modal.msgSuccess("续借成功，应还日期顺延 30 天")
+        this.getList()
+      }).catch(() => {})
     },
     handleReturn(row) {
       this.$modal.confirm('确认还书《' + (row.bookName || '') + '》吗？归还后库存自动+1').then(() => {
