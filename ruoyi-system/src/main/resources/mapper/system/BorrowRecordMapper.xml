@@ -87,6 +87,9 @@
             <if test="returnDate != null">return_date = #{returnDate},</if>
             <if test="status != null">status = #{status},</if>
             <if test="remark != null">remark = #{remark},</if>
+            <if test="readerName != null">reader_name = #{readerName},</if>
+            <if test="cardNo != null">card_no = #{cardNo},</if>
+            <if test="bookName != null">book_name = #{bookName},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>

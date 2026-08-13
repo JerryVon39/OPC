@@ -126,6 +126,24 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Override
     public int updateBorrowRecord(BorrowRecord borrowRecord)
     {
+        // 若读者/图书被修改，同步刷新快照（保持记录显示与实际一致）
+        if (borrowRecord.getReaderId() != null)
+        {
+            Reader reader = readerMapper.selectReaderByReaderId(borrowRecord.getReaderId());
+            if (reader != null)
+            {
+                borrowRecord.setReaderName(reader.getReaderName());
+                borrowRecord.setCardNo(reader.getCardNo());
+            }
+        }
+        if (borrowRecord.getBookId() != null)
+        {
+            Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());
+            if (book != null)
+            {
+                borrowRecord.setBookName(book.getBookName());
+            }
+        }
         return borrowRecordMapper.updateBorrowRecord(borrowRecord);
     }
 

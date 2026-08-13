@@ -73,7 +73,8 @@ public class ReaderController extends BaseController
     /**
      * 新增读者管理
      */
-    /** 前台读者登录（匿名）：姓名+借书证号验证 */
+    /** 前台读者登录（匿名）：姓名+借书证号验证
+     * 注意：按证号精确查询后精确比对姓名——不能用 LIKE 模糊匹配姓名（知道证号即可猜登录） */
     @Anonymous
     @PostMapping("/login")
     public AjaxResult login(String readerName, String cardNo)
@@ -83,14 +84,17 @@ public class ReaderController extends BaseController
             return error("请输入姓名和借书证号");
         }
         Reader query = new Reader();
-        query.setReaderName(readerName.trim());
         query.setCardNo(cardNo.trim());
         java.util.List<Reader> list = readerService.selectReaderList(query);
         if (list == null || list.isEmpty())
         {
-            return error("姓名与借书证号不匹配，请确认后重试");
+            return error("借书证号不存在，请先登记");
         }
         Reader r = list.get(0);
+        if (!readerName.trim().equals(r.getReaderName()))
+        {
+            return error("姓名与借书证号不匹配，请确认后重试");
+        }
         // 停用/挂失的证号不允许登录前台（借书、购书前就把问题拦下）
         if (!"0".equals(r.getStatus()))
         {
