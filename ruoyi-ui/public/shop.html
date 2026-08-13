@@ -35,7 +35,7 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
   .book-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; cursor: pointer; }
   .book-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-  .book-cover { height: 130px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; overflow: hidden; }
+  .book-cover { height: 190px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; overflow: hidden; background: #f0f2f5; }
   .book-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
   .book-author { font-size: 13px; color: #888; margin-bottom: 8px; }
   .book-meta { font-size: 12px; color: #999; margin-bottom: 12px; }
@@ -63,7 +63,7 @@
   .detail-row { display: flex; margin-bottom: 10px; font-size: 14px; }
   .detail-row .d-label { color: #999; width: 80px; flex-shrink: 0; }
   .detail-row .d-value { flex: 1; }
-  .detail-cover { height: 150px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 16px; overflow: hidden; }
+  .detail-cover { height: 230px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 16px; overflow: hidden; background: #f0f2f5; }
   .borrow-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
   .days-left { font-weight: bold; }
   .days-danger { color: #e64340; }
@@ -293,7 +293,7 @@
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
-              ${b.cover ? '<img src="' + imgSrc(b.cover) + '" style="width:100%;height:100%;object-fit:cover" />' : '📕'}
+              ${b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '📕'}
             </div>
             <div class="book-name">${b.bookName}</div>
             <div class="book-author">作者：${b.author || '未知'}</div>
@@ -344,7 +344,7 @@
     const onSale = b.status === '0';
     document.getElementById('detailName').textContent = b.bookName;
     document.getElementById('detailCover').style.background = COVER_COLORS[(b.bookId || 0) % COVER_COLORS.length];
-    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + imgSrc(b.cover) + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px" />' : '📕';
+    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15)" />' : '📕';
     document.getElementById('detailAuthor').textContent = b.author || '未知';
     document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
     document.getElementById('detailPublisher').textContent = b.publisher || '—';
