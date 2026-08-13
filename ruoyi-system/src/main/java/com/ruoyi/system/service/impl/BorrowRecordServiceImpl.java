@@ -34,6 +34,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Autowired
     private ISysConfigService configService;
 
+    @Autowired
+    private com.ruoyi.system.mapper.SysNoticeMapper noticeMapper;
+
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
     {
@@ -149,7 +152,54 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             book.setStock((book.getStock() == null ? 0 : book.getStock()) + 1);
             bookMapper.updateBook(book);
         }
-        return borrowRecordMapper.updateBorrowRecord(record);
+        borrowRecordMapper.updateBorrowRecord(record);
+        // 归还后同步逾期催还公告：还清了就删公告，还有逾期就重新汇总
+        syncOverdueNotice();
+        return 1;
+    }
+
+    /**
+     * 归还后同步逾期催还公告：
+     * 1) 无剩余逾期记录 → 删除全部"逾期催还通知"公告
+     * 2) 仍有逾期记录 → 删除旧公告并重新汇总发布（内容与现状一致）
+     */
+    private void syncOverdueNotice()
+    {
+        BorrowRecord q = new BorrowRecord();
+        q.setStatus("2");
+        List<BorrowRecord> overdue = borrowRecordMapper.selectBorrowRecordList(q);
+        // 删除旧的催还公告
+        com.ruoyi.system.domain.SysNotice delQuery = new com.ruoyi.system.domain.SysNotice();
+        delQuery.setNoticeTitle("逾期催还通知");
+        List<com.ruoyi.system.domain.SysNotice> oldList = noticeMapper.selectNoticeList(delQuery);
+        for (com.ruoyi.system.domain.SysNotice n : oldList)
+        {
+            noticeMapper.deleteNoticeById(n.getNoticeId());
+        }
+        if (overdue == null || overdue.isEmpty())
+        {
+            return;
+        }
+        // 重新汇总发布（内容与当前逾期情况一致）
+        String books = "";
+        int max = Math.min(overdue.size(), 5);
+        for (int i = 0; i < max; i++)
+        {
+            BorrowRecord br = overdue.get(i);
+            books += "《" + (br.getBookName() == null ? "未知" : br.getBookName()) + "》(" + (br.getReaderName() == null ? "读者" : br.getReaderName()) + ") ";
+        }
+        if (overdue.size() > max)
+        {
+            books += "等共 " + overdue.size() + " 本";
+        }
+        com.ruoyi.system.domain.SysNotice notice = new com.ruoyi.system.domain.SysNotice();
+        notice.setNoticeTitle("逾期催还通知");
+        notice.setNoticeType("2");
+        notice.setNoticeContent("以下图书已逾期未归还，请相关读者尽快到服务台办理还书：" + books);
+        notice.setStatus("0");
+        notice.setCreateBy("system");
+        notice.setCreateTime(new Date());
+        noticeMapper.insertNotice(notice);
     }
 
     @Override
