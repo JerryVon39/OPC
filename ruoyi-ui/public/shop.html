@@ -70,6 +70,40 @@
   .days-left { font-weight: bold; }
   .days-danger { color: #e64340; }
   .days-ok { color: #67c23a; }
+
+  /* ================= 手机版适配（≤768px 自动生效） ================= */
+  @media (max-width: 768px) {
+    /* 导航栏：改为多行排列，搜索框占满一行 */
+    .navbar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
+    .navbar .logo { font-size: 18px; }
+    .nav-search { order: 3; flex-basis: 100%; max-width: none; margin-top: 4px; }
+    .nav-links { order: 4; flex-basis: 100%; justify-content: flex-start; gap: 14px; }
+    .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 12px; }
+    .nav-right span { font-size: 13px; }
+
+    /* 横幅与标题 */
+    .banner { padding: 24px 16px; }
+    .banner h1 { font-size: 26px; }
+    .banner p { font-size: 13px; }
+    .notice-bar { padding: 8px 14px; }
+    .hot-bar { padding: 0 12px; }
+    .container { padding: 0 12px; }
+    .section-title { font-size: 17px; }
+
+    /* 图书网格：两列紧凑卡片 */
+    .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .book-card { padding: 12px; }
+    .book-cover { height: 170px; font-size: 32px; }
+    .book-name { font-size: 14px; margin-bottom: 4px; }
+    .book-author { font-size: 12px; margin-bottom: 6px; }
+    .book-price { font-size: 16px; }
+    .btn-buy { padding: 6px 10px; font-size: 12px; }
+    .book-bottom { flex-wrap: wrap; gap: 6px; }
+
+    /* 弹窗：宽度自适应屏幕 */
+    .modal-box { width: calc(100vw - 28px); max-width: 400px; padding: 20px; }
+    .detail-cover { height: 210px; font-size: 44px; }
+  }
 </style>
 </head>
 <body>
