@@ -5,94 +5,166 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>万事屋 · 在线书店</title>
 <style>
+  /* ================= 品牌色板（暖木书店调） ================= */
+  :root {
+    --primary-dark: #24402f;   /* 深墨绿（导航） */
+    --primary: #2f4f3e;        /* 墨绿主色 */
+    --primary-light: #3d6a52;  /* 浅墨绿（渐变/装饰） */
+    --accent: #d4a24e;         /* 米金强调 */
+    --accent-deep: #b98a3e;    /* 米金深（按钮渐变） */
+    --accent-light: #e3bc6f;   /* 米金亮 */
+    --bg: #f7f5f0;             /* 暖米白背景 */
+    --card: #ffffff;
+    --text: #3a3a3a;
+    --text-light: #8a8a8a;
+    --danger: #c65d43;         /* 暖红（价格/预警） */
+    --success: #4f8a62;        /* 绿 */
+    --line: #efe9dd;           /* 分割线 */
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f6fa; color: #333; }
-  .navbar { background: #2d3a4b; color: #fff; padding: 0 40px; display: flex; align-items: center; height: 56px; gap: 20px; }
-  .navbar .logo { font-size: 20px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
-  .navbar .logo span { color: #ffc107; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+  /* ================= 顶部导航（吸顶 + 渐变 + 阴影） ================= */
+  .navbar { background: linear-gradient(90deg, var(--primary-dark), var(--primary)); color: #fff; padding: 0 40px; display: flex; align-items: center; height: 60px; gap: 20px; position: sticky; top: 0; z-index: 900; box-shadow: 0 2px 10px rgba(20,35,28,0.25); }
+  .navbar .logo { font-size: 21px; font-weight: bold; letter-spacing: 2px; white-space: nowrap; }
+  .navbar .logo span { color: var(--accent); }
   .nav-search { flex: 1; max-width: 380px; display: flex; }
-  .nav-search input { flex: 1; padding: 8px 14px; border: none; border-radius: 6px 0 0 6px; font-size: 14px; outline: none; }
-  .nav-search button { padding: 8px 18px; border: none; background: #ffc107; color: #333; font-size: 14px; font-weight: bold; border-radius: 0 6px 6px 0; cursor: pointer; }
-  .nav-links { display: flex; gap: 16px; }
-  .nav-links a { color: #cfd8e3; text-decoration: none; font-size: 14px; cursor: pointer; }
-  .nav-links a:hover, .nav-links a.active { color: #ffc107; }
+  .nav-search input { flex: 1; padding: 9px 14px; border: none; border-radius: 8px 0 0 8px; font-size: 14px; outline: none; }
+  .nav-search button { padding: 9px 18px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; font-size: 14px; font-weight: bold; border-radius: 0 8px 8px 0; cursor: pointer; transition: filter .2s; }
+  .nav-search button:hover { filter: brightness(1.08); }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-links a { color: #d5e0d8; text-decoration: none; font-size: 14px; cursor: pointer; padding: 5px 16px; border-radius: 20px; transition: all .2s; }
+  .nav-links a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .nav-links a.active { background: var(--accent); color: #fff; font-weight: bold; }
   .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; row-gap: 4px; }
-  .nav-right span { color: #ffc107; font-size: 14px; cursor: pointer; white-space: nowrap; }
-  .notice-bar { background: #fff8e1; color: #8a6d3b; font-size: 13px; padding: 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; }
-  .notice-bar .n-title { color: #e64340; font-weight: bold; margin-right: 10px; display: inline-block; vertical-align: middle; }
+  .nav-right span { color: var(--accent); font-size: 14px; cursor: pointer; white-space: nowrap; transition: color .2s; }
+  .nav-right span:hover { color: var(--accent-light); }
+
+  /* ================= 公告栏（可关闭） ================= */
+  .notice-bar { background: #fdf6e7; color: #8a6d3b; font-size: 13px; padding: 8px 48px 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; position: relative; }
+  .notice-bar .n-title { color: var(--danger); font-weight: bold; margin-right: 10px; display: inline-block; vertical-align: middle; }
   #noticeText { display: inline-block; vertical-align: middle; }
+  .notice-close { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #b99b5f; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .notice-close:hover { color: var(--danger); background: rgba(0,0,0,0.05); }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
-  .banner { background: linear-gradient(135deg, #2d3a4b 0%, #455a75 60%, #5b7a9d 100%); color: #fff; padding: 40px 40px; text-align: center; }
-  .banner h1 { font-size: 34px; margin-bottom: 10px; }
+
+  /* ================= 横幅（渐变 + 书本装饰） ================= */
+  .banner { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); color: #fff; padding: 44px 40px; text-align: center; position: relative; overflow: hidden; }
+  .banner h1 { font-size: 34px; margin-bottom: 10px; letter-spacing: 4px; }
   .banner p { font-size: 15px; opacity: 0.85; }
+  .banner::before, .banner::after {
+    content: ''; position: absolute; top: 50%; width: 84px; height: 112px; border-radius: 6px;
+    transform: translateY(-50%) rotate(-14deg); opacity: 0.22;
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-deep) 100%);
+  }
+  .banner::before { left: 9%; }
+  .banner::after { right: 9%; transform: translateY(-50%) rotate(14deg); background: linear-gradient(180deg, #6b8a76, #4a6b57); }
+
+  /* ================= 热门推荐（金/银/铜徽章） ================= */
   .hot-bar { max-width: 1200px; margin: 24px auto 0; padding: 0 20px; }
-  .hot-bar .hot-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-left: 10px; border-left: 4px solid #e64340; }
+  .hot-bar .hot-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-left: 10px; border-left: 4px solid var(--accent); }
   .hot-items { display: flex; gap: 12px; flex-wrap: wrap; }
-  .hot-item { background: #fff; border-radius: 8px; padding: 10px 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); font-size: 13px; cursor: pointer; }
-  .hot-item:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
-  .hot-item .rank { color: #e64340; font-weight: bold; margin-right: 6px; }
-  .hot-item .cnt { color: #999; margin-left: 6px; }
+  .hot-item { background: var(--card); border-radius: 10px; padding: 10px 16px; box-shadow: 0 2px 6px rgba(60,50,30,0.07); font-size: 13px; cursor: pointer; transition: all .2s; }
+  .hot-item:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(60,50,30,0.13); }
+  .hot-item .rank { font-weight: bold; margin-right: 6px; }
+  .hot-item:nth-child(1) .rank { color: #c9972f; }   /* 金牌 */
+  .hot-item:nth-child(2) .rank { color: #8f9aa8; }   /* 银牌 */
+  .hot-item:nth-child(3) .rank { color: #c08a5a; }   /* 铜牌 */
+  .hot-item .cnt { color: var(--text-light); margin-left: 6px; }
+
+  /* ================= 图书网格与卡片 ================= */
   .container { max-width: 1200px; margin: 24px auto 30px; padding: 0 20px; }
-  .section-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid #ffc107; }
+  .section-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid var(--accent); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-  .book-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; cursor: pointer; }
-  .book-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-  .book-cover { height: 190px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; overflow: hidden; background: #f0f2f5; }
+  .book-card { background: var(--card); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(60,50,30,0.05), 0 4px 14px rgba(60,50,30,0.06); transition: transform .25s, box-shadow .25s; cursor: pointer; }
+  .book-card:hover { transform: translateY(-6px); box-shadow: 0 8px 24px rgba(60,50,30,0.14); }
+  .book-cover { height: 190px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; overflow: hidden; background: #f2efe8; }
   .book-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
-  .book-author { font-size: 13px; color: #888; margin-bottom: 8px; }
-  .book-meta { font-size: 12px; color: #999; margin-bottom: 12px; }
+  .book-author { font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
+  .book-meta { font-size: 12px; color: var(--text-light); margin-bottom: 12px; }
   .book-bottom { display: flex; align-items: center; justify-content: space-between; }
-  .book-price { color: #e64340; font-size: 20px; font-weight: bold; }
+  .book-price { color: var(--danger); font-size: 20px; font-weight: bold; }
   .book-price small { font-size: 12px; }
-  .btn-buy { background: #ffc107; border: none; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
-  .btn-buy:hover { background: #ffd54f; }
-  .btn-buy.disabled { background: #ccc; cursor: not-allowed; }
-  .btn-borrow { background: #409eff !important; color: #fff !important; }
+
+  /* ================= 按钮（渐变 + 微动效） ================= */
+  .btn-buy { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: bold; transition: transform .15s, box-shadow .15s, filter .15s; box-shadow: 0 2px 6px rgba(185,138,62,0.35); }
+  .btn-buy:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 4px 12px rgba(185,138,62,0.45); }
+  .btn-buy:active { transform: translateY(0); }
+  .btn-buy.disabled { background: #cfc9bd; cursor: not-allowed; box-shadow: none; }
+  .btn-buy.disabled:hover { transform: none; filter: none; box-shadow: none; }
+  .btn-borrow { background: linear-gradient(135deg, #4a8b5e, #2f6b45) !important; box-shadow: 0 2px 6px rgba(47,107,69,0.35) !important; }
+  .btn-borrow:hover { box-shadow: 0 4px 12px rgba(47,107,69,0.45) !important; }
+
+  /* ================= 标签 ================= */
   .tag { display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 10px; margin-right: 6px; }
-  .tag-sale { background: #f0f9eb; color: #67c23a; }
-  .tag-off { background: #fef0f0; color: #f56c6c; }
-  .footer { text-align: center; color: #999; font-size: 13px; padding: 30px 0 40px; }
-  .loading { text-align: center; padding: 60px; color: #999; }
-  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #2d3a4b; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .3s; z-index: 999; }
-  .toast.show { opacity: 1; }
-  .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-  .modal-box { background: #fff; border-radius: 12px; padding: 28px 32px; width: 400px; max-height: 85vh; overflow-y: auto; }
+  .tag-sale { background: #eef7ef; color: var(--success); }
+  .tag-off { background: #fdf0ec; color: var(--danger); }
+
+  /* ================= 页脚（三栏信息） ================= */
+  .footer { background: #2b3a30; color: #a8b5ab; padding: 32px 20px 24px; margin-top: 30px; }
+  .footer-cols { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; text-align: left; }
+  .footer-col h4 { color: #fff; margin-bottom: 10px; font-size: 14px; letter-spacing: 1px; }
+  .footer-col p { font-size: 12px; line-height: 1.9; }
+  .footer-bottom { text-align: center; color: #7d8a80; font-size: 12px; margin-top: 22px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; }
+
+  /* ================= 通用 ================= */
+  .loading { text-align: center; padding: 60px; color: var(--text-light); }
+  .toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-10px); background: rgba(40,60,48,0.95); color: #fff; padding: 11px 26px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s, transform .3s; z-index: 999; box-shadow: 0 6px 22px rgba(0,0,0,0.25); backdrop-filter: blur(4px); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30,30,30,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: var(--card); border-radius: 14px; padding: 28px 32px; width: 400px; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
   .modal-box h3 { margin-bottom: 6px; }
-  .modal-tip { color: #999; font-size: 13px; margin-bottom: 16px; }
-  .modal-input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; font-size: 14px; box-sizing: border-box; }
+  .modal-tip { color: var(--text-light); font-size: 13px; margin-bottom: 16px; }
+  .modal-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; font-size: 14px; box-sizing: border-box; transition: border-color .2s; }
+  .modal-input:focus { outline: none; border-color: var(--accent); }
   .modal-btns { display: flex; gap: 12px; margin-top: 6px; }
-  .modal-msg { margin-top: 10px; font-size: 13px; color: #67c23a; min-height: 18px; }
-  .detail-row { display: flex; margin-bottom: 10px; font-size: 14px; }
-  .detail-row .d-label { color: #999; width: 80px; flex-shrink: 0; }
+  .modal-msg { margin-top: 10px; font-size: 13px; color: var(--success); min-height: 18px; }
+
+  /* ================= 详情弹窗（分区展示） ================= */
+  .detail-cover { height: 230px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 8px; overflow: hidden; background: #f2efe8; }
+  .detail-section-title { font-size: 13px; font-weight: bold; color: var(--primary); margin: 14px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent); }
+  .detail-row { display: flex; margin-bottom: 9px; font-size: 14px; }
+  .detail-row .d-label { color: var(--text-light); width: 80px; flex-shrink: 0; }
   .detail-row .d-value { flex: 1; }
-  .detail-cover { height: 230px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; margin-bottom: 16px; overflow: hidden; background: #f0f2f5; }
-  .borrow-item { border: 1px solid #eee; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+  .detail-intro { font-size: 13px; color: #666; line-height: 1.9; background: #faf8f3; border-radius: 8px; padding: 12px 14px; }
+
+  /* ================= 借阅/订单条目 ================= */
+  .borrow-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; background: #fff; }
   .days-left { font-weight: bold; }
-  .days-danger { color: #e64340; }
-  .days-ok { color: #67c23a; }
+  .days-danger { color: var(--danger); }
+  .days-ok { color: var(--success); }
+
+  /* ================= 加载骨架屏 ================= */
+  .skeleton-card { cursor: default; pointer-events: none; }
+  .skeleton-block, .skeleton-line {
+    background: linear-gradient(90deg, #ece7dd 25%, #f6f3ec 50%, #ece7dd 75%);
+    background-size: 200% 100%; animation: shimmer 1.4s infinite;
+  }
+  .skeleton-line { height: 14px; border-radius: 4px; margin-bottom: 10px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
   /* ================= 手机版适配（≤768px 自动生效） ================= */
   @media (max-width: 768px) {
-    /* 导航栏：改为多行排列，搜索框占满一行 */
     .navbar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
     .navbar .logo { font-size: 18px; }
     .nav-search { order: 3; flex-basis: 100%; max-width: none; margin-top: 4px; }
-    .nav-links { order: 4; flex-basis: 100%; justify-content: flex-start; gap: 14px; }
+    .nav-links { order: 4; flex-basis: 100%; justify-content: flex-start; gap: 6px; }
+    .nav-links a { padding: 4px 12px; font-size: 13px; }
     .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 12px; }
     .nav-right span { font-size: 13px; }
 
-    /* 横幅与标题 */
     .banner { padding: 24px 16px; }
     .banner h1 { font-size: 26px; }
     .banner p { font-size: 13px; }
-    .notice-bar { padding: 8px 14px; }
+    .banner::before, .banner::after { display: none; }
+    .notice-bar { padding: 8px 40px 8px 14px; }
     .hot-bar { padding: 0 12px; }
     .container { padding: 0 12px; }
     .section-title { font-size: 17px; }
 
-    /* 图书网格：两列紧凑卡片 */
     .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-    .book-card { padding: 12px; }
+    .book-card { padding: 12px; border-radius: 10px; }
     .book-cover { height: 170px; font-size: 32px; }
     .book-name { font-size: 14px; margin-bottom: 4px; }
     .book-author { font-size: 12px; margin-bottom: 6px; }
@@ -100,9 +172,9 @@
     .btn-buy { padding: 6px 10px; font-size: 12px; }
     .book-bottom { flex-wrap: wrap; gap: 6px; }
 
-    /* 弹窗：宽度自适应屏幕 */
     .modal-box { width: calc(100vw - 28px); max-width: 400px; padding: 20px; }
     .detail-cover { height: 210px; font-size: 44px; }
+    .footer-cols { grid-template-columns: 1fr; gap: 16px; }
   }
 </style>
 </head>
@@ -129,10 +201,11 @@
     </div>
   </div>
 
-  <!-- 公告横幅 -->
+  <!-- 公告横幅（可关闭） -->
   <div class="notice-bar" id="noticeBar" style="display:none">
     <span class="n-title">📢 公告</span>
     <span id="noticeText">加载中…</span>
+    <span class="notice-close" onclick="closeNotice()">✕</span>
   </div>
 
   <!-- 横幅 -->
@@ -150,18 +223,34 @@
   <!-- 图书列表 -->
   <div class="container">
     <div class="section-title" id="listTitle">全部图书</div>
-    <div id="bookGrid" class="grid">
-      <div class="loading">正在加载图书…</div>
-    </div>
+    <div id="bookGrid" class="grid"></div>
   </div>
 
-  <div class="footer">© 2026 万事屋 · 前端界面与后台管理共用同一数据库</div>
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>🏪 关于万事屋</h4>
+        <p>基于 RuoYi-Vue 二次开发的图书管理系统学习项目<br>前台自助 · 后台管理 · 数据同源</p>
+      </div>
+      <div class="footer-col">
+        <h4>📖 借阅规则</h4>
+        <p>借期 30 天 · 可续借 1 次<br>逾期请尽快归还，还书请到服务台</p>
+      </div>
+      <div class="footer-col">
+        <h4>🕐 服务时间</h4>
+        <p>周一至周日 9:00 - 21:00<br>节假日正常营业</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 万事屋 · 前端界面与后台管理共用同一数据库</div>
+  </footer>
 
   <!-- 图书详情弹窗 -->
   <div id="detailModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3 id="detailName">图书详情</h3>
       <div class="detail-cover" id="detailCover">📕</div>
+      <div class="detail-section-title">基本信息</div>
       <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor"></span></div>
       <div class="detail-row"><span class="d-label">类型</span><span class="d-value" id="detailType"></span></div>
       <div class="detail-row"><span class="d-label">出版社</span><span class="d-value" id="detailPublisher"></span></div>
@@ -170,12 +259,13 @@
       <div class="detail-row"><span class="d-label">库存</span><span class="d-value" id="detailStock"></span></div>
       <div class="detail-row"><span class="d-label">状态</span><span class="d-value" id="detailStatus"></span></div>
       <div class="detail-row"><span class="d-label">ISBN</span><span class="d-value" id="detailIsbn"></span></div>
-      <div class="detail-row"><span class="d-label">简介</span><span class="d-value" id="detailIntro" style="line-height:1.6"></span></div>
       <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
+      <div class="detail-section-title">内容简介</div>
+      <div class="detail-intro" id="detailIntro">—</div>
       <div class="modal-btns">
         <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
         <button class="btn-buy" onclick="detailAddCart()" id="detailCartBtn" style="display:none">加入购物车</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('detailModal')">关闭</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
       </div>
     </div>
   </div>
@@ -187,11 +277,11 @@
       <p class="modal-tip" id="cartEmpty" style="display:none">购物车是空的，去挑选几本好书吧</p>
       <div id="cartItems" style="margin-bottom:12px"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-weight:bold">合计：<span style="color:#e64340;font-size:18px" id="cartTotal">¥0</span></span>
+        <span style="font-weight:bold">合计：<span style="color:#c65d43;font-size:18px" id="cartTotal">¥0</span></span>
       </div>
       <div class="modal-btns">
         <button class="btn-buy" onclick="checkout()">结算</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('cartModal')">关闭</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('cartModal')">关闭</button>
       </div>
       <div id="cartMsg" class="modal-msg"></div>
     </div>
@@ -213,7 +303,7 @@
       <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitRegister()">提交登记</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('regModal')">取消</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('regModal')">取消</button>
       </div>
       <div id="regMsg" class="modal-msg"></div>
     </div>
@@ -227,7 +317,7 @@
       <input id="qCardNo" class="modal-input" placeholder="借书证号（如 JS12345678）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="queryMyBorrow()">查询</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('borrowModal')">关闭</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('borrowModal')">关闭</button>
       </div>
       <div id="borrowResult" style="margin-top:14px"></div>
     </div>
@@ -241,7 +331,7 @@
       <input id="qOrderCard" class="modal-input" placeholder="借书证号" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="queryMyOrders()">查询</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('orderModal')">关闭</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('orderModal')">关闭</button>
       </div>
       <div id="orderResult" style="margin-top:14px"></div>
     </div>
@@ -256,7 +346,7 @@
       <input id="loginCard" class="modal-input" placeholder="借书证号" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitLogin()">登 录</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('loginModal')">取消</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('loginModal')">取消</button>
       </div>
       <div id="loginMsg" class="modal-msg"></div>
     </div>
@@ -271,7 +361,7 @@
       <input id="borrowCardNo" class="modal-input" placeholder="未登录时请输入借书证号" style="display:none" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitBorrow()">确认借书</button>
-        <button class="btn-buy" style="background:#ccc" onclick="closeModal('borrowBookModal')">取消</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('borrowBookModal')">取消</button>
       </div>
       <div id="borrowBookMsg" class="modal-msg"></div>
     </div>
@@ -299,7 +389,7 @@
   const STATUS_MAP = { '0': '在售', '1': '已下架' };
   const BORROW_STATUS = { '0': '借出中', '1': '已归还', '2': '已逾期' };
   const ORDER_STATUS = { '0': '待处理', '1': '已完成', '2': '已取消' };
-  const COVER_COLORS = ['#e8f4fd', '#fdf1e8', '#eef9ef', '#f9e8f4', '#e8f0fd', '#fdf8e8'];
+  const COVER_COLORS = ['#e8f0e9', '#f6efe2', '#eef4ef', '#f4e9ea', '#e9eef6', '#f3efe4'];
 
   // ===== 全局状态 =====
   let currentType = '';
@@ -309,7 +399,9 @@
   let cart = [];
   let warnThreshold = 3;   // 库存预警阈值（从系统参数读取，后台可改）
   const CART_KEY = 'wswCart';
+  const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
   const PLACEHOLDER = 'img/book-placeholder.svg';
+  const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
 
   // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
   async function loadConfig() {
@@ -325,9 +417,11 @@
     } catch (e) { }
   }
 
-  // ===== 图书列表（keyword 搜索 + 分类）=====
+  // ===== 图书列表（keyword 搜索 + 分类 + 加载骨架屏）=====
   let currentBooks = [];   // 当前渲染的图书列表（详情弹窗从这里取数，保证与搜索/分类同步）
   async function loadBooks() {
+    // 加载前显示骨架屏
+    document.getElementById('bookGrid').innerHTML = SKELETON.repeat(6);
     const kw = document.getElementById('searchInput').value.trim();
     const params = new URLSearchParams({ pageNum: 1, pageSize: 30 });
     if (kw) params.set('keyword', kw);
@@ -356,7 +450,7 @@
             <div class="book-meta">
               <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
               <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
-              ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fef0f0;color:#e64340">库存紧张</span>' : ''}
+              ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">库存紧张</span>' : ''}
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
@@ -446,9 +540,11 @@
     loadBooks();
   }
 
-  // ===== 公告横幅（完整内容 + 长公告跑马灯滚动）=====
+  // ===== 公告横幅（完整内容 + 跑马灯 + 当日可关闭）=====
   async function loadNotices() {
     try {
+      // 当日已手动关闭过则不再显示
+      if (localStorage.getItem(NOTICE_CLOSED_KEY) === new Date().toDateString()) return;
       const res = await fetch(NOTICE_API);
       const d = await res.json();
       const list = d.data || [];
@@ -476,6 +572,11 @@
       el.style.paddingLeft = '0';
     }
   }
+  // 关闭公告：当天不再显示
+  function closeNotice() {
+    document.getElementById('noticeBar').style.display = 'none';
+    localStorage.setItem(NOTICE_CLOSED_KEY, new Date().toDateString());
+  }
 
   // ===== 登录 =====
   function openLogin() { document.getElementById('loginModal').style.display = 'flex'; }
@@ -483,7 +584,7 @@
     const name = document.getElementById('loginName').value.trim();
     const card = document.getElementById('loginCard').value.trim();
     const msg = document.getElementById('loginMsg');
-    if (!name || !card) { msg.textContent = '请输入姓名和借书证号'; msg.style.color = '#e64340'; return; }
+    if (!name || !card) { msg.textContent = '请输入姓名和借书证号'; msg.style.color = '#c65d43'; return; }
     try {
       const body = new URLSearchParams({ readerName: name, cardNo: card });
       const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
@@ -497,11 +598,11 @@
         toast('登录成功，欢迎 ' + currentUser.readerName + '！');
       } else {
         msg.textContent = d.msg || '登录失败';
-        msg.style.color = '#e64340';
+        msg.style.color = '#c65d43';
       }
     } catch (e) {
       msg.textContent = '登录失败：' + e.message;
-      msg.style.color = '#e64340';
+      msg.style.color = '#c65d43';
     }
   }
   function logout() {
@@ -524,7 +625,7 @@
     const phone = document.getElementById('regPhone').value.trim();
     const type = document.getElementById('regType').value;
     const msg = document.getElementById('regMsg');
-    if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#e64340'; return; }
+    if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#c65d43'; return; }
     try {
       // 证号由后端生成（防伪造/占坑）
       const res = await fetch(REG_API, {
@@ -535,14 +636,14 @@
       const d = await res.json();
       if (d.code === 200 && d.data) {
         msg.textContent = '登记成功！您的借书证号：' + d.data.cardNo + '，请记住并登录';
-        msg.style.color = '#67c23a';
+        msg.style.color = '#4f8a62';
       } else {
         msg.textContent = '登记失败：' + (d.msg || '未知错误');
-        msg.style.color = '#e64340';
+        msg.style.color = '#c65d43';
       }
     } catch (e) {
       msg.textContent = '登记失败：' + e.message;
-      msg.style.color = '#e64340';
+      msg.style.color = '#c65d43';
     }
   }
 
@@ -589,7 +690,7 @@
         '<button class="btn-buy" style="padding:3px 10px" onclick="cartQty(' + idx + ',-1)">-</button>' +
         '<span>' + i.qty + '</span>' +
         '<button class="btn-buy" style="padding:3px 10px" onclick="cartQty(' + idx + ',1)">+</button>' +
-        '<button class="btn-buy" style="padding:3px 10px;background:#e64340;color:#fff" onclick="cartRemove(' + idx + ')">×</button>' +
+        '<button class="btn-buy" style="padding:3px 10px;background:#c65d43;color:#fff;box-shadow:none" onclick="cartRemove(' + idx + ')">×</button>' +
         '</span></div>';
     }).join('');
     document.getElementById('cartTotal').textContent = '¥' + total.toFixed(2);
@@ -610,12 +711,12 @@
     const msg = document.getElementById('cartMsg');
     if (!currentUser) {
       msg.textContent = '请先登录后再结算';
-      msg.style.color = '#e64340';
+      msg.style.color = '#c65d43';
       closeModal('cartModal');
       openLogin();
       return;
     }
-    if (!cart.length) { msg.textContent = '购物车是空的'; msg.style.color = '#e64340'; return; }
+    if (!cart.length) { msg.textContent = '购物车是空的'; msg.style.color = '#c65d43'; return; }
     msg.textContent = '下单中…'; msg.style.color = '#999';
     try {
       let ok = 0, fail = 0, failMsg = '';
@@ -628,18 +729,18 @@
       }
       if (fail === 0) {
         msg.textContent = '下单成功 ' + ok + ' 件！可在"我的订单"查看';
-        msg.style.color = '#67c23a';
+        msg.style.color = '#4f8a62';
         cart = [];
         saveCart();
         setTimeout(() => closeModal('cartModal'), 2500);
       } else {
         msg.textContent = '部分成功：' + ok + ' 件成功，' + fail + ' 件失败（' + failMsg + '）';
-        msg.style.color = '#e64340';
+        msg.style.color = '#c65d43';
       }
       loadBooks();
     } catch (e) {
       msg.textContent = '下单失败：' + e.message;
-      msg.style.color = '#e64340';
+      msg.style.color = '#c65d43';
     }
   }
 
@@ -670,7 +771,7 @@
         <div class="borrow-item">
           <div style="font-weight:bold;margin-bottom:4px">《${o.bookName || '未知图书'}》 × ${o.quantity || 1}</div>
           <div style="color:#999">订单号：${o.orderNo || '-'} ｜ ${o.createTime || ''}</div>
-          <span style="color:#e64340;font-weight:bold">¥${o.totalPrice}</span>
+          <span style="color:#c65d43;font-weight:bold">¥${o.totalPrice}</span>
           <span class="tag ${o.status === '0' ? 'tag-off' : 'tag-sale'}" style="margin-left:8px">${ORDER_STATUS[o.status] || '未知'}</span>
           ${o.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-left:8px" onclick="cancelOrder(' + o.orderId + ')">取消订单</button>' : ''}
         </div>`).join('');
@@ -701,10 +802,10 @@
     const loginInfo = document.getElementById('borrowLoginInfo');
     const cardInput = document.getElementById('borrowCardNo');
     if (currentUser) {
-      loginInfo.innerHTML = '<div style="background:#f0f9eb;border-radius:6px;padding:8px 12px;font-size:13px;color:#67c23a">将以 <b>' + currentUser.readerName + '</b>（' + currentUser.cardNo + '）的身份借阅</div>';
+      loginInfo.innerHTML = '<div style="background:#eef7ef;border-radius:8px;padding:8px 12px;font-size:13px;color:#4f8a62">将以 <b>' + currentUser.readerName + '</b>（' + currentUser.cardNo + '）的身份借阅</div>';
       cardInput.style.display = 'none';
     } else {
-      loginInfo.innerHTML = '<div style="background:#fff8e1;border-radius:6px;padding:8px 12px;font-size:13px;color:#8a6d3b">未登录：请输入借书证号，或先 <span style="color:#409eff;cursor:pointer" onclick="closeModal(\'borrowBookModal\');openLogin()">登录</span></div>';
+      loginInfo.innerHTML = '<div style="background:#fdf6e7;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a6d3b">未登录：请输入借书证号，或先 <span style="color:#2f6b45;cursor:pointer;font-weight:bold" onclick="closeModal(\'borrowBookModal\');openLogin()">登录</span></div>';
       cardInput.style.display = 'block';
       cardInput.value = '';
     }
@@ -713,23 +814,23 @@
   async function submitBorrow() {
     const msg = document.getElementById('borrowBookMsg');
     const cardNo = currentUser ? currentUser.cardNo : document.getElementById('borrowCardNo').value.trim();
-    if (!cardNo) { msg.textContent = '请输入借书证号'; msg.style.color = '#e64340'; return; }
+    if (!cardNo) { msg.textContent = '请输入借书证号'; msg.style.color = '#c65d43'; return; }
     msg.textContent = '借书中…'; msg.style.color = '#999';
     try {
       const res = await fetch(BORROW_API + '?cardNo=' + encodeURIComponent(cardNo) + '&bookId=' + borrowBookId, { method: 'POST' });
       const d = await res.json();
       if (d.code === 200) {
         msg.textContent = '借书成功！应还日期已自动设置为 30 天后，可在"我的借阅"查看';
-        msg.style.color = '#67c23a';
+        msg.style.color = '#4f8a62';
         setTimeout(() => closeModal('borrowBookModal'), 2500);
         loadBooks();
       } else {
         msg.textContent = '借书失败：' + (d.msg || '未知错误');
-        msg.style.color = '#e64340';
+        msg.style.color = '#c65d43';
       }
     } catch (e) {
       msg.textContent = '借书失败：' + e.message;
-      msg.style.color = '#e64340';
+      msg.style.color = '#c65d43';
     }
   }
 
@@ -769,7 +870,7 @@
             <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
             <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
             ${b.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px" onclick="renewBorrow(' + b.borrowId + ')">续借30天</button>' : ''}
-            ${b.status !== '1' ? '<div style="background:#fff8e1;border:1px solid #f0e6c8;border-radius:6px;padding:6px 10px;font-size:12px;color:#8a6d3b;margin-top:6px">📖 还书请携带借书证到服务台办理</div>' : ''}
+            ${b.status !== '1' ? '<div style="background:#fdf6e7;border:1px solid #f0e6c8;border-radius:8px;padding:6px 10px;font-size:12px;color:#8a6d3b;margin-top:6px">📖 还书请携带借书证到服务台办理</div>' : ''}
           </div>`;
       }).join('');
     } catch (e) {
@@ -813,6 +914,7 @@
     const saved = localStorage.getItem('shopUser');
     if (saved) currentUser = JSON.parse(saved);
   } catch (e) {}
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
   renderLoginState();
   loadCart();
   loadConfig();
