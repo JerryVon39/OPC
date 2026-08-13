@@ -53,7 +53,7 @@ INSERT INTO `reader` (reader_id, reader_name, phone, card_no, reader_type, sex, 
 (2, '教师测试', '13800000002', 'JS20260002', '2', '0', '0', '测试数据-教师读者(借阅上限10本/借期60天)', 'admin', NOW()),
 (3, '普通测试', '13800000003', 'JS20260003', '3', '0', '0', '测试数据-普通读者(借阅上限3本/借期30天)', 'admin', NOW()),
 (4, '挂失测试', '13800000004', 'JS20260004', '3', '0', '1', '测试数据-挂失读者(可演示前台申请补办)', 'admin', NOW()),
-(5, 'Jerry', '13937262834', 'JS20260005', '2', '0', '0', '测试数据-项目作者账号(教师)', 'admin', NOW());
+(5, 'Jerry', '12345678901', 'DK', '2', '0', '0', '测试数据-项目作者账号(教师)', 'admin', NOW());
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `borrow_record` (
