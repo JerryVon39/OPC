@@ -94,28 +94,21 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("该读者已借阅本书且未归还，请先还书");
         }
-        // 业务规则：借阅数量上限（参数 book.borrow.maxCount，默认 5）
-        int maxCount = 5;
-        try
-        {
-            String cfg = configService.selectConfigByKey("book.borrow.maxCount");
-            if (!cfg.isEmpty())
-            {
-                maxCount = Integer.parseInt(cfg);
-            }
-        }
-        catch (Exception ignore) { }
+        // 业务规则：借阅数量上限（按读者类型区分：学生5/教师10/普通3，参数可配）
+        String readerType = reader.getReaderType();
+        int maxCount = configInt(typeKey("book.borrow.maxCount", readerType), 5);
         int borrowing = borrowRecordMapper.selectBorrowingCount(borrowRecord.getReaderId());
         if (borrowing >= maxCount)
         {
             throw new ServiceException("借阅数量已达上限（" + maxCount + " 本），请先归还部分图书");
         }
-        // 借出日期默认今天，应还日期 = 借出 + 30 天
+        // 借出日期默认今天，应还日期 = 借出 + 按类型的借期（学生/普通30天，教师60天，参数可配）
         if (borrowRecord.getBorrowDate() == null)
         {
             borrowRecord.setBorrowDate(new Date());
         }
-        Date due = new Date(borrowRecord.getBorrowDate().getTime() + 30L * 24 * 3600 * 1000);
+        int days = configInt(typeKey("book.borrow.days", readerType), 30);
+        Date due = new Date(borrowRecord.getBorrowDate().getTime() + days * 24L * 3600 * 1000);
         borrowRecord.setDueDate(due);
         borrowRecord.setStatus("0");
         // 库存 -1：原子条件更新（上方校验负责友好提示，此处兜底并发抢书）
@@ -282,6 +275,43 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         borrow.setReaderId(readers.get(0).getReaderId());
         borrow.setBookId(bookId);
         return insertBorrowRecord(borrow);
+    }
+
+    /** 按读者类型取参数键：book.borrow.maxCount.student（字典值1学生/2教师/3普通→语义后缀），无类型参数时回退通用键 */
+    private String typeKey(String prefix, String readerType)
+    {
+        String suffix = "1".equals(readerType) ? "student"
+                : "2".equals(readerType) ? "teacher"
+                : "3".equals(readerType) ? "normal" : "";
+        if (!suffix.isEmpty())
+        {
+            String key = prefix + "." + suffix;
+            try
+            {
+                String v = configService.selectConfigByKey(key);
+                if (v != null && !v.isEmpty())
+                {
+                    return key;
+                }
+            }
+            catch (Exception ignore) { }
+        }
+        return prefix;
+    }
+
+    /** 读取参数整数，异常/空回退默认值 */
+    private int configInt(String key, int def)
+    {
+        try
+        {
+            String v = configService.selectConfigByKey(key);
+            if (v != null && !v.isEmpty())
+            {
+                return Integer.parseInt(v);
+            }
+        }
+        catch (Exception ignore) { }
+        return def;
     }
 
     /** 前台续借：证号归属校验 + 借出中 + 未逾期 → 应还日期 +30 天 */

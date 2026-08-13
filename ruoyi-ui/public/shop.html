@@ -1030,7 +1030,7 @@
       const res = await fetch(BORROW_API + '?cardNo=' + encodeURIComponent(cardNo) + '&bookId=' + borrowBookId, { method: 'POST' });
       const d = await res.json();
       if (d.code === 200) {
-        msg.textContent = '借书成功！应还日期已自动设置为 30 天后，可在"我的借阅"查看';
+        msg.textContent = '借书成功！应还日期已按借阅规则自动设置，可在"我的借阅"查看';
         msg.style.color = '#4f8a62';
         setTimeout(() => closeModal('borrowBookModal'), 2500);
         // 同步"已借"标识并刷新
