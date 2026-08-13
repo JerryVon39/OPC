@@ -70,6 +70,14 @@ public class ReaderServiceImpl implements IReaderService
         reader.setReaderType(readerType);
         reader.setRemark(remark);
         reader.setStatus("0");
+        reader.setCardNo(generateCardNo());
+        insertReader(reader);
+        return reader;
+    }
+
+    /** 生成唯一证号：JS + 时间戳后8位，查重直到唯一 */
+    private String generateCardNo()
+    {
         for (int i = 0; i < 10; i++)
         {
             String cardNo = "JS" + String.valueOf(System.currentTimeMillis()).substring(5);
@@ -78,9 +86,7 @@ public class ReaderServiceImpl implements IReaderService
             List<Reader> exists = readerMapper.selectReaderList(query);
             if (exists == null || exists.isEmpty())
             {
-                reader.setCardNo(cardNo);
-                insertReader(reader);
-                return reader;
+                return cardNo;
             }
         }
         throw new com.ruoyi.common.exception.ServiceException("证号生成失败，请稍后重试");
@@ -99,6 +105,11 @@ public class ReaderServiceImpl implements IReaderService
                 throw new com.ruoyi.common.exception.ServiceException("该借书证号已被使用，请更换");
             }
             reader.setCardNo(reader.getCardNo().trim());
+        }
+        else
+        {
+            // 证号留空自动生成（后台添加读者零负担，与前台登记一致）
+            reader.setCardNo(generateCardNo());
         }
         reader.setCreateTime(DateUtils.getNowDate());
         return readerMapper.insertReader(reader);

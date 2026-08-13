@@ -96,13 +96,22 @@
           <dict-tag :options="readerTypeOptions" :value="scope.row.readerType" />
         </template>
       </el-table-column>
-      <el-table-column label="性别(0男 1女 2未知)" align="center" prop="sex" />
+      <el-table-column label="性别" align="center" width="70">
+        <template slot-scope="scope">
+          <span>{{ { '0': '男', '1': '女', '2': '未知' }[scope.row.sex] || '未知' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="出生日期" align="center" prop="birthDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.birthDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态(0正常 1停用)" align="center" prop="status" />
+      <el-table-column label="状态" align="center" width="80">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">正常</el-tag>
+          <el-tag v-else type="danger" size="mini">停用</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -137,24 +146,24 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="读者姓名" prop="readerName">
               <el-input v-model="form.readerName" placeholder="请输入读者姓名" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="手机号码" prop="phone">
               <el-input v-model="form.phone" placeholder="请输入手机号码" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="借书证号" prop="cardNo">
-              <el-input v-model="form.cardNo" placeholder="请输入借书证号" />
+              <el-input v-model="form.cardNo" placeholder="留空则自动生成" />
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="读者类型" prop="readerType">
-              <el-select v-model="form.readerType" placeholder="请选择读者类型">
+              <el-select v-model="form.readerType" placeholder="请选择读者类型" style="width:100%">
                 <el-option
                   v-for="dict in readerTypeOptions"
                   :key="dict.dictValue"
@@ -164,26 +173,32 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="24">
-          <el-col :span="24">
-            <el-form-item label="读者类型" prop="readerType">
-              <el-select v-model="form.readerType" placeholder="请选择读者类型">
-                <el-option
-                  v-for="dict in readerTypeOptions"
-                  :key="dict.dictValue"
-                  :label="dict.dictLabel"
-                  :value="dict.dictValue"
-                />
-              </el-select>
+          <el-col :span="12">
+            <el-form-item label="性别" prop="sex">
+              <el-radio-group v-model="form.sex">
+                <el-radio label="0">男</el-radio>
+                <el-radio label="1">女</el-radio>
+                <el-radio label="2">未知</el-radio>
+              </el-radio-group>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
             <el-form-item label="出生日期" prop="birthDate">
               <el-date-picker clearable
                 v-model="form.birthDate"
                 type="date"
                 value-format="yyyy-MM-dd"
-                placeholder="请选择出生日期">
+                placeholder="请选择出生日期"
+                style="width:100%">
               </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="form.status">
+                <el-radio label="0">正常</el-radio>
+                <el-radio label="1">停用</el-radio>
+              </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="24">
