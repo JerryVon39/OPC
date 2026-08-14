@@ -15,6 +15,7 @@ import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.service.IShopOrderService;
 import com.ruoyi.system.service.IReaderService;
+import com.ruoyi.system.service.StatisticsService;
 
 @Service
 public class ShopOrderServiceImpl implements IShopOrderService
@@ -30,6 +31,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
 
     @Autowired
     private IReaderService readerService;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     @Override
     public ShopOrder selectShopOrderByOrderId(Long orderId)
@@ -127,7 +131,10 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("库存不足，无法购买");
         }
-        return shopOrderMapper.insertShopOrder(order);
+        int rows = shopOrderMapper.insertShopOrder(order);
+        // 订单数据变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     @Override
@@ -167,6 +174,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
             bookMapper.restoreStock(order.getBookId(), order.getQuantity());
         }
         order.setStatus("2");
-        return shopOrderMapper.updateShopOrder(order);
+        int rows = shopOrderMapper.updateShopOrder(order);
+        // 订单数据变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 }

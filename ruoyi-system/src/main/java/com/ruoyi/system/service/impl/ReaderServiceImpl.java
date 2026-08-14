@@ -11,6 +11,7 @@ import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IReaderService;
+import com.ruoyi.system.service.StatisticsService;
 
 /**
  * 读者管理Service业务层处理
@@ -29,6 +30,9 @@ public class ReaderServiceImpl implements IReaderService
 
     @Autowired
     private ShopOrderMapper shopOrderMapper;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     /**
      * 查询读者管理
@@ -112,7 +116,10 @@ public class ReaderServiceImpl implements IReaderService
             reader.setCardNo(generateCardNo());
         }
         reader.setCreateTime(DateUtils.getNowDate());
-        return readerMapper.insertReader(reader);
+        int rows = readerMapper.insertReader(reader);
+        // 读者总数变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**
@@ -193,7 +200,10 @@ public class ReaderServiceImpl implements IReaderService
                 throw new com.ruoyi.common.exception.ServiceException("该读者存在待处理订单，无法删除");
             }
         }
-        return readerMapper.deleteReaderByReaderIds(readerIds);
+        int rows = readerMapper.deleteReaderByReaderIds(readerIds);
+        // 读者总数变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**

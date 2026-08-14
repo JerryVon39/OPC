@@ -19,6 +19,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBorrowRecordService;
+import com.ruoyi.system.service.StatisticsService;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 
@@ -31,6 +32,9 @@ public class BorrowRecordController extends BaseController
 {
     @Autowired
     private IBorrowRecordService borrowRecordService;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     /** 导出借阅记录 */
     @PreAuthorize("@ss.hasPermi('system:borrow:export')")
@@ -116,14 +120,14 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.renewByCard(cardNo, borrowId));
     }
 
-    /** 借阅统计：热门图书 + 读者排行（匿名：前台热门推荐用） */
+    /** 借阅统计：热门图书 + 读者排行（匿名：前台热门推荐用，数据走 Redis 缓存） */
     @Anonymous
     @GetMapping("/stats")
     public AjaxResult stats()
     {
         java.util.Map<String, Object> result = new java.util.HashMap<>();
-        result.put("topBooks", borrowRecordService.selectTopBooks());
-        result.put("topReaders", borrowRecordService.selectTopReaders());
+        result.put("topBooks", statisticsService.topBooks());
+        result.put("topReaders", statisticsService.topReaders());
         return success(result);
     }
 

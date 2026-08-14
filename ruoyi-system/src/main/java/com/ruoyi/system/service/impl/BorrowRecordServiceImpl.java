@@ -17,6 +17,7 @@ import com.ruoyi.system.service.IReaderService;
 import com.ruoyi.system.service.FineService;
 import com.ruoyi.system.service.BorrowRuleService;
 import com.ruoyi.system.service.ISysConfigService;
+import com.ruoyi.system.service.StatisticsService;
 
 /**
  * 借阅记录Service业务层处理
@@ -48,6 +49,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
 
     @Autowired
     private IReaderService readerService;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
@@ -142,6 +146,8 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 bookReserveMapper.updateBookReserve(rv);
             }
         }
+        // 借阅数据变了：失效统计缓存（热门排行/看板下次请求重新计算）
+        statisticsService.evictAll();
         return rows;
     }
 
@@ -211,6 +217,8 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             first.setUpdateTime(new Date());
             bookReserveMapper.updateBookReserve(first);
         }
+        // 借阅/罚款数据变了：失效统计缓存
+        statisticsService.evictAll();
         return rows;
     }
 
@@ -218,7 +226,10 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Override
     public int payFine(Long borrowId)
     {
-        return fineService.payFine(borrowId);
+        int rows = fineService.payFine(borrowId);
+        // 未缴罚款总额变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**

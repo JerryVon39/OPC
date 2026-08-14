@@ -349,3 +349,28 @@ INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, 
 SELECT '算法导论（第3版）','Thomas H. Cormen','2','机械工业出版社',128.00,'2012-12-01',10,'0','9787111407010','算法领域的经典教材','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787111407010');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
 SELECT '万历十五年','黄仁宇','3','中华书局',18.00,'2007-01-01',20,'0','9787101054033','大历史观代表作，以小事见大时代','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787101054033');
+
+-- ============================================
+-- 查询性能索引（幂等）：借阅/订单/预约按常用查询条件加索引，数据量增长后避免全表扫描
+-- ============================================
+
+-- ---------- 借阅记录：按读者查（借书校验/我的借阅）、按图书查（归还后预约联动/重复借校验） ----------
+SET @i1 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='borrow_record' AND index_name='idx_br_reader');
+SET @si1 = IF(@i1=0, 'ALTER TABLE borrow_record ADD INDEX idx_br_reader (reader_id)', 'SELECT 1');
+PREPARE st1 FROM @si1; EXECUTE st1; DEALLOCATE PREPARE st1;
+SET @i2 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='borrow_record' AND index_name='idx_br_book');
+SET @si2 = IF(@i2=0, 'ALTER TABLE borrow_record ADD INDEX idx_br_book (book_id)', 'SELECT 1');
+PREPARE st2 FROM @si2; EXECUTE st2; DEALLOCATE PREPARE st2;
+
+-- ---------- 购书订单：按证号查（前台"我的订单"） ----------
+SET @i3 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='shop_order' AND index_name='idx_so_card');
+SET @si3 = IF(@i3=0, 'ALTER TABLE shop_order ADD INDEX idx_so_card (card_no)', 'SELECT 1');
+PREPARE st3 FROM @si3; EXECUTE st3; DEALLOCATE PREPARE st3;
+
+-- ---------- 图书预约：按证号查（前台"我的预约"）、按图书查（还书后找最早预约） ----------
+SET @i4 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='book_reserve' AND index_name='idx_res_card');
+SET @si4 = IF(@i4=0, 'ALTER TABLE book_reserve ADD INDEX idx_res_card (card_no)', 'SELECT 1');
+PREPARE st4 FROM @si4; EXECUTE st4; DEALLOCATE PREPARE st4;
+SET @i5 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='book_reserve' AND index_name='idx_res_book');
+SET @si5 = IF(@i5=0, 'ALTER TABLE book_reserve ADD INDEX idx_res_book (book_id)', 'SELECT 1');
+PREPARE st5 FROM @si5; EXECUTE st5; DEALLOCATE PREPARE st5;

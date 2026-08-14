@@ -11,6 +11,7 @@ import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IBookService;
+import com.ruoyi.system.service.StatisticsService;
 
 /**
  * 图书信息Service业务层处理
@@ -29,6 +30,9 @@ public class BookServiceImpl implements IBookService
 
     @Autowired
     private ShopOrderMapper shopOrderMapper;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     /**
      * 查询图书信息
@@ -71,7 +75,10 @@ public class BookServiceImpl implements IBookService
     public int insertBook(Book book)
     {
         book.setCreateTime(DateUtils.getNowDate());
-        return bookMapper.insertBook(book);
+        int rows = bookMapper.insertBook(book);
+        // 馆藏总数变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**
@@ -84,7 +91,10 @@ public class BookServiceImpl implements IBookService
     public int updateBook(Book book)
     {
         book.setUpdateTime(DateUtils.getNowDate());
-        return bookMapper.updateBook(book);
+        int rows = bookMapper.updateBook(book);
+        // 上架/下架影响在架统计：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**
@@ -119,7 +129,10 @@ public class BookServiceImpl implements IBookService
                 throw new com.ruoyi.common.exception.ServiceException("该图书存在待处理订单，无法删除");
             }
         }
-        return bookMapper.deleteBookByBookIds(bookIds);
+        int rows = bookMapper.deleteBookByBookIds(bookIds);
+        // 馆藏总数变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**

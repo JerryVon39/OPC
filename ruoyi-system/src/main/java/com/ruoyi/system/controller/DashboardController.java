@@ -10,6 +10,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.service.StatisticsService;
 
 /**
  * 首页数据看板Controller
@@ -23,13 +24,16 @@ public class DashboardController extends BaseController
     @Autowired
     private BorrowRecordMapper borrowRecordMapper;
 
-    /** 业务统计（登录即可访问，供后台首页看板使用） */
+    @Autowired
+    private StatisticsService statisticsService;
+
+    /** 业务统计（登录即可访问，供后台首页看板使用）：数据走 Redis 缓存（5分钟） */
     @GetMapping("/stats")
     public AjaxResult stats()
     {
-        Map<String, Object> stats = borrowRecordMapper.selectDashboard();
+        Map<String, Object> stats = statisticsService.dashboard();
         // 热门图书 Top10（前端取前5展示）
-        stats.put("topBooks", borrowRecordMapper.selectTopBooks(new BorrowRecord()));
+        stats.put("topBooks", statisticsService.topBooks());
         return success(stats);
     }
 
@@ -38,7 +42,7 @@ public class DashboardController extends BaseController
     @GetMapping("/publicStats")
     public AjaxResult publicStats()
     {
-        Map<String, Object> stats = borrowRecordMapper.selectDashboard();
+        Map<String, Object> stats = statisticsService.dashboard();
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("bookTotal", stats.get("bookTotal"));
         result.put("readerTotal", stats.get("readerTotal"));
