@@ -88,6 +88,23 @@ INSERT INTO shop_order (order_no, reader_id, reader_name, card_no, book_id, book
 ('WSW20260810001', 1, '学生测试', 'JS20260001', 15, '白夜行', 1, 59.60, '3', '学生测试', DATE_SUB(NOW(), INTERVAL 3 DAY)),
 ('WSW20260812001', 2, '教师测试', 'JS20260002', 21, '算法导论（第3版）', 1, 128.00, '1', '教师测试', DATE_SUB(NOW(), INTERVAL 1 DAY)),
 ('WSW20260811001', 3, '普通测试', 'JS20260003', 7, '围城', 2, 78.00, '2', '普通测试', DATE_SUB(NOW(), INTERVAL 2 DAY));
+-- ---------- 图书预约表 ----------
+CREATE TABLE IF NOT EXISTS `book_reserve` (
+  `reserve_id` bigint NOT NULL AUTO_INCREMENT COMMENT '预约ID',
+  `book_id` bigint DEFAULT NULL COMMENT '图书ID',
+  `reader_id` bigint DEFAULT NULL COMMENT '读者ID',
+  `reader_name` varchar(50) DEFAULT NULL COMMENT '读者姓名(快照)',
+  `card_no` varchar(30) DEFAULT NULL COMMENT '借书证号(快照)',
+  `book_name` varchar(100) DEFAULT NULL COMMENT '图书名称(快照)',
+  `reserve_date` datetime DEFAULT NULL COMMENT '预约时间',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0预约中 1可借 2已完成 3已取消)',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`reserve_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书预约表';
+
 -- 预约演示数据（《白夜行》完整状态链：可借/预约中/已完成/已取消，打开"我的预约"即见）
 INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time) VALUES
 (15, 2, '教师测试', 'JS20260002', '白夜行', DATE_SUB(NOW(), INTERVAL 2 DAY), '1', '教师测试', NOW()),
