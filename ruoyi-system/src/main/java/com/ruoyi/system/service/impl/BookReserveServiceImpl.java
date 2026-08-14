@@ -11,7 +11,9 @@ import com.ruoyi.system.domain.BookReserve;
 import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BookReserveMapper;
+import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ReaderMapper;
+import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBookReserveService;
 
 /**
@@ -28,6 +30,9 @@ public class BookReserveServiceImpl implements IBookReserveService
 
     @Autowired
     private ReaderMapper readerMapper;
+
+    @Autowired
+    private BorrowRecordMapper borrowRecordMapper;
 
     @Override
     public BookReserve selectBookReserveByReserveId(Long reserveId)
@@ -88,6 +93,18 @@ public class BookReserveServiceImpl implements IBookReserveService
         if (book.getStock() != null && book.getStock() > 0)
         {
             throw new ServiceException("该图书当前有库存，可直接借阅，无需预约");
+        }
+        // 已借阅未归还不可预约（借走最后一本的人不能预约自己的书，归还后可直接再借）
+        BorrowRecord bq = new BorrowRecord();
+        bq.setReaderId(reader.getReaderId());
+        bq.setBookId(bookId);
+        List<BorrowRecord> borrowing = borrowRecordMapper.selectBorrowRecordList(bq);
+        for (BorrowRecord br : borrowing)
+        {
+            if ("0".equals(br.getStatus()) || "2".equals(br.getStatus()))
+            {
+                throw new ServiceException("您已借阅本书且未归还，归还后可直接再借，无需预约");
+            }
         }
         // 重复预约校验（预约中/可借状态下不可重复预约）
         BookReserve q = new BookReserve();

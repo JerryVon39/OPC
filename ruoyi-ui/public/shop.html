@@ -656,12 +656,12 @@
       document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
         const onSale = b.status === '0';
         const borrowed = borrowedIds.includes(b.bookId);
-        // 按钮区：已借→已借出 / 有库存→借阅+购物车 / 无库存→预约（避免模板内嵌套 ${}）
+        // 按钮区：已借→已借出(不论库存) / 有库存→借阅+购物车 / 无库存未借→预约（避免模板内嵌套 ${}）
         let btns = '';
-        if (onSale && b.stock > 0) {
-          btns = borrowed
-            ? '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>'
-            : '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>';
+        if (borrowed && onSale) {
+          btns = '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>';
+        } else if (onSale && b.stock > 0) {
+          btns = '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>';
           btns += '<button class="btn-buy" data-id="' + b.bookId + '" data-name="' + b.bookName + '" data-price="' + (b.price || 0) + '" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>';
         } else if (onSale) {
           btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openReserve(this.dataset.id, this.dataset.name)">📌 预约</button>';
@@ -752,12 +752,13 @@
       bBtn.dataset.name = b.bookName;
       cBtn.style.display = 'inline-block';
       rBtn.style.display = 'none';
-    } else if (onSale && b.stock <= 0) {
-      // 库存为0：隐藏借阅/购物车，显示预约
+    } else if (onSale && b.stock <= 0 && !borrowedIds.includes(b.bookId)) {
+      // 库存为0且未借：隐藏借阅/购物车，显示预约
       bBtn.style.display = 'none';
       cBtn.style.display = 'none';
       rBtn.style.display = 'inline-block';
     } else {
+      // 已借该书（无论库存）：不显示借阅/预约
       bBtn.style.display = 'none';
       cBtn.style.display = 'none';
       rBtn.style.display = 'none';
