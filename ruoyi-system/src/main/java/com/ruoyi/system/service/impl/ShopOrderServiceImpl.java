@@ -14,6 +14,7 @@ import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.service.IShopOrderService;
+import com.ruoyi.system.service.IReaderService;
 
 @Service
 public class ShopOrderServiceImpl implements IShopOrderService
@@ -26,6 +27,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
 
     @Autowired
     private ReaderMapper readerMapper;
+
+    @Autowired
+    private IReaderService readerService;
 
     @Override
     public ShopOrder selectShopOrderByOrderId(Long orderId)
@@ -87,15 +91,8 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             quantity = 1L;
         }
-        Reader query = new Reader();
-        query.setCardNo(cardNo.trim());
-        List<Reader> readers = readerMapper.selectReaderList(query);
-        if (readers == null || readers.isEmpty())
-        {
-            throw new ServiceException("借书证号不存在，请先登记");
-        }
-        Reader reader = readers.get(0);
-        if (!"0".equals(reader.getStatus()))
+        Reader reader = readerService.findActiveReader(cardNo);
+        if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法购买");
         }

@@ -93,10 +93,7 @@ public class SysNoticeController extends BaseController
     public AjaxResult publicList()
     {
         java.util.List<SysNotice> list = noticeService.selectNoticeList(new SysNotice());
-        for (SysNotice n : list)
-        {
-            n.setNoticeContent(com.ruoyi.common.utils.BbCodeUtil.render(n.getNoticeContent()));
-        }
+        com.ruoyi.system.util.RenderUtil.renderNoticeContent(list);
         return AjaxResult.success(list);
     }
 

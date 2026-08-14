@@ -13,6 +13,7 @@ import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.service.IBorrowRecordService;
+import com.ruoyi.system.service.IReaderService;
 import com.ruoyi.system.service.FineService;
 import com.ruoyi.system.service.BorrowRuleService;
 import com.ruoyi.system.service.ISysConfigService;
@@ -45,6 +46,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Autowired
     private BorrowRuleService borrowRuleService;
 
+    @Autowired
+    private IReaderService readerService;
+
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
     {
@@ -67,12 +71,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return list;
     }
 
-    /** 借书：创建记录 + 图书库存-1（事务：库存与记录同生共死） */
-    @Override
-    @Transactional
-    public int insertBorrowRecord(BorrowRecord borrowRecord)
+    /** 借书前置校验：图书在架有库存 / 读者正常 / 无欠费 / 未重复借 / 未超上限 */
+    private void validateBeforeBorrow(BorrowRecord borrowRecord, Book book, Reader reader)
     {
-        Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());
         if (book == null)
         {
             throw new ServiceException("图书不存在");
@@ -85,24 +86,29 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("图书库存不足，无法借出");
         }
-        Reader reader = readerMapper.selectReaderByReaderId(borrowRecord.getReaderId());
         if (reader == null)
         {
             throw new ServiceException("读者不存在");
         }
-        // 业务规则：证号状态校验（正常可借，停用/挂失不可借）
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法借书");
         }
-        // 业务规则：欠费冻结（有未缴罚款的读者不能借书）
         fineService.checkNoUnpaidFine(borrowRecord.getReaderId());
-        // 业务规则：重复借阅校验（同一本书未还不可再借）
         borrowRuleService.checkNotBorrowing(borrowRecord.getReaderId(), borrowRecord.getBookId());
-        // 业务规则：借阅数量上限（按读者类型区分：学生5/教师10/普通3，参数可配）
+        borrowRuleService.checkUnderLimit(borrowRecord.getReaderId(), borrowRuleService.maxCountFor(reader.getReaderType()));
+    }
+
+    /** 借书：创建记录 + 图书库存-1（事务：库存与记录同生共死） */
+    @Override
+    @Transactional
+    public int insertBorrowRecord(BorrowRecord borrowRecord)
+    {
+        Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());
+        Reader reader = readerMapper.selectReaderByReaderId(borrowRecord.getReaderId());
+        // 前置校验（图书/读者/欠费/重复/上限）
+        validateBeforeBorrow(borrowRecord, book, reader);
         String readerType = reader.getReaderType();
-        int maxCount = borrowRuleService.maxCountFor(readerType);
-        borrowRuleService.checkUnderLimit(borrowRecord.getReaderId(), maxCount);
         // 借出日期默认今天，应还日期 = 借出 + 按类型的借期（学生/普通30天，教师60天，参数可配）
         if (borrowRecord.getBorrowDate() == null)
         {
@@ -331,15 +337,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("请输入借书证号");
         }
-        Reader query = new Reader();
-        query.setCardNo(cardNo.trim());
-        List<Reader> readers = readerMapper.selectReaderList(query);
-        if (readers == null || readers.isEmpty())
-        {
-            throw new ServiceException("借书证号不存在，请先登记");
-        }
+        Reader reader = readerService.findActiveReader(cardNo);
         BorrowRecord borrow = new BorrowRecord();
-        borrow.setReaderId(readers.get(0).getReaderId());
+        borrow.setReaderId(reader.getReaderId());
         borrow.setBookId(bookId);
         return insertBorrowRecord(borrow);
     }

@@ -41,6 +41,9 @@ public interface IReaderService
     /** 挂失补办：生成新证号并恢复状态，返回新证号 */
     public String reissueCard(Long readerId);
 
+    /** 按证号查询读者（不存在抛异常），供前台各接口复用 */
+    public Reader findActiveReader(String cardNo);
+
     /**
      * 修改读者管理
      * 

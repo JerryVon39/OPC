@@ -15,6 +15,7 @@ import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBookReserveService;
+import com.ruoyi.system.service.IReaderService;
 
 /**
  * 图书预约Service业务层处理
@@ -33,6 +34,9 @@ public class BookReserveServiceImpl implements IBookReserveService
 
     @Autowired
     private BorrowRecordMapper borrowRecordMapper;
+
+    @Autowired
+    private IReaderService readerService;
 
     @Override
     public BookReserve selectBookReserveByReserveId(Long reserveId)
@@ -73,15 +77,8 @@ public class BookReserveServiceImpl implements IBookReserveService
         {
             throw new ServiceException("参数不完整");
         }
-        Reader query = new Reader();
-        query.setCardNo(cardNo.trim());
-        List<Reader> readers = readerMapper.selectReaderList(query);
-        if (readers == null || readers.isEmpty())
-        {
-            throw new ServiceException("借书证号不存在，请先登记");
-        }
-        Reader reader = readers.get(0);
-        if (!"0".equals(reader.getStatus()))
+        Reader reader = readerService.findActiveReader(cardNo);
+        if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法预约");
         }

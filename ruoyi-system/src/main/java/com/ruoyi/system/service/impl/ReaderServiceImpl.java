@@ -128,6 +128,20 @@ public class ReaderServiceImpl implements IReaderService
         return readerMapper.updateReader(reader);
     }
 
+    /** 按证号查询读者（不存在抛异常），供前台各接口复用 */
+    @Override
+    public Reader findActiveReader(String cardNo)
+    {
+        Reader query = new Reader();
+        query.setCardNo(cardNo.trim());
+        List<Reader> readers = readerMapper.selectReaderList(query);
+        if (readers == null || readers.isEmpty())
+        {
+            throw new com.ruoyi.common.exception.ServiceException("借书证号不存在，请先登记");
+        }
+        return readers.get(0);
+    }
+
     /** 挂失补办：生成新证号 + 状态恢复正常（旧证号作废，历史记录快照保留） */
     @Override
     public String reissueCard(Long readerId)

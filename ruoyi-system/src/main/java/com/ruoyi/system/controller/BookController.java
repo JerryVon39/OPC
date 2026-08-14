@@ -46,10 +46,7 @@ public class BookController extends BaseController
         startPage();
         List<Book> list = bookService.selectBookList(book);
         // 简介渲染 BBCODE（展示为富文本；后台编辑回显走 getInfo 不受影响）
-        for (Book b : list)
-        {
-            b.setIntro(com.ruoyi.common.utils.BbCodeUtil.render(b.getIntro()));
-        }
+        com.ruoyi.system.util.RenderUtil.renderBookIntro(list);
         return getDataTable(list);
     }
 
@@ -65,10 +62,7 @@ public class BookController extends BaseController
             return error("参数不完整");
         }
         java.util.List<Book> related = bookService.selectRelatedBooks(bookId, bookType.trim());
-        for (Book b : related)
-        {
-            b.setIntro(com.ruoyi.common.utils.BbCodeUtil.render(b.getIntro()));
-        }
+        com.ruoyi.system.util.RenderUtil.renderBookIntro(related);
         return success(related);
     }
 
