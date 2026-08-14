@@ -100,10 +100,11 @@ JDK 17、Maven 3.6+、Node.js 16+、MySQL 8、Redis
 ### 启动步骤
 
 ```bash
-# 1. 初始化数据库（依次导入）
-mysql -uroot -p < sql/ry_20260417.sql        # 若依系统表
-mysql -uroot -p < sql/quartz.sql             # 定时任务表
-mysql -uroot -p < sql/business_init.sql      # 业务表+字典+菜单+订单表（幂等，可重复执行）
+# 1. 初始化数据库（依次导入；务必带 --default-character-set=utf8mb4，
+#    否则 Windows 终端按 GBK 读脚本会把中文读坏入库（菜单乱码/登录报错））
+mysql --default-character-set=utf8mb4 -uroot -p < sql/ry_20260417.sql        # 若依系统表
+mysql --default-character-set=utf8mb4 -uroot -p < sql/quartz.sql             # 定时任务表
+mysql --default-character-set=utf8mb4 -uroot -p < sql/business_init.sql      # 业务表+字典+菜单+订单表（幂等，可重复执行）
 
 # 2. 配置数据库连接
 #    编辑 ruoyi-admin/src/main/resources/application-druid.yml（账号密码）
@@ -143,6 +144,16 @@ npm run dev
 - 购书业务（校验/下单/库存联动/事务）：`ruoyi-system/.../service/impl/ShopOrderServiceImpl.java`
 - 逾期定时任务：`ruoyi-admin/.../quartz/task/BorrowTask.java`
 - 书店前台：`ruoyi-ui/public/shop.html`
+
+## 🧪 自动化测试（双保险）
+
+| 层级 | 怎么跑 | 覆盖 |
+|---|---|---|
+| 单元测试（75 用例） | `mvn test`（秒级，不依赖数据库） | 罚款计算/借阅规则/预约校验/下单校验/证号生成/统计缓存/BBCODE 渲染/参数回退 |
+| 集成冒烟（51 项） | `python -u scripts/full_test.py`（需后端已启动） | 前台购物/借阅/预约/订单 + 后台管理全链路 |
+
+> 💡 `python` 命令若被 Windows 应用商店的 python 占位拦截，请用完整路径运行：
+> `C:\Users\1\AppData\Local\Python\pythoncore-3.14-64\python.exe scripts/full_test.py`
 
 ## 🛡️ 部署与运维
 
@@ -197,6 +208,15 @@ npm run dev
 | `3b05ef82` | BBCODE 富文本支持 |
 | `a1e859d1` | 续借次数限制 + 弹窗空白关闭 + BBCODE 工具栏 |
 | `d8bba0e3` | BBCODE 站内链接 + 整体回归 51/51 |
+| `636fe606` | 推送前文档更新（功能清单/提交轨迹/指南章节） |
+| `4973134f` | 演示数据检查修复（测试残留清理 + 库存还原） |
+| `3044405c` | P1 代码结构优化（拆借阅规则/罚款服务、BizStatus 常量、ConfigUtil） |
+| `a19fcd63` | P2 代码质量优化（findActiveReader 抽取、校验链拆分、RenderUtil 封装） |
+| `6667e35b` | P3 性能优化（5 个查询索引 + 统计 Redis 缓存与写路径失效） |
+| `b7004272` | 修复孤儿菜单 NPE（parent_id 为 NULL 导致登录路由崩溃） |
+| `e101d0b0` | 修复乱码菜单（脚本执行需 --default-character-set=utf8mb4） |
+| `c7115dbe` | 修复菜单插入顺序（图书业务目录前置，全新库不再产生孤儿菜单） |
+| `63dc1579` | P4 单元测试（8 个测试类 75 用例，JUnit5+Mockito 全通过） |
 
 ## 📜 声明
 
