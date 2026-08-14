@@ -50,8 +50,8 @@
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 
   /* ================= 横幅（渐变 + 书本装饰 + 轮播） ================= */
-  .banner { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); color: #fff; position: relative; overflow: hidden; min-height: 148px; }
-  .banner-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; transition: opacity .6s; pointer-events: none; }
+  .banner { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); color: #fff; position: relative; overflow: hidden; min-height: 176px; }
+  .banner-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; transition: opacity .6s; pointer-events: none; padding-bottom: 44px; box-sizing: border-box; }
   .banner-slide.active { opacity: 1; pointer-events: auto; }
   .banner h1 { font-size: 34px; margin-bottom: 10px; letter-spacing: 4px; }
   .banner p { font-size: 15px; opacity: 0.85; }
@@ -226,8 +226,8 @@
     .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 12px; }
     .nav-right span { font-size: 13px; }
 
-    .banner { min-height: 128px; }
-    .banner-slide { padding: 24px 16px; }
+    .banner { min-height: 156px; }
+    .banner-slide { padding: 24px 16px 40px; }
     .banner h1 { font-size: 26px; }
     .banner p { font-size: 13px; }
     .banner::before, .banner::after { display: none; }
