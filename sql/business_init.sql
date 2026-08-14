@@ -105,6 +105,16 @@ CREATE TABLE IF NOT EXISTS `book_reserve` (
   PRIMARY KEY (`reserve_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书预约表';
 
+-- 预约管理菜单
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '预约管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),7,'reserve','system/reserve/index',1,0,'C','0','0','system:borrow:list','date','admin',NOW(),'图书预约管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='预约管理');
+
+-- 预约参数与定时任务
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '预约可借保留天数','book.reserve.expireDays','2','Y','admin',NOW(),'可借状态超过该天数未到馆借阅自动取消' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.reserve.expireDays');
+INSERT INTO sys_job (job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, remark)
+SELECT '预约超时检查','SYSTEM','borrowTask.reserveExpireCheck()','0 0 8 * * ?','3','1','0','admin',NOW(),'每天8点自动取消超时未取的可借预约并通知下一位' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='预约超时检查');
+
 -- 预约演示数据（《白夜行》完整状态链：可借/预约中/已完成/已取消，打开"我的预约"即见）
 INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time) VALUES
 (15, 2, '教师测试', 'JS20260002', '白夜行', DATE_SUB(NOW(), INTERVAL 2 DAY), '1', '教师测试', NOW()),

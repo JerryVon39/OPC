@@ -532,6 +532,7 @@
   let noticeTexts = [];    // 公告全文列表（点击横幅看全文）
   let noticeIdx = 0;       // 当前显示的公告下标
   let borrowedIds = [];    // 当前登录读者未还的图书ID（"已借"标识）
+  let reservedIds = [];    // 当前登录读者预约中的图书ID（预约中/可借，"已预约"标识）
   const CART_KEY = 'wswCart';
   const FAV_KEY = 'wswFav';
   const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
@@ -603,6 +604,19 @@
     }
   }
 
+  // ===== 当前读者的预约中图书（"已预约"标识，登录后加载）=====
+  async function loadReserved() {
+    reservedIds = [];
+    if (!currentUser) return;
+    try {
+      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const d = await res.json();
+      (d.data || []).forEach(r => {
+        if (r.status === '0' || r.status === '1') reservedIds.push(r.bookId);
+      });
+    } catch (e) { }
+  }
+
   // ===== 当前读者的未还借阅（"已借"标识，登录后加载）=====
   async function loadBorrowed() {
     borrowedIds = [];
@@ -656,13 +670,16 @@
       document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
         const onSale = b.status === '0';
         const borrowed = borrowedIds.includes(b.bookId);
-        // 按钮区：已借→已借出(不论库存) / 有库存→借阅+购物车 / 无库存未借→预约（避免模板内嵌套 ${}）
+        // 按钮区：已借→已借出 / 已预约→已预约 / 有库存→借阅+购物车 / 无库存未借未约→预约（避免模板内嵌套 ${}）
+        const reserved = reservedIds.includes(b.bookId);
         let btns = '';
         if (borrowed && onSale) {
           btns = '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>';
         } else if (onSale && b.stock > 0) {
           btns = '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>';
           btns += '<button class="btn-buy" data-id="' + b.bookId + '" data-name="' + b.bookName + '" data-price="' + (b.price || 0) + '" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>';
+        } else if (onSale && reserved) {
+          btns = '<button class="btn-buy" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已预约该书，请关注我的预约状态">已预约</button>';
         } else if (onSale) {
           btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openReserve(this.dataset.id, this.dataset.name)">📌 预约</button>';
         }
@@ -871,8 +888,9 @@
         closeModal('loginModal');
         msg.textContent = '';
         toast('登录成功，欢迎 ' + currentUser.readerName + '！');
-        // 加载未还借阅（"已借"标识）并刷新列表
+        // 加载未还借阅与预约（"已借"/"已预约"标识）并刷新列表
         await loadBorrowed();
+        await loadReserved();
         loadBooks();
       } else {
         msg.textContent = d.msg || '登录失败';
@@ -887,6 +905,7 @@
     currentUser = null;
     localStorage.removeItem('shopUser');
     borrowedIds = [];
+    reservedIds = [];
     renderLoginState();
     toast('已退出登录');
     loadBooks();
@@ -1078,8 +1097,11 @@
       const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
       const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
-      if (d.code === 200) toast('预约成功！可在"📌 预约"查看排队状态');
-      else toast(d.msg || '预约失败');
+      if (d.code === 200) {
+        toast('预约成功！可在"📌 预约"查看排队状态');
+        await loadReserved();
+        loadBooks();
+      } else toast(d.msg || '预约失败');
     } catch (e) { toast('预约失败：' + e.message); }
   }
   function detailReserve() {
@@ -1129,8 +1151,12 @@
       const body = new URLSearchParams({ cardNo: cardNo, reserveId: reserveId });
       const res = await fetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
-      if (d.code === 200) { toast('预约已取消'); queryMyReserves(); }
-      else toast(d.msg || '取消失败');
+      if (d.code === 200) {
+        toast('预约已取消');
+        await loadReserved();
+        loadBooks();
+        queryMyReserves();
+      } else toast(d.msg || '取消失败');
     } catch (e) { toast('取消失败：' + e.message); }
   }
 
@@ -1340,9 +1366,10 @@
   loadFavs();
   loadCart();
   loadConfig();
-  // 先加载分类字典与"已借"标识（依赖登录态），再加载图书
+  // 先加载分类字典与"已借/已预约"标识（依赖登录态），再加载图书
   loadTypes().then(async () => {
     await loadBorrowed();
+    await loadReserved();
     loadBooks();
   });
   loadHot();

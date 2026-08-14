@@ -24,6 +24,12 @@ public class BorrowTask
     @Autowired
     private com.ruoyi.system.mapper.SysUserMapper userMapper;
 
+    @Autowired
+    private com.ruoyi.system.mapper.BookReserveMapper reserveMapper;
+
+    @Autowired
+    private com.ruoyi.system.service.ISysConfigService configService;
+
     /**
      * 逾期自动标记：将"借出中"且应还日期已过的记录持久化为"已逾期"(2)
      * 建议 cron：每天 0 点执行 0 0 0 * * ?
@@ -46,6 +52,60 @@ public class BorrowTask
             }
         }
         System.out.println("逾期检查完成，共标记 " + count + " 条记录为逾期");
+    }
+
+    /**
+     * 预约超时检查：'可借'状态超过 N 天未到馆借阅 → 自动取消并通知下一位预约人
+     * 建议 cron：每天 8 点执行 0 0 8 * * ?
+     */
+    public void reserveExpireCheck()
+    {
+        int expireDays = 2;
+        try
+        {
+            String v = configService.selectConfigByKey("book.reserve.expireDays");
+            if (v != null && !v.isEmpty())
+            {
+                expireDays = Integer.parseInt(v);
+            }
+        }
+        catch (Exception ignore) { }
+        com.ruoyi.system.domain.BookReserve q = new com.ruoyi.system.domain.BookReserve();
+        q.setStatus("1");
+        java.util.List<com.ruoyi.system.domain.BookReserve> list = reserveMapper.selectBookReserveList(q);
+        if (list == null || list.isEmpty())
+        {
+            System.out.println("预约超时检查：无可借待取预约");
+            return;
+        }
+        Date now = new Date();
+        int count = 0;
+        for (com.ruoyi.system.domain.BookReserve r : list)
+        {
+            if (r.getUpdateTime() == null
+                    || now.getTime() - r.getUpdateTime().getTime() <= expireDays * 24L * 3600 * 1000)
+            {
+                continue;
+            }
+            // 超时未取：取消该预约
+            r.setStatus("3");
+            r.setUpdateTime(now);
+            reserveMapper.updateBookReserve(r);
+            count++;
+            // 通知下一位预约人（该书最早的'预约中'）
+            com.ruoyi.system.domain.BookReserve nq = new com.ruoyi.system.domain.BookReserve();
+            nq.setBookId(r.getBookId());
+            nq.setStatus("0");
+            java.util.List<com.ruoyi.system.domain.BookReserve> next = reserveMapper.selectBookReserveList(nq);
+            if (next != null && !next.isEmpty())
+            {
+                com.ruoyi.system.domain.BookReserve n = next.get(0);
+                n.setStatus("1");
+                n.setUpdateTime(now);
+                reserveMapper.updateBookReserve(n);
+            }
+        }
+        System.out.println("预约超时检查完成，共取消 " + count + " 条超时可借预约");
     }
 
     /**

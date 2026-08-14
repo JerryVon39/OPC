@@ -1,7 +1,9 @@
 import urllib.request, urllib.parse, json, subprocess
 
 BASE = 'http://localhost:8080'
+import os
 MYSQL = r'C:\Users\1\tools\mysql-8.4.9-winx64\bin\mysql.exe'
+DB_PASS = os.environ.get('DB_PASS', 'password')
 
 def req(path, method='GET', data=None, headers=None):
     r = urllib.request.Request(BASE + path, method=method, data=data, headers=headers or {})
@@ -12,7 +14,7 @@ def req(path, method='GET', data=None, headers=None):
         return e.code, e.read().decode('utf-8', 'ignore')
 
 def sql(cmd):
-    r = subprocess.run([MYSQL, '-uroot', '-ppassword', '-N', '--default-character-set=utf8mb4', '-e', 'USE ry-vue; ' + cmd], capture_output=True, encoding='utf-8', errors='replace')
+    r = subprocess.run([MYSQL, '-uroot', '-p' + DB_PASS, '-N', '--default-character-set=utf8mb4', '-e', 'USE ry-vue; ' + cmd], capture_output=True, encoding='utf-8', errors='replace')
     return (r.stdout or '').strip()
 
 # 预清理：删除上次测试残留的订单并还原库存（保证脚本可重复执行）
