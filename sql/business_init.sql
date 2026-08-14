@@ -88,6 +88,15 @@ INSERT INTO shop_order (order_no, reader_id, reader_name, card_no, book_id, book
 ('WSW20260810001', 1, '学生测试', 'JS20260001', 15, '白夜行', 1, 59.60, '3', '学生测试', DATE_SUB(NOW(), INTERVAL 3 DAY)),
 ('WSW20260812001', 2, '教师测试', 'JS20260002', 21, '算法导论（第3版）', 1, 128.00, '1', '教师测试', DATE_SUB(NOW(), INTERVAL 1 DAY)),
 ('WSW20260811001', 3, '普通测试', 'JS20260003', 7, '围城', 2, 78.00, '2', '普通测试', DATE_SUB(NOW(), INTERVAL 2 DAY));
+-- 预约演示数据（《白夜行》完整状态链：可借/预约中/已完成/已取消，打开"我的预约"即见）
+INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time) VALUES
+(15, 2, '教师测试', 'JS20260002', '白夜行', DATE_SUB(NOW(), INTERVAL 2 DAY), '1', '教师测试', NOW()),
+(15, 1, '学生测试', 'JS20260001', '白夜行', DATE_SUB(NOW(), INTERVAL 1 DAY), '0', '学生测试', NOW()),
+(15, 3, '普通测试', 'JS20260003', '白夜行', DATE_SUB(NOW(), INTERVAL 5 DAY), '2', '普通测试', NOW()),
+(15, 5, 'Jerry', 'DK', '白夜行', DATE_SUB(NOW(), INTERVAL 7 DAY), '3', 'Jerry', NOW());
+-- 白夜行库存置 1（对应"可借"那本，与预约状态自洽）
+UPDATE book SET stock=1 WHERE book_id=15 AND stock=18;
+
 -- 挂失测试历史借阅（已归还，演示补办后历史保留）
 INSERT INTO borrow_record (reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time) VALUES
 (4, 18, '2026-07-10', '2026-08-09', '2026-07-25', '1', '挂失测试', 'JS20260004', '边城', 'system', NOW());
