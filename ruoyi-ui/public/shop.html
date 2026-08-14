@@ -49,10 +49,24 @@
   .notice-close:hover { color: var(--danger); background: rgba(0,0,0,0.05); }
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 
-  /* ================= 横幅（渐变 + 书本装饰） ================= */
-  .banner { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); color: #fff; padding: 44px 40px; text-align: center; position: relative; overflow: hidden; }
+  /* ================= 横幅（渐变 + 书本装饰 + 轮播） ================= */
+  .banner { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); color: #fff; position: relative; overflow: hidden; min-height: 148px; }
+  .banner-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; transition: opacity .6s; pointer-events: none; }
+  .banner-slide.active { opacity: 1; pointer-events: auto; }
   .banner h1 { font-size: 34px; margin-bottom: 10px; letter-spacing: 4px; }
   .banner p { font-size: 15px; opacity: 0.85; }
+  .banner-dots { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 8px; z-index: 5; }
+  .banner-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: background .3s; }
+  .banner-dots span.active { background: #fff; }
+
+  /* ================= 店铺数据条（实时统计四格） ================= */
+  .shop-stats { max-width: 1200px; margin: -18px auto 0; padding: 0 20px; position: relative; z-index: 5; display: flex; gap: 12px; }
+  .shop-stats .stat-item { flex: 1; background: var(--card); border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 3px 12px rgba(60,50,30,0.1); }
+  .shop-stats .stat-num { font-size: 24px; font-weight: bold; color: var(--primary); display: block; line-height: 1.3; }
+  .shop-stats .stat-label { font-size: 12px; color: var(--text-light); margin-top: 2px; display: block; }
+
+  /* ================= 新书上架角标 ================= */
+  .new-badge { position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg, var(--accent), #e0a93c); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: bold; z-index: 3; }
   .banner::before, .banner::after {
     content: ''; position: absolute; top: 50%; width: 84px; height: 112px; border-radius: 6px;
     transform: translateY(-50%) rotate(-14deg); opacity: 0.22;
@@ -212,10 +226,13 @@
     .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 12px; }
     .nav-right span { font-size: 13px; }
 
-    .banner { padding: 24px 16px; }
+    .banner { min-height: 128px; }
+    .banner-slide { padding: 24px 16px; }
     .banner h1 { font-size: 26px; }
     .banner p { font-size: 13px; }
     .banner::before, .banner::after { display: none; }
+    .shop-stats { flex-wrap: wrap; margin-top: -14px; }
+    .shop-stats .stat-item { flex: 1 1 40%; }
     .notice-bar { padding: 8px 40px 8px 14px; }
     .hot-bar { padding: 0 12px; }
     .container { padding: 0 12px; }
@@ -279,10 +296,31 @@
     </div>
   </div>
 
-  <!-- 横幅 -->
+  <!-- 横幅（轮播） -->
   <div class="banner">
-    <h1>📚 万事屋</h1>
-    <p>万事屋，万事皆可办 ｜ 借书自助，还书请到服务台</p>
+    <div class="banner-slide active">
+      <h1>📚 万事屋</h1>
+      <p>万事屋，万事皆可办 ｜ 借书自助，还书请到服务台</p>
+    </div>
+    <div class="banner-slide">
+      <h1>📌 图书预约</h1>
+      <p>书被借光？一键预约，归还后自动通知您来借</p>
+    </div>
+    <div class="banner-slide">
+      <h1>🆕 新书上架</h1>
+      <p>藏书持续更新，文学 / 科技 / 历史任你挑选</p>
+    </div>
+    <div class="banner-dots" id="bannerDots">
+      <span class="active"></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- 店铺数据条（实时统计） -->
+  <div class="shop-stats" id="shopStats" style="display:none">
+    <div class="stat-item"><span class="stat-num" id="stBooks">0</span><span class="stat-label">馆藏图书</span></div>
+    <div class="stat-item"><span class="stat-num" id="stReaders">0</span><span class="stat-label">注册读者</span></div>
+    <div class="stat-item"><span class="stat-num" id="stBorrowToday">0</span><span class="stat-label">今日借出</span></div>
+    <div class="stat-item"><span class="stat-num" id="stOrderToday">0</span><span class="stat-label">今日订单</span></div>
   </div>
 
   <!-- 热门推荐 -->
@@ -511,6 +549,7 @@
   const RESERVE_API = '/dev-api/system/reserve/add';
   const MY_RESERVE_API = '/dev-api/system/reserve/myList';
   const RESERVE_CANCEL = '/dev-api/system/reserve/cancel';
+  const PUBLIC_STATS_API = '/dev-api/system/dashboard/publicStats';
   const DICT_API = '/dev-api/system/dict/data/type/book_type';
   const RELATED_API = '/dev-api/system/book/related';
 
@@ -538,6 +577,41 @@
   const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
   const PLACEHOLDER = 'img/book-placeholder.svg';
   const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
+
+  // ===== 店铺数据条：实时统计（馆藏/读者/今日借出/今日订单）=====
+  async function loadShopStats() {
+    try {
+      const res = await fetch(PUBLIC_STATS_API);
+      const d = await res.json();
+      const s = d.data || {};
+      document.getElementById('stBooks').textContent = s.bookTotal || 0;
+      document.getElementById('stReaders').textContent = s.readerTotal || 0;
+      document.getElementById('stBorrowToday').textContent = s.borrowToday || 0;
+      document.getElementById('stOrderToday').textContent = s.orderToday || 0;
+      document.getElementById('shopStats').style.display = 'flex';
+    } catch (e) { }
+  }
+
+  // ===== Banner 轮播（3 张宣传卡 + 圆点指示）=====
+  let bannerIdx = 0;
+  function showBanner(i) {
+    bannerIdx = (i + 3) % 3;
+    document.querySelectorAll('.banner-slide').forEach((s, idx) => s.classList.toggle('active', idx === bannerIdx));
+    document.querySelectorAll('#bannerDots span').forEach((d, idx) => d.classList.toggle('active', idx === bannerIdx));
+  }
+  function initBanner() {
+    document.querySelectorAll('#bannerDots span').forEach((d, i) => {
+      d.onclick = () => showBanner(i);
+    });
+    setInterval(() => showBanner(bannerIdx + 1), 5000);
+  }
+
+  // ===== 新书上架判断（最近 7 天入库）=====
+  function isNewBook(b) {
+    if (!b.createTime) return false;
+    const t = new Date(String(b.createTime).replace(/-/g, '/'));
+    return (Date.now() - t.getTime()) < 7 * 24 * 3600 * 1000;
+  }
 
   // ===== 图书分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
   async function loadTypes() {
@@ -686,6 +760,7 @@
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
+              ${isNewBook(b) ? '<span class="new-badge">🆕 新</span>' : ''}
               <span class="fav-btn ${isFav(b.bookId) ? 'fav-on' : ''}" data-id="${b.bookId}" title="收藏" onclick="event.stopPropagation();toggleFav(this.dataset.id)">${isFav(b.bookId) ? '♥' : '♡'}</span>
               ${b.cover ? '<img src="' + imgSrc(b.cover) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />'}
             </div>
@@ -1372,6 +1447,8 @@
     await loadReserved();
     loadBooks();
   });
+  loadShopStats();
+  initBanner();
   loadHot();
   loadNotices();
 </script>

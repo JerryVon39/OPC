@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.system.domain.BorrowRecord;
@@ -30,5 +31,19 @@ public class DashboardController extends BaseController
         // 热门图书 Top10（前端取前5展示）
         stats.put("topBooks", borrowRecordMapper.selectTopBooks(new BorrowRecord()));
         return success(stats);
+    }
+
+    /** 前台公开统计（匿名）：店铺数据条用（馆藏/读者/今日借出/今日订单，无敏感数据） */
+    @Anonymous
+    @GetMapping("/publicStats")
+    public AjaxResult publicStats()
+    {
+        Map<String, Object> stats = borrowRecordMapper.selectDashboard();
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("bookTotal", stats.get("bookTotal"));
+        result.put("readerTotal", stats.get("readerTotal"));
+        result.put("borrowToday", stats.get("borrowToday"));
+        result.put("orderToday", stats.get("orderToday"));
+        return success(result);
     }
 }

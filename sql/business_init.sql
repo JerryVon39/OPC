@@ -105,6 +105,10 @@ CREATE TABLE IF NOT EXISTS `book_reserve` (
   PRIMARY KEY (`reserve_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书预约表';
 
+-- 分散演示书入库日期（前台"新"角标只显示最近入库的3本，其余为旧书）
+UPDATE book SET create_time='2026-06-15 10:00:00' WHERE book_name IN ('三体','深入理解计算机系统','明朝那些事儿','活着','百年孤独','围城');
+UPDATE book SET create_time='2026-07-01 10:00:00' WHERE book_name IN ('平凡的世界','红楼梦','西游记','三国演义','水浒传','小王子','老人与海','呐喊','边城','骆驼祥子','代码大全（第2版）','万历十五年');
+
 -- 预约管理菜单
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '预约管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),7,'reserve','system/reserve/index',1,0,'C','0','0','system:borrow:list','date','admin',NOW(),'图书预约管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='预约管理');
