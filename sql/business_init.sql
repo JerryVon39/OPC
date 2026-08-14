@@ -2,6 +2,8 @@
 -- 图书管理系统 业务初始化 SQL
 -- 前置：先导入 ry_20260417.sql 和 quartz.sql
 -- 说明：本文件幂等，可重复执行
+-- 注意：必须指定字符集执行，否则中文会乱码入库（Windows 默认 GBK 会把 UTF-8 读坏）：
+--   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < business_init.sql
 -- ============================================
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
