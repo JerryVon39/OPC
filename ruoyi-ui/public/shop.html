@@ -598,6 +598,12 @@
     });
     setInterval(() => showBanner(bannerIdx + 1), 5000);
   }
+  // 轮播跳转：/ 开头站内跳转，http 开头新标签打开
+  function goBannerLink(link) {
+    if (!link) return;
+    if (link.startsWith('http')) window.open(link, '_blank');
+    else location.href = link;
+  }
   async function loadBanners() {
     let list = DEFAULT_BANNERS;
     try {
@@ -607,15 +613,16 @@
     } catch (e) { }
     const slidesBox = document.getElementById('bannerSlides');
     const dotsBox = document.getElementById('bannerDots');
-    slidesBox.innerHTML = list.map((b, i) =>
-      '<div class="banner-slide' + (i === 0 ? ' active' : '') + '">' +
+    slidesBox.innerHTML = list.map((b, i) => {
+      const clickable = b.link ? ' style="cursor:pointer" onclick="goBannerLink(\'' + String(b.link).replace(/'/g, "\\'") + '\')"' : '';
+      return '<div class="banner-slide' + (i === 0 ? ' active' : '') + '"' + clickable + '>' +
         (b.image ? '<img src="' + imgSrc(b.image) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />' : '') +
         '<div style="position:relative;z-index:2' + (b.image ? ';background:rgba(36,64,47,0.55);padding:16px 30px;border-radius:12px' : '') + '">' +
           '<h1>' + (b.title || '') + '</h1>' +
           (b.subtitle ? '<p>' + b.subtitle + '</p>' : '') +
         '</div>' +
-      '</div>'
-    ).join('');
+      '</div>';
+    }).join('');
     dotsBox.innerHTML = list.map((_, i) => '<span' + (i === 0 ? ' class="active"' : '') + '></span>').join('');
     initBanner();
   }
