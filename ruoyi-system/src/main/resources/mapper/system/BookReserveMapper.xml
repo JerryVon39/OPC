@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookReserveMapper">
+
+    <resultMap type="BookReserve" id="BookReserveResult">
+        <result property="reserveId"    column="reserve_id"    />
+        <result property="bookId"      column="book_id"      />
+        <result property="readerId"    column="reader_id"    />
+        <result property="readerName"  column="reader_name"  />
+        <result property="cardNo"      column="card_no"      />
+        <result property="bookName"    column="book_name"    />
+        <result property="reserveDate" column="reserve_date" />
+        <result property="status"      column="status"       />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"  column="create_time"  />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"  column="update_time"  />
+    </resultMap>
+
+    <sql id="selectBookReserveVo">
+        select reserve_id, book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time, update_by, update_time from book_reserve
+    </sql>
+
+    <select id="selectBookReserveList" parameterType="BookReserve" resultMap="BookReserveResult">
+        <include refid="selectBookReserveVo"/>
+        <where>
+            <if test="bookId != null"> and book_id = #{bookId}</if>
+            <if test="readerId != null"> and reader_id = #{readerId}</if>
+            <if test="cardNo != null and cardNo != ''"> and card_no = #{cardNo}</if>
+            <if test="bookName != null and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
+        </where>
+        order by reserve_id asc
+    </select>
+
+    <select id="selectBookReserveByReserveId" parameterType="Long" resultMap="BookReserveResult">
+        <include refid="selectBookReserveVo"/>
+        where reserve_id = #{reserveId}
+    </select>
+
+    <insert id="insertBookReserve" parameterType="BookReserve" useGeneratedKeys="true" keyProperty="reserveId">
+        insert into book_reserve
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bookId != null">book_id,</if>
+            <if test="readerId != null">reader_id,</if>
+            <if test="readerName != null">reader_name,</if>
+            <if test="cardNo != null">card_no,</if>
+            <if test="bookName != null">book_name,</if>
+            <if test="reserveDate != null">reserve_date,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bookId != null">#{bookId},</if>
+            <if test="readerId != null">#{readerId},</if>
+            <if test="readerName != null">#{readerName},</if>
+            <if test="cardNo != null">#{cardNo},</if>
+            <if test="bookName != null">#{bookName},</if>
+            <if test="reserveDate != null">#{reserveDate},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBookReserve" parameterType="BookReserve">
+        update book_reserve
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where reserve_id = #{reserveId}
+    </update>
+
+    <delete id="deleteBookReserveByReserveIds" parameterType="String">
+        delete from book_reserve where reserve_id in
+        <foreach item="reserveId" collection="array" open="(" separator="," close=")">
+            #{reserveId}
+        </foreach>
+    </delete>
+</mapper>

@@ -252,6 +252,7 @@
       <span id="registerEntry" onclick="openRegister()">📝 读者登记</span>
       <span onclick="openReissue()">🪪 补办证号</span>
       <span onclick="openMyBorrow()">📖 我的借阅</span>
+      <span onclick="openMyReserves()">📌 预约</span>
       <span onclick="openFavs()">❤️ 收藏</span>
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
       <span id="cartArea" style="cursor:pointer" onclick="openCart()">🛒 购物车 (0)</span>
@@ -336,6 +337,7 @@
       <div id="relatedBooks" class="related-grid"><div class="related-empty">加载中…</div></div>
       <div class="modal-btns">
         <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
+        <button class="btn-buy" style="background:#8a6d3b;display:none" onclick="detailReserve()" id="detailReserveBtn">📌 预约</button>
         <button class="btn-buy" onclick="detailAddCart()" id="detailCartBtn" style="display:none">加入购物车</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
       </div>
@@ -447,6 +449,20 @@
     </div>
   </div>
 
+  <!-- 我的预约弹窗 -->
+  <div id="reserveModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📌 我的预约</h3>
+      <p class="modal-tip">登录后自动显示；未登录请输入借书证号查询</p>
+      <input id="qReserveCard" class="modal-input" placeholder="🎫 借书证号" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="queryMyReserves()">查询</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('reserveModal')">关闭</button>
+      </div>
+      <div id="reserveResult" style="margin-top:14px"></div>
+    </div>
+  </div>
+
   <!-- 我的收藏弹窗 -->
   <div id="favModal" class="modal" style="display:none">
     <div class="modal-box">
@@ -492,6 +508,9 @@
   const CONFIG_API = '/dev-api/system/config/configKey/book.stock.warn';
   const MYINFO_API = '/dev-api/system/reader/updateMyInfo';
   const REISSUE_API = '/dev-api/system/reader/applyReissue';
+  const RESERVE_API = '/dev-api/system/reserve/add';
+  const MY_RESERVE_API = '/dev-api/system/reserve/myList';
+  const RESERVE_CANCEL = '/dev-api/system/reserve/cancel';
   const DICT_API = '/dev-api/system/dict/data/type/book_type';
   const RELATED_API = '/dev-api/system/book/related';
 
@@ -500,6 +519,7 @@
   const STATUS_MAP = { '0': '在售', '1': '已下架' };
   const BORROW_STATUS = { '0': '借出中', '1': '已归还', '2': '已逾期' };
   const ORDER_STATUS = { '0': '待付款', '1': '已完成', '2': '已取消', '3': '已收款' };
+  const RESERVE_STATUS = { '0': '预约中', '1': '可借', '2': '已完成', '3': '已取消' };
   const COVER_COLORS = ['#e8f0e9', '#f6efe2', '#eef4ef', '#f4e9ea', '#e9eef6', '#f3efe4'];
 
   // ===== 全局状态 =====
@@ -635,6 +655,17 @@
       }
       document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
         const onSale = b.status === '0';
+        const borrowed = borrowedIds.includes(b.bookId);
+        // 按钮区：已借→已借出 / 有库存→借阅+购物车 / 无库存→预约（避免模板内嵌套 ${}）
+        let btns = '';
+        if (onSale && b.stock > 0) {
+          btns = borrowed
+            ? '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>'
+            : '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>';
+          btns += '<button class="btn-buy" data-id="' + b.bookId + '" data-name="' + b.bookName + '" data-price="' + (b.price || 0) + '" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>';
+        } else if (onSale) {
+          btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openReserve(this.dataset.id, this.dataset.name)">📌 预约</button>';
+        }
         return `
           <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
             <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
@@ -647,16 +678,11 @@
               <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
               <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
               ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">库存紧张</span>' : ''}
-              ${onSale && borrowedIds.includes(b.bookId) ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已借</span>' : ''}
+              ${onSale && borrowed ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已借</span>' : ''}
             </div>
             <div class="book-bottom">
               <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
-              <div style="display:flex;gap:8px">
-                ${onSale ? (borrowedIds.includes(b.bookId)
-                  ? '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>'
-                  : '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + b.bookName + '" onclick="event.stopPropagation();openBorrow(this.dataset.id, this.dataset.name)">借阅</button>') : ''}
-                <button class="btn-buy ${onSale ? '' : 'disabled'}" ${onSale ? '' : 'disabled'} data-id="${b.bookId}" data-name="${b.bookName}" data-price="${b.price || 0}" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>
-              </div>
+              <div style="display:flex;gap:8px">${btns}</div>
             </div>
           </div>`;
       }).join('');
@@ -719,14 +745,22 @@
     document.getElementById('detailRemark').textContent = b.remark || '—';
     const bBtn = document.getElementById('detailBorrowBtn');
     const cBtn = document.getElementById('detailCartBtn');
+    const rBtn = document.getElementById('detailReserveBtn');
     if (onSale && b.stock > 0 && !borrowedIds.includes(b.bookId)) {
       bBtn.style.display = 'inline-block';
       bBtn.dataset.id = b.bookId;
       bBtn.dataset.name = b.bookName;
       cBtn.style.display = 'inline-block';
+      rBtn.style.display = 'none';
+    } else if (onSale && b.stock <= 0) {
+      // 库存为0：隐藏借阅/购物车，显示预约
+      bBtn.style.display = 'none';
+      cBtn.style.display = 'none';
+      rBtn.style.display = 'inline-block';
     } else {
       bBtn.style.display = 'none';
       cBtn.style.display = 'none';
+      rBtn.style.display = 'none';
     }
     document.getElementById('detailModal').style.display = 'flex';
     loadRelated(b);
@@ -1033,6 +1067,70 @@
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
     }
+  }
+
+  // ===== 图书预约（库存为0时排队，归还后可借）=====
+  async function openReserve(bookId, bookName) {
+    if (!currentUser) { toast('请先登录后再预约'); openLogin(); return; }
+    if (!confirm('确认预约《' + bookName + '》？图书归还后您将收到"可借"通知')) return;
+    try {
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
+      const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) toast('预约成功！可在"📌 预约"查看排队状态');
+      else toast(d.msg || '预约失败');
+    } catch (e) { toast('预约失败：' + e.message); }
+  }
+  function detailReserve() {
+    if (detailBook) openReserve(detailBook.bookId, detailBook.bookName);
+  }
+  function openMyReserves() {
+    document.getElementById('reserveModal').style.display = 'flex';
+    if (currentUser) {
+      document.getElementById('qReserveCard').value = currentUser.cardNo;
+      document.getElementById('qReserveCard').style.display = 'none';
+      queryMyReserves();
+    } else {
+      document.getElementById('qReserveCard').style.display = 'block';
+    }
+  }
+  async function queryMyReserves() {
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qReserveCard').value.trim();
+    const box = document.getElementById('reserveResult');
+    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
+    box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
+    try {
+      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo));
+      const d = await res.json();
+      if (d.code !== 200 || !d.data || !d.data.length) {
+        box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无预约记录</span></div>';
+        return;
+      }
+      // 状态色竖条：预约中金 / 可借绿 / 已完成灰 / 已取消灰
+      const barColor = { '0': '#d4a24e', '1': '#4f8a62', '2': '#b9b0a2', '3': '#b9b0a2' };
+      const tagCls = { '0': 'tag-off', '1': 'tag-sale', '2': 'tag-sale', '3': 'tag-off' };
+      box.innerHTML = d.data.map(r => `
+        <div class="borrow-item" style="border-left-color:${barColor[r.status] || '#b9b0a2'}">
+          <div style="font-weight:bold;margin-bottom:4px">《${r.bookName || '未知图书'}》 <span class="tag ${tagCls[r.status] || 'tag-off'}">${RESERVE_STATUS[r.status] || '未知'}</span></div>
+          <div style="color:#999">预约时间：${r.reserveDate || '-'}</div>
+          ${r.status === '1' ? '<div style="background:#eef7ef;border:1px solid #d5ead9;border-radius:8px;padding:6px 10px;font-size:12px;color:#4f8a62;margin-top:6px">✅ 图书已归还，请尽快到馆借阅（借出后预约自动完成）</div>' : ''}
+          ${(r.status === '0' || r.status === '1') ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd;box-shadow:none" onclick="cancelReserve(' + r.reserveId + ')">取消预约</button>' : ''}
+        </div>`).join('');
+    } catch (e) {
+      box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
+    }
+  }
+  async function cancelReserve(reserveId) {
+    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qReserveCard').value.trim();
+    if (!cardNo) { toast('请先输入借书证号'); return; }
+    if (!confirm('确认取消该预约吗？')) return;
+    try {
+      const body = new URLSearchParams({ cardNo: cardNo, reserveId: reserveId });
+      const res = await fetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) { toast('预约已取消'); queryMyReserves(); }
+      else toast(d.msg || '取消失败');
+    } catch (e) { toast('取消失败：' + e.message); }
   }
 
   // ===== 取消订单（仅待处理，自动回滚库存）=====

@@ -37,6 +37,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Autowired
     private com.ruoyi.system.mapper.SysNoticeMapper noticeMapper;
 
+    @Autowired
+    private com.ruoyi.system.mapper.BookReserveMapper bookReserveMapper;
+
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
     {
@@ -132,7 +135,22 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("图书库存不足，无法借出");
         }
-        return borrowRecordMapper.insertBorrowRecord(borrowRecord);
+        int rows = borrowRecordMapper.insertBorrowRecord(borrowRecord);
+        // 借出成功后：该读者对该书的预约（预约中/可借）置为已完成
+        com.ruoyi.system.domain.BookReserve rq = new com.ruoyi.system.domain.BookReserve();
+        rq.setReaderId(borrowRecord.getReaderId());
+        rq.setBookId(book.getBookId());
+        java.util.List<com.ruoyi.system.domain.BookReserve> reserves = bookReserveMapper.selectBookReserveList(rq);
+        for (com.ruoyi.system.domain.BookReserve rv : reserves)
+        {
+            if ("0".equals(rv.getStatus()) || "1".equals(rv.getStatus()))
+            {
+                rv.setStatus("2");
+                rv.setUpdateTime(new Date());
+                bookReserveMapper.updateBookReserve(rv);
+            }
+        }
+        return rows;
     }
 
     @Override
@@ -195,6 +213,18 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         int rows = borrowRecordMapper.updateBorrowRecord(record);
         // 归还后同步逾期催还公告：还清了就删公告，还有逾期就重新汇总
         syncOverdueNotice();
+        // 归还后检查预约：该书最早的"预约中"读者 → 状态置"可借"（前台我的预约可见）
+        com.ruoyi.system.domain.BookReserve rq = new com.ruoyi.system.domain.BookReserve();
+        rq.setBookId(record.getBookId());
+        rq.setStatus("0");
+        java.util.List<com.ruoyi.system.domain.BookReserve> reserves = bookReserveMapper.selectBookReserveList(rq);
+        if (reserves != null && !reserves.isEmpty())
+        {
+            com.ruoyi.system.domain.BookReserve first = reserves.get(0);
+            first.setStatus("1");
+            first.setUpdateTime(new Date());
+            bookReserveMapper.updateBookReserve(first);
+        }
         return rows;
     }
 
