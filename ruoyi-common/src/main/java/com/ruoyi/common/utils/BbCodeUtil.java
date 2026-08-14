@@ -27,7 +27,7 @@ public class BbCodeUtil
         s = s.replaceAll("\\[u\\](.*?)\\[/u\\]", "<u>$1</u>");
         s = s.replaceAll("\\[color=([a-zA-Z0-9#]{3,7})\\](.*?)\\[/color\\]", "<span style=\"color:$1\">$2</span>");
         s = s.replaceAll("\\[size=([0-9]{1,2})\\](.*?)\\[/size\\]", "<span style=\"font-size:${1}px\">$2</span>");
-        s = s.replaceAll("\\[url=((?:https?|#)[^\\]\\s]+)\\](.*?)\\[/url\\]", "<a href=\"$1\" target=\"_blank\" rel=\"noopener\">$2</a>");
+        s = s.replaceAll("\\[url=((?:https?|#|/)[^\\]\\s]+)\\](.*?)\\[/url\\]", "<a href=\"$1\" target=\"_blank\" rel=\"noopener\">$2</a>");
         s = s.replaceAll("\\[img\\]((?:https?|/)[^\\]\\s]+)\\[/img\\]", "<img src=\"$1\" style=\"max-width:100%;border-radius:6px\" />");
         s = s.replaceAll("\\[quote\\](.*?)\\[/quote\\]", "<blockquote style=\"margin:6px 0;padding:8px 12px;border-left:3px solid #d4a24e;background:#faf8f3;color:#666\">$1</blockquote>");
         s = s.replaceAll("\\[code\\](.*?)\\[/code\\]", "<pre style=\"background:#2d3a4b;color:#e8e8e8;padding:10px;border-radius:6px;overflow-x:auto\">$1</pre>");

@@ -408,7 +408,7 @@ export default {
       }).catch(() => {})
     },
     insertBbcodeUrl() {
-      this.$prompt('输入链接地址（http/https）', '链接', { inputValue: 'https://', inputPattern: /^(https?|#)\S+$/, inputErrorMessage: '仅支持 http/https' }).then(({ value }) => {
+      this.$prompt('输入链接地址（http/https 或站内 / 路径）', '链接', { inputValue: 'https://', inputPattern: /^(https?|#|\/)\S+$/, inputErrorMessage: '仅支持 http/https 或 / 开头的站内路径' }).then(({ value }) => {
         this.insertBbcode('[url=' + value + ']', '[/url]')
       }).catch(() => {})
     },
