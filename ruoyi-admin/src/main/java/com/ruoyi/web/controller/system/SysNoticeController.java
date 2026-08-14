@@ -87,12 +87,17 @@ public class SysNoticeController extends BaseController
     /**
      * 首页顶部公告列表（返回全部正常公告，带当前用户已读标记，最多5条）
      */
-    /** 前台公告列表（匿名公开接口）：不依赖登录用户 */
+    /** 前台公告列表（匿名公开接口）：不依赖登录用户，内容渲染 BBCODE */
     @Anonymous
     @GetMapping("/publicList")
     public AjaxResult publicList()
     {
-        return AjaxResult.success(noticeService.selectNoticeList(new SysNotice()));
+        java.util.List<SysNotice> list = noticeService.selectNoticeList(new SysNotice());
+        for (SysNotice n : list)
+        {
+            n.setNoticeContent(com.ruoyi.common.utils.BbCodeUtil.render(n.getNoticeContent()));
+        }
+        return AjaxResult.success(list);
     }
 
     @GetMapping("/listTop")

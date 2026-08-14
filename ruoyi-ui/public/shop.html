@@ -854,7 +854,7 @@
     document.getElementById('detailStock').textContent = (b.stock ?? 0) + ' 本';
     document.getElementById('detailStatus').textContent = onSale ? '在售' : '已下架';
     document.getElementById('detailIsbn').textContent = b.isbn || '—';
-    document.getElementById('detailIntro').textContent = b.intro || '—';
+    document.getElementById('detailIntro').innerHTML = b.intro || '—';
     document.getElementById('detailRemark').textContent = b.remark || '—';
     const bBtn = document.getElementById('detailBorrowBtn');
     const cBtn = document.getElementById('detailCartBtn');
@@ -954,10 +954,10 @@
       el.style.paddingLeft = '0';
     }
   }
-  // 点击公告栏：查看当前公告全文（关闭按钮已 stopPropagation 不会触发）
+  // 点击公告栏：查看当前公告全文（关闭按钮已 stopPropagation 不会触发；内容为 BBCODE 渲染后的 HTML）
   function openNoticeDetail(event) {
     if (!noticeTexts.length) return;
-    document.getElementById('noticeDetailText').textContent = noticeTexts[noticeIdx];
+    document.getElementById('noticeDetailText').innerHTML = noticeTexts[noticeIdx];
     document.getElementById('noticeDetailModal').style.display = 'flex';
   }
   // 关闭公告：当天不再显示
