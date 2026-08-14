@@ -374,3 +374,12 @@ PREPARE st4 FROM @si4; EXECUTE st4; DEALLOCATE PREPARE st4;
 SET @i5 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='book_reserve' AND index_name='idx_res_book');
 SET @si5 = IF(@i5=0, 'ALTER TABLE book_reserve ADD INDEX idx_res_book (book_id)', 'SELECT 1');
 PREPARE st5 FROM @si5; EXECUTE st5; DEALLOCATE PREPARE st5;
+
+-- ============================================
+-- 孤儿菜单自愈（幂等）：历史脚本顺序问题可能让菜单 parent_id 为 NULL，
+-- 会导致登录后路由构建 NPE（Cannot invoke getParentId().longValue()）
+-- ============================================
+UPDATE sys_menu m JOIN sys_menu p ON p.menu_name='图书业务' SET m.parent_id=p.menu_id
+WHERE m.menu_name='预约管理' AND m.parent_id IS NULL;
+UPDATE sys_menu m JOIN sys_menu p ON p.menu_name='订单管理' SET m.parent_id=p.menu_id
+WHERE m.menu_name='订单删除' AND m.parent_id IS NULL;
