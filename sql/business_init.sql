@@ -132,6 +132,10 @@ INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_t
 ('新书上架', '藏书持续更新，文学 / 科技 / 历史任你挑选', '', 3, '0', 'admin', NOW())
 ON DUPLICATE KEY UPDATE title=VALUES(title);
 
+-- ---------- 菜单：图书业务目录（必须先于所有引用它的子菜单插入，否则 parent_id 为 NULL 导致登录菜单树 NPE） ----------
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '图书业务',0,1,'business','',1,0,'M','0','0','','book','admin',NOW(),'图书业务模块' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书业务');
+
 -- 轮播图管理菜单与权限点
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '轮播图管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),8,'banner','system/banner/index',1,0,'C','0','0','system:banner:list','picture','admin',NOW(),'前台轮播图管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图管理');
@@ -204,10 +208,6 @@ INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_cl
 SELECT 2,'教师','2','reader_type','success','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='2');
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
 SELECT 3,'普通读者','3','reader_type','warning','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='3');
-
--- ---------- 菜单：图书业务目录 ----------
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '图书业务',0,1,'business','',1,0,'M','0','0','','book','admin',NOW(),'图书业务模块' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书业务');
 
 -- 图书信息
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
