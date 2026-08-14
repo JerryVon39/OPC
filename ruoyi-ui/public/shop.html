@@ -1353,7 +1353,9 @@
             <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
             <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
             ${b.fineAmount > 0 && b.finePaid === '0' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">欠费 ¥' + b.fineAmount + '</span>' : ''}
-            ${b.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px" onclick="renewBorrow(' + b.borrowId + ')">续借30天</button>' : ''}
+            ${(b.renewCount || 0) > 0 && b.status === '0' ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已续借' + (b.renewCount || 0) + '次</span>' : ''}
+            ${b.status === '0' && (b.renewCount || 0) >= 1 ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled>已续借</button>'
+              : (b.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px" onclick="renewBorrow(' + b.borrowId + ')">续借30天</button>' : '')}
             ${b.fineAmount > 0 && b.finePaid === '0' ? '<div style="background:#fdf0ec;border:1px solid #f5d9d1;border-radius:8px;padding:6px 10px;font-size:12px;color:#c65d43;margin-top:6px">⚠️ 您有未缴罚款，请到服务台缴费后方可继续借书</div>' : ''}
             ${b.status !== '1' ? '<div style="background:#fdf6e7;border:1px solid #f0e6c8;border-radius:8px;padding:6px 10px;font-size:12px;color:#8a6d3b;margin-top:6px">📖 还书请携带借书证到服务台办理</div>' : ''}
           </div>`;
@@ -1443,6 +1445,13 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2500);
   }
+
+  // ===== 弹窗点击空白处（遮罩）自动关闭 =====
+  document.querySelectorAll('.modal').forEach(function (m) {
+    m.addEventListener('click', function (e) {
+      if (e.target === m) m.style.display = 'none';
+    });
+  });
 
   // ===== 详情弹窗内借阅按钮（委托）=====
   document.addEventListener('click', function (e) {

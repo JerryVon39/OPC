@@ -239,7 +239,17 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="图书简介" prop="intro">
-              <el-input v-model="form.intro" type="textarea" :rows="3" placeholder="请输入图书简介" />
+              <div class="bbcode-toolbar">
+                <el-button size="mini" @click="insertBbcode('[b]','[/b]')">B</el-button>
+                <el-button size="mini" @click="insertBbcode('[i]','[/i]')">I</el-button>
+                <el-button size="mini" @click="insertBbcode('[u]','[/u]')">U</el-button>
+                <el-button size="mini" @click="insertBbcodeColor">🎨 颜色</el-button>
+                <el-button size="mini" @click="insertBbcodeUrl">🔗 链接</el-button>
+                <el-button size="mini" @click="insertBbcode('[quote]','[/quote]')">📦 引用</el-button>
+                <el-button size="mini" @click="insertBbcode('[center]','[/center]')">居中</el-button>
+                <el-button size="mini" @click="clearBbcode">✂️ 清除格式</el-button>
+              </div>
+              <el-input ref="introInput" v-model="form.intro" type="textarea" :rows="4" placeholder="支持 BBCODE：如 [b]粗体[/b] [quote]引用[/quote] [color=red]红字[/color] [url=https://x]链接[/url]" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -376,6 +386,39 @@ export default {
       }
       this.resetForm("form")
     },
+    /** BBCODE 快捷插入（光标处） */
+    getIntroTextarea() {
+      return this.$refs.introInput ? this.$refs.introInput.$refs.textarea : null
+    },
+    insertBbcode(prefix, suffix) {
+      const ta = this.getIntroTextarea()
+      const val = this.form.intro || ''
+      if (!ta) { this.form.intro = val + prefix + suffix; return }
+      const start = ta.selectionStart, end = ta.selectionEnd
+      const selected = val.substring(start, end)
+      this.form.intro = val.substring(0, start) + prefix + selected + suffix + val.substring(end)
+      this.$nextTick(() => {
+        ta.focus()
+        ta.setSelectionRange(start + prefix.length, start + prefix.length + selected.length)
+      })
+    },
+    insertBbcodeColor() {
+      this.$prompt('输入颜色（如 red 或 #c65d43）', '颜色', { inputValue: '#c65d43', inputPattern: /^[a-zA-Z0-9#]{3,7}$/, inputErrorMessage: '格式不正确' }).then(({ value }) => {
+        this.insertBbcode('[color=' + value + ']', '[/color]')
+      }).catch(() => {})
+    },
+    insertBbcodeUrl() {
+      this.$prompt('输入链接地址（http/https）', '链接', { inputValue: 'https://', inputPattern: /^(https?|#)\S+$/, inputErrorMessage: '仅支持 http/https' }).then(({ value }) => {
+        this.insertBbcode('[url=' + value + ']', '[/url]')
+      }).catch(() => {})
+    },
+    clearBbcode() {
+      const ta = this.getIntroTextarea()
+      if (!ta) return
+      this.form.intro = ta.value
+        .replace(/\[(b|i|u|quote|center|code)\]/g, '').replace(/\[\/(b|i|u|quote|center|code)\]/g, '')
+        .replace(/\[(color|size|url|img)=[^\]]*\]/g, '').replace(/\[\/(color|size|url|img)\]/g, '')
+    },
     /** 封面上传成功回调（存相对路径 fileName，通过 /dev-api 代理加载，换端口/部署不写死主机名） */
     handleCoverSuccess(res) {
       if (res.code === 200) {
@@ -468,5 +511,15 @@ export default {
   object-fit: cover;
   display: block;
   border-radius: 6px;
+}
+.bbcode-toolbar {
+  margin-bottom: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.bbcode-toolbar .el-button--mini {
+  padding: 4px 8px;
+  font-weight: bold;
 }
 </style>

@@ -345,9 +345,17 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("该记录已逾期，请先归还后再借");
         }
+        // 续借次数限制（参数 book.borrow.renewLimit，默认 1 次）
+        long renewLimit = configInt("book.borrow.renewLimit", 1);
+        long renewCount = record.getRenewCount() == null ? 0 : record.getRenewCount();
+        if (renewCount >= renewLimit)
+        {
+            throw new ServiceException("该图书已续借过 " + renewCount + " 次，不可再次续借");
+        }
         // 应还日期 +30 天
         Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);
         record.setDueDate(newDue);
+        record.setRenewCount(renewCount + 1);
         record.setUpdateTime(new Date());
         return borrowRecordMapper.updateBorrowRecord(record);
     }
@@ -458,8 +466,16 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("该记录已逾期，请先归还后再借");
         }
+        // 续借次数限制（与后台 renewBook 一致）
+        long renewLimit = configInt("book.borrow.renewLimit", 1);
+        long renewCount = record.getRenewCount() == null ? 0 : record.getRenewCount();
+        if (renewCount >= renewLimit)
+        {
+            throw new ServiceException("该图书已续借过 " + renewCount + " 次，不可再次续借");
+        }
         Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);
         record.setDueDate(newDue);
+        record.setRenewCount(renewCount + 1);
         record.setUpdateTime(new Date());
         return borrowRecordMapper.updateBorrowRecord(record);
     }

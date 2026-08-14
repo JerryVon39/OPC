@@ -68,6 +68,10 @@ public class BorrowRecord extends BaseEntity
     @Excel(name = "罚款状态", readConverterExp = "0=未缴,1=已缴")
     private String finePaid;
 
+    /** 已续借次数 */
+    @Excel(name = "续借次数")
+    private Long renewCount;
+
     public Long getBorrowId() { return borrowId; }
     public void setBorrowId(Long borrowId) { this.borrowId = borrowId; }
 
@@ -106,4 +110,7 @@ public class BorrowRecord extends BaseEntity
 
     public String getFinePaid() { return finePaid; }
     public void setFinePaid(String finePaid) { this.finePaid = finePaid; }
+
+    public Long getRenewCount() { return renewCount; }
+    public void setRenewCount(Long renewCount) { this.renewCount = renewCount; }
 }

@@ -16,11 +16,12 @@
         <result property="bookName"    column="bookName"     />
         <result property="fineAmount"  column="fine_amount"  />
         <result property="finePaid"    column="fine_paid"    />
+        <result property="renewCount"  column="renew_count"  />
     </resultMap>
 
     <sql id="selectBorrowRecordVo">
         select b.borrow_id, b.reader_id, b.book_id, b.borrow_date, b.due_date, b.return_date, b.status, b.remark,
-               b.fine_amount, b.fine_paid,
+               b.fine_amount, b.fine_paid, b.renew_count,
                -- 快照优先，JOIN 兜底（旧数据无快照时仍能显示；删除读者/图书后快照保证历史完整）
                COALESCE(b.reader_name, r.reader_name) as readerName,
                COALESCE(b.card_no, r.card_no) as cardNo,
@@ -96,6 +97,7 @@
             <if test="bookName != null">book_name = #{bookName},</if>
             <if test="fineAmount != null">fine_amount = #{fineAmount},</if>
             <if test="finePaid != null">fine_paid = #{finePaid},</if>
+            <if test="renewCount != null">renew_count = #{renewCount},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>

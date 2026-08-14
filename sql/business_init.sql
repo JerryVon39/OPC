@@ -142,6 +142,13 @@ SELECT '轮播图修改',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播�
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '轮播图删除',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),4,'','',1,0,'F','0','0','system:banner:remove','#','admin',NOW(),'轮播图删除' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图删除');
 
+-- ---------- 续借次数字段与参数 ----------
+SET @rc = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='renew_count');
+SET @rs = IF(@rc=0, 'ALTER TABLE borrow_record ADD COLUMN renew_count int DEFAULT 0 COMMENT ''已续借次数''', 'SELECT 1');
+PREPARE rst FROM @rs; EXECUTE rst; DEALLOCATE PREPARE rst;
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '续借次数上限','book.borrow.renewLimit','1','Y','admin',NOW(),'每本图书最多可续借次数' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.borrow.renewLimit');
+
 -- BBCODE 演示：小王子简介展示富文本效果
 UPDATE book SET intro = '写给大人的[b]童话[/b]，关于爱与责任的寓言。
 [quote]只有用心才能看得清，真正重要的东西用眼睛是看不见的。[/quote]
