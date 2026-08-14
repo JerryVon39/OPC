@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysBannerMapper">
+
+    <resultMap type="SysBanner" id="SysBannerResult">
+        <result property="bannerId"   column="banner_id"   />
+        <result property="title"     column="title"       />
+        <result property="subtitle"  column="subtitle"    />
+        <result property="image"     column="image"       />
+        <result property="link"      column="link"        />
+        <result property="sort"      column="sort"        />
+        <result property="status"    column="status"      />
+        <result property="createBy"  column="create_by"   />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy"  column="update_by"   />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectSysBannerVo">
+        select banner_id, title, subtitle, image, link, sort, status, create_by, create_time, update_by, update_time from sys_banner
+    </sql>
+
+    <select id="selectSysBannerList" parameterType="SysBanner" resultMap="SysBannerResult">
+        <include refid="selectSysBannerVo"/>
+        <where>
+            <if test="title != null and title != ''"> and title like concat('%', #{title}, '%')</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
+        </where>
+        order by sort asc, banner_id asc
+    </select>
+
+    <select id="selectSysBannerByBannerId" parameterType="Long" resultMap="SysBannerResult">
+        <include refid="selectSysBannerVo"/>
+        where banner_id = #{bannerId}
+    </select>
+
+    <insert id="insertSysBanner" parameterType="SysBanner" useGeneratedKeys="true" keyProperty="bannerId">
+        insert into sys_banner
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">title,</if>
+            <if test="subtitle != null">subtitle,</if>
+            <if test="image != null">image,</if>
+            <if test="link != null">link,</if>
+            <if test="sort != null">sort,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null">#{title},</if>
+            <if test="subtitle != null">#{subtitle},</if>
+            <if test="image != null">#{image},</if>
+            <if test="link != null">#{link},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateSysBanner" parameterType="SysBanner">
+        update sys_banner
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null">title = #{title},</if>
+            <if test="subtitle != null">subtitle = #{subtitle},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="link != null">link = #{link},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where banner_id = #{bannerId}
+    </update>
+
+    <delete id="deleteSysBannerByBannerIds" parameterType="String">
+        delete from sys_banner where banner_id in
+        <foreach item="bannerId" collection="array" open="(" separator="," close=")">
+            #{bannerId}
+        </foreach>
+    </delete>
+</mapper>

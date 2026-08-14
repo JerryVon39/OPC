@@ -1,0 +1,205 @@
+<template>
+  <div class="app-container">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="标题" prop="title">
+        <el-input v-model="queryParams.title" placeholder="请输入标题" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
+          <el-option label="启用" value="0" />
+          <el-option label="停用" value="1" />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:banner:add']">新增</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['system:banner:remove']">删除</el-button>
+      </el-col>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+    </el-row>
+
+    <el-table v-loading="loading" :data="bannerList" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column label="轮播ID" align="center" prop="bannerId" width="80" />
+      <el-table-column label="预览" align="center" width="150">
+        <template slot-scope="scope">
+          <div v-if="scope.row.image" style="width:130px;height:50px;border-radius:6px;overflow:hidden">
+            <img :src="imgUrl(scope.row.image)" style="width:100%;height:100%;object-fit:cover" />
+          </div>
+          <div v-else style="width:130px;height:50px;border-radius:6px;background:linear-gradient(135deg,#24402f,#3d6a52);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px">{{ scope.row.title }}</div>
+        </template>
+      </el-table-column>
+      <el-table-column label="标题" align="center" prop="title" />
+      <el-table-column label="副标题" align="center" prop="subtitle" show-overflow-tooltip />
+      <el-table-column label="排序" align="center" prop="sort" width="70" />
+      <el-table-column label="状态" align="center" width="80">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">启用</el-tag>
+          <el-tag v-else type="info" size="mini">停用</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:banner:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:banner:remove']">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
+
+    <el-dialog :title="title" :visible.sync="open" width="560px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="90px">
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="form.title" placeholder="请输入标题（必填）" />
+        </el-form-item>
+        <el-form-item label="副标题" prop="subtitle">
+          <el-input v-model="form.subtitle" placeholder="请输入副标题" />
+        </el-form-item>
+        <el-form-item label="图片" prop="image">
+          <el-upload
+            class="avatar-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleImageSuccess"
+          >
+            <img v-if="form.image" :src="imgUrl(form.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
+            <i v-else class="el-icon-plus avatar-uploader-icon" style="width:100%"></i>
+          </el-upload>
+          <div style="color:#999;font-size:12px">可不上传图片，留空则前台显示渐变背景+文字</div>
+        </el-form-item>
+        <el-form-item label="跳转链接" prop="link">
+          <el-input v-model="form.link" placeholder="如 /shop.html 或空" />
+        </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input-number v-model="form.sort" :min="0" :max="99" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="form.status">
+            <el-radio label="0">启用</el-radio>
+            <el-radio label="1">停用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitForm">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { listBanner, getBanner, delBanner, addBanner, updateBanner } from "@/api/system/banner"
+import { getToken } from "@/utils/auth"
+
+export default {
+  name: "Banner",
+  data() {
+    return {
+      loading: true,
+      showSearch: true,
+      ids: [],
+      multiple: true,
+      total: 0,
+      bannerList: [],
+      title: "",
+      open: false,
+      uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
+      uploadHeaders: { Authorization: "Bearer " + getToken() },
+      queryParams: { pageNum: 1, pageSize: 10, title: null, status: null },
+      form: {},
+      rules: {
+        title: [{ required: true, message: "标题不能为空", trigger: "blur" }]
+      }
+    }
+  },
+  created() {
+    this.getList()
+  },
+  methods: {
+    imgUrl(url) {
+      if (!url) return ''
+      if (url.startsWith('http') || url.startsWith('/dev-api')) return url
+      return process.env.VUE_APP_BASE_API + url
+    },
+    handleImageSuccess(res) {
+      if (res.code === 200) {
+        this.form.image = res.fileName || res.url
+        this.$modal.msgSuccess("图片上传成功")
+      } else {
+        this.$modal.msgError("上传失败：" + (res.msg || ""))
+      }
+    },
+    getList() {
+      this.loading = true
+      listBanner(this.queryParams).then(response => {
+        this.bannerList = response.rows
+        this.total = response.total
+        this.loading = false
+      })
+    },
+    handleQuery() { this.queryParams.pageNum = 1; this.getList() },
+    resetQuery() { this.resetForm("queryForm"); this.handleQuery() },
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.bannerId)
+      this.multiple = !selection.length
+    },
+    handleAdd() {
+      this.reset()
+      this.open = true
+      this.title = "新增轮播图"
+    },
+    handleUpdate(row) {
+      this.reset()
+      getBanner(row.bannerId).then(response => {
+        this.form = response.data
+        this.open = true
+        this.title = "修改轮播图"
+      })
+    },
+    submitForm() {
+      this.$refs["form"].validate(valid => {
+        if (valid) {
+          if (this.form.bannerId != null) {
+            updateBanner(this.form).then(() => {
+              this.$modal.msgSuccess("修改成功")
+              this.open = false
+              this.getList()
+            })
+          } else {
+            addBanner(this.form).then(() => {
+              this.$modal.msgSuccess("新增成功")
+              this.open = false
+              this.getList()
+            })
+          }
+        }
+      })
+    },
+    handleDelete(row) {
+      const bannerIds = row.bannerId || this.ids
+      this.$modal.confirm('确认删除该轮播图吗？').then(() => {
+        return delBanner(bannerIds)
+      }).then(() => {
+        this.getList()
+        this.$modal.msgSuccess("删除成功")
+      }).catch(() => {})
+    },
+    cancel() { this.open = false; this.reset() },
+    reset() {
+      this.form = { bannerId: null, title: null, subtitle: null, image: null, link: null, sort: 0, status: '0' }
+      this.resetForm("form")
+    }
+  }
+}
+</script>

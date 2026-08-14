@@ -296,23 +296,10 @@
     </div>
   </div>
 
-  <!-- 横幅（轮播） -->
+  <!-- 横幅（轮播，内容由后台"轮播图管理"动态加载） -->
   <div class="banner">
-    <div class="banner-slide active">
-      <h1>📚 万事屋</h1>
-      <p>万事屋，万事皆可办 ｜ 借书自助，还书请到服务台</p>
-    </div>
-    <div class="banner-slide">
-      <h1>📌 图书预约</h1>
-      <p>书被借光？一键预约，归还后自动通知您来借</p>
-    </div>
-    <div class="banner-slide">
-      <h1>🆕 新书上架</h1>
-      <p>藏书持续更新，文学 / 科技 / 历史任你挑选</p>
-    </div>
-    <div class="banner-dots" id="bannerDots">
-      <span class="active"></span><span></span><span></span>
-    </div>
+    <div id="bannerSlides"></div>
+    <div class="banner-dots" id="bannerDots"></div>
   </div>
 
   <!-- 店铺数据条（实时统计） -->
@@ -550,6 +537,7 @@
   const MY_RESERVE_API = '/dev-api/system/reserve/myList';
   const RESERVE_CANCEL = '/dev-api/system/reserve/cancel';
   const PUBLIC_STATS_API = '/dev-api/system/dashboard/publicStats';
+  const BANNER_API = '/dev-api/system/banner/publicList';
   const DICT_API = '/dev-api/system/dict/data/type/book_type';
   const RELATED_API = '/dev-api/system/book/related';
 
@@ -592,7 +580,12 @@
     } catch (e) { }
   }
 
-  // ===== Banner 轮播（3 张宣传卡 + 圆点指示）=====
+  // ===== Banner 轮播（后台"轮播图管理"动态加载，无图渐变背景+文字，有图显示图片）=====
+  const DEFAULT_BANNERS = [
+    { title: '万事屋', subtitle: '万事屋，万事皆可办 ｜ 借书自助，还书请到服务台' },
+    { title: '图书预约', subtitle: '书被借光？一键预约，归还后自动通知您来借' },
+    { title: '新书上架', subtitle: '藏书持续更新，文学 / 科技 / 历史任你挑选' }
+  ];
   let bannerIdx = 0;
   function showBanner(i) {
     bannerIdx = (i + 3) % 3;
@@ -604,6 +597,27 @@
       d.onclick = () => showBanner(i);
     });
     setInterval(() => showBanner(bannerIdx + 1), 5000);
+  }
+  async function loadBanners() {
+    let list = DEFAULT_BANNERS;
+    try {
+      const res = await fetch(BANNER_API);
+      const d = await res.json();
+      if (d.code === 200 && d.data && d.data.length) list = d.data;
+    } catch (e) { }
+    const slidesBox = document.getElementById('bannerSlides');
+    const dotsBox = document.getElementById('bannerDots');
+    slidesBox.innerHTML = list.map((b, i) =>
+      '<div class="banner-slide' + (i === 0 ? ' active' : '') + '">' +
+        (b.image ? '<img src="' + imgSrc(b.image) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />' : '') +
+        '<div style="position:relative;z-index:2' + (b.image ? ';background:rgba(36,64,47,0.55);padding:16px 30px;border-radius:12px' : '') + '">' +
+          '<h1>' + (b.title || '') + '</h1>' +
+          (b.subtitle ? '<p>' + b.subtitle + '</p>' : '') +
+        '</div>' +
+      '</div>'
+    ).join('');
+    dotsBox.innerHTML = list.map((_, i) => '<span' + (i === 0 ? ' class="active"' : '') + '></span>').join('');
+    initBanner();
   }
 
   // ===== 新书上架判断（最近 7 天入库）=====
@@ -1448,7 +1462,7 @@
     loadBooks();
   });
   loadShopStats();
-  initBanner();
+  loadBanners();
   loadHot();
   loadNotices();
 </script>

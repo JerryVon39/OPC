@@ -109,6 +109,39 @@ CREATE TABLE IF NOT EXISTS `book_reserve` (
 UPDATE book SET create_time='2026-06-15 10:00:00' WHERE book_name IN ('三体','深入理解计算机系统','明朝那些事儿','活着','百年孤独','围城');
 UPDATE book SET create_time='2026-07-01 10:00:00' WHERE book_name IN ('平凡的世界','红楼梦','西游记','三国演义','水浒传','小王子','老人与海','呐喊','边城','骆驼祥子','代码大全（第2版）','万历十五年');
 
+-- ---------- 前台轮播图 ----------
+CREATE TABLE IF NOT EXISTS `sys_banner` (
+  `banner_id` bigint NOT NULL AUTO_INCREMENT COMMENT '轮播ID',
+  `title` varchar(100) DEFAULT NULL COMMENT '标题',
+  `subtitle` varchar(200) DEFAULT NULL COMMENT '副标题',
+  `image` varchar(255) DEFAULT NULL COMMENT '图片地址(可为空,空则渐变背景)',
+  `link` varchar(255) DEFAULT NULL COMMENT '跳转链接',
+  `sort` int DEFAULT '0' COMMENT '排序',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0启用 1停用)',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`banner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='前台轮播图';
+INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time) VALUES
+('万事屋', '万事屋，万事皆可办 ｜ 借书自助，还书请到服务台', '', 1, '0', 'admin', NOW()),
+('图书预约', '书被借光？一键预约，归还后自动通知您来借', '/shop.html', 2, '0', 'admin', NOW()),
+('新书上架', '藏书持续更新，文学 / 科技 / 历史任你挑选', '', 3, '0', 'admin', NOW())
+ON DUPLICATE KEY UPDATE title=VALUES(title);
+
+-- 轮播图管理菜单与权限点
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),8,'banner','system/banner/index',1,0,'C','0','0','system:banner:list','picture','admin',NOW(),'前台轮播图管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图管理');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图查询',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),1,'','',1,0,'F','0','0','system:banner:query','#','admin',NOW(),'轮播图查询' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图查询');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图新增',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),2,'','',1,0,'F','0','0','system:banner:add','#','admin',NOW(),'轮播图新增' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图新增');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图修改',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),3,'','',1,0,'F','0','0','system:banner:edit','#','admin',NOW(),'轮播图修改' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图修改');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图删除',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),4,'','',1,0,'F','0','0','system:banner:remove','#','admin',NOW(),'轮播图删除' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图删除');
+
 -- 预约管理菜单
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '预约管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),7,'reserve','system/reserve/index',1,0,'C','0','0','system:borrow:list','date','admin',NOW(),'图书预约管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='预约管理');
