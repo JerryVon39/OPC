@@ -22,6 +22,7 @@ sql("DELETE FROM shop_order WHERE order_no LIKE 'WSW178%';")
 sql("UPDATE book SET stock=40 WHERE book_name='小王子';")
 sql("UPDATE book SET stock=35 WHERE book_name='老人与海';")
 sql("UPDATE borrow_record SET due_date='2026-09-12' WHERE reader_id=1 AND book_id=1 AND status='0';")
+sql("UPDATE borrow_record SET renew_count=0;")
 
 results = []
 def tc(no, name, cond, detail=''):
