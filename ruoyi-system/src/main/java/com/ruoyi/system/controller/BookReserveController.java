@@ -17,6 +17,7 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.system.domain.BookReserve;
 import com.ruoyi.system.service.IBookReserveService;
+import com.ruoyi.system.service.ReaderSessionService;
 
 /**
  * 图书预约Controller
@@ -28,6 +29,9 @@ public class BookReserveController extends BaseController
     @Autowired
     private IBookReserveService bookReserveService;
 
+    @Autowired
+    private ReaderSessionService readerSessionService;
+
     /** 后台预约列表 */
     @PreAuthorize("@ss.hasPermi('system:borrow:list')")
     @GetMapping("/list")
@@ -38,32 +42,43 @@ public class BookReserveController extends BaseController
         return getDataTable(list);
     }
 
-    /** 前台预约（匿名）：按证号预约（仅库存为0可预约） */
+    /** 前台预约：短期读者会话 + 证号校验 */
     @Anonymous
     @PostMapping("/add")
-    public AjaxResult add(String cardNo, Long bookId)
+    public AjaxResult add(String cardNo, String sessionToken, Long bookId)
     {
-        return toAjax(bookReserveService.reserveByCard(cardNo, bookId));
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        return toAjax(bookReserveService.reserveByCard(sessionCard, bookId));
     }
 
-    /** 前台我的预约（匿名） */
+    /** 前台我的预约：短期读者会话查询 */
     @Anonymous
     @GetMapping("/myList")
-    public AjaxResult myList(String cardNo)
+    public AjaxResult myList(String cardNo, String sessionToken)
     {
-        if (cardNo == null || cardNo.trim().isEmpty())
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
-            return error("请输入借书证号");
+            return error("登录已失效，请重新登录");
         }
-        return success(bookReserveService.selectReservesByCard(cardNo.trim()));
+        return success(bookReserveService.selectReservesByCard(sessionCard));
     }
 
-    /** 前台取消预约（匿名） */
+    /** 前台取消预约：短期读者会话 + 证号归属校验 */
     @Anonymous
     @PostMapping("/cancel")
-    public AjaxResult cancel(String cardNo, Long reserveId)
+    public AjaxResult cancel(String cardNo, String sessionToken, Long reserveId)
     {
-        return toAjax(bookReserveService.cancelByCard(cardNo, reserveId));
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        return toAjax(bookReserveService.cancelByCard(sessionCard, reserveId));
     }
 
     /** 后台删除预约记录 */

@@ -6,6 +6,8 @@ MYSQL = r'C:\Users\1\tools\mysql-8.4.9-winx64\bin\mysql.exe'
 DB_PASS = os.environ.get('DB_PASS', 'password')
 
 def req(path, method='GET', data=None, headers=None):
+    if isinstance(data, str):
+        data = data.encode()
     r = urllib.request.Request(BASE + path, method=method, data=data, headers=headers or {})
     try:
         with urllib.request.urlopen(r, timeout=15) as resp:
@@ -35,9 +37,16 @@ def login(username, password='admin123'):
     s, d = req('/login', 'POST', json.dumps({'username': username, 'password': password}).encode(), {'Content-Type': 'application/json'})
     return d
 
+SESSION = {}  # cardNo -> 前台登录 sessionToken（登录后提取，业务接口必须携带）
+
 def reader_login(name, card):
     s, d = req('/system/reader/login', 'POST', urllib.parse.urlencode({'readerName': name, 'cardNo': card}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    if d.get('code') == 200:
+        SESSION[card] = (d.get('data') or {}).get('sessionToken')
     return d
+
+def auth_params(card):
+    return urllib.parse.urlencode({'cardNo': card, 'sessionToken': SESSION.get(card, '')})
 
 # ============ 1. 登录与权限 ============
 print('=== 1. 登录与权限 ===')
@@ -77,9 +86,9 @@ new_card = (d.get('data') or {}).get('cardNo')
 tc('3.1', '前台登记(证号后端生成)', d.get('code') == 200 and str(new_card).startswith('JS'), str(new_card))
 d = reader_login('整体测试', new_card)
 tc('3.2', '新登记可登录', d.get('code') == 200)
-s, d = req('/system/reader/updateMyInfo', 'POST', urllib.parse.urlencode({'cardNo': new_card, 'readerName': '整体测试', 'phone': '13800009999'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reader/updateMyInfo', 'POST', (auth_params(new_card) + '&readerName=' + urllib.parse.quote('整体测试') + '&phone=13800009999').encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('3.3', '修改手机号', d.get('code') == 200)
-s, d = req('/system/reader/updateMyInfo', 'POST', urllib.parse.urlencode({'cardNo': new_card, 'readerName': '错名', 'phone': '13800000000'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reader/updateMyInfo', 'POST', (auth_params(new_card) + '&readerName=' + urllib.parse.quote('错名') + '&phone=13800000000').encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('3.4', '错误姓名改手机被拒', d.get('code') != 200)
 # 清理测试读者
 _, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
@@ -91,20 +100,20 @@ tc('3.5', '删除无关联读者', d.get('code') == 200)
 print('=== 4. 借阅 ===')
 # 4.1 欠费冻结（普通测试欠费1.20）
 d = reader_login('普通测试', 'JS20260003')
-s, d = req('/system/borrow/borrowByCard', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260003', 'bookId': 10}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/borrow/borrowByCard', 'POST', auth_params('JS20260003') + '&bookId=10', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('4.1', '欠费冻结借书被拒', '罚款' in str(d.get('msg')), d.get('msg'))
 # 4.2 正常借书（学生借西游记）
-s, d = req('/system/borrow/borrowByCard', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'bookId': 10}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/borrow/borrowByCard', 'POST', auth_params('JS20260001') + '&bookId=10', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('4.2', '正常借书', d.get('code') == 200, d.get('msg'))
 bid = sql("SELECT MAX(borrow_id) FROM borrow_record WHERE reader_id=1 AND book_id=10;")
 # 4.3 重复借阅被拒
-s, d = req('/system/borrow/borrowByCard', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'bookId': 10}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/borrow/borrowByCard', 'POST', auth_params('JS20260001') + '&bookId=10', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('4.3', '重复借阅被拒', '未归还' in str(d.get('msg')), d.get('msg'))
 # 4.4 我的借阅
-s, d = req('/system/borrow/queryByCard?cardNo=JS20260001')
+s, d = req('/system/borrow/queryByCard?' + auth_params('JS20260001'))
 tc('4.4', '我的借阅列表', d.get('code') == 200 and len(d.get('data') or []) >= 3)
 # 4.5 教师借期60天（教师借三体？学生借了……借围城 book7）
-s, d = req('/system/borrow/borrowByCard', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260002', 'bookId': 7}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/borrow/borrowByCard', 'POST', auth_params('JS20260002') + '&bookId=7', {'Content-Type': 'application/x-www-form-urlencoded'})
 due_t = sql("SELECT due_date FROM borrow_record WHERE reader_id=2 ORDER BY borrow_id DESC LIMIT 1;")
 from datetime import date, timedelta
 borrow_d = sql("SELECT borrow_date FROM borrow_record WHERE reader_id=2 ORDER BY borrow_id DESC LIMIT 1;")
@@ -117,33 +126,33 @@ tc('4.6', '还书正常', d.get('code') == 200, d.get('msg'))
 bid_t = sql("SELECT MAX(borrow_id) FROM borrow_record WHERE reader_id=2 AND book_id=7;")
 s, d = req('/system/borrow/return/' + bid_t, 'PUT', headers=auth)
 # 4.7 续借（学生借三体→续借）
-s, d = req('/system/borrow/renewByCard', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'borrowId': sql("SELECT borrow_id FROM borrow_record WHERE reader_id=1 AND book_id=1 AND status='0' LIMIT 1;")}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/borrow/renewByCard', 'POST', auth_params('JS20260001') + '&borrowId=' + sql("SELECT borrow_id FROM borrow_record WHERE reader_id=1 AND book_id=1 AND status='0' LIMIT 1;"), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('4.7', '前台续借', d.get('code') == 200, d.get('msg'))
 
 # ============ 5. 预约 ============
 print('=== 5. 预约 ===')
 sql("UPDATE book SET stock=0 WHERE book_id=16;")
-s, d = req('/system/reserve/add', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'bookId': 16}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reserve/add', 'POST', auth_params('JS20260001') + '&bookId=16', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('5.1', '预约成功', d.get('code') == 200, d.get('msg'))
-s, d = req('/system/reserve/add', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'bookId': 16}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reserve/add', 'POST', auth_params('JS20260001') + '&bookId=16', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('5.2', '重复预约拒绝', '重复预约' in str(d.get('msg')))
-s, d = req('/system/reserve/myList?cardNo=JS20260001')
+s, d = req('/system/reserve/myList?' + auth_params('JS20260001'))
 has16 = any(r.get('bookId') == 16 for r in (d.get('data') or []))
 tc('5.3', '我的预约含新预约', has16)
 rid16 = sql("SELECT reserve_id FROM book_reserve WHERE reader_id=1 AND book_id=16;")
-s, d = req('/system/reserve/cancel', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'reserveId': rid16}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reserve/cancel', 'POST', auth_params('JS20260001') + '&reserveId=' + rid16, {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('5.4', '取消预约', sql("SELECT status FROM book_reserve WHERE reserve_id=" + rid16 + ";") == '3')
 sql("UPDATE book SET stock=18 WHERE book_id=16;")
 sql("DELETE FROM book_reserve WHERE book_id=16;")
 
 # ============ 6. 订单 ============
 print('=== 6. 订单 ===')
-s, d = req('/system/order/create', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'bookId': 13, 'quantity': 2}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/order/create', 'POST', auth_params('JS20260001') + '&bookId=13&quantity=2', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('6.1', '下单成功', d.get('code') == 200, d.get('msg'))
 oid = sql("SELECT MAX(order_id) FROM shop_order;")
 stock_after = sql("SELECT stock FROM book WHERE book_id=13;")
 tc('6.2', '下单库存-2', stock_after == '38', 'stock=' + stock_after)
-s, d = req('/system/order/queryByCard?cardNo=JS20260001')
+s, d = req('/system/order/queryByCard?' + auth_params('JS20260001'))
 tc('6.3', '我的订单', d.get('code') == 200)
 s, d = req('/system/order', 'PUT', json.dumps({'orderId': int(oid), 'status': '3'}).encode(), {**auth, 'Content-Type': 'application/json'})
 tc('6.4', '订单收款(0→3)', d.get('code') == 200, d.get('msg'))
@@ -152,10 +161,10 @@ tc('6.5', '已收款不可取消', '不允许' in str(d.get('msg')), d.get('msg'
 s, d = req('/system/order', 'PUT', json.dumps({'orderId': int(oid), 'status': '1'}).encode(), {**auth, 'Content-Type': 'application/json'})
 tc('6.6', '收款后完成(3→1)', d.get('code') == 200, d.get('msg'))
 # 取消回滚测试
-s, d = req('/system/order/create', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'bookId': 14, 'quantity': 1}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/order/create', 'POST', auth_params('JS20260001') + '&bookId=14&quantity=1', {'Content-Type': 'application/x-www-form-urlencoded'})
 oid2 = sql("SELECT MAX(order_id) FROM shop_order;")
 stock_mid = sql("SELECT stock FROM book WHERE book_id=14;")
-s, d = req('/system/order/cancelByCard', 'POST', urllib.parse.urlencode({'cardNo': 'JS20260001', 'orderId': oid2}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/order/cancelByCard', 'POST', auth_params('JS20260001') + '&orderId=' + oid2, {'Content-Type': 'application/x-www-form-urlencoded'})
 stock_back = sql("SELECT stock FROM book WHERE book_id=14;")
 tc('6.7', '取消订单回滚库存', stock_back == str(int(stock_mid) + 1), stock_mid + '->' + stock_back)
 

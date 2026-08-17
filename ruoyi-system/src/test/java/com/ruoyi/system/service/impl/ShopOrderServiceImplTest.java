@@ -171,12 +171,28 @@ public class ShopOrderServiceImplTest
         order.setBookId(3L);
         order.setQuantity(2L);
         when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(order);
-        when(shopOrderMapper.updateShopOrder(order)).thenReturn(1);
+        when(shopOrderMapper.updateStatusIfCurrent(1L, "0", "2")).thenReturn(1);
 
         assertEquals(1, shopOrderService.cancelByCard("JS12345678", 1L));
         verify(bookMapper).restoreStock(3L, 2L);
-        assertEquals("2", order.getStatus());
         verify(statisticsService).evictAll();
+    }
+
+    /** 前台取消：并发下状态已被其他请求处理 → 不回滚库存 */
+    @Test
+    void cancelByCard_concurrentStateLoss_noRestore()
+    {
+        ShopOrder order = new ShopOrder();
+        order.setOrderId(1L);
+        order.setCardNo("JS12345678");
+        order.setStatus("0");
+        order.setBookId(3L);
+        order.setQuantity(2L);
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(order);
+        when(shopOrderMapper.updateStatusIfCurrent(1L, "0", "2")).thenReturn(0);
+
+        assertThrows(ServiceException.class, () -> shopOrderService.cancelByCard("JS12345678", 1L));
+        verify(bookMapper, never()).restoreStock(any(), any());
     }
 
     /** 后台取消：非待付款 → 抛 */

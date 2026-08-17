@@ -21,6 +21,12 @@ public interface BorrowRecordMapper
     /** 修改借阅记录 */
     public int updateBorrowRecord(BorrowRecord borrowRecord);
 
+    /** 原子变更借阅状态，返回实际更新行数 */
+    public int updateStatusIfCurrent(@Param("borrowId") Long borrowId, @Param("fromStatus") String fromStatus,
+            @Param("toStatus") String toStatus, @Param("returnDate") java.util.Date returnDate,
+            @Param("fineAmount") java.math.BigDecimal fineAmount, @Param("finePaid") String finePaid,
+            @Param("updateTime") java.util.Date updateTime);
+
     /** 删除借阅记录 */
     public int deleteBorrowRecordByBorrowId(Long borrowId);
 

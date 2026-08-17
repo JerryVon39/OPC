@@ -215,21 +215,25 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("该图书已归还，请勿重复操作");
         }
-        record.setReturnDate(new Date());
-        record.setStatus(com.ruoyi.system.constant.BizStatus.BORROW_RETURNED);
-        // 还书结算：逾期超过免罚天数，按天计罚（委托 FineService）
+        // 先原子完成状态转换，只有抢到转换权的请求才能回补库存，避免并发双回补
+        String fromStatus = record.getStatus();
         java.math.BigDecimal fine = fineService.calcFine(record);
+        String finePaid = record.getFinePaid();
         if (fine != null)
         {
-            record.setFineAmount(fine);
-            record.setFinePaid(com.ruoyi.system.constant.BizStatus.FINE_UNPAID);
+            finePaid = com.ruoyi.system.constant.BizStatus.FINE_UNPAID;
         }
-        // 库存 +1（原子回补）
+        int rows = borrowRecordMapper.updateStatusIfCurrent(borrowId, fromStatus,
+                com.ruoyi.system.constant.BizStatus.BORROW_RETURNED, new Date(), fine, finePaid, new Date());
+        if (rows == 0)
+        {
+            throw new ServiceException("该图书已归还，请勿重复操作");
+        }
+        // 库存 +1（仅状态转换成功后回补）
         if (record.getBookId() != null)
         {
             bookMapper.restoreStock(record.getBookId(), 1L);
         }
-        int rows = borrowRecordMapper.updateBorrowRecord(record);
         // 归还后同步逾期催还公告：还清了就删公告，还有逾期就重新汇总
         syncOverdueNotice();
         // 归还后检查预约：该书最早的"预约中"读者 → 状态置"可借"（前台我的预约可见）

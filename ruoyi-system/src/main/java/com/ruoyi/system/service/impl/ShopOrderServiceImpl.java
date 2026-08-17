@@ -212,17 +212,17 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("该订单不属于此证号");
         }
-        if (!"0".equals(order.getStatus()))
+        // 先原子完成取消状态转换，只有成功请求才能回补库存，避免并发双回补
+        int rows = shopOrderMapper.updateStatusIfCurrent(orderId, BizStatus.ORDER_UNPAID, BizStatus.ORDER_CANCELLED);
+        if (rows == 0)
         {
             throw new ServiceException("该订单已处理，无法取消");
         }
-        // 回滚库存（原子回补）
+        // 回滚库存（仅状态转换成功后回补）
         if (order.getBookId() != null && order.getQuantity() != null)
         {
             bookMapper.restoreStock(order.getBookId(), order.getQuantity());
         }
-        order.setStatus("2");
-        int rows = shopOrderMapper.updateShopOrder(order);
         // 订单数据变了：失效统计缓存
         statisticsService.evictAll();
         return rows;

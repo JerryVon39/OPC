@@ -540,6 +540,8 @@
   const BANNER_API = '/dev-api/system/banner/publicList';
   const DICT_API = '/dev-api/system/dict/data/type/book_type';
   const RELATED_API = '/dev-api/system/book/related';
+  const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
+  const authParams = () => ({ cardNo: currentUser ? currentUser.cardNo : '', sessionToken: sessionToken() });
 
   // ===== 字典翻译（分类由后台字典动态加载）=====
   let TYPE_MAP = {};
@@ -704,7 +706,7 @@
     reservedIds = [];
     if (!currentUser) return;
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       (d.data || []).forEach(r => {
         if (r.status === '0' || r.status === '1') reservedIds.push(r.bookId);
@@ -717,7 +719,7 @@
     borrowedIds = [];
     if (!currentUser) return;
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       (d.data || []).forEach(b => {
         if (b.status === '0' || b.status === '2') borrowedIds.push(b.bookId);
@@ -1011,8 +1013,7 @@
     renderLoginState();
     toast('已退出登录');
     loadBooks();
-  }
-  function renderLoginState() {
+  }  function renderLoginState() {
     const area = document.getElementById('loginArea');
     area.innerHTML = currentUser
       ? '<span style="cursor:pointer" onclick="logout()">你好，' + esc(currentUser.readerName) + '（退出）</span>'
@@ -1131,7 +1132,7 @@
       let ok = 0, fail = 0, failMsg = '';
       for (const item of cart) {
         // 直接按 bookId 下单（书名校验/库存校验由后端 createOrder 负责）
-        const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: item.bookId, quantity: item.qty || 1 });
+        const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: item.bookId, quantity: item.qty || 1 });
         const o = await fetch(ORDER_CREATE, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
         const od = await o.json();
         if (od.code === 200) ok++; else { fail++; failMsg = od.msg || '下单失败'; }
@@ -1157,20 +1158,21 @@
   function openMyOrders() {
     document.getElementById('orderModal').style.display = 'flex';
     if (currentUser) {
-      document.getElementById('qOrderCard').value = currentUser.cardNo;
       document.getElementById('qOrderCard').style.display = 'none';
       queryMyOrders();
     } else {
       document.getElementById('qOrderCard').style.display = 'block';
+      document.getElementById('orderResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的订单</div>';
     }
   }
   async function queryMyOrders() {
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qOrderCard').value.trim();
     const box = document.getElementById('orderResult');
+    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的订单</div>'; openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(ORDER_QUERY + '?cardNo=' + encodeURIComponent(cardNo));
+      const res = await fetch(ORDER_QUERY + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="loading" style="padding:10px">暂无订单</div>';
@@ -1196,7 +1198,7 @@
     if (!currentUser) { toast('请先登录后再预约'); openLogin(); return; }
     if (!confirm('确认预约《' + bookName + '》？图书归还后您将收到"可借"通知')) return;
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
       const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
@@ -1212,20 +1214,21 @@
   function openMyReserves() {
     document.getElementById('reserveModal').style.display = 'flex';
     if (currentUser) {
-      document.getElementById('qReserveCard').value = currentUser.cardNo;
       document.getElementById('qReserveCard').style.display = 'none';
       queryMyReserves();
     } else {
       document.getElementById('qReserveCard').style.display = 'block';
+      document.getElementById('reserveResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的预约</div>';
     }
   }
   async function queryMyReserves() {
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qReserveCard').value.trim();
     const box = document.getElementById('reserveResult');
+    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的预约</div>'; openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo));
+      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无预约记录</span></div>';
@@ -1246,11 +1249,12 @@
     }
   }
   async function cancelReserve(reserveId) {
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qReserveCard').value.trim();
+    if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { toast('请先输入借书证号'); return; }
     if (!confirm('确认取消该预约吗？')) return;
     try {
-      const body = new URLSearchParams({ cardNo: cardNo, reserveId: reserveId });
+      const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), reserveId: reserveId });
       const res = await fetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
@@ -1264,11 +1268,12 @@
 
   // ===== 取消订单（仅待处理，自动回滚库存）=====
   async function cancelOrder(orderId) {
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qOrderCard').value.trim();
+    if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { toast('请先输入借书证号'); return; }
     if (!confirm('确认取消该订单吗？取消后库存自动恢复')) return;
     try {
-      const body = new URLSearchParams({ cardNo: cardNo, orderId: orderId });
+      const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), orderId: orderId });
       const res = await fetch(ORDER_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { toast('订单已取消，库存已恢复'); queryMyOrders(); }
@@ -1287,19 +1292,20 @@
       loginInfo.innerHTML = '<div style="background:#eef7ef;border-radius:8px;padding:8px 12px;font-size:13px;color:#4f8a62">将以 <b>' + esc(currentUser.readerName) + '</b>（' + esc(currentUser.cardNo) + '）的身份借阅</div>';
       cardInput.style.display = 'none';
     } else {
-      loginInfo.innerHTML = '<div style="background:#fdf6e7;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a6d3b">未登录：请输入借书证号，或先 <span style="color:#2f6b45;cursor:pointer;font-weight:bold" onclick="closeModal(\'borrowBookModal\');openLogin()">登录</span></div>';
-      cardInput.style.display = 'block';
+      loginInfo.innerHTML = '<div style="background:#fdf6e7;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a6d3b">请先 <span style="color:#2f6b45;cursor:pointer;font-weight:bold" onclick="closeModal(\'borrowBookModal\');openLogin()">登录</span> 后再借书</div>';
+      cardInput.style.display = 'none';
       cardInput.value = '';
     }
     document.getElementById('borrowBookModal').style.display = 'flex';
   }
   async function submitBorrow() {
     const msg = document.getElementById('borrowBookMsg');
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('borrowCardNo').value.trim();
+    if (!currentUser) { msg.textContent = '请先登录后再借书'; msg.style.color = '#c65d43'; openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { msg.textContent = '请输入借书证号'; msg.style.color = '#c65d43'; return; }
     msg.textContent = '借书中…'; msg.style.color = '#999';
     try {
-      const res = await fetch(BORROW_API + '?cardNo=' + encodeURIComponent(cardNo) + '&bookId=' + borrowBookId, { method: 'POST' });
+      const res = await fetch(BORROW_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()) + '&bookId=' + borrowBookId, { method: 'POST' });
       const d = await res.json();
       if (d.code === 200) {
         msg.textContent = '借书成功！应还日期已按借阅规则自动设置，可在"我的借阅"查看';
@@ -1325,20 +1331,21 @@
     document.getElementById('myInfoMsg').textContent = '';
     document.getElementById('myInfoArea').style.display = currentUser ? 'block' : 'none';
     if (currentUser) {
-      document.getElementById('qCardNo').value = currentUser.cardNo;
       document.getElementById('qCardNo').style.display = 'none';
       queryMyBorrow();
     } else {
       document.getElementById('qCardNo').style.display = 'block';
+      document.getElementById('borrowResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的借阅</div>';
     }
   }
   async function queryMyBorrow() {
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qCardNo').value.trim();
     const box = document.getElementById('borrowResult');
+    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的借阅</div>'; openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
+      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="loading" style="padding:10px">未查询到借阅记录（请确认证号）</div>';
@@ -1392,10 +1399,11 @@
       if (d.code === 200 && d.data) {
         msg.textContent = '补办成功！新证号：' + d.data + '，请使用新证号登录（旧证号已作废）';
         msg.style.color = '#4f8a62';
-        // 若是本人补办，同步更新当前登录态证号
+        // 若是本人补办，同步更新当前登录态证号并清除旧会话（需重新登录获取新会话）
         if (currentUser && currentUser.readerName === name) {
-          currentUser.cardNo = d.data;
-          localStorage.setItem('shopUser', JSON.stringify(currentUser));
+          currentUser = null;
+          localStorage.removeItem('shopUser');
+          renderLoginState();
         }
       } else {
         msg.textContent = d.msg || '补办失败';
@@ -1414,7 +1422,7 @@
     if (!currentUser) { msg.textContent = '请先登录'; msg.style.color = '#c65d43'; return; }
     if (!phone) { msg.textContent = '请输入新手机号'; msg.style.color = '#c65d43'; return; }
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), readerName: currentUser.readerName, phone: phone });
       const res = await fetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { msg.textContent = '手机号修改成功'; msg.style.color = '#4f8a62'; }
@@ -1424,11 +1432,12 @@
 
   // ===== 续借（仅借出中且未逾期，应还日期 +30 天）=====
   async function renewBorrow(borrowId) {
-    const cardNo = currentUser ? currentUser.cardNo : document.getElementById('qCardNo').value.trim();
+    if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
+    const cardNo = currentUser.cardNo;
     if (!cardNo) { toast('请先输入借书证号'); return; }
     if (!confirm('确认续借该图书吗？应还日期将顺延 30 天')) return;
     try {
-      const body = new URLSearchParams({ cardNo: cardNo, borrowId: borrowId });
+      const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), borrowId: borrowId });
       const res = await fetch(RENEW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { toast('续借成功，应还日期顺延 30 天'); queryMyBorrow(); }

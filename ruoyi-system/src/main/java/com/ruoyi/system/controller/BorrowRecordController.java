@@ -19,6 +19,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBorrowRecordService;
+import com.ruoyi.system.service.ReaderSessionService;
 import com.ruoyi.system.service.StatisticsService;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.poi.ExcelUtil;
@@ -32,6 +33,9 @@ public class BorrowRecordController extends BaseController
 {
     @Autowired
     private IBorrowRecordService borrowRecordService;
+
+    @Autowired
+    private ReaderSessionService readerSessionService;
 
     @Autowired
     private StatisticsService statisticsService;
@@ -83,12 +87,17 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.updateBorrowRecord(borrowRecord));
     }
 
-    /** 前台借书（匿名公开接口）：按借书证号借书 */
+    /** 前台借书：短期读者会话 + 证号兼容校验 */
     @Anonymous
     @PostMapping("/borrowByCard")
-    public AjaxResult borrowByCard(String cardNo, Long bookId)
+    public AjaxResult borrowByCard(String cardNo, String sessionToken, Long bookId)
     {
-        return toAjax(borrowRecordService.borrowByCard(cardNo, bookId));
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        return toAjax(borrowRecordService.borrowByCard(sessionCard, bookId));
     }
 
     /** 续借：应还日期 +30 天 */
@@ -100,24 +109,30 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.renewBook(borrowId));
     }
 
-    /** 前台"我的借阅"：按借书证号查询（匿名公开接口） */
+    /** 前台"我的借阅"：短期读者会话查询 */
     @Anonymous
     @GetMapping("/queryByCard")
-    public AjaxResult queryByCard(String cardNo)
+    public AjaxResult queryByCard(String cardNo, String sessionToken)
     {
-        if (cardNo == null || cardNo.trim().isEmpty())
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
-            return error("请输入借书证号");
+            return error("登录已失效，请重新登录");
         }
-        return success(borrowRecordService.selectBorrowListByCard(cardNo.trim()));
+        return success(borrowRecordService.selectBorrowListByCard(sessionCard));
     }
 
-    /** 前台续借（匿名）：证号+借阅记录号，未逾期可续 30 天 */
+    /** 前台续借：短期读者会话 + 记录归属校验 */
     @Anonymous
     @PostMapping("/renewByCard")
-    public AjaxResult renewByCard(String cardNo, Long borrowId)
+    public AjaxResult renewByCard(String cardNo, String sessionToken, Long borrowId)
     {
-        return toAjax(borrowRecordService.renewByCard(cardNo, borrowId));
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        return toAjax(borrowRecordService.renewByCard(sessionCard, borrowId));
     }
 
     /** 借阅统计：热门图书 + 读者排行（匿名：前台热门推荐用，数据走 Redis 缓存） */

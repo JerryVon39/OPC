@@ -19,6 +19,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.service.IReaderService;
+import com.ruoyi.system.service.ReaderSessionService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
@@ -34,6 +35,9 @@ public class ReaderController extends BaseController
 {
     @Autowired
     private IReaderService readerService;
+
+    @Autowired
+    private ReaderSessionService readerSessionService;
 
     /**
      * 查询读者管理列表
@@ -106,6 +110,7 @@ public class ReaderController extends BaseController
         result.put("cardNo", r.getCardNo());
         result.put("readerType", r.getReaderType());
         result.put("status", r.getStatus());
+        result.put("sessionToken", readerSessionService.create(r.getCardNo()));
         return success(result);
     }
 
@@ -175,12 +180,17 @@ public class ReaderController extends BaseController
         return ajax;
     }
 
-    /** 前台修改个人信息（匿名）：按证号+姓名校验后更新手机号 */
+    /** 前台修改个人信息：短期读者会话 + 姓名/证号校验后更新手机号 */
     @Anonymous
     @PostMapping("/updateMyInfo")
-    public AjaxResult updateMyInfo(String cardNo, String readerName, String phone)
+    public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone)
     {
-        if (cardNo == null || cardNo.trim().isEmpty() || readerName == null || readerName.trim().isEmpty()
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        if (readerName == null || readerName.trim().isEmpty()
                 || phone == null || phone.trim().isEmpty())
         {
             return error("参数不完整");

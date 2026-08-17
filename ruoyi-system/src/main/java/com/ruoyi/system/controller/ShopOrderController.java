@@ -18,6 +18,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IShopOrderService;
+import com.ruoyi.system.service.ReaderSessionService;
 import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
@@ -29,6 +30,9 @@ public class ShopOrderController extends BaseController
 {
     @Autowired
     private IShopOrderService shopOrderService;
+
+    @Autowired
+    private ReaderSessionService readerSessionService;
 
     /** 订单列表 */
     @PreAuthorize("@ss.hasPermi('system:order:list')")
@@ -48,32 +52,43 @@ public class ShopOrderController extends BaseController
         return success(shopOrderService.selectShopOrderByOrderId(orderId));
     }
 
-    /** 前台购书（匿名）：按证号下单 */
+    /** 前台购书：短期读者会话 + 证号兼容校验 */
     @Anonymous
     @PostMapping("/create")
-    public AjaxResult create(String cardNo, Long bookId, Long quantity)
+    public AjaxResult create(String cardNo, String sessionToken, Long bookId, Long quantity)
     {
-        return toAjax(shopOrderService.createOrder(cardNo, bookId, quantity));
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        return toAjax(shopOrderService.createOrder(sessionCard, bookId, quantity));
     }
 
-    /** 前台我的订单（匿名）：按证号查询 */
+    /** 前台我的订单：短期读者会话查询 */
     @Anonymous
     @GetMapping("/queryByCard")
-    public AjaxResult queryByCard(String cardNo)
+    public AjaxResult queryByCard(String cardNo, String sessionToken)
     {
-        if (cardNo == null || cardNo.trim().isEmpty())
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
-            return error("请输入借书证号");
+            return error("登录已失效，请重新登录");
         }
-        return success(shopOrderService.selectOrdersByCard(cardNo.trim()));
+        return success(shopOrderService.selectOrdersByCard(sessionCard));
     }
 
-    /** 前台取消订单（匿名）：证号+订单号，仅待处理可取消，自动回滚库存 */
+    /** 前台取消订单：短期读者会话 + 证号归属校验 */
     @Anonymous
     @PostMapping("/cancelByCard")
-    public AjaxResult cancelByCard(String cardNo, Long orderId)
+    public AjaxResult cancelByCard(String cardNo, String sessionToken, Long orderId)
     {
-        return toAjax(shopOrderService.cancelByCard(cardNo, orderId));
+        String sessionCard = readerSessionService.resolve(sessionToken);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        return toAjax(shopOrderService.cancelByCard(sessionCard, orderId));
     }
 
     /** 修改订单（状态流转） */

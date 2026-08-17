@@ -104,6 +104,13 @@
         where borrow_id = #{borrowId}
     </update>
 
+    <update id="updateStatusIfCurrent">
+        update borrow_record
+        set status = #{toStatus}, return_date = #{returnDate}, fine_amount = #{fineAmount},
+            fine_paid = #{finePaid}, update_time = #{updateTime}
+        where borrow_id = #{borrowId} and status = #{fromStatus}
+    </update>
+
     <delete id="deleteBorrowRecordByBorrowId" parameterType="Long">
         delete from borrow_record where borrow_id = #{borrowId}
     </delete>

@@ -13,6 +13,11 @@ public interface ShopOrderMapper
 
     public int updateShopOrder(ShopOrder shopOrder);
 
+    /** 仅当订单仍为指定状态时更新，返回实际更新行数 */
+    public int updateStatusIfCurrent(@org.apache.ibatis.annotations.Param("orderId") Long orderId,
+            @org.apache.ibatis.annotations.Param("fromStatus") String fromStatus,
+            @org.apache.ibatis.annotations.Param("toStatus") String toStatus);
+
     public int deleteShopOrderByOrderId(Long orderId);
 
     public int deleteShopOrderByOrderIds(Long[] orderIds);
