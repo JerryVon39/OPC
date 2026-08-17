@@ -113,4 +113,49 @@ public class ReaderServiceImplTest
 
         assertEquals(reader, readerService.findActiveReader("JS12345678"));
     }
+
+    /** 修改读者：证号与他人撞 → 抛（防撞 uk_card_no 唯一约束变裸数据库异常） */
+    @Test
+    void updateReader_duplicateCardNo_throws()
+    {
+        Reader other = new Reader();
+        other.setReaderId(99L);
+        other.setCardNo("JS12345678");
+        List<Reader> list = new ArrayList<>();
+        list.add(other);
+        when(readerMapper.selectReaderList(any())).thenReturn(list);
+
+        reader.setReaderId(1L);
+        reader.setCardNo("JS12345678");
+        ServiceException e = assertThrows(ServiceException.class, () -> readerService.updateReader(reader));
+        assertTrue(e.getMessage().contains("已被使用"));
+    }
+
+    /** 修改读者：证号未变（查重命中自己）→ 正常更新 */
+    @Test
+    void updateReader_sameCardNo_ok()
+    {
+        Reader self = new Reader();
+        self.setReaderId(1L);
+        self.setCardNo("JS12345678");
+        List<Reader> list = new ArrayList<>();
+        list.add(self);
+        when(readerMapper.selectReaderList(any())).thenReturn(list);
+        when(readerMapper.updateReader(any(Reader.class))).thenReturn(1);
+
+        reader.setReaderId(1L);
+        reader.setCardNo("JS12345678");
+        assertEquals(1, readerService.updateReader(reader));
+        verify(readerMapper).updateReader(any(Reader.class));
+    }
+
+    /** 修改读者：不填证号 → 不查重直接更新 */
+    @Test
+    void updateReader_noCardNo_ok()
+    {
+        when(readerMapper.updateReader(any(Reader.class))).thenReturn(1);
+        reader.setReaderId(1L);
+        assertEquals(1, readerService.updateReader(reader));
+        verify(readerMapper, never()).selectReaderList(any());
+    }
 }

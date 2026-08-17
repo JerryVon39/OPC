@@ -140,6 +140,11 @@ public class BookReserveServiceImpl implements IBookReserveService
     @Override
     public int cancelByCard(String cardNo, Long reserveId)
     {
+        // 匿名接口空参守卫：null 直接 trim 会 NPE 变 500
+        if (cardNo == null || cardNo.trim().isEmpty() || reserveId == null)
+        {
+            throw new ServiceException("参数不完整");
+        }
         BookReserve reserve = bookReserveMapper.selectBookReserveByReserveId(reserveId);
         if (reserve == null)
         {

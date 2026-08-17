@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.constant.BizStatus;
 import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.domain.ShopOrder;
@@ -53,27 +54,56 @@ public class ShopOrderServiceImpl implements IShopOrderService
         return shopOrderMapper.insertShopOrder(shopOrder);
     }
 
-    /** 修改订单：状态流转（0待付款→1完成/2取消/3已收款，3→1完成；仅待付款可取消并回滚库存） */
+    /** 修改订单：状态机校验 + 流转
+     * 允许：0待付款 → 1完成 / 2取消 / 3已收款；3已收款 → 1完成。
+     * 其余流转（含已取消/已完成订单再改单）一律拒绝，防止"库存已回补却仍被标记卖出"等账实不符。
+     * 仅"待付款 → 取消"回滚库存（与前台 cancelByCard 语义一致）；订单不存在抛明确异常。 */
     @Override
     @Transactional
     public int updateShopOrder(ShopOrder shopOrder)
     {
-        if ("2".equals(shopOrder.getStatus()))
+        if (shopOrder.getOrderId() == null || shopOrder.getStatus() == null)
         {
-            ShopOrder old = shopOrderMapper.selectShopOrderByOrderId(shopOrder.getOrderId());
-            if (old != null)
-            {
-                if (!"0".equals(old.getStatus()))
-                {
-                    throw new ServiceException("仅待付款订单可取消");
-                }
-                if (old.getBookId() != null && old.getQuantity() != null)
-                {
-                    bookMapper.restoreStock(old.getBookId(), old.getQuantity());
-                }
-            }
+            throw new ServiceException("参数不完整");
+        }
+        ShopOrder old = shopOrderMapper.selectShopOrderByOrderId(shopOrder.getOrderId());
+        if (old == null)
+        {
+            throw new ServiceException("订单不存在");
+        }
+        if (!isOrderTransitionAllowed(old.getStatus(), shopOrder.getStatus()))
+        {
+            throw new ServiceException("不允许从" + orderStatusText(old.getStatus()) + "变更为" + orderStatusText(shopOrder.getStatus()));
+        }
+        // 待付款 → 取消：回滚库存（原子回补）
+        if (BizStatus.ORDER_CANCELLED.equals(shopOrder.getStatus()) && old.getBookId() != null && old.getQuantity() != null)
+        {
+            bookMapper.restoreStock(old.getBookId(), old.getQuantity());
         }
         return shopOrderMapper.updateShopOrder(shopOrder);
+    }
+
+    /** 订单状态机：允许的流转（0待付款/1完成/2取消/3已收款） */
+    private boolean isOrderTransitionAllowed(String from, String to)
+    {
+        if (BizStatus.ORDER_UNPAID.equals(from))
+        {
+            return BizStatus.ORDER_COMPLETED.equals(to) || BizStatus.ORDER_CANCELLED.equals(to) || BizStatus.ORDER_PAID.equals(to);
+        }
+        if (BizStatus.ORDER_PAID.equals(from))
+        {
+            return BizStatus.ORDER_COMPLETED.equals(to);
+        }
+        return false;
+    }
+
+    private String orderStatusText(String status)
+    {
+        if (BizStatus.ORDER_UNPAID.equals(status)) return "待付款";
+        if (BizStatus.ORDER_COMPLETED.equals(status)) return "已完成";
+        if (BizStatus.ORDER_CANCELLED.equals(status)) return "已取消";
+        if (BizStatus.ORDER_PAID.equals(status)) return "已收款";
+        return "未知状态";
     }
 
     @Override

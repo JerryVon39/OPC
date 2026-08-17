@@ -210,4 +210,13 @@ public class BookReserveServiceImplTest
         assertEquals(bookReserveMapper.updateBookReserve(reserve), bookReserveService.cancelByCard("JS12345678", 1L));
         assertEquals("3", reserve.getStatus());
     }
+
+    /** 取消预约：参数缺失 → 抛（匿名接口空参守卫，防 NPE 变 500） */
+    @Test
+    void cancelByCard_nullParam_throws()
+    {
+        assertThrows(ServiceException.class, () -> bookReserveService.cancelByCard(null, 1L));
+        assertThrows(ServiceException.class, () -> bookReserveService.cancelByCard("", 1L));
+        assertThrows(ServiceException.class, () -> bookReserveService.cancelByCard("JS12345678", null));
+    }
 }

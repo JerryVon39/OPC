@@ -30,6 +30,9 @@ public class BorrowTask
     @Autowired
     private com.ruoyi.system.service.ISysConfigService configService;
 
+    @Autowired
+    private com.ruoyi.system.service.StatisticsService statisticsService;
+
     /**
      * 逾期自动标记：将"借出中"且应还日期已过的记录持久化为"已逾期"(2)
      * 建议 cron：每天 0 点执行 0 0 0 * * ?
@@ -50,6 +53,11 @@ public class BorrowTask
                 borrowRecordMapper.updateBorrowRecord(br);
                 count++;
             }
+        }
+        // 逾期状态影响看板口径（borrowingCount/overdueCount）：有变更就失效统计缓存
+        if (count > 0)
+        {
+            statisticsService.evictAll();
         }
         System.out.println("逾期检查完成，共标记 " + count + " 条记录为逾期");
     }

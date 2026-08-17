@@ -148,7 +148,7 @@ tc('6.3', '我的订单', d.get('code') == 200)
 s, d = req('/system/order', 'PUT', json.dumps({'orderId': int(oid), 'status': '3'}).encode(), {**auth, 'Content-Type': 'application/json'})
 tc('6.4', '订单收款(0→3)', d.get('code') == 200, d.get('msg'))
 s, d = req('/system/order', 'PUT', json.dumps({'orderId': int(oid), 'status': '2'}).encode(), {**auth, 'Content-Type': 'application/json'})
-tc('6.5', '已收款不可取消', '仅待付款' in str(d.get('msg')), d.get('msg'))
+tc('6.5', '已收款不可取消', '不允许' in str(d.get('msg')), d.get('msg'))
 s, d = req('/system/order', 'PUT', json.dumps({'orderId': int(oid), 'status': '1'}).encode(), {**auth, 'Content-Type': 'application/json'})
 tc('6.6', '收款后完成(3→1)', d.get('code') == 200, d.get('msg'))
 # 取消回滚测试

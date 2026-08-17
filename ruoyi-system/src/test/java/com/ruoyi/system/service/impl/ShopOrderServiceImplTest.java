@@ -210,4 +210,106 @@ public class ShopOrderServiceImplTest
         assertEquals(1, shopOrderService.updateShopOrder(update));
         verify(bookMapper).restoreStock(3L, 1L);
     }
+
+    /** 后台收款：待付款 → 已收款，合法流转（不动库存） */
+    @Test
+    void updateShopOrder_payFromPending_ok()
+    {
+        ShopOrder old = new ShopOrder();
+        old.setOrderId(1L);
+        old.setStatus("0");
+        old.setBookId(3L);
+        old.setQuantity(1L);
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(1L);
+        update.setStatus("3");
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
+        when(shopOrderMapper.updateShopOrder(update)).thenReturn(1);
+
+        assertEquals(1, shopOrderService.updateShopOrder(update));
+        verify(bookMapper, never()).restoreStock(any(), any());
+    }
+
+    /** 后台完成：已收款 → 已完成，合法流转（不动库存） */
+    @Test
+    void updateShopOrder_completeFromPaid_ok()
+    {
+        ShopOrder old = new ShopOrder();
+        old.setOrderId(1L);
+        old.setStatus("3");
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(1L);
+        update.setStatus("1");
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
+        when(shopOrderMapper.updateShopOrder(update)).thenReturn(1);
+
+        assertEquals(1, shopOrderService.updateShopOrder(update));
+        verify(bookMapper, never()).restoreStock(any(), any());
+    }
+
+    /** 后台取消：已收款订单 → 抛（收款后不允许退款改单） */
+    @Test
+    void updateShopOrder_cancelFromPaid_throws()
+    {
+        ShopOrder old = new ShopOrder();
+        old.setOrderId(1L);
+        old.setStatus("3");
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(1L);
+        update.setStatus("2");
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
+        assertThrows(ServiceException.class, () -> shopOrderService.updateShopOrder(update));
+    }
+
+    /** 后台收款：已取消订单 → 抛（库存已回补，不能再收款） */
+    @Test
+    void updateShopOrder_payFromCancelled_throws()
+    {
+        ShopOrder old = new ShopOrder();
+        old.setOrderId(1L);
+        old.setStatus("2");
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(1L);
+        update.setStatus("3");
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
+        assertThrows(ServiceException.class, () -> shopOrderService.updateShopOrder(update));
+    }
+
+    /** 后台改单：已完成订单再改状态 → 抛 */
+    @Test
+    void updateShopOrder_editFromCompleted_throws()
+    {
+        ShopOrder old = new ShopOrder();
+        old.setOrderId(1L);
+        old.setStatus("1");
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(1L);
+        update.setStatus("3");
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
+        assertThrows(ServiceException.class, () -> shopOrderService.updateShopOrder(update));
+    }
+
+    /** 后台改单：订单不存在 → 抛明确异常 */
+    @Test
+    void updateShopOrder_orderNotFound_throws()
+    {
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(99L);
+        update.setStatus("3");
+        when(shopOrderMapper.selectShopOrderByOrderId(99L)).thenReturn(null);
+        ServiceException e = assertThrows(ServiceException.class,
+                () -> shopOrderService.updateShopOrder(update));
+        assertTrue(e.getMessage().contains("订单不存在"));
+    }
+
+    /** 后台改单：status 为空 → 抛 */
+    @Test
+    void updateShopOrder_nullStatus_throws()
+    {
+        ShopOrder update = new ShopOrder();
+        update.setOrderId(1L);
+        ServiceException e = assertThrows(ServiceException.class,
+                () -> shopOrderService.updateShopOrder(update));
+        assertTrue(e.getMessage().contains("参数不完整"));
+    }
 }

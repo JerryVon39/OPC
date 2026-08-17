@@ -4,6 +4,7 @@ import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
@@ -131,11 +132,33 @@ public class ReaderServiceImpl implements IReaderService
     @Override
     public int updateReader(Reader reader)
     {
+        // 修改证号同样要查重（排除自身）：防撞 uk_card_no 唯一约束变成裸数据库异常
+        if (reader.getCardNo() != null && !reader.getCardNo().trim().isEmpty())
+        {
+            String cardNo = reader.getCardNo().trim();
+            Reader query = new Reader();
+            query.setCardNo(cardNo);
+            List<Reader> exists = readerMapper.selectReaderList(query);
+            if (exists != null)
+            {
+                for (Reader r : exists)
+                {
+                    if (r.getReaderId() == null || !r.getReaderId().equals(reader.getReaderId()))
+                    {
+                        throw new com.ruoyi.common.exception.ServiceException("该借书证号已被使用，请更换");
+                    }
+                }
+            }
+            reader.setCardNo(cardNo);
+        }
         reader.setUpdateTime(DateUtils.getNowDate());
         return readerMapper.updateReader(reader);
     }
 
-    /** 按证号查询读者（不存在抛异常），供前台各接口复用 */
+    /**
+     * 按证号查询读者（不存在抛异常），供前台各接口复用。
+     * 注意：仅保证"存在"，不校验状态——停用/挂失由调用方按需拦截（见 createOrder/reserveByCard）。
+     */
     @Override
     public Reader findActiveReader(String cardNo)
     {
@@ -149,8 +172,10 @@ public class ReaderServiceImpl implements IReaderService
         return readers.get(0);
     }
 
-    /** 挂失补办：生成新证号 + 状态恢复正常（旧证号作废，历史记录快照保留） */
+    /** 挂失补办：生成新证号 + 状态恢复正常（旧证号作废，历史记录快照保留）
+     * 两步写（换证号 + 同步历史快照）放同一事务：换号成功而快照失败会丢"我的借阅"关联 */
     @Override
+    @Transactional
     public String reissueCard(Long readerId)
     {
         Reader reader = readerMapper.selectReaderByReaderId(readerId);
