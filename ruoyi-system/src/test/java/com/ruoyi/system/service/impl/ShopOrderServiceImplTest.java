@@ -312,4 +312,37 @@ public class ShopOrderServiceImplTest
                 () -> shopOrderService.updateShopOrder(update));
         assertTrue(e.getMessage().contains("参数不完整"));
     }
+
+    /** 删除订单：待付款(0) → 还原库存后删 + 失效缓存 */
+    @Test
+    void deleteShopOrderByOrderIds_pending_restoresStock()
+    {
+        ShopOrder order = new ShopOrder();
+        order.setOrderId(1L);
+        order.setStatus("0");
+        order.setBookId(3L);
+        order.setQuantity(2L);
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(order);
+        when(shopOrderMapper.deleteShopOrderByOrderIds(any())).thenReturn(1);
+
+        assertEquals(1, shopOrderService.deleteShopOrderByOrderIds(new Long[] { 1L }));
+        verify(bookMapper).restoreStock(3L, 2L);
+        verify(statisticsService).evictAll();
+    }
+
+    /** 删除订单：已完成(1) → 直接删，不还原库存 */
+    @Test
+    void deleteShopOrderByOrderIds_completed_noRestore()
+    {
+        ShopOrder order = new ShopOrder();
+        order.setOrderId(1L);
+        order.setStatus("1");
+        order.setBookId(3L);
+        order.setQuantity(1L);
+        when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(order);
+        when(shopOrderMapper.deleteShopOrderByOrderIds(any())).thenReturn(1);
+
+        assertEquals(1, shopOrderService.deleteShopOrderByOrderIds(new Long[] { 1L }));
+        verify(bookMapper, never()).restoreStock(any(), any());
+    }
 }

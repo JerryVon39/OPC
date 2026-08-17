@@ -154,6 +154,33 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Override
     public int updateBorrowRecord(BorrowRecord borrowRecord)
     {
+        // 生命周期字段守卫：状态/罚款/续借次数只能走还书/收款/续借专用流程，
+        // 普通编辑不允许直接改（防绕过还书流程：借出中直标已归还而库存不还原）
+        if (borrowRecord.getBorrowId() != null)
+        {
+            BorrowRecord old = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowRecord.getBorrowId());
+            if (old != null)
+            {
+                if (borrowRecord.getStatus() != null && !borrowRecord.getStatus().equals(old.getStatus()))
+                {
+                    throw new ServiceException("借阅状态请通过还书/续借功能变更，不允许直接修改");
+                }
+                if (borrowRecord.getFineAmount() != null
+                        && (old.getFineAmount() == null || borrowRecord.getFineAmount().compareTo(old.getFineAmount()) != 0))
+                {
+                    throw new ServiceException("罚款金额由系统在还书时自动结算，不允许直接修改");
+                }
+                if (borrowRecord.getFinePaid() != null && !borrowRecord.getFinePaid().equals(old.getFinePaid()))
+                {
+                    throw new ServiceException("罚款缴纳请使用收款功能，不允许直接修改");
+                }
+                if (borrowRecord.getRenewCount() != null
+                        && (old.getRenewCount() == null || !borrowRecord.getRenewCount().equals(old.getRenewCount())))
+                {
+                    throw new ServiceException("续借次数由系统在续借时累加，不允许直接修改");
+                }
+            }
+        }
         // 若读者/图书被修改，同步刷新快照（保持记录显示与实际一致）
         if (borrowRecord.getReaderId() != null)
         {
@@ -397,10 +424,39 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.updateBorrowRecord(record);
     }
 
+    /** 删除借阅记录：未还记录（借出中/逾期）先还原库存再删，有未缴罚款则拒绝（删除会抹掉欠费） */
     @Override
+    @Transactional
     public int deleteBorrowRecordByBorrowIds(Long[] borrowIds)
     {
-        return borrowRecordMapper.deleteBorrowRecordByBorrowIds(borrowIds);
+        for (Long borrowId : borrowIds)
+        {
+            BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowId);
+            if (record == null)
+            {
+                continue;
+            }
+            if (com.ruoyi.system.constant.BizStatus.BORROW_OUT.equals(record.getStatus())
+                    || com.ruoyi.system.constant.BizStatus.BORROW_OVERDUE.equals(record.getStatus()))
+            {
+                // 有未缴罚款的逾期记录不可删：先到服务台收款，否则欠费随记录一起消失
+                if (record.getFineAmount() != null
+                        && record.getFineAmount().compareTo(java.math.BigDecimal.ZERO) > 0
+                        && com.ruoyi.system.constant.BizStatus.FINE_UNPAID.equals(record.getFinePaid()))
+                {
+                    throw new ServiceException("该借阅记录有未缴罚款，请先到服务台收款后再删除");
+                }
+                // 未还书删除 = 库存还原（书回到书架，记录作废）
+                if (record.getBookId() != null)
+                {
+                    bookMapper.restoreStock(record.getBookId(), 1L);
+                }
+            }
+        }
+        int rows = borrowRecordMapper.deleteBorrowRecordByBorrowIds(borrowIds);
+        // 借阅数据变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     @Override

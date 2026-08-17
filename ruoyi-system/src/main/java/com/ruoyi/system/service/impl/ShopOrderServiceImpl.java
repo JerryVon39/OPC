@@ -106,10 +106,28 @@ public class ShopOrderServiceImpl implements IShopOrderService
         return "未知状态";
     }
 
+    /** 删除订单：待付款订单删除 = 硬取消，先还原库存（避免书被"吃掉"）；其余状态直接删 */
     @Override
+    @Transactional
     public int deleteShopOrderByOrderIds(Long[] orderIds)
     {
-        return shopOrderMapper.deleteShopOrderByOrderIds(orderIds);
+        for (Long orderId : orderIds)
+        {
+            ShopOrder order = shopOrderMapper.selectShopOrderByOrderId(orderId);
+            if (order == null)
+            {
+                continue;
+            }
+            if (BizStatus.ORDER_UNPAID.equals(order.getStatus())
+                    && order.getBookId() != null && order.getQuantity() != null)
+            {
+                bookMapper.restoreStock(order.getBookId(), order.getQuantity());
+            }
+        }
+        int rows = shopOrderMapper.deleteShopOrderByOrderIds(orderIds);
+        // 订单数据变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /** 前台购书：校验读者/图书/库存 → 创建订单 → 库存-1（事务：下单与扣库存同生共死） */
