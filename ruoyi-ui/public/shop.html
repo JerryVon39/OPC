@@ -808,6 +808,7 @@
           </div>`;
       }).join('');
     } catch (e) {
+      if (mySeq !== bookRequestSeq) return; // 旧请求失败不覆盖新结果（与成功路径的防覆盖一致）
       document.getElementById('bookGrid').innerHTML = '<div class="loading">加载失败：' + e.message + '</div>';
     }
   }

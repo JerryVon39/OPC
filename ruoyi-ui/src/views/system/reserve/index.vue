@@ -83,7 +83,7 @@ export default {
         this.reserveList = response.rows
         this.total = response.total
       }).catch(() => {
-        this.$modal.msgError("预约列表加载失败，请检查网络后重试")
+        // 错误提示已由 request.js 拦截器统一弹出，这里只吞掉异常避免重复 toast
       }).finally(() => {
         this.loading = false
       })

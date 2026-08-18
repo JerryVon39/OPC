@@ -91,6 +91,7 @@ public class BookReserveServiceImplTest
     {
         reader.setStatus("1");
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
         assertTrue(e.getMessage().contains("停用/挂失"));
@@ -102,6 +103,7 @@ public class BookReserveServiceImplTest
     {
         book.setStatus("1");
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
@@ -114,6 +116,7 @@ public class BookReserveServiceImplTest
     {
         book.setStock(5L);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
@@ -129,6 +132,7 @@ public class BookReserveServiceImplTest
         List<BorrowRecord> list = new ArrayList<>();
         list.add(br);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(list);
         ServiceException e = assertThrows(ServiceException.class,
@@ -145,6 +149,7 @@ public class BookReserveServiceImplTest
         List<BookReserve> list = new ArrayList<>();
         list.add(exist);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(new ArrayList<>());
         when(bookReserveMapper.selectBookReserveList(any())).thenReturn(list);
@@ -153,11 +158,23 @@ public class BookReserveServiceImplTest
         assertTrue(e.getMessage().contains("请勿重复预约"));
     }
 
+    /** 读者在 findActiveReader 与加锁之间被并发删除 → 明确"读者不存在"而非 NPE */
+    @Test
+    void reserveByCard_readerDeletedConcurrently_throws()
+    {
+        when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(null);
+        ServiceException e = assertThrows(ServiceException.class,
+                () -> bookReserveService.reserveByCard("JS12345678", 3L));
+        assertTrue(e.getMessage().contains("读者不存在"));
+    }
+
     /** 成功预约：快照字段完整 + 状态预约中 */
     @Test
     void reserveByCard_success()
     {
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(new ArrayList<>());
         when(bookReserveMapper.selectBookReserveList(any())).thenReturn(new ArrayList<>());

@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.Book;
@@ -68,9 +69,10 @@ public class BookReserveServiceImpl implements IBookReserveService
         return bookReserveMapper.deleteBookReserveByReserveIds(reserveIds);
     }
 
-    /** 前台预约：校验读者/图书/库存/重复后创建（仅库存为0可预约，有库存提示直接借） */
+    /** 前台预约：校验读者/图书/库存/重复后创建（仅库存为0可预约，有库存提示直接借）
+     * READ_COMMITTED：加锁后的重复预约/已借检查读最新已提交数据，并发重复预约才能被拦下 */
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int reserveByCard(String cardNo, Long bookId)
     {
         if (cardNo == null || cardNo.trim().isEmpty() || bookId == null)
@@ -79,7 +81,12 @@ public class BookReserveServiceImpl implements IBookReserveService
         }
         // 先按证号定位读者，再锁读者行（FOR UPDATE）：同一读者的并发预约串行化，"重复预约"检查与插入原子化
         Reader queryReader = readerService.findActiveReader(cardNo);
-        Reader reader = queryReader == null ? null : readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
+        Reader reader = readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
+        // findActiveReader 与加锁之间读者可能被管理端删除：加锁查不到即视为不存在
+        if (reader == null)
+        {
+            throw new ServiceException("读者不存在");
+        }
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法预约");

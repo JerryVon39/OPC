@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.Book;
@@ -103,9 +104,10 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         borrowRuleService.checkUnderLimit(borrowRecord.getReaderId(), borrowRuleService.maxCountFor(reader.getReaderType()));
     }
 
-    /** 借书：创建记录 + 图书库存-1（事务：库存与记录同生共死） */
+    /** 借书：创建记录 + 图书库存-1（事务：库存与记录同生共死）
+     * READ_COMMITTED：FOR UPDATE 后的一致性读均读最新已提交数据，重复借阅/上限检查才能看到并发事务刚插入的记录 */
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int insertBorrowRecord(BorrowRecord borrowRecord)
     {
         Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());

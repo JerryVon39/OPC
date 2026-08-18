@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.constant.BizStatus;
@@ -132,7 +133,7 @@ public class ShopOrderServiceImpl implements IShopOrderService
 
     /** 前台购书：校验读者/图书/库存 → 创建订单 → 库存-1（事务：下单与扣库存同生共死） */
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int createOrder(String cardNo, Long bookId, Long quantity)
     {
         if (cardNo == null || cardNo.trim().isEmpty())
@@ -145,7 +146,12 @@ public class ShopOrderServiceImpl implements IShopOrderService
         }
         // 锁读者行（FOR UPDATE）：与删除读者互斥，防止"删除检查通过后、下单插入订单"的竞态
         Reader queryReader = readerService.findActiveReader(cardNo);
-        Reader reader = queryReader == null ? null : readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
+        Reader reader = readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
+        // findActiveReader 与加锁之间读者可能被管理端删除：加锁查不到即视为不存在
+        if (reader == null)
+        {
+            throw new ServiceException("读者不存在");
+        }
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法购买");

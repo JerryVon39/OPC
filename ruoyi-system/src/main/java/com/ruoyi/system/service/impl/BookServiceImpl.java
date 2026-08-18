@@ -1,16 +1,20 @@
 package com.ruoyi.system.service.impl;
 
+import java.util.Arrays;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import com.ruoyi.system.mapper.BookMapper;
-import com.ruoyi.system.mapper.BorrowRecordMapper;
-import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.domain.Book;
+import com.ruoyi.system.domain.BookReserve;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.domain.ShopOrder;
+import com.ruoyi.system.mapper.BookMapper;
+import com.ruoyi.system.mapper.BookReserveMapper;
+import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.service.IBookService;
 import com.ruoyi.system.service.StatisticsService;
 
@@ -31,6 +35,9 @@ public class BookServiceImpl implements IBookService
 
     @Autowired
     private ShopOrderMapper shopOrderMapper;
+
+    @Autowired
+    private BookReserveMapper bookReserveMapper;
 
     @Autowired
     private StatisticsService statisticsService;
@@ -105,9 +112,11 @@ public class BookServiceImpl implements IBookService
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int deleteBookByBookIds(Long[] bookIds)
     {
+        // 排序：批量删除的加锁顺序一致，避免并发批量删除互相持锁等待（死锁）
+        Arrays.sort(bookIds);
         for (Long bookId : bookIds)
         {
             // 锁图书行（FOR UPDATE）：防止检查通过后、删除前并发插入新的借阅/订单（检查与删除同事务原子化）
@@ -134,6 +143,17 @@ public class BookServiceImpl implements IBookService
             if (orders != null && !orders.isEmpty())
             {
                 throw new com.ruoyi.common.exception.ServiceException("该图书存在待处理订单，无法删除");
+            }
+            // 有预约中/可借预约的图书不可删（否则前台"我的预约"出现幽灵记录）
+            BookReserve rq = new BookReserve();
+            rq.setBookId(bookId);
+            List<BookReserve> reserves = bookReserveMapper.selectBookReserveList(rq);
+            for (BookReserve rv : reserves)
+            {
+                if ("0".equals(rv.getStatus()) || "1".equals(rv.getStatus()))
+                {
+                    throw new com.ruoyi.common.exception.ServiceException("该图书存在预约中的读者，请先取消预约后再删除");
+                }
             }
         }
         int rows = bookMapper.deleteBookByBookIds(bookIds);

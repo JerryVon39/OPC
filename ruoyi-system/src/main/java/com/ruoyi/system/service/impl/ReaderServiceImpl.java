@@ -1,9 +1,11 @@
 package com.ruoyi.system.service.impl;
 
+import java.util.Arrays;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
@@ -193,16 +195,19 @@ public class ReaderServiceImpl implements IReaderService
         return newCard;
     }
 
-    /**
-     * 批量删除读者管理
+    /** 批量删除读者管理
+     * READ_COMMITTED：加锁后对借阅/订单的检查均读最新已提交数据（REPEATABLE READ 下批量第2个起
+     * 的检查会读第1个建立的旧快照，漏看并发提交的借阅/订单）
      *
      * @param readerIds 需要删除的读者管理主键
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int deleteReaderByReaderIds(Long[] readerIds)
     {
+        // 排序：批量删除的加锁顺序一致，避免并发批量删除互相持锁等待（死锁）
+        Arrays.sort(readerIds);
         for (Long readerId : readerIds)
         {
             // 锁读者行（FOR UPDATE）：防止检查通过后、删除前并发借书/下单/预约（检查与删除同事务原子化）

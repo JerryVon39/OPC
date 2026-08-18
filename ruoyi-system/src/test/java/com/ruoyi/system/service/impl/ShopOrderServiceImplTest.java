@@ -79,6 +79,7 @@ public class ShopOrderServiceImplTest
     {
         reader.setStatus("1");
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
         assertTrue(e.getMessage().contains("停用/挂失"));
@@ -90,6 +91,7 @@ public class ShopOrderServiceImplTest
     {
         book.setStatus("1");
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         assertThrows(ServiceException.class, () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
     }
@@ -100,10 +102,22 @@ public class ShopOrderServiceImplTest
     {
         book.setStock(1L);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> shopOrderService.createOrder("JS12345678", 3L, 2L));
         assertTrue(e.getMessage().contains("库存不足"));
+    }
+
+    /** 读者在 findActiveReader 与加锁之间被并发删除 → 明确"读者不存在"而非 NPE */
+    @Test
+    void createOrder_readerDeletedConcurrently_throws()
+    {
+        when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(null);
+        ServiceException e = assertThrows(ServiceException.class,
+                () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
+        assertTrue(e.getMessage().contains("读者不存在"));
     }
 
     /** 并发兜底：updateStock 返回 0（期间库存被抢光）→ 抛异常 */
@@ -111,6 +125,7 @@ public class ShopOrderServiceImplTest
     void createOrder_concurrentStockLoss_throws()
     {
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         when(bookMapper.updateStock(3L, 1L)).thenReturn(0);
         assertThrows(ServiceException.class, () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
@@ -121,6 +136,7 @@ public class ShopOrderServiceImplTest
     void createOrder_success()
     {
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
+        when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
         when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
         when(bookMapper.updateStock(3L, 1L)).thenReturn(1);
         when(shopOrderMapper.insertShopOrder(any(ShopOrder.class))).thenReturn(1);
