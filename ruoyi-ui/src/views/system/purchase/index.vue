@@ -143,6 +143,8 @@ export default {
         this.purchaseList = response.rows
         this.total = response.total
         this.loading = false
+      }).catch(() => { // 错误已由 request.js 拦截器统一弹出，这里吞掉避免重复 toast
+        this.loading = false
       })
     },
     cancel() {

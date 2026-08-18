@@ -375,8 +375,9 @@ export default {
         this.loading = false
       })
     },
-    /** 上下架拨动开关：乐观切换，请求失败回滚 */
+    /** 上下架拨动开关：乐观切换，请求失败回滚；请求进行中忽略再次拨动 */
     handleStatusChange(row) {
+      if (row.statusLoading) return // 在途防重：避免连续拨动发重复/过期请求
       const target = row.status // el-switch v-model 已乐观改写
       const revertTo = target === '0' ? '1' : '0'
       this.$set(row, 'statusLoading', true)

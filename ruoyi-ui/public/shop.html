@@ -827,6 +827,8 @@
       box.style.display = 'block';
     } catch (e) {
       if (mySeq !== suggestReqSeq) return;
+      suggestItems = [];
+      suggestIdx = -1;
       box.style.display = 'none';
     }
   }
@@ -1009,7 +1011,6 @@
   // ===== 乐观 UI：点击瞬间改按钮态，失败再回滚（体验"系统反应真快"）=====
   let pendingBorrow = new Set();  // 借书请求进行中的 bookId（按书粒度防重复，不再用全局单锁）
   let pendingReserve = new Set(); // 预约请求进行中的 bookId
-  let renewPending = false;       // 续借请求进行中（按 borrowId 防重复）
   function optimisticBorrow(bookId, name) {
     bookId = Number(bookId);
     if (!currentUser) { toast('请先登录后再借书'); openLogin(); return; }
@@ -1744,15 +1745,17 @@
   }
 
   // ===== 续借（仅借出中且未逾期，应还日期 +30 天）=====
+  let renewPending = new Set(); // 续借请求进行中的 borrowId（按书粒度防重复）
   async function renewBorrow(borrowId, btn) {
+    borrowId = Number(borrowId);
     if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
-    if (renewPending) return; // 防重复：续借请求进行中忽略再次点击
-    renewPending = true;
+    if (renewPending.has(borrowId)) return; // 防重复：该笔续借请求进行中忽略再次点击
+    renewPending.add(borrowId);
     // 乐观：点击瞬间按钮变"已续借"，失败再回滚
     if (btn) { btn.textContent = '已续借'; btn.disabled = true; btn.style.background = '#cfc9bd'; btn.style.boxShadow = 'none'; btn.style.cursor = 'not-allowed'; }
     const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), borrowId: borrowId });
     const revertBtn = function () {
-      if (btn) { btn.textContent = '续借30天'; btn.disabled = false; btn.style.background = ''; btn.style.boxShadow = ''; btn.style.cursor = ''; }
+      if (btn && document.body.contains(btn)) { btn.textContent = '续借30天'; btn.disabled = false; btn.style.background = ''; btn.style.boxShadow = ''; btn.style.cursor = ''; }
     };
     try {
       const res = await fetch(RENEW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
@@ -1760,7 +1763,7 @@
       if (d.code === 200) { toast('续借成功，应还日期顺延 30 天'); queryMyBorrow(); }
       else { revertBtn(); toast(d.msg || '续借失败'); }
     } catch (e) { revertBtn(); toast('续借失败：' + e.message); }
-    finally { renewPending = false; }
+    finally { renewPending.delete(borrowId); }
   }
 
   // ===== 通用 =====
@@ -1801,9 +1804,9 @@
     el.addEventListener('compositionstart', function () { suggestComposing = true; });
     el.addEventListener('compositionend', function () { suggestComposing = false; onSearchInput(); });
     el.addEventListener('focus', function () { if (this.value.trim()) doSuggest(); });
-    el.addEventListener('blur', function () { setTimeout(hideSuggest, 150); });
+    el.addEventListener('blur', function () { ++suggestReqSeq; setTimeout(hideSuggest, 150); }); // 失效在途请求，防止晚到响应重新弹出下拉
     document.addEventListener('click', function (e) {
-      if (!e.target.closest('.nav-search')) hideSuggest();
+      if (!e.target.closest('.nav-search')) { ++suggestReqSeq; hideSuggest(); }
     });
   })();
 
