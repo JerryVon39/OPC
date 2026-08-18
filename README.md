@@ -169,7 +169,7 @@ npm run dev
 | 层级 | 怎么跑 | 覆盖 |
 |---|---|---|
 | 单元测试（99 用例） | `mvn test`（秒级，不依赖数据库） | 罚款计算/借阅规则/预约校验/下单校验/订单状态机/删除还原库存/并发取消防双回补/证号生成·查重/统计缓存/BBCODE 渲染/参数回退/FOR UPDATE 行锁路径/并发删除守卫/荐购校验与去重 |
-| 集成冒烟（61 项） | `python -u scripts/full_test.py`（需后端已启动） | 前台购物/借阅/预约/订单 + 后台管理全链路 + 搜索联想/排序/荐购/上下架开关 |
+| 集成冒烟（62 项） | `python -u scripts/full_test.py`（需后端已启动） | 前台购物/借阅/预约/订单 + 后台管理全链路 + 搜索联想/排序/荐购/上下架开关 |
 
 > 💡 `python` 命令若被 Windows 应用商店的 python 占位拦截，请用完整路径运行：
 > `C:\Users\1\AppData\Local\Python\pythoncore-3.14-64\python.exe scripts/full_test.py`
