@@ -109,7 +109,7 @@ JDK 17、Maven 3.6+、Node.js 16+、MySQL 8、Redis
 #    否则 Windows 终端按 GBK 读脚本会把中文读坏入库（菜单乱码/登录报错））
 mysql --default-character-set=utf8mb4 -uroot -p < sql/ry_20260417.sql        # 若依系统表
 mysql --default-character-set=utf8mb4 -uroot -p < sql/quartz.sql             # 定时任务表
-mysql --default-character-set=utf8mb4 -uroot -p < sql/business_init.sql      # 业务表+字典+菜单+订单表（幂等，可重复执行）
+mysql --default-character-set=utf8mb4 -uroot -p < sql/business_init.sql      # 业务表+字典+菜单+订单表（全新库初始化）
 
 # 已有旧库升级到当前版本时，business_init.sql 顶部建表语句在已有库会报"表已存在"，
 # 只需额外执行增量升级脚本（幂等）：
