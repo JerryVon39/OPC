@@ -836,6 +836,7 @@
   let suggestComposing = false; // 中文输入法组词中不触发
   function onSearchKeyDown(e) {
     if (e.key === 'Enter') {
+      ++suggestReqSeq; // 回车直接搜索：失效在途联想请求，防止晚到响应重新弹窗
       // 有高亮项时回车选中，否则直接搜索
       if (suggestItems.length && suggestIdx >= 0) { pickSuggest(suggestIdx); }
       else { hideSuggest(); loadBooks(); }
@@ -849,6 +850,7 @@
       suggestIdx = (suggestIdx - 1 + suggestItems.length) % suggestItems.length;
       highlightSuggest();
     } else if (e.key === 'Escape') {
+      ++suggestReqSeq;
       hideSuggest();
     }
   }

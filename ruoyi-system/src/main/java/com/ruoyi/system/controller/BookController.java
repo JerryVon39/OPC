@@ -57,6 +57,16 @@ public class BookController extends BaseController
                 throw new com.ruoyi.common.exception.ServiceException("非法的排序字段");
             }
         }
+        // isAsc 也白名单化：只允许 asc/desc（及其长写法），防止经 isAsc 旁路在 ORDER BY 后追加任意列（防御纵深）
+        String isAsc = request.getParameter("isAsc");
+        if (isAsc != null && !isAsc.trim().isEmpty())
+        {
+            String dir = isAsc.trim();
+            if (!"asc".equals(dir) && !"desc".equals(dir) && !"ascending".equals(dir) && !"descending".equals(dir))
+            {
+                throw new com.ruoyi.common.exception.ServiceException("非法的排序方向");
+            }
+        }
         startPage();
         List<Book> list = bookService.selectBookList(book);
         // 简介渲染 BBCODE（展示为富文本；后台编辑回显走 getInfo 不受影响）

@@ -218,6 +218,9 @@ tc('9.3', '最新出版降序', dates == sorted(dates, reverse=True), 'dates=' +
 # 9.4 排序字段白名单：非法字段被拒
 s, d = req('/system/book/list?pageNum=1&pageSize=5&orderByColumn=evil%20union')
 tc('9.4', '非法排序字段被拒', '非法的排序字段' in str(d), str(d)[:80])
+# 9.4a isAsc 白名单：经 isAsc 旁路排序任意列被拒
+s, d = req('/system/book/list?pageNum=1&pageSize=5&orderByColumn=bookId&isAsc=desc%2C%20intro')
+tc('9.4a', '非法排序方向被拒', '非法的排序方向' in str(d), str(d)[:80])
 # 9.5 匿名提交荐购成功
 import time as _t
 _pname = '回归测试荐购书' + str(int(_t.time()))
