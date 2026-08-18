@@ -29,7 +29,7 @@ CREATE TABLE `book` (
   PRIMARY KEY (`book_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `book` VALUES (1,'三体','刘慈欣','1','重庆出版社',88.00,'2008-01-01',9,'0','科幻经典','admin','2026-08-12 09:40:40','',NULL),(2,'深入理解计算机系统','Randal E. Bryant','2','机械工业出版社',139.00,'2016-11-01',5,'0','计算机必读','admin','2026-08-12 09:40:40','',NULL),(3,'明朝那些事儿','当年明月','3','中国海关出版社',358.00,'2009-04-01',20,'1','通俗历史','admin','2026-08-12 09:40:40','',NULL),(4,'活着','余华','1','作家出版社',35.00,'2012-08-01',50,'0','经典文学','admin','2026-08-12 11:08:22','',NULL),(5,'哇奥','哇奥','1','哇奥',576.00,'2026-08-05',7,'0','经典文学','','2026-08-12 11:21:25','','2026-08-12 15:59:02'),(6,'百年孤独','加西亚·马尔克斯','1','南海出版公司',55.00,'2011-06-01',8,'0','魔幻现实主义','admin','2026-08-12 17:14:21','',NULL),(7,'围城','钱钟书','1','人民文学出版社',39.00,'1991-02-01',6,'0','经典讽刺小说','admin','2026-08-12 17:14:21','',NULL);
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, intro, create_by, create_time, update_by, update_time) VALUES (1,'三体','刘慈欣','1','重庆出版社',88.00,'2008-01-01',9,'0','科幻经典','admin','2026-08-12 09:40:40','',NULL),(2,'深入理解计算机系统','Randal E. Bryant','2','机械工业出版社',139.00,'2016-11-01',5,'0','计算机必读','admin','2026-08-12 09:40:40','',NULL),(3,'明朝那些事儿','当年明月','3','中国海关出版社',358.00,'2009-04-01',20,'1','通俗历史','admin','2026-08-12 09:40:40','',NULL),(4,'活着','余华','1','作家出版社',35.00,'2012-08-01',50,'0','经典文学','admin','2026-08-12 11:08:22','',NULL),(5,'哇奥','哇奥','1','哇奥',576.00,'2026-08-05',7,'0','经典文学','','2026-08-12 11:21:25','','2026-08-12 15:59:02'),(6,'百年孤独','加西亚·马尔克斯','1','南海出版公司',55.00,'2011-06-01',8,'0','魔幻现实主义','admin','2026-08-12 17:14:21','',NULL),(7,'围城','钱钟书','1','人民文学出版社',39.00,'1991-02-01',6,'0','经典讽刺小说','admin','2026-08-12 17:14:21','',NULL);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reader` (
@@ -84,6 +84,26 @@ INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date,
 (3, 2, 2, '2026-08-13', '2026-10-12', NULL, '0', '教师测试', 'JS20260002', '深入理解计算机系统', 'system', NOW()),
 (4, 3, 4, '2026-07-01', '2026-07-31', '2026-07-20', '1', '普通测试', 'JS20260003', '活着', 'system', NOW()),
 (5, 3, 13, '2026-07-02', '2026-08-01', NULL, '2', '普通测试', 'JS20260003', '小王子', 'system', NOW());
+-- ---------- 购书订单表（建表必须在测试订单插入之前，全新库才能初始化成功） ----------
+CREATE TABLE IF NOT EXISTS `shop_order` (
+  `order_id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+  `order_no` varchar(30) DEFAULT NULL COMMENT '订单号',
+  `reader_id` bigint DEFAULT NULL COMMENT '读者ID',
+  `reader_name` varchar(50) DEFAULT NULL COMMENT '读者姓名',
+  `card_no` varchar(30) DEFAULT NULL COMMENT '借书证号',
+  `book_id` bigint DEFAULT NULL COMMENT '图书ID',
+  `book_name` varchar(100) DEFAULT NULL COMMENT '图书名称',
+  `quantity` int DEFAULT '1' COMMENT '购买数量',
+  `total_price` decimal(10,2) DEFAULT NULL COMMENT '订单总价(元)',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0待处理 1已完成 2已取消)',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='购书订单表';
+
 -- 测试订单（四种状态齐全：待付款/已收款/已完成/已取消）
 INSERT INTO shop_order (order_no, reader_id, reader_name, card_no, book_id, book_name, quantity, total_price, status, create_by, create_time) VALUES
 ('WSW20260813001', 1, '学生测试', 'JS20260001', 13, '小王子', 1, 22.00, '0', '学生测试', NOW()),
@@ -246,26 +266,6 @@ PREPARE st2 FROM @s2; EXECUTE st2; DEALLOCATE PREPARE st2;
 SET @c3 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='intro');
 SET @s3 = IF(@c3=0, 'ALTER TABLE book ADD COLUMN intro varchar(1000) DEFAULT NULL COMMENT ''图书简介''', 'SELECT 1');
 PREPARE st3 FROM @s3; EXECUTE st3; DEALLOCATE PREPARE st3;
-
--- ---------- 购书订单表 ----------
-CREATE TABLE IF NOT EXISTS `shop_order` (
-  `order_id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
-  `order_no` varchar(30) DEFAULT NULL COMMENT '订单号',
-  `reader_id` bigint DEFAULT NULL COMMENT '读者ID',
-  `reader_name` varchar(50) DEFAULT NULL COMMENT '读者姓名',
-  `card_no` varchar(30) DEFAULT NULL COMMENT '借书证号',
-  `book_id` bigint DEFAULT NULL COMMENT '图书ID',
-  `book_name` varchar(100) DEFAULT NULL COMMENT '图书名称',
-  `quantity` int DEFAULT '1' COMMENT '购买数量',
-  `total_price` decimal(10,2) DEFAULT NULL COMMENT '订单总价(元)',
-  `status` char(1) DEFAULT '0' COMMENT '状态(0待处理 1已完成 2已取消)',
-  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  PRIMARY KEY (`order_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='购书订单表';
 
 -- ---------- 菜单：订单管理（图书业务目录下） ----------
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
