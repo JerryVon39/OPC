@@ -1,0 +1,91 @@
+# ============================================
+# 万事屋图书管理系统 · Docker 一键编排
+# 启动：docker compose up -d --build
+# 访问：http://localhost:8080（后台 / 前台 shop.html）
+# 首次启动自动初始化数据库（sql/ 按依赖顺序导入）
+# ============================================
+services:
+  # ---------- MySQL 8 ----------
+  mysql:
+    image: mysql:8.0
+    container_name: wanshiwu-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: ry-vue
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # SQL 脚本目录（mysql-init.sh 按依赖顺序导入）
+      - ./sql:/docker-entrypoint-initdb.d/sql:ro
+      - ./docker/mysql-init.sh:/docker-entrypoint-initdb.d/mysql-init.sh:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # ---------- Redis ----------
+  redis:
+    image: redis:7-alpine
+    container_name: wanshiwu-redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------- 后端 ----------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wanshiwu-backend
+    environment:
+      # 覆盖 application-druid.yml / application.yml 的默认 localhost
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # 上传文件目录（容器内，持久化到 upload 卷）
+      RUOYI_PROFILE: /home/ruoyi/uploadPath
+      TZ: Asia/Shanghai
+    volumes:
+      - upload:/home/ruoyi/uploadPath
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------- 前端（Nginx 托管 + 代理 /prod-api 与 /profile） ----------
+  frontend:
+    build:
+      context: .
+      dockerfile: ruoyi-ui/Dockerfile
+    container_name: wanshiwu-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
+  upload:
