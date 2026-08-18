@@ -68,6 +68,9 @@ public class Book extends BaseEntity
     /** 查询关键字（书名或作者） */
     private String keyword;
 
+    /** 借阅次数（列表查询派生：借阅记录统计字段，非数据库列） */
+    private Long borrowCount;
+
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
 
@@ -82,6 +85,9 @@ public class Book extends BaseEntity
 
     public String getKeyword() { return keyword; }
     public void setKeyword(String keyword) { this.keyword = keyword; }
+
+    public Long getBorrowCount() { return borrowCount; }
+    public void setBorrowCount(Long borrowCount) { this.borrowCount = borrowCount; }
 
     public void setBookId(Long bookId) 
     {

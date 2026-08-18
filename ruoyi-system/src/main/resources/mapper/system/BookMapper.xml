@@ -22,14 +22,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"    column="update_by"    />
         <result property="updateTime"    column="update_time"    />
+        <result property="borrowCount"    column="borrow_count"    />
     </resultMap>
 
     <sql id="selectBookVo">
         select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, remark, cover, isbn, intro, create_by, create_time, update_by, update_time from book
     </sql>
 
+    <!-- 列表用：额外带借阅次数（借阅记录实时统计），支持"借阅最多"排序 -->
+    <sql id="selectBookListVo">
+        select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, remark, cover, isbn, intro, create_by, create_time, update_by, update_time,
+        (select count(1) from borrow_record b where b.book_id = book.book_id) as borrow_count
+        from book
+    </sql>
+
     <select id="selectBookList" parameterType="Book" resultMap="BookResult">
-        <include refid="selectBookVo"/>
+        <include refid="selectBookListVo"/>
         <where>  
             <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
             <if test="author != null  and author != ''"> and author = #{author}</if>
@@ -139,11 +147,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where book_id = #{bookId}
     </update>
 
+    <!-- 上下架状态切换（后台列表开关）：仅改 status，字段由 Service 层做预约联动校验后调用 -->
+    <update id="updateBookStatus">
+        update book set status = #{status}, update_time = sysdate()
+        where book_id = #{bookId}
+    </update>
+
     <!-- 同类图书推荐：同分类在架书（排除自身，库存充足优先，最多4本） -->
     <select id="selectRelatedBooks" resultMap="BookResult">
         <include refid="selectBookVo"/>
         where book_id != #{bookId} and book_type = #{bookType} and status = '0'
         order by stock desc, book_id asc
         limit 4
+    </select>
+
+    <!-- 搜索联想（匿名）：在架书按书名模糊匹配，最多 8 条 -->
+    <select id="selectSuggestBooks" resultMap="BookResult">
+        select book_id, book_name, author, book_type, price from book
+        where status = '0' and book_name like concat('%', #{keyword}, '%')
+        order by book_id asc
+        limit 8
     </select>
 </mapper>

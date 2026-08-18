@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookPurchaseReqMapper">
+
+    <resultMap type="BookPurchaseReq" id="BookPurchaseReqResult">
+        <result property="reqId"       column="req_id"    />
+        <result property="bookName"    column="book_name" />
+        <result property="author"      column="author"    />
+        <result property="status"      column="status"    />
+        <result property="remark"      column="remark"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"  column="create_time"  />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"  column="update_time"  />
+    </resultMap>
+
+    <sql id="selectBookPurchaseReqVo">
+        select req_id, book_name, author, status, remark, create_by, create_time, update_by, update_time from book_purchase_req
+    </sql>
+
+    <select id="selectBookPurchaseReqList" parameterType="BookPurchaseReq" resultMap="BookPurchaseReqResult">
+        <include refid="selectBookPurchaseReqVo"/>
+        <where>
+            <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="author != null  and author != ''"> and author = #{author}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+        order by req_id desc
+    </select>
+
+    <select id="selectBookPurchaseReqByReqId" parameterType="Long" resultMap="BookPurchaseReqResult">
+        <include refid="selectBookPurchaseReqVo"/>
+        where req_id = #{reqId}
+    </select>
+
+    <select id="countPendingByName" parameterType="String" resultType="int">
+        select count(1) from book_purchase_req
+        where book_name = #{bookName} and status = '0'
+    </select>
+
+    <insert id="insertBookPurchaseReq" parameterType="BookPurchaseReq" useGeneratedKeys="true" keyProperty="reqId">
+        insert into book_purchase_req
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bookName != null and bookName != ''">book_name,</if>
+            <if test="author != null">author,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bookName != null and bookName != ''">#{bookName},</if>
+            <if test="author != null">#{author},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBookPurchaseReq" parameterType="BookPurchaseReq">
+        update book_purchase_req
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="bookName != null and bookName != ''">book_name = #{bookName},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where req_id = #{reqId}
+    </update>
+
+    <delete id="deleteBookPurchaseReqByReqIds" parameterType="String">
+        delete from book_purchase_req where req_id in
+        <foreach item="reqId" collection="array" open="(" separator="," close=")">
+            #{reqId}
+        </foreach>
+    </delete>
+</mapper>

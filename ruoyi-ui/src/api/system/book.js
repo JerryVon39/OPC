@@ -35,6 +35,15 @@ export function updateBook(data) {
   })
 }
 
+// 上下架状态切换（后台列表开关）
+export function changeBookStatus(bookId, status) {
+  return request({
+    url: '/system/book/changeStatus',
+    method: 'put',
+    params: { bookId: bookId, status: status }
+  })
+}
+
 // 删除图书信息
 export function delBook(bookId) {
   return request({

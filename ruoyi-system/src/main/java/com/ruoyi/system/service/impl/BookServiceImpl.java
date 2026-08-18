@@ -61,6 +61,13 @@ public class BookServiceImpl implements IBookService
         return bookMapper.selectRelatedBooks(bookId, bookType);
     }
 
+    /** 搜索联想（匿名）：在架书按书名模糊匹配，最多 8 条 */
+    @Override
+    public java.util.List<Book> selectSuggestBooks(String keyword)
+    {
+        return bookMapper.selectSuggestBooks(keyword);
+    }
+
     /**
      * 查询图书信息列表
      * 
@@ -102,6 +109,52 @@ public class BookServiceImpl implements IBookService
         int rows = bookMapper.updateBook(book);
         // 上架/下架影响在架统计：失效统计缓存
         statisticsService.evictAll();
+        return rows;
+    }
+
+    /**
+     * 上下架状态切换（后台列表开关）
+     * 有预约中/可借预约的图书禁止下架（联动校验）
+     */
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public int changeBookStatus(Long bookId, String status)
+    {
+        if (bookId == null)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("参数不完整");
+        }
+        if (!"0".equals(status) && !"1".equals(status))
+        {
+            throw new com.ruoyi.common.exception.ServiceException("非法的上下架状态");
+        }
+        // 锁图书行：防止检查通过后并发新增预约再下架（检查与更新同事务原子化）
+        Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
+        if (book == null)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("图书不存在");
+        }
+        // 仅"在架 → 下架"需要联动校验；上架永远允许
+        boolean goingOff = "1".equals(status) && "0".equals(book.getStatus());
+        if (goingOff)
+        {
+            BookReserve rq = new BookReserve();
+            rq.setBookId(bookId);
+            List<BookReserve> reserves = bookReserveMapper.selectBookReserveList(rq);
+            for (BookReserve rv : reserves)
+            {
+                if ("0".equals(rv.getStatus()) || "1".equals(rv.getStatus()))
+                {
+                    throw new com.ruoyi.common.exception.ServiceException("该图书存在预约中的读者，请先取消预约后再下架");
+                }
+            }
+        }
+        int rows = bookMapper.updateBookStatus(bookId, status);
+        if (rows > 0)
+        {
+            // 上架/下架影响在架统计：失效统计缓存
+            statisticsService.evictAll();
+        }
         return rows;
     }
 

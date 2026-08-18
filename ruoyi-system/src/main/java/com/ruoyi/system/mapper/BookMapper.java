@@ -69,6 +69,12 @@ public interface BookMapper
     /** 回补库存（归还/取消订单） */
     public int restoreStock(@Param("bookId") Long bookId, @Param("quantity") Long quantity);
 
+    /** 上下架状态切换（后台列表开关）：仅更新 status，不触碰其他字段 */
+    public int updateBookStatus(@Param("bookId") Long bookId, @Param("status") String status);
+
     /** 同类图书推荐：同分类在架书（排除自身，最多4本） */
     public java.util.List<Book> selectRelatedBooks(@Param("bookId") Long bookId, @Param("bookType") String bookType);
+
+    /** 搜索联想（匿名）：书架书按书名模糊匹配，最多 8 条（返回 bookId/bookName/author 等轻量字段） */
+    public java.util.List<Book> selectSuggestBooks(@Param("keyword") String keyword);
 }

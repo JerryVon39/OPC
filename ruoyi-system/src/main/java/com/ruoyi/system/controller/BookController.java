@@ -1,6 +1,7 @@
 package com.ruoyi.system.controller;
 
 import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +42,21 @@ public class BookController extends BaseController
      */
     @Anonymous
     @GetMapping("/list")
-    public TableDataInfo list(Book book)
+    public TableDataInfo list(Book book, HttpServletRequest request)
     {
+        // 排序字段白名单：前台仅允许"借阅最多(borrowCount)/最新出版(publishDate)"等固定字段排序，防 ORDER BY 注入
+        String orderByColumn = request.getParameter("orderByColumn");
+        if (orderByColumn != null && !orderByColumn.trim().isEmpty())
+        {
+            String col = orderByColumn.trim();
+            java.util.Set<String> allowed = new java.util.HashSet<>(java.util.Arrays.asList(
+                    "book_id", "book_name", "author", "book_type", "publisher", "price", "publish_date", "stock", "status", "isbn",
+                    "bookId", "bookName", "publishDate", "borrowCount", "borrow_count"));
+            if (!allowed.contains(col))
+            {
+                throw new com.ruoyi.common.exception.ServiceException("非法的排序字段");
+            }
+        }
         startPage();
         List<Book> list = bookService.selectBookList(book);
         // 简介渲染 BBCODE（展示为富文本；后台编辑回显走 getInfo 不受影响）
@@ -64,6 +78,20 @@ public class BookController extends BaseController
         java.util.List<Book> related = bookService.selectRelatedBooks(bookId, bookType.trim());
         com.ruoyi.system.util.RenderUtil.renderBookIntro(related);
         return success(related);
+    }
+
+    /**
+     * 搜索联想（匿名）：输入时按书名模糊匹配在架图书，最多 8 条
+     */
+    @Anonymous
+    @GetMapping("/suggest")
+    public AjaxResult suggest(String keyword)
+    {
+        if (keyword == null || keyword.trim().isEmpty())
+        {
+            return success(java.util.Collections.emptyList());
+        }
+        return success(bookService.selectSuggestBooks(keyword.trim()));
     }
 
     /**
@@ -109,6 +137,18 @@ public class BookController extends BaseController
     public AjaxResult edit(@RequestBody Book book)
     {
         return toAjax(bookService.updateBook(book));
+    }
+
+    /**
+     * 上下架状态切换（后台列表开关）
+     * 有预约中/可借预约的图书禁止下架（Service 层联动校验）
+     */
+    @PreAuthorize("@ss.hasPermi('system:book:edit')")
+    @Log(title = "图书信息", businessType = BusinessType.UPDATE)
+    @PutMapping("/changeStatus")
+    public AjaxResult changeStatus(Long bookId, String status)
+    {
+        return toAjax(bookService.changeBookStatus(bookId, status));
     }
 
     /**

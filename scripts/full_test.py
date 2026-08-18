@@ -199,6 +199,52 @@ tc('8.1', '删除有未还借阅的书被拒', '未归还' in str(d.get('msg')),
 s, d = req('/system/reader/1', 'DELETE', headers=auth)
 tc('8.2', '删除有未还借阅的读者被拒', '未归还' in str(d.get('msg')), d.get('msg'))
 
+# ============ 9. 新功能回归（搜索联想/排序/荐购/上下架） ============
+print('=== 9. 新功能回归 ===')
+# 9.1 搜索联想：输入"三"联想出《三体》
+s, d = req('/system/book/suggest?keyword=' + urllib.parse.quote('三'))
+names = [b.get('bookName') for b in (d.get('data') or [])]
+tc('9.1', '搜索联想返回三体', '三体' in names, str(names[:3]))
+# 9.2 借阅最多排序：borrowCount 降序
+s, d = req('/system/book/list?pageNum=1&pageSize=10&orderByColumn=borrowCount&isAsc=desc')
+rows = d.get('rows') or []
+cnts = [r.get('borrowCount') or 0 for r in rows]
+tc('9.2', '借阅最多降序', d.get('code') == 200 and cnts == sorted(cnts, reverse=True), 'counts=' + str(cnts[:5]))
+# 9.3 最新出版排序：publishDate 降序
+s, d = req('/system/book/list?pageNum=1&pageSize=10&orderByColumn=publishDate&isAsc=desc')
+rows = d.get('rows') or []
+dates = [str(r.get('publishDate') or '') for r in rows]
+tc('9.3', '最新出版降序', dates == sorted(dates, reverse=True), 'dates=' + str(dates[:3]))
+# 9.4 排序字段白名单：非法字段被拒
+s, d = req('/system/book/list?pageNum=1&pageSize=5&orderByColumn=evil%20union')
+tc('9.4', '非法排序字段被拒', '非法的排序字段' in str(d), str(d)[:80])
+# 9.5 匿名提交荐购成功
+import time as _t
+_pname = '回归测试荐购书' + str(int(_t.time()))
+s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': _pname, 'author': '回归', 'remark': 'auto'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+tc('9.5', '匿名提交荐购', d.get('code') == 200, d.get('msg'))
+# 9.6 同书名待处理去重
+s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': _pname}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+tc('9.6', '荐购去重拒绝', '重复提交' in str(d.get('msg')), d.get('msg'))
+# 9.7 后台荐购列表 + 处理
+s, d = req('/system/purchase/list?pageNum=1&pageSize=10', headers=auth)
+row = next((r for r in (d.get('rows') or []) if r.get('bookName') == _pname), None)
+tc('9.7', '后台荐购列表可见', row is not None, str(row))
+if row:
+    s, d = req('/system/purchase', 'PUT', json.dumps({'reqId': row['reqId'], 'bookName': row['bookName'], 'author': row.get('author'), 'status': '1'}).encode(), dict(auth, **{'Content-Type': 'application/json'}))
+    s, d2 = req('/system/purchase/list?pageNum=1&pageSize=10', headers=auth)
+    row2 = next((r for r in (d2.get('rows') or []) if r.get('bookName') == _pname), None)
+    tc('9.8', '后台处理荐购(已处理)', row2 is not None and row2.get('status') == '1', str(row2))
+# 9.9 有预约中的书禁止下架（白夜行 book 15）
+s, d = req('/system/book/changeStatus?bookId=15&status=1', 'PUT', headers=auth)
+tc('9.9', '预约中的书禁止下架', '预约' in str(d.get('msg')), d.get('msg'))
+# 9.10 正常书上下架（明朝那些事儿 book 3：下架→上架→还原下架）
+s, d = req('/system/book/changeStatus?bookId=3&status=0', 'PUT', headers=auth)
+s2, d2 = req('/system/book/changeStatus?bookId=3&status=1', 'PUT', headers=auth)
+tc('9.10', '开关上架/下架正常', d.get('code') == 200 and d2.get('code') == 200, d.get('msg'))
+# 9.11 清理荐购测试数据
+sql("DELETE FROM book_purchase_req WHERE book_name='" + _pname + "';")
+
 # ============ 汇总 ============
 total = len(results)
 passed = sum(1 for r in results if r[2] == 'PASS')

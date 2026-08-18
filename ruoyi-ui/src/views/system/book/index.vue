@@ -122,10 +122,23 @@
           <span v-else>{{ scope.row.stock }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" width="70">
+      <el-table-column label="状态" align="center" width="130">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">在架</el-tag>
-          <el-tag v-else type="info" size="mini">下架</el-tag>
+          <el-switch
+            v-if="hasEditPermi"
+            v-model="scope.row.status"
+            :active-value="'0'"
+            :inactive-value="'1'"
+            active-text="在架"
+            inactive-text="下架"
+            :loading="scope.row.statusLoading === true"
+            title="拨动开关直接上架/下架（有未完成预约的图书禁止下架）"
+            @change="handleStatusChange(scope.row)"
+          />
+          <span v-else>
+            <el-tag v-if="scope.row.status === '0'" type="success" size="mini">在架</el-tag>
+            <el-tag v-else type="info" size="mini">下架</el-tag>
+          </span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
@@ -268,10 +281,11 @@
 </template>
 
 <script>
-import { listBook, getBook, delBook, addBook, updateBook } from "@/api/system/book"
+import { listBook, getBook, delBook, addBook, updateBook, changeBookStatus } from "@/api/system/book"
 import { getToken } from "@/utils/auth"
 import { getDicts } from "@/api/system/dict/data"
 import { getConfigKey } from "@/api/system/config"
+import { checkPermi } from "@/utils/permission"
 
 export default {
   name: "Book",
@@ -302,6 +316,8 @@ export default {
       uploadHeaders: { Authorization: "Bearer " + getToken() },
       // 库存预警阈值（系统参数 book.stock.warn，后台参数设置可改）
       warnThreshold: 3,
+      // 是否有图书修改权限（决定列表显示开关 or 只读标签）
+      hasEditPermi: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -332,6 +348,7 @@ export default {
     }
   },
   created() {
+    this.hasEditPermi = checkPermi(['system:book:edit'])
     this.getDicts("book_type").then(response => {
       this.bookTypeOptions = response.data;
     });
@@ -356,6 +373,19 @@ export default {
         this.bookList = response.rows
         this.total = response.total
         this.loading = false
+      })
+    },
+    /** 上下架拨动开关：乐观切换，请求失败回滚 */
+    handleStatusChange(row) {
+      const target = row.status // el-switch v-model 已乐观改写
+      const revertTo = target === '0' ? '1' : '0'
+      this.$set(row, 'statusLoading', true)
+      changeBookStatus(row.bookId, target).then(() => {
+        this.$set(row, 'statusLoading', false)
+        this.$modal.msgSuccess(target === '0' ? '已上架' : '已下架')
+      }).catch(() => {
+        this.$set(row, 'status', revertTo)
+        this.$set(row, 'statusLoading', false)
       })
     },
     // 取消按钮

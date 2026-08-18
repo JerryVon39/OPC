@@ -22,6 +22,9 @@ public interface IBookService
     /** 同类图书推荐：同分类在架书（最多4本） */
     public java.util.List<Book> selectRelatedBooks(Long bookId, String bookType);
 
+    /** 搜索联想（匿名）：在架书按书名模糊匹配，最多 8 条 */
+    public java.util.List<Book> selectSuggestBooks(String keyword);
+
     /**
      * 查询图书信息列表
      * 
@@ -40,11 +43,21 @@ public interface IBookService
 
     /**
      * 修改图书信息
-     * 
+     *
      * @param book 图书信息
      * @return 结果
      */
     public int updateBook(Book book);
+
+    /**
+     * 上下架状态切换（后台列表开关）
+     * 有预约中/可借预约的图书禁止下架（联动校验）
+     *
+     * @param bookId 图书ID
+     * @param status 目标状态（0在架 1下架）
+     * @return 结果
+     */
+    public int changeBookStatus(Long bookId, String status);
 
     /**
      * 批量删除图书信息
