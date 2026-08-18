@@ -109,7 +109,8 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     public int insertBorrowRecord(BorrowRecord borrowRecord)
     {
         Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());
-        Reader reader = readerMapper.selectReaderByReaderId(borrowRecord.getReaderId());
+        // 锁读者行（FOR UPDATE）：同一读者的并发借书串行化，"重复借阅/借阅上限"检查与插入原子化
+        Reader reader = readerMapper.selectReaderByReaderIdForUpdate(borrowRecord.getReaderId());
         // 前置校验（图书/读者/欠费/重复/上限）
         validateBeforeBorrow(borrowRecord, book, reader);
         String readerType = reader.getReaderType();

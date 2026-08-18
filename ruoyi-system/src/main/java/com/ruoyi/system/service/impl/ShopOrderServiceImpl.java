@@ -143,7 +143,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             quantity = 1L;
         }
-        Reader reader = readerService.findActiveReader(cardNo);
+        // 锁读者行（FOR UPDATE）：与删除读者互斥，防止"删除检查通过后、下单插入订单"的竞态
+        Reader queryReader = readerService.findActiveReader(cardNo);
+        Reader reader = queryReader == null ? null : readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法购买");

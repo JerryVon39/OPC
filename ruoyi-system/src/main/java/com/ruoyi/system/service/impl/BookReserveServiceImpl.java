@@ -77,7 +77,9 @@ public class BookReserveServiceImpl implements IBookReserveService
         {
             throw new ServiceException("参数不完整");
         }
-        Reader reader = readerService.findActiveReader(cardNo);
+        // 先按证号定位读者，再锁读者行（FOR UPDATE）：同一读者的并发预约串行化，"重复预约"检查与插入原子化
+        Reader queryReader = readerService.findActiveReader(cardNo);
+        Reader reader = queryReader == null ? null : readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
             throw new ServiceException("该读者证号已停用/挂失，无法预约");

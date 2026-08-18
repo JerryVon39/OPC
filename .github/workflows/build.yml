@@ -27,3 +27,10 @@ jobs:
         with:
           name: ruoyi-admin
           path: ruoyi-admin/target/ruoyi-admin.jar
+
+      # ============ Docker 镜像构建验证（Dockerfile 可用性） ============
+      - name: Build backend docker image
+        run: docker build -t wanshiwu-backend:ci .
+
+      - name: Build frontend docker image
+        run: docker build -t wanshiwu-frontend:ci -f ruoyi-ui/Dockerfile .

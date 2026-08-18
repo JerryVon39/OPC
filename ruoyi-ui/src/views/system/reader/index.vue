@@ -115,7 +115,7 @@
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)">借阅记录</el-button>
+          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)" v-hasPermi="['system:borrow:list']">借阅记录</el-button>
           <el-button
             size="mini"
             type="text"
@@ -286,6 +286,9 @@ export default {
       listReader(this.queryParams).then(response => {
         this.readerList = response.rows
         this.total = response.total
+      }).catch(() => {
+        this.$modal.msgError("读者列表加载失败，请检查网络后重试")
+      }).finally(() => {
         this.loading = false
       })
     },

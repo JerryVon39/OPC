@@ -4,6 +4,7 @@ import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
@@ -104,10 +105,16 @@ public class BookServiceImpl implements IBookService
      * @return 结果
      */
     @Override
+    @Transactional
     public int deleteBookByBookIds(Long[] bookIds)
     {
         for (Long bookId : bookIds)
         {
+            // 锁图书行（FOR UPDATE）：防止检查通过后、删除前并发插入新的借阅/订单（检查与删除同事务原子化）
+            if (bookMapper.selectBookByBookIdForUpdate(bookId) == null)
+            {
+                continue;
+            }
             // 有未归还借阅（借出中/逾期）的图书不可删
             BorrowRecord q = new BorrowRecord();
             q.setBookId(bookId);

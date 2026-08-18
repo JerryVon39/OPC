@@ -42,6 +42,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where reader_id = #{readerId}
     </select>
 
+    <select id="selectReaderByReaderIdForUpdate" parameterType="Long" resultMap="ReaderResult">
+        <include refid="selectReaderVo"/>
+        where reader_id = #{readerId} for update
+    </select>
+
     <insert id="insertReader" parameterType="Reader" useGeneratedKeys="true" keyProperty="readerId">
         insert into reader
         <trim prefix="(" suffix=")" suffixOverrides=",">

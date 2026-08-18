@@ -20,6 +20,9 @@ public interface BookMapper
      */
     public Book selectBookByBookId(Long bookId);
 
+    /** 行锁查询（FOR UPDATE）：删除图书时锁行，防止检查后插入新借阅/订单的竞态 */
+    public Book selectBookByBookIdForUpdate(Long bookId);
+
     /**
      * 查询图书信息列表
      * 

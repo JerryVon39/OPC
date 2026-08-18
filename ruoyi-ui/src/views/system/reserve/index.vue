@@ -82,6 +82,9 @@ export default {
       listReserve(this.queryParams).then(response => {
         this.reserveList = response.rows
         this.total = response.total
+      }).catch(() => {
+        this.$modal.msgError("预约列表加载失败，请检查网络后重试")
+      }).finally(() => {
         this.loading = false
       })
     },

@@ -200,10 +200,16 @@ public class ReaderServiceImpl implements IReaderService
      * @return 结果
      */
     @Override
+    @Transactional
     public int deleteReaderByReaderIds(Long[] readerIds)
     {
         for (Long readerId : readerIds)
         {
+            // 锁读者行（FOR UPDATE）：防止检查通过后、删除前并发借书/下单/预约（检查与删除同事务原子化）
+            if (readerMapper.selectReaderByReaderIdForUpdate(readerId) == null)
+            {
+                continue;
+            }
             // 有未归还借阅（借出中/逾期）的读者不可删
             BorrowRecord q = new BorrowRecord();
             q.setReaderId(readerId);

@@ -590,7 +590,10 @@
   ];
   let bannerIdx = 0;
   function showBanner(i) {
-    bannerIdx = (i + 3) % 3;
+    // 按实际轮播数量取模（后台增删轮播后自动适配，不再固定 3 张）
+    const count = document.querySelectorAll('.banner-slide').length;
+    if (!count) return;
+    bannerIdx = ((i % count) + count) % count;
     document.querySelectorAll('.banner-slide').forEach((s, idx) => s.classList.toggle('active', idx === bannerIdx));
     document.querySelectorAll('#bannerDots span').forEach((d, idx) => d.classList.toggle('active', idx === bannerIdx));
   }
@@ -743,7 +746,9 @@
 
   // ===== 图书列表（keyword 搜索 + 分类 + 加载骨架屏）=====
   let currentBooks = [];   // 当前渲染的图书列表（详情弹窗从这里取数，保证与搜索/分类同步）
+  let bookRequestSeq = 0;  // 请求序号：只渲染最后一次请求的结果（防止快速搜索时旧结果覆盖新结果）
   async function loadBooks() {
+    const mySeq = ++bookRequestSeq;
     // 加载前显示骨架屏
     document.getElementById('bookGrid').innerHTML = SKELETON.repeat(6);
     const kw = document.getElementById('searchInput').value.trim();
@@ -753,6 +758,7 @@
     try {
       const res = await fetch(API + '?' + params.toString());
       const data = await res.json();
+      if (mySeq !== bookRequestSeq) return; // 已有更新的搜索请求，丢弃本次结果
       // 前台只展示在售图书（下架书不出现在列表）
       const books = (data.rows || []).filter(b => b.status === '0');
       currentBooks = books;
@@ -1117,6 +1123,7 @@
     openCart();
   }
   // ===== 结算（登录状态逐项下单，库存-1）=====
+  let checkoutBusy = false; // 防重复提交：下单进行中忽略再次点击
   async function checkout() {
     const msg = document.getElementById('cartMsg');
     if (!currentUser) {
@@ -1127,6 +1134,8 @@
       return;
     }
     if (!cart.length) { msg.textContent = '购物车是空的'; msg.style.color = '#c65d43'; return; }
+    if (checkoutBusy) return;
+    checkoutBusy = true;
     msg.textContent = '下单中…'; msg.style.color = '#999';
     try {
       let ok = 0, fail = 0, failMsg = '';
@@ -1151,6 +1160,8 @@
     } catch (e) {
       msg.textContent = '下单失败：' + e.message;
       msg.style.color = '#c65d43';
+    } finally {
+      checkoutBusy = false;
     }
   }
 
@@ -1298,11 +1309,14 @@
     }
     document.getElementById('borrowBookModal').style.display = 'flex';
   }
+  let borrowBusy = false; // 防重复提交：借书请求进行中忽略再次点击
   async function submitBorrow() {
     const msg = document.getElementById('borrowBookMsg');
     if (!currentUser) { msg.textContent = '请先登录后再借书'; msg.style.color = '#c65d43'; openLogin(); return; }
     const cardNo = currentUser.cardNo;
     if (!cardNo) { msg.textContent = '请输入借书证号'; msg.style.color = '#c65d43'; return; }
+    if (borrowBusy) return;
+    borrowBusy = true;
     msg.textContent = '借书中…'; msg.style.color = '#999';
     try {
       const res = await fetch(BORROW_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()) + '&bookId=' + borrowBookId, { method: 'POST' });
@@ -1321,6 +1335,8 @@
     } catch (e) {
       msg.textContent = '借书失败：' + e.message;
       msg.style.color = '#c65d43';
+    } finally {
+      borrowBusy = false;
     }
   }
 
@@ -1386,12 +1402,15 @@
     document.getElementById('reissueName').value = currentUser ? currentUser.readerName : '';
     document.getElementById('reissuePhone').value = '';
   }
+  let reissueBusy = false; // 防重复提交：补办请求进行中忽略再次点击
   async function applyReissue() {
     const name = document.getElementById('reissueName').value.trim();
     const phone = document.getElementById('reissuePhone').value.trim();
     const msg = document.getElementById('reissueMsg');
     if (!name || !phone) { msg.textContent = '请输入姓名和登记手机号'; msg.style.color = '#c65d43'; return; }
     if (!confirm('确认补办借书证？新证号生成后旧证号立即作废')) return;
+    if (reissueBusy) return;
+    reissueBusy = true;
     try {
       const body = new URLSearchParams({ readerName: name, phone: phone });
       const res = await fetch(REISSUE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
@@ -1412,6 +1431,8 @@
     } catch (e) {
       msg.textContent = '补办失败：' + e.message;
       msg.style.color = '#c65d43';
+    } finally {
+      reissueBusy = false;
     }
   }
 

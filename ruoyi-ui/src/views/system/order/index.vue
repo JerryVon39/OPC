@@ -86,6 +86,9 @@ export default {
       listOrder(this.queryParams).then(response => {
         this.orderList = response.rows
         this.total = response.total
+      }).catch(() => {
+        this.$modal.msgError("订单列表加载失败，请检查网络后重试")
+      }).finally(() => {
         this.loading = false
       })
     },

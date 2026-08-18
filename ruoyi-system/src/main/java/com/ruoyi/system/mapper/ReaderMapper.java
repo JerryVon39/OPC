@@ -19,6 +19,9 @@ public interface ReaderMapper
      */
     public Reader selectReaderByReaderId(Long readerId);
 
+    /** 行锁查询（FOR UPDATE）：并发写路径（借书/预约/下单/删除读者）串行化同一读者的操作 */
+    public Reader selectReaderByReaderIdForUpdate(Long readerId);
+
     /**
      * 查询读者管理列表
      * 

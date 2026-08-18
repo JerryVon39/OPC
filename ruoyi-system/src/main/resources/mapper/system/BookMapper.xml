@@ -48,6 +48,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where book_id = #{bookId}
     </select>
 
+    <select id="selectBookByBookIdForUpdate" parameterType="Long" resultMap="BookResult">
+        <include refid="selectBookVo"/>
+        where book_id = #{bookId} for update
+    </select>
+
     <insert id="insertBook" parameterType="Book" useGeneratedKeys="true" keyProperty="bookId">
         insert into book
         <trim prefix="(" suffix=")" suffixOverrides=",">
