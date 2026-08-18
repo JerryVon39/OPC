@@ -938,7 +938,7 @@
       currentBooks = books;
       const title = document.getElementById('listTitle');
       // 标题文字 + "清除筛选"快捷入口（有搜索词或分类时显示）
-      title.innerHTML = (currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + kw : '全部图书'))
+      title.innerHTML = (currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + esc(kw) : '全部图书'))
         + '<a id="clearSearch" style="' + ((kw || currentType) ? '' : 'display:none') + '" onclick="resetAll()">✕ 清除筛选</a>';
       if (!books.length) {
         document.getElementById('bookGrid').innerHTML =
