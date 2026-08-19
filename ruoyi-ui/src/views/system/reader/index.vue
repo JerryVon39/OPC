@@ -385,7 +385,7 @@ export default {
     },
     /** 修改按钮操作 */
     handleBorrow(row) {
-      this.$router.push({ path: '/business/borrow', query: { readerId: row.readerId } })
+      this.$router.push({ path: '/business/book-mgmt/borrow', query: { readerId: row.readerId } })
     },
     /** 挂失补办：生成新证号并恢复状态 */
     handleReissue(row) {

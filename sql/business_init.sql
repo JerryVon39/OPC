@@ -413,3 +413,27 @@ INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame
 SELECT '荐购处理',(SELECT menu_id FROM sys_menu WHERE menu_name='荐购管理'),2,'','',1,0,'F','0','0','system:purchase:edit','#','admin',NOW(),'荐购处理按钮(标记已处理/已拒绝)' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='荐购处理');
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '荐购删除',(SELECT menu_id FROM sys_menu WHERE menu_name='荐购管理'),3,'','',1,0,'F','0','0','system:purchase:remove','#','admin',NOW(),'荐购删除按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='荐购删除');
+
+-- ============================================
+-- 菜单重组（幂等）：图书业务 → 3 个二级目录（图书管理/读者服务/经营管理），
+-- 便于管理员按业务域整理。角色-菜单绑定（sys_role_menu）按 menu_id 关联，
+-- 层级变化自动跟随，无需迁移；角色目录可见性由 role_init.sql 补充
+-- ============================================
+-- 1) 插入 3 个二级目录（C 类型，挂在图书业务下）
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '图书管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),1,'book-mgmt','',1,0,'M','0','0','','book','admin',NOW(),'馆藏与借阅：图书信息/借阅记录/轮播图' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书管理');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '读者服务',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),2,'reader-mgmt','',1,0,'M','0','0','','peoples','admin',NOW(),'读者业务：读者管理/登记/预约' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='读者服务');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '经营管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),3,'ops','',1,0,'M','0','0','','shopping','admin',NOW(),'经营业务：订单/荐购/统计' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='经营管理');
+
+-- 2) 原 9 个子菜单改挂新目录（按 menu_name 定位；重复执行结果相同，天然幂等）
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='图书管理') tmp), order_num=1 WHERE menu_name='图书信息';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='图书管理') tmp), order_num=2 WHERE menu_name='借阅记录';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='图书管理') tmp), order_num=3 WHERE menu_name='轮播图管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='读者服务') tmp), order_num=1 WHERE menu_name='读者管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='读者服务') tmp), order_num=2 WHERE menu_name='读者登记';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='读者服务') tmp), order_num=3 WHERE menu_name='预约管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='经营管理') tmp), order_num=1 WHERE menu_name='订单管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='经营管理') tmp), order_num=2 WHERE menu_name='荐购管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='经营管理') tmp), order_num=3 WHERE menu_name='借阅统计';

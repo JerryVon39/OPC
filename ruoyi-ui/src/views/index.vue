@@ -34,10 +34,10 @@
             <span>⚡ 快捷入口</span>
           </div>
           <div class="quick-links">
-            <el-button type="primary" size="medium" icon="el-icon-notebook-2" @click="go('/business/book')">图书管理</el-button>
-            <el-button type="warning" size="medium" icon="el-icon-reading" @click="go('/business/borrow')">借阅记录</el-button>
-            <el-button type="success" size="medium" icon="el-icon-shopping-cart-full" @click="go('/business/order')">订单管理</el-button>
-            <el-button type="info" size="medium" icon="el-icon-user" @click="go('/business/reader')">读者管理</el-button>
+            <el-button type="primary" size="medium" icon="el-icon-notebook-2" @click="go('/business/book-mgmt/book')">图书管理</el-button>
+            <el-button type="warning" size="medium" icon="el-icon-reading" @click="go('/business/book-mgmt/borrow')">借阅记录</el-button>
+            <el-button type="success" size="medium" icon="el-icon-shopping-cart-full" @click="go('/business/ops/order')">订单管理</el-button>
+            <el-button type="info" size="medium" icon="el-icon-user" @click="go('/business/reader-mgmt/reader')">读者管理</el-button>
           </div>
           <div class="card-header sub-header">📖 图书分类</div>
           <div class="type-list">
@@ -130,7 +130,7 @@ export default {
     },
     /** 跳图书管理页（lowStock=1：列表按 book.stock.warn 阈值过滤低库存书） */
     goLowStock() {
-      this.$router.push({ path: '/business/book', query: { lowStock: 1 } })
+      this.$router.push({ path: '/business/book-mgmt/book', query: { lowStock: 1 } })
     },
     /** 热门图书柱状图 */
     initChart() {

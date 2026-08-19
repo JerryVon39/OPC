@@ -531,7 +531,7 @@ export default {
     },
     /** 跳转借阅历史（带图书ID过滤；路由由菜单生成：图书业务目录business下） */
     handleBorrow(row) {
-      this.$router.push({ path: '/business/borrow', query: { bookId: row.bookId } })
+      this.$router.push({ path: '/business/book-mgmt/borrow', query: { bookId: row.bookId } })
     },
     /** 修改按钮操作 */
     handleUpdate(row) {

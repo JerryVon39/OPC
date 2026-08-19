@@ -14,28 +14,28 @@ INSERT INTO sys_role (role_name, role_key, role_sort, data_scope, menu_check_str
 SELECT '统计访客','viewer',4,'1','1','1','0','admin',NOW(),'只读：查看数据看板与借阅统计' WHERE NOT EXISTS (SELECT 1 FROM sys_role WHERE role_key='viewer');
 
 -- ---------- 角色菜单分配（按菜单名动态关联） ----------
--- 图书管理员：图书业务目录 + 图书信息全套 + 读者管理全套 + 读者登记 + 借阅记录全套 + 借阅导出 + 借阅统计
+-- 图书管理员：图书管理目录 + 图书信息全套 + 读者服务目录 + 读者管理全套 + 读者登记 + 借阅记录全套 + 借阅导出 + 借阅统计
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
 WHERE r.role_key='librarian' AND m.menu_name IN
-('图书业务','图书信息','图书信息查询','图书信息新增','图书信息修改','图书信息删除','图书信息导出',
- '读者管理','读者管理查询','读者管理新增','读者管理修改','读者管理删除','读者管理导出','读者登记',
+('图书业务','图书管理','图书信息','图书信息查询','图书信息新增','图书信息修改','图书信息删除','图书信息导出',
+ '读者服务','读者管理','读者管理查询','读者管理新增','读者管理修改','读者管理删除','读者管理导出','读者登记',
  '借阅记录','借阅记录查询','借阅记录新增','借阅记录修改','借阅记录删除','借阅导出','借阅统计')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
 
--- 收银专员：图书业务目录 + 订单管理全套 + 借阅记录(查看/借书/还书续借,无删除导出) + 图书/读者查看
+-- 收银专员：图书业务目录 + 经营管理目录(订单全套) + 图书管理目录(图书/借阅查看) + 读者查看
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
 WHERE r.role_key='cashier' AND m.menu_name IN
-('图书业务','订单管理','订单查询','订单修改','订单删除',
- '借阅记录','借阅记录查询','借阅记录新增','借阅记录修改',
- '图书信息','图书信息查询','读者管理','读者管理查询')
+('图书业务','经营管理','订单管理','订单查询','订单修改','订单删除',
+ '图书管理','借阅记录','借阅记录查询','借阅记录新增','借阅记录修改',
+ '图书信息','图书信息查询','读者服务','读者管理','读者管理查询')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
 
--- 统计访客：图书业务目录 + 借阅统计（只读）
+-- 统计访客：图书业务目录 + 经营管理目录 + 借阅统计（只读）
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
-WHERE r.role_key='viewer' AND m.menu_name IN ('图书业务','借阅统计')
+WHERE r.role_key='viewer' AND m.menu_name IN ('图书业务','经营管理','借阅统计')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
 
 -- ---------- 测试用户（密码与 admin 相同 admin123，复用其 BCrypt 哈希） ----------
