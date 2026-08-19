@@ -28,6 +28,10 @@ public class Reader extends BaseEntity
     @Excel(name = "手机号码")
     private String phone;
 
+    /** 电子邮箱（新读者登记必填，用于自动邮件通知） */
+    @Excel(name = "电子邮箱")
+    private String email;
+
     /** 借书证号 */
     @Excel(name = "借书证号")
     private String cardNo;
@@ -83,9 +87,19 @@ public class Reader extends BaseEntity
         this.phone = phone;
     }
 
-    public String getPhone() 
+    public String getPhone()
     {
         return phone;
+    }
+
+    public void setEmail(String email)
+    {
+        this.email = email;
+    }
+
+    public String getEmail()
+    {
+        return email;
     }
 
     public void setCardNo(String cardNo) 
@@ -151,6 +165,7 @@ public class Reader extends BaseEntity
             .append("readerId", getReaderId())
             .append("readerName", getReaderName())
             .append("phone", getPhone())
+            .append("email", getEmail())
             .append("cardNo", getCardNo())
             .append("readerType", getReaderType())
             .append("sex", getSex())

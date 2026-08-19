@@ -59,10 +59,11 @@ public class ReaderServiceImplTest
         when(readerMapper.selectReaderList(any())).thenReturn(new ArrayList<>());
         when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
 
-        Reader saved = readerService.register("测试读者", "13800000000", "1", "");
+        Reader saved = readerService.register("测试读者", "13800000000", "1", "test@qq.com", "");
         assertNotNull(saved.getCardNo());
         assertTrue(saved.getCardNo().matches("JS\\d{8}"), "证号格式应为JS+8位数字，实际: " + saved.getCardNo());
         assertEquals("0", saved.getStatus());
+        assertEquals("test@qq.com", saved.getEmail());
     }
 
     /** 登记：证号重复 → 抛异常 */
@@ -181,6 +182,7 @@ public class ReaderServiceImplTest
         Reader r = new Reader();
         r.setReaderName(name);
         r.setPhone(phone);
+        r.setEmail("t" + (name == null ? "" : name.hashCode()) + "@qq.com");
         r.setReaderType(type);
         r.setCardNo(cardNo);
         return r;

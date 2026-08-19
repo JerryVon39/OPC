@@ -439,6 +439,7 @@
       <p class="modal-tip">登记后可在本店借阅图书</p>
       <input id="regName" class="modal-input" placeholder="👤 读者姓名" />
       <input id="regPhone" class="modal-input" placeholder="📱 手机号码" />
+      <input id="regEmail" class="modal-input" placeholder="📧 电子邮箱（必填，用于接收借阅/预约通知）" />
       <select id="regType" class="modal-input">
         <option value="">请选择读者类型</option>
         <option value="1">学生</option>
@@ -469,6 +470,7 @@
       <div id="myInfoArea" style="display:none;margin-top:14px;border-top:1px solid #efe9dd;padding-top:12px">
         <div style="font-weight:bold;margin-bottom:8px">📱 我的信息</div>
         <input id="myPhone" class="modal-input" placeholder="📱 修改手机号码" />
+        <input id="myEmail" class="modal-input" placeholder="📧 修改电子邮箱（用于接收通知）" />
         <button class="btn-buy" onclick="updateMyInfo()" style="width:100%">保存修改</button>
         <div id="myInfoMsg" class="modal-msg"></div>
       </div>
@@ -552,6 +554,7 @@
       <p class="modal-tip">告诉我们你想看的书，采购后会尽快上架</p>
       <input id="pBookName" class="modal-input" placeholder="📖 书名（必填）" />
       <input id="pAuthor" class="modal-input" placeholder="✍️ 作者（选填）" />
+      <input id="pEmail" class="modal-input" placeholder="📧 电子邮箱（必填，处理结果将邮件通知）" />
       <textarea id="pRemark" class="modal-input" rows="2" placeholder="备注：出版社 / 版次 / 想看的理由（选填）" style="height:auto"></textarea>
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitPurchase()">提交申请</button>
@@ -886,8 +889,10 @@
   }
   async function submitPurchase() {
     const name = document.getElementById('pBookName').value.trim();
+    const email = document.getElementById('pEmail').value.trim();
     const msg = document.getElementById('purchaseMsg');
     if (!name) { msg.textContent = '请填写书名'; msg.style.color = '#c65d43'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（处理结果将邮件通知）'; msg.style.color = '#c65d43'; return; }
     if (purchaseBusy) return;
     purchaseBusy = true;
     msg.textContent = '提交中…'; msg.style.color = '#999';
@@ -895,6 +900,7 @@
       const body = new URLSearchParams({
         bookName: name,
         author: document.getElementById('pAuthor').value.trim(),
+        email: email,
         remark: document.getElementById('pRemark').value.trim()
       });
       const res = await fetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
@@ -1330,15 +1336,17 @@
   async function submitRegister() {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
     const type = document.getElementById('regType').value;
     const msg = document.getElementById('regMsg');
     if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#c65d43'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收借阅/预约通知）'; msg.style.color = '#c65d43'; return; }
     try {
       // 证号由后端生成（防伪造/占坑）
       const res = await fetch(REG_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ readerName: name, phone: phone, readerType: type, remark: document.getElementById('regRemark').value.trim() }).toString()
+        body: new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: document.getElementById('regRemark').value.trim() }).toString()
       });
       const d = await res.json();
       if (d.code === 200 && d.data) {
@@ -1688,14 +1696,16 @@
   // ===== 我的信息：修改手机号（证号+姓名校验）=====
   async function updateMyInfo() {
     const phone = document.getElementById('myPhone').value.trim();
+    const email = document.getElementById('myEmail').value.trim();
     const msg = document.getElementById('myInfoMsg');
     if (!currentUser) { msg.textContent = '请先登录'; msg.style.color = '#c65d43'; return; }
     if (!phone) { msg.textContent = '请输入新手机号'; msg.style.color = '#c65d43'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收通知）'; msg.style.color = '#c65d43'; return; }
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), readerName: currentUser.readerName, phone: phone });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), readerName: currentUser.readerName, phone: phone, email: email });
       const res = await fetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
-      if (d.code === 200) { msg.textContent = '手机号修改成功'; msg.style.color = '#4f8a62'; }
+      if (d.code === 200) { msg.textContent = '信息修改成功'; msg.style.color = '#4f8a62'; }
       else { msg.textContent = d.msg || '修改失败'; msg.style.color = '#c65d43'; }
     } catch (e) { msg.textContent = '修改失败：' + e.message; msg.style.color = '#c65d43'; }
   }

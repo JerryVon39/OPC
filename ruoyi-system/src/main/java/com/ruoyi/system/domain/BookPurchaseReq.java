@@ -28,6 +28,9 @@ public class BookPurchaseReq extends BaseEntity
     @Excel(name = "作者")
     private String author;
 
+    /** 申请者邮箱（荐购结果通知用，前台提交时填写） */
+    private String email;
+
     /** 状态(0待处理 1已处理 2已拒绝) */
     @Excel(name = "状态(0待处理 1已处理 2已拒绝)")
     private String status;
@@ -62,6 +65,16 @@ public class BookPurchaseReq extends BaseEntity
         return author;
     }
 
+    public void setEmail(String email)
+    {
+        this.email = email;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
     public void setStatus(String status)
     {
         this.status = status;
@@ -78,6 +91,7 @@ public class BookPurchaseReq extends BaseEntity
             .append("reqId", getReqId())
             .append("bookName", getBookName())
             .append("author", getAuthor())
+            .append("email", getEmail())
             .append("status", getStatus())
             .append("remark", getRemark())
             .append("createBy", getCreateBy())

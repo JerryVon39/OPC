@@ -17,6 +17,7 @@ import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBookReserveService;
 import com.ruoyi.system.service.IReaderService;
+import com.ruoyi.common.utils.MailUtil;
 
 /**
  * 图书预约Service业务层处理
@@ -38,6 +39,9 @@ public class BookReserveServiceImpl implements IBookReserveService
 
     @Autowired
     private IReaderService readerService;
+
+    @Autowired
+    private MailUtil mailUtil;
 
     @Override
     public BookReserve selectBookReserveByReserveId(Long reserveId)
@@ -137,7 +141,20 @@ public class BookReserveServiceImpl implements IBookReserveService
         reserve.setStatus("0");
         reserve.setCreateBy(reader.getReaderName());
         reserve.setCreateTime(new Date());
-        return bookReserveMapper.insertBookReserve(reserve);
+        int rows = bookReserveMapper.insertBookReserve(reserve);
+        // 预约成功邮件（异步、尽力而为）
+        mailUtil.sendHtml(reader.getEmail(), "【图书预约】预约成功",
+                "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
+                + "<p>您已成功预约《" + esc(book.getBookName()) + "》。该书当前无库存，将进入预约队列；</p>"
+                + "<p>一旦有读者归还，我们会通过邮件通知您前来取书。感谢使用读书当铺！</p>");
+        return rows;
+    }
+
+    /** HTML 转义 */
+    private String esc(String s)
+    {
+        if (s == null) { return ""; }
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     @Override

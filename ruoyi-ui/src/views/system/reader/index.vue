@@ -100,6 +100,7 @@
       <el-table-column label="读者ID" align="center" prop="readerId" />
       <el-table-column label="读者姓名" align="center" prop="readerName" />
       <el-table-column label="手机号码" align="center" prop="phone" />
+      <el-table-column label="电子邮箱" align="center" prop="email" min-width="160" />
       <el-table-column label="借书证号" align="center" prop="cardNo" />
       <el-table-column label="读者类型" align="center" prop="readerType" width="80">
         <template slot-scope="scope">
@@ -162,8 +163,8 @@
     <!-- 批量导入对话框 -->
     <el-dialog title="批量导入读者" :visible.sync="importOpen" width="560px" append-to-body>
       <div class="import-tip">
-        <p>① 先<a class="import-link" @click="downloadTemplate">下载导入模板</a>，按表头填写数据（姓名/手机号必填）</p>
-        <p>② 借书证号留空将自动生成；证号已存在、类型不在字典内的行会跳过并提示</p>
+        <p>① 先<a class="import-link" @click="downloadTemplate">下载导入模板</a>，按表头填写数据（姓名/手机号/电子邮箱必填）</p>
+        <p>② 借书证号留空将自动生成；证号已存在、类型不在字典内、邮箱缺失/格式错的行会跳过并提示</p>
       </div>
       <el-upload
         :action="importUrl"
@@ -200,6 +201,11 @@
           <el-col :span="12">
             <el-form-item label="手机号码" prop="phone">
               <el-input v-model="form.phone" placeholder="请输入手机号码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="电子邮箱" prop="email">
+              <el-input v-model="form.email" placeholder="用于接收借阅/预约邮件通知" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -315,6 +321,14 @@ export default {
         readerName: [
           { required: true, message: "读者姓名不能为空", trigger: "blur" }
         ],
+        phone: [
+          { required: true, message: "手机号码不能为空", trigger: "blur" },
+          { pattern: /^\d{11}$/, message: "需 11 位数字", trigger: "blur" }
+        ],
+        email: [
+          { required: true, message: "电子邮箱不能为空（用于邮件通知）", trigger: "blur" },
+          { pattern: /^[\w.+-]+@[\w-]+(\.[\w-]+)+$/, message: "邮箱格式不正确", trigger: "blur" }
+        ],
       }
     }
   },
@@ -348,6 +362,7 @@ export default {
         readerId: null,
         readerName: null,
         phone: null,
+        email: null,
         cardNo: null,
         readerType: null,
         sex: null,

@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="reqId"       column="req_id"    />
         <result property="bookName"    column="book_name" />
         <result property="author"      column="author"    />
+        <result property="email"       column="email"     />
         <result property="status"      column="status"    />
         <result property="remark"      column="remark"    />
         <result property="createBy"    column="create_by"    />
@@ -17,7 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectBookPurchaseReqVo">
-        select req_id, book_name, author, status, remark, create_by, create_time, update_by, update_time from book_purchase_req
+        select req_id, book_name, author, email, status, remark, create_by, create_time, update_by, update_time from book_purchase_req
     </sql>
 
     <select id="selectBookPurchaseReqList" parameterType="BookPurchaseReq" resultMap="BookPurchaseReqResult">
@@ -45,6 +46,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="bookName != null and bookName != ''">book_name,</if>
             <if test="author != null">author,</if>
+            <if test="email != null">email,</if>
             <if test="status != null">status,</if>
             <if test="remark != null">remark,</if>
             <if test="createBy != null">create_by,</if>
@@ -55,6 +57,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="bookName != null and bookName != ''">#{bookName},</if>
             <if test="author != null">#{author},</if>
+            <if test="email != null">#{email},</if>
             <if test="status != null">#{status},</if>
             <if test="remark != null">#{remark},</if>
             <if test="createBy != null">#{createBy},</if>

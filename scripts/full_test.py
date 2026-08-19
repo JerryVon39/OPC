@@ -1,4 +1,5 @@
 import urllib.request, urllib.parse, json, subprocess
+import time
 
 BASE = 'http://localhost:8080'
 import os
@@ -80,7 +81,7 @@ tc('2.8', '库存预警参数', d.get('msg') == '3')
 
 # ============ 3. 读者 ============
 print('=== 3. 读者 ===')
-s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '整体测试', 'phone': '13800008888', 'readerType': '1', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '整体测试', 'phone': '13800008888', 'readerType': '1', 'email': 'zhengti@qq.com', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 rid = (d.get('data') or {}).get('readerId')
 new_card = (d.get('data') or {}).get('cardNo')
 tc('3.1', '前台登记(证号后端生成)', d.get('code') == 200 and str(new_card).startswith('JS'), str(new_card))
@@ -224,10 +225,10 @@ tc('9.4a', '非法排序方向被拒', '非法的排序方向' in str(d), str(d)
 # 9.5 匿名提交荐购成功
 import time as _t
 _pname = '回归测试荐购书' + str(int(_t.time()))
-s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': _pname, 'author': '回归', 'remark': 'auto'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': _pname, 'author': '回归', 'email': 'return@qq.com', 'remark': 'auto'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('9.5', '匿名提交荐购', d.get('code') == 200, d.get('msg'))
 # 9.6 同书名待处理去重
-s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': _pname}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': _pname, 'email': 'return@qq.com'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('9.6', '荐购去重拒绝', '重复提交' in str(d.get('msg')), d.get('msg'))
 # 9.7 后台荐购列表 + 处理
 s, d = req('/system/purchase/list?pageNum=1&pageSize=10', headers=auth)
@@ -284,9 +285,9 @@ try:
     sql("DELETE FROM book WHERE book_name='导入测试书A';")
 
     # 10.2 读者导入：1 新读者（证号自动生成）+ 1 手机号错
-    make_xlsx(['读者姓名', '手机号码', '借书证号', '读者类型', '性别(0男 1女 2未知)', '出生日期', '状态(0正常 1停用)'],
-              [['导入测试读者', '13900001111', '', '1', '0', '2000-01-01', '0'],
-               ['坏手机号', 'abc', '', '1', '0', '2000-01-01', '0']], '.import_reader.xlsx')
+    make_xlsx(['读者姓名', '手机号码', '电子邮箱', '借书证号', '读者类型', '性别(0男 1女 2未知)', '出生日期', '状态(0正常 1停用)'],
+              [['导入测试读者', '13900001111', 'daoru@qq.com', '', '1', '0', '2000-01-01', '0'],
+               ['坏手机号', 'abc', 'bad@qq.com', '', '1', '0', '2000-01-01', '0']], '.import_reader.xlsx')
     d = upload_xlsx('.import_reader.xlsx', '/system/reader/importData', auth['Authorization'].split(' ')[1])
     data = d.get('data') or {}
     card = sql("SELECT card_no FROM reader WHERE reader_name='导入测试读者' LIMIT 1;")
@@ -329,7 +330,7 @@ try:
     sql("DELETE FROM book_recycle WHERE book_name='回收站测试书';")
 
     # 11.3 读者：登记 → 删除 → 进回收站
-    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '回收站测试读者', 'phone': '13899998888', 'readerType': '1', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '回收站测试读者', 'phone': '13899998888', 'readerType': '1', 'email': 'huishou@qq.com', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
     nr = sql("SELECT reader_id FROM reader WHERE reader_name='回收站测试读者' LIMIT 1;")
     s, d = req('/system/reader/' + nr, 'DELETE', headers=auth)
     cnt = sql("SELECT COUNT(*) FROM reader_recycle WHERE reader_name='回收站测试读者';")
@@ -363,6 +364,35 @@ try:
     tc('11.7', 'librarian有回收站权限', d.get('code') == 200)
 except Exception as e:
     tc('11', '回收站章节执行', False, str(e))
+
+# ============ 12. 邮件通知（邮箱校验 + 尽力而为不阻断） ============
+print('=== 12. 邮件通知 ===')
+try:
+    # 12.1 新读者登记：缺邮箱 → 被拒
+    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '邮件测试无邮', 'phone': '13877776666', 'readerType': '1', 'email': '', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    tc('12.1', '登记缺邮箱被拒', d.get('code') != 200, str(d.get('msg')))
+    # 12.2 新读者登记：带邮箱 → 成功
+    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '邮件测试', 'phone': '13877776666', 'readerType': '1', 'email': 'mailtest_' + str(int(time.time())) + '@qq.com', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    tc('12.2', '登记带邮箱成功', d.get('code') == 200 and (d.get('data') or {}).get('email'), str((d.get('data') or {}).get('email'))[:40])
+    mc = sql("SELECT card_no FROM reader WHERE reader_name='邮件测试' LIMIT 1;")
+    # 12.3 借书（带邮箱读者）→ 业务成功（邮件异步尽力而为，不阻断）
+    s, d = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    auth = {'Authorization': 'Bearer ' + d['token']}
+    # 删除测试读者（进回收站）
+    nr = sql("SELECT reader_id FROM reader WHERE reader_name='邮件测试' LIMIT 1;")
+    s, d = req('/system/reader/' + nr, 'DELETE', headers=auth)
+    tc('12.3', '带邮箱读者可删除', d.get('code') == 200)
+    # 12.4 荐购：缺邮箱被拒
+    s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': '荐购邮件测试书', 'email': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    tc('12.4', '荐购缺邮箱被拒', d.get('code') != 200, str(d.get('msg')))
+    # 12.5 荐购：带邮箱成功
+    s, d = req('/system/purchase/apply', 'POST', urllib.parse.urlencode({'bookName': '荐购邮件测试书', 'email': 'buy@qq.com'}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    tc('12.5', '荐购带邮箱成功', d.get('code') == 200)
+    sql("DELETE FROM book_purchase_req WHERE book_name='荐购邮件测试书';")
+    sql("DELETE FROM reader WHERE reader_name='邮件测试';")
+    sql("DELETE FROM reader_recycle WHERE reader_name='邮件测试';")
+except Exception as e:
+    tc('12', '邮件通知章节执行', False, str(e))
 
 # ============ 汇总 ============
 total = len(results)

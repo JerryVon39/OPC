@@ -141,7 +141,7 @@ public class ReaderController extends BaseController
     /** 前台自助登记（匿名）：证号由后端生成，防止客户端伪造/占用证号 */
     @Anonymous
     @PostMapping("/register")
-    public AjaxResult register(String readerName, String phone, String readerType, String remark)
+    public AjaxResult register(String readerName, String phone, String readerType, String email, String remark)
     {
         if (readerName == null || readerName.trim().isEmpty()
                 || phone == null || phone.trim().isEmpty()
@@ -149,11 +149,17 @@ public class ReaderController extends BaseController
         {
             return error("请填写姓名、手机号和读者类型");
         }
-        Reader r = readerService.register(readerName.trim(), phone.trim(), readerType.trim(), remark);
+        String em = trimEmail(email);
+        if (em == null)
+        {
+            return error("请填写有效的电子邮箱（用于接收借阅/预约通知）");
+        }
+        Reader r = readerService.register(readerName.trim(), phone.trim(), readerType.trim(), em, remark);
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("readerId", r.getReaderId());
         result.put("readerName", r.getReaderName());
         result.put("cardNo", r.getCardNo());
+        result.put("email", r.getEmail());
         return success(result);
     }
 
@@ -207,7 +213,7 @@ public class ReaderController extends BaseController
     /** 前台修改个人信息：短期读者会话 + 姓名/证号校验后更新手机号 */
     @Anonymous
     @PostMapping("/updateMyInfo")
-    public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone)
+    public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone, String email)
     {
         String sessionCard = readerSessionService.resolve(sessionToken);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
@@ -231,8 +237,27 @@ public class ReaderController extends BaseController
         {
             return error("姓名与借书证号不匹配");
         }
+        // 邮箱允许修改：不传则保留原值；传了则必填且须格式合法
+        String em = email == null ? r.getEmail() : trimEmail(email);
+        if (em == null)
+        {
+            return error("请填写有效的电子邮箱（用于接收借阅/预约通知）");
+        }
         r.setPhone(phone.trim());
+        r.setEmail(em);
         return toAjax(readerService.updateReader(r));
+    }
+
+    /** 校验并规范化邮箱：格式合法返回去空格值，否则返回 null */
+    private String trimEmail(String email)
+    {
+        if (email == null) { return null; }
+        String em = email.trim();
+        if (em.isEmpty() || !em.matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$") || em.length() > 50)
+        {
+            return null;
+        }
+        return em;
     }
 
     /** 后台添加读者（需要权限） */

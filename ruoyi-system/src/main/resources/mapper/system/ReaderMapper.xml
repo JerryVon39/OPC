@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="readerId"    column="reader_id"    />
         <result property="readerName"    column="reader_name"    />
         <result property="phone"    column="phone"    />
+        <result property="email"    column="email"    />
         <result property="cardNo"    column="card_no"    />
         <result property="readerType"    column="reader_type"    />
         <result property="sex"    column="sex"    />
@@ -21,7 +22,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectReaderVo">
-        select reader_id, reader_name, phone, card_no, reader_type, sex, birth_date, status, remark, create_by, create_time, update_by, update_time from reader
+        select reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date, status, remark, create_by, create_time, update_by, update_time from reader
     </sql>
 
     <select id="selectReaderList" parameterType="Reader" resultMap="ReaderResult">
@@ -52,6 +53,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="readerName != null and readerName != ''">reader_name,</if>
             <if test="phone != null">phone,</if>
+            <if test="email != null">email,</if>
             <if test="cardNo != null">card_no,</if>
             <if test="readerType != null">reader_type,</if>
             <if test="sex != null">sex,</if>
@@ -66,6 +68,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="readerName != null and readerName != ''">#{readerName},</if>
             <if test="phone != null">#{phone},</if>
+            <if test="email != null">#{email},</if>
             <if test="cardNo != null">#{cardNo},</if>
             <if test="readerType != null">#{readerType},</if>
             <if test="sex != null">#{sex},</if>
@@ -84,6 +87,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="SET" suffixOverrides=",">
             <if test="readerName != null and readerName != ''">reader_name = #{readerName},</if>
             <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
             <if test="cardNo != null">card_no = #{cardNo},</if>
             <if test="readerType != null">reader_type = #{readerType},</if>
             <if test="sex != null">sex = #{sex},</if>

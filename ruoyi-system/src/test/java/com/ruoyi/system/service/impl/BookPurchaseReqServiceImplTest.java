@@ -35,6 +35,7 @@ class BookPurchaseReqServiceImplTest
         BookPurchaseReq req = new BookPurchaseReq();
         req.setBookName("  三体 外传 ");
         req.setAuthor(" 刘慈欣 ");
+        req.setEmail("reader@qq.com");
         when(bookPurchaseReqMapper.countPendingByName("三体 外传")).thenReturn(0);
         when(bookPurchaseReqMapper.insertBookPurchaseReq(any(BookPurchaseReq.class))).thenReturn(1);
 
@@ -43,6 +44,7 @@ class BookPurchaseReqServiceImplTest
         assertEquals(1, rows);
         assertEquals("三体 外传", req.getBookName()); // 去首尾空格
         assertEquals("0", req.getStatus());           // 默认待处理
+        assertEquals("reader@qq.com", req.getEmail());
         assertNotNull(req.getCreateTime());
         verify(bookPurchaseReqMapper).insertBookPurchaseReq(req);
     }
@@ -62,6 +64,7 @@ class BookPurchaseReqServiceImplTest
     {
         BookPurchaseReq req = new BookPurchaseReq();
         req.setBookName("三体");
+        req.setEmail("reader@qq.com");
         when(bookPurchaseReqMapper.countPendingByName("三体")).thenReturn(1);
 
         assertThrows(ServiceException.class, () -> bookPurchaseReqService.applyPurchase(req));

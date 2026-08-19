@@ -71,6 +71,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="readerId"    column="reader_id"    />
         <result property="readerName"  column="reader_name"  />
         <result property="phone"       column="phone"        />
+        <result property="email"       column="email"        />
         <result property="cardNo"      column="card_no"      />
         <result property="readerType"  column="reader_type"  />
         <result property="sex"         column="sex"          />
@@ -86,7 +87,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="recycleReaderColumns">
-        recycle_id, reader_id, reader_name, phone, card_no, reader_type, sex, birth_date,
+        recycle_id, reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date,
         status, remark, create_by, create_time, update_by, update_time, deleted_by, deleted_time
     </sql>
 
@@ -103,9 +104,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <insert id="insertRecycleReader" parameterType="Reader" useGeneratedKeys="true" keyProperty="recycleId">
-        insert into reader_recycle (reader_id, reader_name, phone, card_no, reader_type, sex, birth_date,
+        insert into reader_recycle (reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date,
             status, remark, create_by, create_time, update_by, update_time, deleted_by, deleted_time)
-        values (#{readerId}, #{readerName}, #{phone}, #{cardNo}, #{readerType}, #{sex}, #{birthDate},
+        values (#{readerId}, #{readerName}, #{phone}, #{email}, #{cardNo}, #{readerType}, #{sex}, #{birthDate},
             #{status}, #{remark}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{deletedBy}, #{deletedTime})
     </insert>
 

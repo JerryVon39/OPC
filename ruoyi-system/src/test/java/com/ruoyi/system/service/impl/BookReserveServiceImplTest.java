@@ -44,6 +44,9 @@ public class BookReserveServiceImplTest
     @Mock
     private IReaderService readerService;
 
+    @Mock
+    private com.ruoyi.common.utils.MailUtil mailUtil;
+
     @InjectMocks
     private BookReserveServiceImpl bookReserveService;
 

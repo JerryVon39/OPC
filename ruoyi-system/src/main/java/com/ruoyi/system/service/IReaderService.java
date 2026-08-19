@@ -36,7 +36,7 @@ public interface IReaderService
     public int insertReader(Reader reader);
 
     /** 前台自助登记：证号后端生成（防伪造/占坑） */
-    public Reader register(String readerName, String phone, String readerType, String remark);
+    public Reader register(String readerName, String phone, String readerType, String email, String remark);
 
     /** 挂失补办：生成新证号并恢复状态，返回新证号 */
     public String reissueCard(Long readerId);

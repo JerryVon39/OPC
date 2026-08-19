@@ -17,6 +17,7 @@ import com.ruoyi.system.service.IBorrowRecordService;
 import com.ruoyi.system.service.IReaderService;
 import com.ruoyi.system.service.FineService;
 import com.ruoyi.system.service.BorrowRuleService;
+import com.ruoyi.common.utils.MailUtil;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.StatisticsService;
 
@@ -53,6 +54,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
 
     @Autowired
     private StatisticsService statisticsService;
+
+    @Autowired
+    private MailUtil mailUtil;
 
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
@@ -154,6 +158,11 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         // 借阅数据变了：失效统计缓存（热门排行/看板下次请求重新计算）
         statisticsService.evictAll();
+        // 借书成功邮件通知（异步、尽力而为，失败不影响业务）
+        mailUtil.sendHtml(reader.getEmail(), "【图书借阅】借书成功",
+                "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
+                + "<p>您已成功借阅《" + esc(book.getBookName()) + "》，应还日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", due) + "。</p>"
+                + "<p>请按时归还，逾期将产生罚款。感谢使用读书当铺！</p>");
         return rows;
     }
 
@@ -253,6 +262,15 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             first.setStatus("1");
             first.setUpdateTime(new Date());
             bookReserveMapper.updateBookReserve(first);
+            // 书已归还 → 通知排在最前的预约读者前来取书（异步、尽力而为）
+            Reader rv = readerMapper.selectReaderByReaderId(first.getReaderId());
+            if (rv != null)
+            {
+                mailUtil.sendHtml(rv.getEmail(), "【图书预约】您预约的书到了",
+                        "<p>您好，" + esc(rv.getReaderName()) + "：</p>"
+                        + "<p>您预约的《" + esc(first.getBookName() == null ? "图书" : first.getBookName()) + "》已被读者归还，现可前来取书。</p>"
+                        + "<p>请尽早在" + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", new Date()) + "起的 3 天内到店办理借阅，逾期未取将视为放弃。感谢使用读书当铺！</p>");
+            }
         }
         // 借阅/罚款数据变了：失效统计缓存
         statisticsService.evictAll();
@@ -431,7 +449,20 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         record.setDueDate(newDue);
         record.setRenewCount(renewCount + 1);
         record.setUpdateTime(new Date());
-        return borrowRecordMapper.updateBorrowRecord(record);
+        int rows = borrowRecordMapper.updateBorrowRecord(record);
+        // 续借成功邮件（异步、尽力而为）
+        mailUtil.sendHtml(reader.getEmail(), "【图书借阅】续借成功",
+                "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
+                + "<p>您已成功续借《" + esc(record.getBookName() == null ? "该书" : record.getBookName()) + "》，新的应还日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", newDue) + "。</p>"
+                + "<p>如再次需续借或有其他问题，请联系服务台。感谢使用读书当铺！</p>");
+        return rows;
+    }
+
+    /** HTML 转义，避免书名/姓名含特殊字符破坏邮件模板 */
+    private String esc(String s)
+    {
+        if (s == null) { return ""; }
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /** 删除借阅记录：未还记录（借出中/逾期）先还原库存再删，有未缴罚款则拒绝（删除会抹掉欠费） */

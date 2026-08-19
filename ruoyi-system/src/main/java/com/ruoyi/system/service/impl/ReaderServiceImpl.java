@@ -75,12 +75,14 @@ public class ReaderServiceImpl implements IReaderService
      * @return 结果
      */
     @Override
-    /** 前台自助登记：证号由后端生成（JS+时间戳后8位），查重直到唯一，防止伪造/占坑 */
-    public Reader register(String readerName, String phone, String readerType, String remark)
+    /** 前台自助登记：证号由后端生成（JS+时间戳后8位），查重直到唯一，防止伪造/占坑
+     * email 由 Controller 层完成必填/格式校验后传入，此处仅落库 */
+    public Reader register(String readerName, String phone, String readerType, String email, String remark)
     {
         Reader reader = new Reader();
         reader.setReaderName(readerName);
         reader.setPhone(phone);
+        reader.setEmail(email);
         reader.setReaderType(readerType);
         reader.setRemark(remark);
         reader.setStatus("0");
@@ -307,6 +309,13 @@ public class ReaderServiceImpl implements IReaderService
                 continue;
             }
             r.setPhone(r.getPhone().trim());
+            // 新读者导入邮箱必填且格式合法（邮件通知前提）
+            if (r.getEmail() == null || !r.getEmail().trim().matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$") || r.getEmail().trim().length() > 50)
+            {
+                errors.add("第" + row + "行：读者" + r.getReaderName() + " 电子邮箱为空或格式不正确");
+                continue;
+            }
+            r.setEmail(r.getEmail().trim());
             if (r.getReaderType() != null && !r.getReaderType().trim().isEmpty() && !typeSet.contains(r.getReaderType().trim()))
             {
                 errors.add("第" + row + "行：读者" + r.getReaderName() + " 类型不在字典内");
