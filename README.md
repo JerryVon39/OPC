@@ -178,6 +178,7 @@ npm run dev
 
 - [《部署指南》](docs/部署指南.md)：本机启动 / 正式部署（前端构建 + Nginx 反向代理）/ **cpolar 内网穿透在线演示** / Docker（可选）/ 首次初始化 / 升级回滚
 - [《数据库备份脚本》](scripts/backup-db.bat)：一键 mysqldump 备份，可挂 Windows 任务计划定期执行
+- [《Docker 发布脚本》](scripts/publish-docker.bat)：一键重新构建 → 推送 Docker Hub → 同步 compose 版本号（`scripts\publish-docker.bat v1.1`）
 - **Docker 化已实机验证**：2026-08-18 在本机完成端到端验证（镜像构建 → 四容器编排 → 全新库初始化 → 前后端联通），并修复了 2 个仅在全新库初始化的 SQL 缺陷（见提交轨迹 `ce49bed6`）。日常开发仍用本机环境，Docker 面向服务器部署与环境复现。
 
 ## 📖 学习文档
