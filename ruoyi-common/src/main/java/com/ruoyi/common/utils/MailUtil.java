@@ -40,6 +40,21 @@ public class MailUtil
     @Value("${spring.mail.username:}")
     private String from;
 
+    /** 授权码（SMTP 密码，环境变量注入；为空时邮件会认证失败） */
+    @Value("${spring.mail.password:}")
+    private String password;
+
+    /** 启动自检：未配置授权码时立即告警，避免"业务成功但邮件发不出"的困惑 */
+    @jakarta.annotation.PostConstruct
+    public void checkConfig()
+    {
+        if (enabled && mailSender != null && (password == null || password.isEmpty()))
+        {
+            log.warn("邮件通知已启用但未配置 SMTP 授权码（MAIL_AUTH_CODE 环境变量为空），邮件将发送失败！"
+                    + "本地启动请使用 scripts/start-backend.bat（自动读取 .env）");
+        }
+    }
+
     /** 独立小线程池：异步发信，避免干扰 Web 请求线程/主业务事务 */
     private static final ExecutorService EXEC = new ThreadPoolExecutor(
             1, 2, 10L, TimeUnit.SECONDS,
