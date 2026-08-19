@@ -104,7 +104,7 @@ public class BookReserveServiceImplTest
         book.setStatus("1");
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
         assertTrue(e.getMessage().contains("不存在或已下架"));
@@ -117,7 +117,7 @@ public class BookReserveServiceImplTest
         book.setStock(5L);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
         assertTrue(e.getMessage().contains("有库存"));
@@ -133,7 +133,7 @@ public class BookReserveServiceImplTest
         list.add(br);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(list);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
@@ -150,7 +150,7 @@ public class BookReserveServiceImplTest
         list.add(exist);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(new ArrayList<>());
         when(bookReserveMapper.selectBookReserveList(any())).thenReturn(list);
         ServiceException e = assertThrows(ServiceException.class,
@@ -175,7 +175,7 @@ public class BookReserveServiceImplTest
     {
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(new ArrayList<>());
         when(bookReserveMapper.selectBookReserveList(any())).thenReturn(new ArrayList<>());
         when(bookReserveMapper.insertBookReserve(any(BookReserve.class))).thenReturn(1);

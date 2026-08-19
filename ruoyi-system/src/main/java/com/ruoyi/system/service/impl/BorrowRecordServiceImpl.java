@@ -110,9 +110,12 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public int insertBorrowRecord(BorrowRecord borrowRecord)
     {
-        Book book = bookMapper.selectBookByBookId(borrowRecord.getBookId());
         // 锁读者行（FOR UPDATE）：同一读者的并发借书串行化，"重复借阅/借阅上限"检查与插入原子化
         Reader reader = readerMapper.selectReaderByReaderIdForUpdate(borrowRecord.getReaderId());
+        // 再锁图书行（FOR UPDATE，加锁顺序统一为 读者→图书，避免与预约路径交叉死锁）：
+        // 与下架（changeBookStatus）/删除图书共享 book 行锁，下架完成后本事务读到的必是最新状态，
+        // 已下架的书在此被拦截（"该图书已下架，无法借出"），下架与新借书因此串行化
+        Book book = bookMapper.selectBookByBookIdForUpdate(borrowRecord.getBookId());
         // 前置校验（图书/读者/欠费/重复/上限）
         validateBeforeBorrow(borrowRecord, book, reader);
         String readerType = reader.getReaderType();

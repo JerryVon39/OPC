@@ -91,7 +91,10 @@ public class BookReserveServiceImpl implements IBookReserveService
         {
             throw new ServiceException("该读者证号已停用/挂失，无法预约");
         }
-        Book book = bookMapper.selectBookByBookId(bookId);
+        // 锁图书行（FOR UPDATE，加锁顺序统一为 读者→图书，避免与借书路径交叉死锁）：
+        // 与下架（changeBookStatus）/删除图书共享 book 行锁，下架完成后本事务读到的必是最新状态，
+        // 下架与新建预约因此串行化，消除"下架校验通过后并发插入预约"的竞态（幽灵预约）
+        Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null || !"0".equals(book.getStatus()))
         {
             throw new ServiceException("该图书不存在或已下架");
