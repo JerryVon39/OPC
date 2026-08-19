@@ -16,6 +16,7 @@ import com.ruoyi.system.mapper.BookReserveMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.service.IBookService;
+import com.ruoyi.system.service.IRecycleService;
 import com.ruoyi.system.service.StatisticsService;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.system.service.ISysDictDataService;
@@ -46,6 +47,9 @@ public class BookServiceImpl implements IBookService
 
     @Autowired
     private ISysDictDataService sysDictDataService;
+
+    @Autowired
+    private IRecycleService recycleService;
 
     /**
      * 查询图书信息
@@ -175,10 +179,12 @@ public class BookServiceImpl implements IBookService
     {
         // 排序：批量删除的加锁顺序一致，避免并发批量删除互相持锁等待（死锁）
         Arrays.sort(bookIds);
+        java.util.List<Book> toSnapshot = new java.util.ArrayList<>();
         for (Long bookId : bookIds)
         {
             // 锁图书行（FOR UPDATE）：防止检查通过后、删除前并发插入新的借阅/订单（检查与删除同事务原子化）
-            if (bookMapper.selectBookByBookIdForUpdate(bookId) == null)
+            Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
+            if (book == null)
             {
                 continue;
             }
@@ -213,6 +219,13 @@ public class BookServiceImpl implements IBookService
                     throw new com.ruoyi.common.exception.ServiceException("该图书存在预约中的读者，请先取消预约后再删除");
                 }
             }
+            // 校验全部通过：记入待快照集合，供误删后回收站还原
+            toSnapshot.add(book);
+        }
+        // 物理删除前先把通过校验的图书快照进回收站（同事务，任一失败整体回滚）
+        for (Book b : toSnapshot)
+        {
+            recycleService.snapshotBook(b, null);
         }
         int rows = bookMapper.deleteBookByBookIds(bookIds);
         // 馆藏总数变了：失效统计缓存

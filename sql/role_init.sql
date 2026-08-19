@@ -23,6 +23,12 @@ WHERE r.role_key='librarian' AND m.menu_name IN
  '借阅记录','借阅记录查询','借阅记录新增','借阅记录修改','借阅记录删除','借阅导出','借阅统计')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
 
+-- 图书管理员：回收站三菜单（误删数据恢复）
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
+WHERE r.role_key='librarian' AND m.menu_name IN ('回收站','图书回收站','读者回收站')
+AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
+
 -- 收银专员：图书业务目录 + 经营管理目录(订单全套) + 图书管理目录(图书/借阅查看) + 读者查看
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m

@@ -49,7 +49,16 @@ public class Reader extends BaseEntity
     @Excel(name = "状态(0正常 1停用)")
     private String status;
 
-    public void setReaderId(Long readerId) 
+    /** 回收站ID（回收站列表/还原用，非 reader 表列） */
+    private Long recycleId;
+
+    /** 删除时间（回收站列表用，非 reader 表列） */
+    private java.util.Date deletedTime;
+
+    /** 删除人（回收站列表用，非 reader 表列） */
+    private String deletedBy;
+
+    public void setReaderId(Long readerId)
     {
         this.readerId = readerId;
     }
@@ -128,6 +137,13 @@ public class Reader extends BaseEntity
     {
         return status;
     }
+
+    public Long getRecycleId() { return recycleId; }
+    public void setRecycleId(Long recycleId) { this.recycleId = recycleId; }
+    public java.util.Date getDeletedTime() { return deletedTime; }
+    public void setDeletedTime(java.util.Date deletedTime) { this.deletedTime = deletedTime; }
+    public String getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
 
     @Override
     public String toString() {

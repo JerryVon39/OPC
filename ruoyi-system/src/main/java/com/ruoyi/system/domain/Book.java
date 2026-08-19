@@ -71,6 +71,15 @@ public class Book extends BaseEntity
     /** 借阅次数（列表查询派生：借阅记录统计字段，非数据库列） */
     private Long borrowCount;
 
+    /** 回收站ID（回收站列表/还原用，非 book 表列） */
+    private Long recycleId;
+
+    /** 删除时间（回收站列表用，非 book 表列） */
+    private Date deletedTime;
+
+    /** 删除人（回收站列表用，非 book 表列） */
+    private String deletedBy;
+
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
 
@@ -88,6 +97,13 @@ public class Book extends BaseEntity
 
     public Long getBorrowCount() { return borrowCount; }
     public void setBorrowCount(Long borrowCount) { this.borrowCount = borrowCount; }
+
+    public Long getRecycleId() { return recycleId; }
+    public void setRecycleId(Long recycleId) { this.recycleId = recycleId; }
+    public Date getDeletedTime() { return deletedTime; }
+    public void setDeletedTime(Date deletedTime) { this.deletedTime = deletedTime; }
+    public String getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
 
     public void setBookId(Long bookId) 
     {

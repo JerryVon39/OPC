@@ -307,6 +307,63 @@ try:
 except Exception as e:
     tc('10.1', '导入/预警章节执行', False, str(e))
 
+# ============ 11. 回收站 ============
+print('=== 11. 回收站 ===')
+try:
+    s, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    auth = {'Authorization': 'Bearer ' + da['token']}
+
+    # 11.1 图书：造新书 → 删除 → 进回收站
+    s, d = req('/system/book', 'POST', json.dumps({'bookName': '回收站测试书', 'author': '测试', 'bookType': '1', 'publisher': '测试社', 'price': 10, 'stock': 1, 'status': '0'}).encode(), {'Content-Type': 'application/json', **auth})
+    nb = sql("SELECT book_id FROM book WHERE book_name='回收站测试书' LIMIT 1;")
+    s, d = req('/system/book/' + nb, 'DELETE', headers=auth)
+    cnt = sql("SELECT COUNT(*) FROM book_recycle WHERE book_name='回收站测试书';")
+    tc('11.1', '删除图书进回收站', d.get('code') == 200 and cnt == '1', str(d.get('msg')))
+    # 11.2 还原：回图书列表，回收站清空
+    rc = sql("SELECT recycle_id FROM book_recycle WHERE book_name='回收站测试书' LIMIT 1;")
+    s, d = req('/system/recycle/book/restore/' + rc, 'PUT', headers=auth)
+    cnt = sql("SELECT COUNT(*) FROM book_recycle WHERE book_name='回收站测试书';")
+    nb2 = sql("SELECT COUNT(*) FROM book WHERE book_name='回收站测试书';")
+    tc('11.2', '还原图书回列表', d.get('code') == 200 and cnt == '0' and nb2 == '1')
+    sql("DELETE FROM book WHERE book_name='回收站测试书';")
+    sql("DELETE FROM book_recycle WHERE book_name='回收站测试书';")
+
+    # 11.3 读者：登记 → 删除 → 进回收站
+    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '回收站测试读者', 'phone': '13899998888', 'readerType': '1', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    nr = sql("SELECT reader_id FROM reader WHERE reader_name='回收站测试读者' LIMIT 1;")
+    s, d = req('/system/reader/' + nr, 'DELETE', headers=auth)
+    cnt = sql("SELECT COUNT(*) FROM reader_recycle WHERE reader_name='回收站测试读者';")
+    tc('11.3', '删除读者进回收站', d.get('code') == 200 and cnt == '1')
+    # 11.4 还原读者
+    rc = sql("SELECT recycle_id FROM reader_recycle WHERE reader_name='回收站测试读者' LIMIT 1;")
+    s, d = req('/system/recycle/reader/restore/' + rc, 'PUT', headers=auth)
+    cnt = sql("SELECT COUNT(*) FROM reader_recycle WHERE reader_name='回收站测试读者';")
+    nr2 = sql("SELECT COUNT(*) FROM reader WHERE reader_name='回收站测试读者';")
+    tc('11.4', '还原读者回列表', d.get('code') == 200 and cnt == '0' and nr2 == '1')
+    sql("DELETE FROM reader WHERE reader_name='回收站测试读者';")
+    sql("DELETE FROM reader_recycle WHERE reader_name='回收站测试读者';")
+
+    # 11.5 彻底删除：造书 → 删除 → 回收站 purge → 两处都无
+    s, d = req('/system/book', 'POST', json.dumps({'bookName': '回收站清除书', 'author': '测试', 'bookType': '1', 'publisher': '测试社', 'price': 10, 'stock': 1, 'status': '0'}).encode(), {'Content-Type': 'application/json', **auth})
+    nb = sql("SELECT book_id FROM book WHERE book_name='回收站清除书' LIMIT 1;")
+    req('/system/book/' + nb, 'DELETE', headers=auth)
+    rc = sql("SELECT recycle_id FROM book_recycle WHERE book_name='回收站清除书' LIMIT 1;")
+    s, d = req('/system/recycle/book/' + rc, 'DELETE', headers=auth)
+    cnt = sql("SELECT COUNT(*) FROM book_recycle WHERE book_name='回收站清除书';")
+    tc('11.5', '彻底删除回收站图书', d.get('code') == 200 and cnt == '0')
+
+    # 11.6 权限：viewer 无回收站权限
+    _, dv = req('/login', 'POST', json.dumps({'username': 'viewer', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    s, d = req('/system/recycle/book/list?pageNum=1&pageSize=5', headers={'Authorization': 'Bearer ' + dv['token']})
+    tc('11.6', 'viewer无回收站权限', '没有权限' in str(d.get('msg')))
+
+    # 11.7 librarian 有回收站权限
+    _, dl = req('/login', 'POST', json.dumps({'username': 'librarian', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    s, d = req('/system/recycle/book/list?pageNum=1&pageSize=5', headers={'Authorization': 'Bearer ' + dl['token']})
+    tc('11.7', 'librarian有回收站权限', d.get('code') == 200)
+except Exception as e:
+    tc('11', '回收站章节执行', False, str(e))
+
 # ============ 汇总 ============
 total = len(results)
 passed = sum(1 for r in results if r[2] == 'PASS')

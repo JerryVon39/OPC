@@ -14,6 +14,7 @@ import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IReaderService;
+import com.ruoyi.system.service.IRecycleService;
 import com.ruoyi.system.service.StatisticsService;
 
 /**
@@ -39,6 +40,9 @@ public class ReaderServiceImpl implements IReaderService
 
     @Autowired
     private com.ruoyi.system.service.ISysDictDataService sysDictDataService;
+
+    @Autowired
+    private IRecycleService recycleService;
 
     /**
      * 查询读者管理
@@ -211,10 +215,12 @@ public class ReaderServiceImpl implements IReaderService
     {
         // 排序：批量删除的加锁顺序一致，避免并发批量删除互相持锁等待（死锁）
         Arrays.sort(readerIds);
+        java.util.List<Reader> toSnapshot = new java.util.ArrayList<>();
         for (Long readerId : readerIds)
         {
             // 锁读者行（FOR UPDATE）：防止检查通过后、删除前并发借书/下单/预约（检查与删除同事务原子化）
-            if (readerMapper.selectReaderByReaderIdForUpdate(readerId) == null)
+            Reader reader = readerMapper.selectReaderByReaderIdForUpdate(readerId);
+            if (reader == null)
             {
                 continue;
             }
@@ -238,6 +244,13 @@ public class ReaderServiceImpl implements IReaderService
             {
                 throw new com.ruoyi.common.exception.ServiceException("该读者存在待处理订单，无法删除");
             }
+            // 校验全部通过：记入待快照集合，供误删后回收站还原
+            toSnapshot.add(reader);
+        }
+        // 物理删除前先把通过校验的读者快照进回收站（同事务，任一失败整体回滚）
+        for (Reader r : toSnapshot)
+        {
+            recycleService.snapshotReader(r, null);
         }
         int rows = readerMapper.deleteReaderByReaderIds(readerIds);
         // 读者总数变了：失效统计缓存
