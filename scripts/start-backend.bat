@@ -1,27 +1,27 @@
 @echo off
 REM ============================================
-REM æœ¬åœ°ä¸€é”®å¯åŠ¨åç«¯ï¼ˆå«é‚®ä»¶æˆæƒç æ³¨å…¥ï¼‰
-REM ç”¨æ³•ï¼š
-REM   1) é¦–æ¬¡ä½¿ç”¨ï¼šåœ¨æœ¬æ–‡ä»¶åŒç›®å½•å»º .env æ–‡ä»¶ï¼Œå†™å…¥
-REM        MAIL_AUTH_CODE=ä½ çš„QQé‚®ç®±æˆæƒç 
-REM        ï¼ˆå¯é€‰ï¼‰MAIL_ENABLED=false å…³é—­é‚®ä»¶é€šçŸ¥
-REM   2) åŒå‡»æœ¬è„šæœ¬å³å¯å¯åŠ¨
-REM é‚®ä»¶å‘ä¸å‡º 99% æ˜¯æ¼é…æˆæƒç ï¼šSMTP è®¤è¯å¤±è´¥ä¼šè¢«åæ‰ï¼Œ
-REM ä½†ä¸šåŠ¡ï¼ˆå€Ÿä¹¦/é¢„çº¦ç­‰ï¼‰ç…§å¸¸æˆåŠŸï¼Œæ—¥å¿—ä¼šæ‰“ WARNã€‚
+REM Ò»¼üÆô¶¯ºó¶Ë£¨º¬ÓÊ¼şÊÚÈ¨Âë×¢Èë£©
+REM ÓÃ·¨£º
+REM   1) Ê×´ÎÊ¹ÓÃ£ºÔÚ±¾ÎÄ¼şÍ¬Ä¿Â¼½¨ .env ÎÄ¼ş£¬Ğ´Èë
+REM        MAIL_AUTH_CODE=ÄãµÄQQÓÊÏäÊÚÈ¨Âë
+REM        £¨¿ÉÑ¡£©MAIL_ENABLED=false ¹Ø±ÕÓÊ¼şÍ¨Öª
+REM   2) Ë«»÷±¾½Å±¾¼´¿ÉÆô¶¯
+REM ÓÊ¼ş·¢²»³ö 99% ÊÇÂ©ÅäÊÚÈ¨Âë£ºSMTP ÈÏÖ¤Ê§°Ü»á±»ÍÌµô£¬
+REM µ«ÒµÎñ£¨½èÊé/Ô¤Ô¼µÈ£©ÕÕ³£³É¹¦£¬ÈÕÖ¾»á´ò WARN¡£
 REM ============================================
 cd /d "%~dp0.."
 
-REM ä» .env è¯»å–ç¯å¢ƒå˜é‡ï¼ˆè‹¥å­˜åœ¨ï¼‰
-if exist ".env" (
-  for /f "usebackq delims=" %%a in (".env") do (
-    if not "%%a"=="" if not "%%a:~0,1%"=="#" set "%%a"
-  )
-)
+REM ´Ó .env ¶ÁÈ¡»·¾³±äÁ¿£¨Èô´æÔÚ£»# ¿ªÍ·Îª×¢ÊÍĞĞ£©
+if exist ".env" for /f "usebackq eol=# delims=" %%a in (".env") do set "%%a"
 
-echo [start-backend] å¯åŠ¨ä¸­... MAIL_AUTH_CODE å·²é…ç½®: %MAIL_AUTH_CODE:~0,4%***
+if "%MAIL_AUTH_CODE%"=="" (
+  echo [start-backend] ¾¯¸æ: Î´¼ì²âµ½ MAIL_AUTH_CODE, ÓÊ¼şÍ¨Öª½«·¢ËÍÊ§°Ü! Çë±à¼­ .env
+) else (
+  echo [start-backend] ÒÑ×¢Èë MAIL_AUTH_CODE, ÓÊ¼şÍ¨Öª¿ÉÓÃ
+)
 if exist "ruoyi-admin\target\ruoyi-admin.jar" (
   java -jar ruoyi-admin\target\ruoyi-admin.jar
 ) else (
-  echo [start-backend] æœªæ‰¾åˆ° jarï¼Œè¯·å…ˆè¿è¡Œ: mvn -B package -pl ruoyi-admin -am -DskipTests
+  echo [start-backend] Î´ÕÒµ½ jar, ÇëÏÈÔËĞĞ: mvn -B package -pl ruoyi-admin -am -DskipTests
   pause
 )
