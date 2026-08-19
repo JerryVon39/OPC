@@ -103,9 +103,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteReaderByReaderIds" parameterType="String">
-        delete from reader where reader_id in 
+        delete from reader where reader_id in
         <foreach item="readerId" collection="array" open="(" separator="," close=")">
             #{readerId}
         </foreach>
     </delete>
+
+    <!-- 批量导入判重：借书证号是否已存在 -->
+    <select id="countByCardNo" parameterType="String" resultType="int">
+        select count(1) from reader where card_no = #{cardNo}
+    </select>
 </mapper>

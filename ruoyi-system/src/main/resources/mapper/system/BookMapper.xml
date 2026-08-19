@@ -45,7 +45,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="publisher != null  and publisher != ''"> and publisher = #{publisher}</if>
             <if test="price != null "> and price = #{price}</if>
             <if test="publishDate != null "> and publish_date = #{publishDate}</if>
-            <if test="stock != null "> and stock = #{stock}</if>
+            <if test="stock != null "> and stock &lt;= #{stock}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
             <if test="keyword != null  and keyword != ''"> and (book_name like concat('%', #{keyword}, '%') or author like concat('%', #{keyword}, '%') or isbn like concat('%', #{keyword}, '%'))</if>
         </where>
@@ -167,5 +167,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where status = '0' and book_name like concat('%', #{keyword}, '%')
         order by book_id asc
         limit 8
+    </select>
+
+    <!-- 库存预警（后台看板）：在架书且库存 <= 阈值，按库存升序取前 N 条 -->
+    <select id="selectLowStockBooks" resultMap="BookResult">
+        select book_id, book_name, stock, status from book
+        where status = '0' and stock &lt;= #{threshold}
+        order by stock asc, book_id asc
+        limit #{limit}
+    </select>
+
+    <!-- 批量导入判重：同名图书是否存在 -->
+    <select id="countByBookName" parameterType="String" resultType="int">
+        select count(1) from book where book_name = #{bookName}
     </select>
 </mapper>

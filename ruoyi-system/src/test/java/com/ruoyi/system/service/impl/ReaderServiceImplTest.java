@@ -158,4 +158,98 @@ public class ReaderServiceImplTest
         assertEquals(1, readerService.updateReader(reader));
         verify(readerMapper, never()).selectReaderList(any());
     }
+
+    // ===== 批量导入 =====
+
+    @Mock
+    private com.ruoyi.system.service.ISysDictDataService sysDictDataService;
+
+    private java.util.List<com.ruoyi.common.core.domain.entity.SysDictData> readerTypeDict()
+    {
+        java.util.List<com.ruoyi.common.core.domain.entity.SysDictData> list = new ArrayList<>();
+        for (String v : new String[] { "1", "2", "3" })
+        {
+            com.ruoyi.common.core.domain.entity.SysDictData d = new com.ruoyi.common.core.domain.entity.SysDictData();
+            d.setDictValue(v);
+            list.add(d);
+        }
+        return list;
+    }
+
+    private Reader reader(String name, String phone, String type, String cardNo)
+    {
+        Reader r = new Reader();
+        r.setReaderName(name);
+        r.setPhone(phone);
+        r.setReaderType(type);
+        r.setCardNo(cardNo);
+        return r;
+    }
+
+    /** 导入成功：证号留空 → 自动生成（走 insertReader），success=1 */
+    @Test
+    void importReaders_success_cardNoGenerated()
+    {
+        when(sysDictDataService.selectDictDataList(any())).thenReturn(readerTypeDict());
+        when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
+
+        List<Reader> list = new ArrayList<>();
+        list.add(reader("张三", "13800000001", "1", null));
+        java.util.Map<String, Object> r = readerService.importReaders(list);
+
+        assertEquals(1, r.get("success"));
+        assertEquals(0, r.get("fail"));
+        verify(readerMapper).insertReader(any(Reader.class));
+    }
+
+    /** 导入判重：证号已存在 → 跳过并提示 */
+    @Test
+    void importReaders_duplicateCardNo_skipped()
+    {
+        when(sysDictDataService.selectDictDataList(any())).thenReturn(readerTypeDict());
+        when(readerMapper.countByCardNo("JS12345678")).thenReturn(1);
+
+        List<Reader> list = new ArrayList<>();
+        list.add(reader("张三", "13800000001", "1", "JS12345678"));
+        java.util.Map<String, Object> r = readerService.importReaders(list);
+
+        assertEquals(0, r.get("success"));
+        assertEquals(1, r.get("fail"));
+        assertTrue(r.get("errors").toString().contains("已存在"));
+        verify(readerMapper, never()).insertReader(any(Reader.class));
+    }
+
+    /** 导入校验：手机号格式不对 → 跳过并提示 */
+    @Test
+    void importReaders_invalidPhone_skipped()
+    {
+        when(sysDictDataService.selectDictDataList(any())).thenReturn(readerTypeDict());
+
+        List<Reader> list = new ArrayList<>();
+        list.add(reader("张三", "123", "1", null));
+        java.util.Map<String, Object> r = readerService.importReaders(list);
+
+        assertEquals(0, r.get("success"));
+        assertTrue(r.get("errors").toString().contains("手机号格式不正确"));
+        verify(readerMapper, never()).insertReader(any(Reader.class));
+    }
+
+    /** 导入混合：1 成功 + 1 证号重复 + 1 手机号错 */
+    @Test
+    void importReaders_mixed()
+    {
+        when(sysDictDataService.selectDictDataList(any())).thenReturn(readerTypeDict());
+        when(readerMapper.countByCardNo("JS12345678")).thenReturn(1);
+        when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
+
+        List<Reader> list = new ArrayList<>();
+        list.add(reader("张三", "13800000001", "1", null));       // 成功
+        list.add(reader("李四", "13800000002", "2", "JS12345678")); // 证号重复
+        list.add(reader("王五", "abc", "3", null));                 // 手机号错
+        java.util.Map<String, Object> r = readerService.importReaders(list);
+
+        assertEquals(1, r.get("success"));
+        assertEquals(2, r.get("fail"));
+        assertEquals(2, ((java.util.List<?>) r.get("errors")).size());
+    }
 }

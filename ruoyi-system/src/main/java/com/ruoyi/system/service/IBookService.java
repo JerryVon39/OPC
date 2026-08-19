@@ -60,6 +60,14 @@ public interface IBookService
     public int changeBookStatus(Long bookId, String status);
 
     /**
+     * 批量导入图书（Excel 逐行校验：必填/类型字典/同名判重跳过，错误收集行号明细）
+     *
+     * @param books 解析出的图书列表
+     * @return {success: 成功条数, fail: 失败条数, errors: [行号+原因]}
+     */
+    public java.util.Map<String, Object> importBooks(java.util.List<Book> books);
+
+    /**
      * 批量删除图书信息
      * 
      * @param bookIds 需要删除的图书信息主键集合

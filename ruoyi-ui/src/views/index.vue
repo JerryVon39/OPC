@@ -47,6 +47,22 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 库存预警（在架书库存 ≤ book.stock.warn 阈值，提醒补货） -->
+    <el-card shadow="never" class="section-card warn-card">
+      <div slot="header" class="card-header">
+        <span>🚨 库存预警</span>
+        <el-tag v-if="lowStockBooks.length" type="danger" size="mini">{{ lowStockBooks.length }} 本低于阈值</el-tag>
+        <el-tag v-else type="success" size="mini">库存充足</el-tag>
+      </div>
+      <div v-if="lowStockBooks.length" class="warn-list">
+        <div v-for="b in lowStockBooks" :key="b.bookId" class="warn-item" @click="goLowStock">
+          <span class="warn-name">《{{ b.bookName }}》</span>
+          <span class="warn-stock">仅剩 {{ b.stock }} 本</span>
+        </div>
+      </div>
+      <el-empty v-else description="库存充足，无需补货" :image-size="60"></el-empty>
+    </el-card>
   </div>
 </template>
 
@@ -72,6 +88,7 @@ export default {
         { label: '欠费总额', value: 0, color: '#F56C6C' }
       ],
       topBooks: [],
+      lowStockBooks: [], // 库存预警：在架书库存 ≤ 阈值（book.stock.warn）
       bookTypes: [],
       today: '',
       userName: ''
@@ -107,8 +124,13 @@ export default {
         this.statCards[7].value = s.orderTotal || 0
         this.statCards[8].value = '¥' + (s.fineTotal || 0)
         this.topBooks = (s.topBooks || []).slice(0, 5)
+        this.lowStockBooks = s.lowStockBooks || []
         this.initChart()
       })
+    },
+    /** 跳图书管理页（lowStock=1：列表按 book.stock.warn 阈值过滤低库存书） */
+    goLowStock() {
+      this.$router.push({ path: '/business/book', query: { lowStock: 1 } })
     },
     /** 热门图书柱状图 */
     initChart() {
@@ -200,5 +222,39 @@ export default {
 }
 .type-tag {
   font-size: 13px;
+}
+/* 库存预警卡片 */
+.warn-card {
+  margin-top: 16px;
+}
+.warn-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.warn-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px solid #f5d9d1;
+  background: #fdf0ec;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.warn-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(198, 93, 67, 0.15);
+}
+.warn-name {
+  font-size: 14px;
+  color: #8a4a38;
+  font-weight: bold;
+}
+.warn-stock {
+  font-size: 12px;
+  color: #c65d43;
+  font-weight: bold;
 }
 </style>

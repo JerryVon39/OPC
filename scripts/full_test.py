@@ -248,6 +248,65 @@ tc('9.10', '开关上架/下架正常', d.get('code') == 200 and d2.get('code') 
 # 9.11 清理荐购测试数据
 sql("DELETE FROM book_purchase_req WHERE book_name='" + _pname + "';")
 
+# ============ 10. 批量导入 + 库存预警 ============
+print('=== 10. 批量导入 + 库存预警 ===')
+try:
+    from openpyxl import Workbook
+    def make_xlsx(headers, rows, path):
+        wb = Workbook()
+        ws = wb.active
+        ws.append(headers)           # 第 1 行列名（ExcelUtil 按列顺序解析，titleNum=0 不跳行）
+        for r in rows:
+            ws.append(r)
+        wb.save(path)
+
+    def upload_xlsx(path, url, tok):
+        boundary = '----WSWBoundary' + 'x' * 12
+        with open(path, 'rb') as f:
+            content = f.read()
+        body = ('--' + boundary + '\r\n').encode() + \
+            'Content-Disposition: form-data; name="file"; filename="import.xlsx"\r\n'.encode() + \
+            b'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n' + \
+            content + b'\r\n' + ('--' + boundary + '--\r\n').encode()
+        r = urllib.request.Request(BASE + url, data=body, method='POST',
+                                   headers={'Content-Type': 'multipart/form-data; boundary=' + boundary, 'Authorization': 'Bearer ' + tok})
+        with urllib.request.urlopen(r, timeout=30) as x:
+            return json.loads(x.read())
+
+    # 10.1 图书导入：1 新书 + 1 重名跳过 + 1 空名跳过
+    make_xlsx(['图书名称', '作者', '图书类型(字典:book_type)', '出版社', '价格(元)', '出版日期', '库存数量', '状态(0在架 1下架)'],
+              [['导入测试书A', '测试作者', '1', '测试社', 25.5, '2026-08-18', 5, '0'],
+               ['三体', '刘慈欣', '1', '重庆出版社', 88, '2008-01-01', 9, '0'],
+               [None, '无名', '1', '测试社', 10, '2026-08-18', 1, '0']], '.import_book.xlsx')
+    d = upload_xlsx('.import_book.xlsx', '/system/book/importData', auth['Authorization'].split(' ')[1])
+    data = d.get('data') or {}
+    tc('10.1', '图书导入成功1跳过2', data.get('success') == 1 and data.get('fail') == 2, str(data.get('errors'))[:100])
+    sql("DELETE FROM book WHERE book_name='导入测试书A';")
+
+    # 10.2 读者导入：1 新读者（证号自动生成）+ 1 手机号错
+    make_xlsx(['读者姓名', '手机号码', '借书证号', '读者类型', '性别(0男 1女 2未知)', '出生日期', '状态(0正常 1停用)'],
+              [['导入测试读者', '13900001111', '', '1', '0', '2000-01-01', '0'],
+               ['坏手机号', 'abc', '', '1', '0', '2000-01-01', '0']], '.import_reader.xlsx')
+    d = upload_xlsx('.import_reader.xlsx', '/system/reader/importData', auth['Authorization'].split(' ')[1])
+    data = d.get('data') or {}
+    card = sql("SELECT card_no FROM reader WHERE reader_name='导入测试读者' LIMIT 1;")
+    tc('10.2', '读者导入成功1失败1且证号生成', data.get('success') == 1 and data.get('fail') == 1 and card.startswith('JS'), str(data.get('errors'))[:100])
+    sql("DELETE FROM reader WHERE reader_name='导入测试读者';")
+
+    # 10.3 库存预警：临时置库存 1 → 出现在看板 lowStockBooks → 还原
+    sql("UPDATE book SET stock=1 WHERE book_name='万历十五年';")
+    s, d = req('/system/dashboard/stats', headers=auth)
+    low = (d.get('data') or {}).get('lowStockBooks') or []
+    hit = any(b.get('bookName') == '万历十五年' for b in low)
+    sql("UPDATE book SET stock=20 WHERE book_name='万历十五年';")
+    tc('10.3', '库存预警列表含低库存书', isinstance(low, list) and hit, str(low)[:120])
+    import os
+    for f in ['.import_book.xlsx', '.import_reader.xlsx']:
+        if os.path.exists(f):
+            os.remove(f)
+except Exception as e:
+    tc('10.1', '导入/预警章节执行', False, str(e))
+
 # ============ 汇总 ============
 total = len(results)
 passed = sum(1 for r in results if r[2] == 'PASS')

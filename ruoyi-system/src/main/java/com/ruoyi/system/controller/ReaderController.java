@@ -65,6 +65,30 @@ public class ReaderController extends BaseController
     }
 
     /**
+     * 批量导入读者（Excel）：逐行校验，证号判重/留空自动生成，返回成功/失败明细
+     */
+    @PreAuthorize("@ss.hasPermi('system:reader:add')")
+    @Log(title = "读者管理", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(org.springframework.web.multipart.MultipartFile file) throws Exception
+    {
+        ExcelUtil<Reader> util = new ExcelUtil<Reader>(Reader.class);
+        List<Reader> list = util.importExcel(file.getInputStream());
+        return success(readerService.importReaders(list));
+    }
+
+    /**
+     * 下载读者导入模板
+     */
+    @PreAuthorize("@ss.hasPermi('system:reader:add')")
+    @GetMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response)
+    {
+        ExcelUtil<Reader> util = new ExcelUtil<Reader>(Reader.class);
+        util.importTemplateExcel(response, "读者管理数据");
+    }
+
+    /**
      * 获取读者管理详细信息
      */
     @PreAuthorize("@ss.hasPermi('system:reader:query')")

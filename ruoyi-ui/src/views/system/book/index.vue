@@ -95,6 +95,16 @@
           v-hasPermi="['system:book:export']"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="info"
+          plain
+          icon="el-icon-upload2"
+          size="mini"
+          @click="handleImport"
+          v-hasPermi="['system:book:add']"
+        >导入</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -170,6 +180,35 @@
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
+
+    <!-- 批量导入对话框 -->
+    <el-dialog title="批量导入图书" :visible.sync="importOpen" width="560px" append-to-body>
+      <div class="import-tip">
+        <p>① 先<a class="import-link" @click="downloadTemplate">下载导入模板</a>，按表头填写数据（书名必填）</p>
+        <p>② 同名图书自动跳过并提示；图书类型需为系统字典内（文学/科技/历史）</p>
+      </div>
+      <el-upload
+        :action="importUrl"
+        :headers="uploadHeaders"
+        accept=".xlsx"
+        :show-file-list="false"
+        :on-success="handleImportSuccess"
+        :on-error="handleImportError"
+      >
+        <el-button type="primary" icon="el-icon-upload2">选择 Excel 文件上传</el-button>
+      </el-upload>
+      <div v-if="importResult" class="import-result">
+        <el-alert
+          :type="importResult.fail ? 'warning' : 'success'"
+          :closable="false"
+          show-icon
+          :title="'导入完成：成功 ' + importResult.success + ' 条' + (importResult.fail ? '，失败 ' + importResult.fail + ' 条' : '')"
+        />
+        <ul v-if="importResult.errors && importResult.errors.length" class="import-errors">
+          <li v-for="(e, i) in importResult.errors" :key="i">{{ e }}</li>
+        </ul>
+      </div>
+    </el-dialog>
 
     <!-- 添加或修改图书信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
@@ -318,6 +357,10 @@ export default {
       warnThreshold: 3,
       // 是否有图书修改权限（决定列表显示开关 or 只读标签）
       hasEditPermi: false,
+      // 批量导入弹窗
+      importOpen: false,
+      importResult: null,
+      importUrl: process.env.VUE_APP_BASE_API + "/system/book/importData",
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -356,6 +399,11 @@ export default {
     getConfigKey('book.stock.warn').then(res => {
       const v = parseInt(res.msg, 10)
       if (!isNaN(v)) this.warnThreshold = v
+      // 看板"库存预警"跳转：lowStock=1 时按阈值过滤低库存书
+      if (this.$route.query.lowStock) {
+        this.queryParams.stock = this.warnThreshold
+        this.getList()
+      }
     })
     this.getList()
   },
@@ -530,6 +578,32 @@ export default {
       this.download('system/book/export', {
         ...this.queryParams
       }, `book_${new Date().getTime()}.xlsx`)
+    },
+    /** 批量导入：打开弹窗 */
+    handleImport() {
+      this.importOpen = true
+      this.importResult = null
+    },
+    /** 下载导入模板（全局 download 方法带登录令牌） */
+    downloadTemplate() {
+      this.download('system/book/importTemplate', {}, `book_import_template_${new Date().getTime()}.xlsx`)
+    },
+    /** 导入完成：展示成功/失败明细并刷新列表 */
+    handleImportSuccess(res) {
+      if (res.code !== 200 || !res.data) {
+        this.$modal.msgError((res && res.msg) || '导入失败')
+        return
+      }
+      this.importResult = res.data
+      if (this.importResult.fail === 0) {
+        this.$modal.msgSuccess('导入成功 ' + this.importResult.success + ' 条')
+      } else {
+        this.$modal.msgWarning('导入完成：成功 ' + this.importResult.success + ' 条，失败 ' + this.importResult.fail + ' 条，详见明细')
+      }
+      this.getList()
+    },
+    handleImportError() {
+      this.$modal.msgError('上传失败，请检查文件格式（需 .xlsx）')
     }
   }
 }
@@ -552,5 +626,34 @@ export default {
 .bbcode-toolbar .el-button--mini {
   padding: 4px 8px;
   font-weight: bold;
+}
+/* 批量导入弹窗 */
+.import-tip {
+  font-size: 13px;
+  color: #8a8a8a;
+  line-height: 2;
+  margin-bottom: 14px;
+  background: #f7f5f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.import-link {
+  color: #2f6b45;
+  font-weight: bold;
+  cursor: pointer;
+}
+.import-result {
+  margin-top: 14px;
+}
+.import-errors {
+  margin-top: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 13px;
+  color: #c65d43;
+  background: #fdf0ec;
+  border-radius: 8px;
+  padding: 10px 14px 10px 30px;
+  line-height: 1.8;
 }
 </style>

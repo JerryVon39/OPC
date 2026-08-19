@@ -17,6 +17,8 @@ import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.service.IBookService;
 import com.ruoyi.system.service.StatisticsService;
+import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.ruoyi.system.service.ISysDictDataService;
 
 /**
  * 图书信息Service业务层处理
@@ -41,6 +43,9 @@ public class BookServiceImpl implements IBookService
 
     @Autowired
     private StatisticsService statisticsService;
+
+    @Autowired
+    private ISysDictDataService sysDictDataService;
 
     /**
      * 查询图书信息
@@ -217,7 +222,7 @@ public class BookServiceImpl implements IBookService
 
     /**
      * 删除图书信息信息
-     * 
+     *
      * @param bookId 图书信息主键
      * @return 结果
      */
@@ -225,5 +230,57 @@ public class BookServiceImpl implements IBookService
     public int deleteBookByBookId(Long bookId)
     {
         return bookMapper.deleteBookByBookId(bookId);
+    }
+
+    /**
+     * 批量导入图书：逐行校验（书名必填/类型字典/同名判重跳过），
+     * 错误不中断整批，收集行号明细返回前端展示
+     */
+    @Override
+    public java.util.Map<String, Object> importBooks(java.util.List<Book> books)
+    {
+        // 类型字典值集合（一次查询复用整批）
+        java.util.Set<String> typeSet = new java.util.HashSet<>();
+        SysDictData typeQuery = new SysDictData();
+        typeQuery.setDictType("book_type");
+        for (SysDictData d : sysDictDataService.selectDictDataList(typeQuery))
+        {
+            typeSet.add(d.getDictValue());
+        }
+        int success = 0;
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        for (int i = 0; i < books.size(); i++)
+        {
+            Book b = books.get(i);
+            if (b == null)
+            {
+                continue; // Excel 尾部空行解析为 null，跳过
+            }
+            int row = i + 2; // 模板第 1 行为大标题、第 2 行为列名，数据从第 3 行起
+            if (b.getBookName() == null || b.getBookName().trim().isEmpty())
+            {
+                errors.add("第" + row + "行：书名不能为空");
+                continue;
+            }
+            b.setBookName(b.getBookName().trim());
+            if (b.getBookType() != null && !b.getBookType().trim().isEmpty() && !typeSet.contains(b.getBookType().trim()))
+            {
+                errors.add("第" + row + "行：《" + b.getBookName() + "》图书类型不在字典内");
+                continue;
+            }
+            if (bookMapper.countByBookName(b.getBookName()) > 0)
+            {
+                errors.add("第" + row + "行：《" + b.getBookName() + "》已存在，已跳过");
+                continue;
+            }
+            b.setStatus(b.getStatus() == null || b.getStatus().trim().isEmpty() ? "0" : b.getStatus());
+            insertBook(b);
+            success++;
+        }
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", success);
+        result.put("fail", errors.size());
+        result.put("errors", errors);
+        return result;
     }
 }

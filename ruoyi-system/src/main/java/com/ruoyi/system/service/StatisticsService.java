@@ -6,8 +6,11 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.core.redis.RedisCache;
+import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.BorrowRecord;
+import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.util.ConfigUtil;
 
 /**
  * 统计查询服务：数据看板 + 热门图书/读者排行
@@ -30,6 +33,12 @@ public class StatisticsService
 
     @Autowired
     private BorrowRecordMapper borrowRecordMapper;
+
+    @Autowired
+    private BookMapper bookMapper;
+
+    @Autowired
+    private ConfigUtil configUtil;
 
     /** 热门图书 Top10（缓存）：按借阅次数统计 */
     @SuppressWarnings("unchecked")
@@ -69,6 +78,10 @@ public class StatisticsService
             return cached;
         }
         Map<String, Object> map = borrowRecordMapper.selectDashboard();
+        // 库存预警（在架书且库存 <= book.stock.warn 阈值，按库存升序取前 10）：后台首页提醒补货
+        int warn = configUtil.getInt("book.stock.warn", 3);
+        java.util.List<Book> lowStock = bookMapper.selectLowStockBooks(warn, 10);
+        map.put("lowStockBooks", lowStock);
         redisCache.setCacheObject(KEY_DASHBOARD, map, CACHE_MINUTES, TimeUnit.MINUTES);
         return map;
     }

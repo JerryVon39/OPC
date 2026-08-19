@@ -77,4 +77,10 @@ public interface BookMapper
 
     /** 搜索联想（匿名）：书架书按书名模糊匹配，最多 8 条（返回 bookId/bookName/author 等轻量字段） */
     public java.util.List<Book> selectSuggestBooks(@Param("keyword") String keyword);
+
+    /** 库存预警：在架书且库存 <= 阈值，按库存升序取前 N 条（后台看板提醒补货） */
+    public java.util.List<Book> selectLowStockBooks(@Param("threshold") int threshold, @Param("limit") int limit);
+
+    /** 批量导入判重：同名图书是否存在 */
+    public int countByBookName(@Param("bookName") String bookName);
 }

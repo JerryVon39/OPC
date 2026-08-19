@@ -10,8 +10,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.common.core.redis.RedisCache;
+import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.BorrowRecord;
+import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.util.ConfigUtil;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +32,12 @@ public class StatisticsServiceTest
 
     @Mock
     private BorrowRecordMapper borrowRecordMapper;
+
+    @Mock
+    private BookMapper bookMapper;
+
+    @Mock
+    private ConfigUtil configUtil;
 
     @InjectMocks
     private StatisticsService statisticsService;
@@ -57,7 +66,7 @@ public class StatisticsServiceTest
         verify(borrowRecordMapper, never()).selectTopBooks(any(BorrowRecord.class));
     }
 
-    /** dashboard 缓存未命中：查库写入 */
+    /** dashboard 缓存未命中：查库写入，且带库存预警列表 */
     @Test
     void dashboard_cacheMiss_queriesAndCaches()
     {
@@ -65,9 +74,14 @@ public class StatisticsServiceTest
         map.put("bookTotal", 100);
         when(redisCache.getCacheObject(anyString())).thenReturn(null);
         when(borrowRecordMapper.selectDashboard()).thenReturn(map);
+        when(configUtil.getInt("book.stock.warn", 3)).thenReturn(3);
+        when(bookMapper.selectLowStockBooks(3, 10)).thenReturn(new ArrayList<Book>());
 
-        assertEquals(map, statisticsService.dashboard());
+        Map<String, Object> result = statisticsService.dashboard();
+        assertEquals(map, result);
+        assertNotNull(result.get("lowStockBooks"));
         verify(borrowRecordMapper).selectDashboard();
+        verify(bookMapper).selectLowStockBooks(3, 10);
     }
 
     /** 失效：三个 key 全部删除 */

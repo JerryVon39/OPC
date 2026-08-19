@@ -118,6 +118,30 @@ public class BookController extends BaseController
     }
 
     /**
+     * 批量导入图书（Excel）：逐行校验，同名跳过，返回成功/失败明细
+     */
+    @PreAuthorize("@ss.hasPermi('system:book:add')")
+    @Log(title = "图书信息", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(org.springframework.web.multipart.MultipartFile file) throws Exception
+    {
+        ExcelUtil<Book> util = new ExcelUtil<Book>(Book.class);
+        List<Book> list = util.importExcel(file.getInputStream());
+        return success(bookService.importBooks(list));
+    }
+
+    /**
+     * 下载图书导入模板
+     */
+    @PreAuthorize("@ss.hasPermi('system:book:add')")
+    @GetMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response)
+    {
+        ExcelUtil<Book> util = new ExcelUtil<Book>(Book.class);
+        util.importTemplateExcel(response, "图书信息数据");
+    }
+
+    /**
      * 获取图书信息详细信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:query')")

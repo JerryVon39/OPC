@@ -37,6 +37,9 @@ public class ReaderServiceImpl implements IReaderService
     @Autowired
     private StatisticsService statisticsService;
 
+    @Autowired
+    private com.ruoyi.system.service.ISysDictDataService sysDictDataService;
+
     /**
      * 查询读者管理
      * 
@@ -252,5 +255,67 @@ public class ReaderServiceImpl implements IReaderService
     public int deleteReaderByReaderId(Long readerId)
     {
         return readerMapper.deleteReaderByReaderId(readerId);
+    }
+
+    /**
+     * 批量导入读者：逐行校验（姓名必填/手机号格式/类型字典/证号判重），
+     * 证号留空走 insertReader 自动生成；错误不中断整批，收集行号明细
+     */
+    @Override
+    public java.util.Map<String, Object> importReaders(java.util.List<Reader> readers)
+    {
+        // 读者类型字典值集合（一次查询复用整批）
+        java.util.Set<String> typeSet = new java.util.HashSet<>();
+        com.ruoyi.common.core.domain.entity.SysDictData typeQuery = new com.ruoyi.common.core.domain.entity.SysDictData();
+        typeQuery.setDictType("reader_type");
+        for (com.ruoyi.common.core.domain.entity.SysDictData d : sysDictDataService.selectDictDataList(typeQuery))
+        {
+            typeSet.add(d.getDictValue());
+        }
+        int success = 0;
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        for (int i = 0; i < readers.size(); i++)
+        {
+            Reader r = readers.get(i);
+            if (r == null)
+            {
+                continue; // Excel 尾部空行解析为 null，跳过
+            }
+            int row = i + 2; // 模板第 1 行为大标题、第 2 行为列名，数据从第 3 行起
+            if (r.getReaderName() == null || r.getReaderName().trim().isEmpty())
+            {
+                errors.add("第" + row + "行：读者姓名不能为空");
+                continue;
+            }
+            r.setReaderName(r.getReaderName().trim());
+            if (r.getPhone() == null || !r.getPhone().trim().matches("\\d{11}"))
+            {
+                errors.add("第" + row + "行：读者" + r.getReaderName() + " 手机号格式不正确（需 11 位数字）");
+                continue;
+            }
+            r.setPhone(r.getPhone().trim());
+            if (r.getReaderType() != null && !r.getReaderType().trim().isEmpty() && !typeSet.contains(r.getReaderType().trim()))
+            {
+                errors.add("第" + row + "行：读者" + r.getReaderName() + " 类型不在字典内");
+                continue;
+            }
+            if (r.getCardNo() != null && !r.getCardNo().trim().isEmpty())
+            {
+                r.setCardNo(r.getCardNo().trim());
+                if (readerMapper.countByCardNo(r.getCardNo()) > 0)
+                {
+                    errors.add("第" + row + "行：读者" + r.getReaderName() + " 证号 " + r.getCardNo() + " 已存在，已跳过");
+                    continue;
+                }
+            }
+            r.setStatus(r.getStatus() == null || r.getStatus().trim().isEmpty() ? "0" : r.getStatus());
+            insertReader(r);
+            success++;
+        }
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", success);
+        result.put("fail", errors.size());
+        result.put("errors", errors);
+        return result;
     }
 }

@@ -1,6 +1,7 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.Reader;
 
 /**
@@ -21,6 +22,9 @@ public interface ReaderMapper
 
     /** 行锁查询（FOR UPDATE）：并发写路径（借书/预约/下单/删除读者）串行化同一读者的操作 */
     public Reader selectReaderByReaderIdForUpdate(Long readerId);
+
+    /** 批量导入判重：借书证号是否已存在（uk_card_no 冲突前先友好提示） */
+    public int countByCardNo(@Param("cardNo") String cardNo);
 
     /**
      * 查询读者管理列表

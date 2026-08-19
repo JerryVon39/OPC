@@ -67,4 +67,13 @@ public interface IReaderService
      * @return 结果
      */
     public int deleteReaderByReaderId(Long readerId);
+
+    /**
+     * 批量导入读者（Excel 逐行校验：姓名必填/手机号格式/类型字典/证号判重，
+     * 证号留空自动生成；错误收集行号明细）
+     *
+     * @param readers 解析出的读者列表
+     * @return {success: 成功条数, fail: 失败条数, errors: [行号+原因]}
+     */
+    public java.util.Map<String, Object> importReaders(java.util.List<Reader> readers);
 }
