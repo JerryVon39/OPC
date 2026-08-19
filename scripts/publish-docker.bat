@@ -1,11 +1,11 @@
 @echo off
 REM ============================================
-REM ä¸‡äº‹å±‹ Â· Docker é•œåƒå‘å¸ƒè„šæœ¬ï¼ˆä¸€é”®æ„å»º + æ¨é€ï¼‰
+REM ÍòÊÂÎİ ¡¤ Docker ¾µÏñ·¢²¼½Å±¾£¨Ò»¼ü¹¹½¨ + ÍÆËÍ£©
 REM
-REM ç”¨æ³•: scripts\publish-docker.bat [ç‰ˆæœ¬å·]     é»˜è®¤ç‰ˆæœ¬å· v1.0
-REM å‰ç½®: 1) å·² docker loginï¼ˆéœ€ Read&Write æƒé™çš„ tokenï¼Œåªè¯» token æ¨é€ä¼šè¢«æ‹’ï¼‰
-REM       2) å¯è®¿é—® Docker Hubï¼ˆå›½å†…ç½‘ç»œéœ€åœ¨ Docker Desktop é…ç½®ä»£ç†ï¼‰
-REM æ•ˆæœ: é‡æ–°æ„å»º backend/frontend â†’ æ‰“ tag â†’ æ¨é€ Docker Hub â†’ åŒæ­¥ docker-compose.yml ç‰ˆæœ¬å·
+REM ÓÃ·¨: scripts\publish-docker.bat [°æ±¾ºÅ]     Ä¬ÈÏ°æ±¾ºÅ v1.0
+REM Ç°ÖÃ: 1) ÒÑ docker login£¨Ğè Read&Write È¨ÏŞµÄ token£¬Ö»¶Á token ÍÆËÍ»á±»¾Ü£©
+REM       2) ¿É·ÃÎÊ Docker Hub£¨¹úÄÚÍøÂçĞèÔÚ Docker Desktop ÅäÖÃ´úÀí£©
+REM Ğ§¹û: ÖØĞÂ¹¹½¨ backend/frontend ¡ú ´ò tag ¡ú ÍÆËÍ Docker Hub ¡ú Í¬²½ docker-compose.yml °æ±¾ºÅ
 REM ============================================
 setlocal enabledelayedexpansion
 
@@ -13,7 +13,7 @@ set "VERSION=%1"
 if "%VERSION%"=="" set "VERSION=v1.0"
 
 echo ============================================
-echo  [1/5] é‡æ–°æ„å»ºé•œåƒï¼ˆå½“å‰ç‰ˆæœ¬ %VERSION%ï¼‰
+echo  [1/5] ÖØĞÂ¹¹½¨¾µÏñ£¨µ±Ç°°æ±¾ %VERSION%£©
 echo ============================================
 docker build -t jerryvon/book-system-backend:%VERSION% .
 if errorlevel 1 goto :fail
@@ -21,35 +21,35 @@ docker build -t jerryvon/book-system-frontend:%VERSION% -f ruoyi-ui/Dockerfile .
 if errorlevel 1 goto :fail
 
 echo ============================================
-echo  [2/5] æ¨é€åç«¯é•œåƒ jerryvon/book-system-backend:%VERSION%
+echo  [2/5] ÍÆËÍºó¶Ë¾µÏñ jerryvon/book-system-backend:%VERSION%
 echo ============================================
 docker push jerryvon/book-system-backend:%VERSION%
 if errorlevel 1 goto :fail
 
 echo ============================================
-echo  [3/5] æ¨é€å‰ç«¯é•œåƒ jerryvon/book-system-frontend:%VERSION%
+echo  [3/5] ÍÆËÍÇ°¶Ë¾µÏñ jerryvon/book-system-frontend:%VERSION%
 echo ============================================
 docker push jerryvon/book-system-frontend:%VERSION%
 if errorlevel 1 goto :fail
 
 echo ============================================
-echo  [4/5] åŒæ­¥ docker-compose.yml ç‰ˆæœ¬å·
+echo  [4/5] Í¬²½ docker-compose.yml °æ±¾ºÅ
 echo ============================================
-node -e "const fs=require('fs');const f='docker-compose.yml';const s=fs.readFileSync(f,'utf8').replace(/book-system-backend:[a-zA-Z0-9._-]+/g,'book-system-backend:%VERSION%').replace(/book-system-frontend:[a-zA-Z0-9._-]+/g,'book-system-frontend:%VERSION%');fs.writeFileSync(f,s);console.log('docker-compose.yml å·²æ›´æ–°ä¸º %VERSION%');"
+node -e "const fs=require('fs');const f='docker-compose.yml';const s=fs.readFileSync(f,'utf8').replace(/book-system-backend:[a-zA-Z0-9._-]+/g,'book-system-backend:%VERSION%').replace(/book-system-frontend:[a-zA-Z0-9._-]+/g,'book-system-frontend:%VERSION%');fs.writeFileSync(f,s);console.log('docker-compose.yml ÒÑ¸üĞÂÎª %VERSION%');"
 if errorlevel 1 goto :fail
 
 echo ============================================
-echo  [5/5] éªŒè¯è¿œç¨‹é•œåƒå­˜åœ¨
+echo  [5/5] ÑéÖ¤Ô¶³Ì¾µÏñ´æÔÚ
 echo ============================================
-powershell -Command "try { $r=Invoke-RestMethod -Uri 'https://hub.docker.com/v2/repositories/jerryvon/book-system-backend/tags' -Headers @{'User-Agent'='Mozilla/5.0'} -ErrorAction Stop; $t=$r.results | Where-Object { $_.name -eq '%VERSION%' }; if($t){ Write-Host 'âœ… åç«¯é•œåƒå·²åœ¨ Docker Hub: jerryvon/book-system-backend:%VERSION%' } else { Write-Host 'âš ï¸ åç«¯é•œåƒæœªæŸ¥åˆ°ï¼ˆç¨ååˆ·æ–°é¡µé¢ç¡®è®¤ï¼‰' } } catch { Write-Host 'âš ï¸ éªŒè¯æ¥å£ä¸å¯è¾¾ï¼ˆé•œåƒå¯èƒ½å·²æ¨é€æˆåŠŸï¼Œé¡µé¢å¯æŸ¥ï¼‰' }"
+powershell -Command "try { $r=Invoke-RestMethod -Uri 'https://hub.docker.com/v2/repositories/jerryvon/book-system-backend/tags' -Headers @{'User-Agent'='Mozilla/5.0'} -ErrorAction Stop; $t=$r.results | Where-Object { $_.name -eq '%VERSION%' }; if($t){ Write-Host '[OK] ºó¶Ë¾µÏñÒÑÔÚ Docker Hub: jerryvon/book-system-backend:%VERSION%' } else { Write-Host '[WARN] ºó¶Ë¾µÏñÎ´²éµ½£¨ÉÔºóË¢ĞÂÒ³ÃæÈ·ÈÏ£©' } } catch { Write-Host '[WARN] ÑéÖ¤½Ó¿Ú²»¿É´ï£¨¾µÏñ¿ÉÄÜÒÑÍÆËÍ³É¹¦£¬Ò³Ãæ¿É²é£©' }"
 
 echo.
-echo âœ… å‘å¸ƒå®Œæˆ %VERSION%
-echo    ä»“åº“é¡µ: https://hub.docker.com/u/jerryvon
-echo    æ³¨æ„: docker-compose.yml å·²åŒæ­¥ç‰ˆæœ¬å·ï¼Œè®°å¾— git commit å­˜æ¡£
+echo [OK] ·¢²¼Íê³É %VERSION%
+echo    ²Ö¿âÒ³: https://hub.docker.com/u/jerryvon
+echo    ×¢Òâ: docker-compose.yml ÒÑÍ¬²½°æ±¾ºÅ£¬¼ÇµÃ git commit ´æµµ
 exit /b 0
 
 :fail
 echo.
-echo âŒ å‘å¸ƒå¤±è´¥ï¼ˆè§ä¸Šæ–¹é”™è¯¯ä¿¡æ¯ï¼‰
+echo [FAIL] ·¢²¼Ê§°Ü£¨¼ûÉÏ·½´íÎóĞÅÏ¢£©
 exit /b 1
