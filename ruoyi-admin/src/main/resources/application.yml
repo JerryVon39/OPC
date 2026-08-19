@@ -91,13 +91,13 @@ spring:
           max-active: 8
           # #连接池最大阻塞等待时间（使用负值表示没有限制）
           max-wait: -1ms
-  # 邮件发送（QQ 邮箱 SMTP；授权码用环境变量 MAIL_AUTH_CODE，避免明文密钥进代码库）
+  # 邮件发送（QQ 邮箱 SMTP；发件邮箱与授权码均用环境变量注入，避免明文进代码库）
   mail:
     # 是否启用邮件通知（false 时不发任何邮件，业务照常）
     enabled: ${MAIL_ENABLED:true}
     host: smtp.qq.com
     port: 465
-    username: 241180560@qq.com
+    username: ${MAIL_USERNAME:}
     password: ${MAIL_AUTH_CODE:}
     # QQ 邮箱要求 SSL
     properties:

@@ -44,11 +44,20 @@ public class MailUtil
     @Value("${spring.mail.password:}")
     private String password;
 
-    /** 启动自检：未配置授权码时立即告警，避免"业务成功但邮件发不出"的困惑 */
+    /** 启动自检：未配置发件邮箱/授权码时立即告警，避免"业务成功但邮件发不出"的困惑 */
     @jakarta.annotation.PostConstruct
     public void checkConfig()
     {
-        if (enabled && mailSender != null && (password == null || password.isEmpty()))
+        if (!enabled || mailSender == null)
+        {
+            return;
+        }
+        if (from == null || from.trim().isEmpty())
+        {
+            log.warn("邮件通知已启用但未配置发件邮箱（MAIL_USERNAME 环境变量为空），邮件将不会发送！"
+                    + "本地启动请使用 scripts/start-backend.bat（自动读取 .env）");
+        }
+        else if (password == null || password.isEmpty())
         {
             log.warn("邮件通知已启用但未配置 SMTP 授权码（MAIL_AUTH_CODE 环境变量为空），邮件将发送失败！"
                     + "本地启动请使用 scripts/start-backend.bat（自动读取 .env）");
@@ -85,13 +94,19 @@ public class MailUtil
         {
             return; // 读者未留邮箱，不回生活负担
         }
+        // 发件邮箱必须配置（MAIL_USERNAME 环境变量），不硬编码任何真实账号
+        if (from == null || from.trim().isEmpty())
+        {
+            log.warn("未配置发件邮箱（MAIL_USERNAME），跳过邮件发送：{} -> {}", subject, to);
+            return;
+        }
         final String target = to.trim();
         EXEC.submit(() -> {
             try
             {
                 MimeMessage msg = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-                helper.setFrom(from == null || from.isEmpty() ? "241180560@qq.com" : from);
+                helper.setFrom(from.trim());
                 helper.setTo(target);
                 helper.setSubject(subject);
                 helper.setText(html, true);

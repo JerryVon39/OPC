@@ -1260,7 +1260,7 @@
 
 ### 26.1 配置（管理员/部署）
 
-- **发件**：QQ 邮箱 `241180560@qq.com`，SMTP `smtp.qq.com:465`（SSL）
+- **发件**：发件邮箱在本地 `.env` 配置（`MAIL_USERNAME`），SMTP `smtp.qq.com:465`（SSL）
 - **授权码不写进代码**：配置走环境变量 `MAIL_AUTH_CODE`（`application.yml` 里 `spring.mail.password`），部署时注入即可，避免密钥进 git
 - **一键启动已含邮件配置**：`C:\Users\1\tools\start-all.bat`（Redis+MySQL+后端+前端一键启动）与 `tools\start-backend.bat` 会自动读取项目根目录 `.env` 文件里的 `MAIL_AUTH_CODE` 注入后端；未检测到授权码会打印警告
 - 开关：`spring.mail.enabled`（默认 true），关闭后不发任何邮件、业务照常

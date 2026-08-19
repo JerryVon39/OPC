@@ -4,7 +4,7 @@
 -- 2) 回收站读者表加 email 列（还原读者时保留邮箱）
 -- 执行：mysql -uroot -p --default-character-set=utf8mb4 ry-vue < upgrade_20260819_mail.sql
 -- 幂等：MySQL 不支持"ADD COLUMN IF NOT EXISTS"（8.4 亦然），改用 INFORMATION_SCHEMA 判断，列不存在才 ADD，可重复执行
--- 邮件账号：241180560@qq.com（SMTP smtp.qq.com:465），授权码经环境变量 MAIL_AUTH_CODE 注入，见 application.yml
+-- 邮件配置见 application.yml：发件邮箱 MAIL_USERNAME、授权码 MAIL_AUTH_CODE（环境变量注入，勿写进代码库）
 -- ============================================
 
 USE `ry-vue`;
