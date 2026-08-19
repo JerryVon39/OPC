@@ -48,6 +48,17 @@
   .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; row-gap: 4px; }
   .nav-right span { color: var(--accent); font-size: 14px; cursor: pointer; white-space: nowrap; transition: color .2s; }
   .nav-right span:hover { color: var(--accent-light); }
+  /* "更多"下拉收纳（次要功能折叠，避免右上角挤成一排） */
+  .nav-more { position: relative; }
+  .more-trigger { display: inline-block; padding: 5px 14px; border: 1px solid rgba(255,255,255,0.28); border-radius: 16px; color: var(--accent) !important; transition: all .2s; }
+  .more-trigger:hover { background: rgba(255,255,255,0.12); color: #fff !important; }
+  .nav-more.open .more-trigger { background: rgba(255,255,255,0.14); color: #fff !important; border-color: rgba(255,255,255,0.5); }
+  .more-menu { position: absolute; top: calc(100% + 10px); right: 0; background: #fff; border-radius: 12px; box-shadow: 0 12px 28px rgba(20,35,28,0.28); min-width: 176px; padding: 6px; z-index: 950; display: none; }
+  .nav-more.open .more-menu { display: block; animation: menuIn .18s ease; }
+  @keyframes menuIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .more-menu::before { content: ''; position: absolute; top: -6px; right: 22px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 6px solid #fff; }
+  .more-item { padding: 9px 14px; font-size: 14px; color: var(--text); border-radius: 8px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+  .more-item:hover { background: #eef3ee; color: var(--primary); }
 
   /* ================= 公告栏（可关闭） ================= */
   .notice-bar { background: #fdf6e7; color: #8a6d3b; font-size: 13px; padding: 8px 48px 8px 40px; border-bottom: 1px solid #f0e6c8; overflow: hidden; white-space: nowrap; position: relative; cursor: pointer; }
@@ -244,6 +255,8 @@
     .nav-links a { padding: 4px 12px; font-size: 13px; }
     .nav-right { order: 5; flex-basis: 100%; margin-left: 0; justify-content: flex-start; gap: 12px; }
     .nav-right span { font-size: 13px; }
+    /* 移动端：下拉菜单右对齐贴边，避免溢出屏幕 */
+    .more-menu { right: 0; min-width: 160px; }
 
     .banner { min-height: 132px; }
     .banner-slide { padding: 24px 16px; }
@@ -286,15 +299,20 @@
       <a class="active" data-type="" onclick="switchType(this)">全部</a>
     </div>
     <div class="nav-right">
-      <span id="registerEntry" onclick="openRegister()">📝 读者登记</span>
-      <span onclick="openReissue()">🪪 补办证号</span>
-      <span onclick="openMyBorrow()">📖 我的借阅</span>
-      <span onclick="openMyReserves()">📌 预约</span>
-      <span onclick="openFavs()">❤️ 收藏</span>
+      <span onclick="openMyBorrow()" title="我的借阅">📖 我的借阅</span>
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
       <span id="cartArea" style="cursor:pointer" onclick="openCart()">🛒 购物车 (0)</span>
-      <span style="cursor:pointer" onclick="openMyOrders()">📦 我的订单</span>
-      <span style="cursor:pointer" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</span>
+      <div class="nav-more" id="navMore">
+        <span class="more-trigger" onclick="toggleMoreMenu(event)">☰ 更多</span>
+        <div class="more-menu" id="moreMenu">
+          <div class="more-item" id="registerEntry" onclick="openRegister()">📝 读者登记</div>
+          <div class="more-item" onclick="openReissue()">🪪 补办证号</div>
+          <div class="more-item" onclick="openMyReserves()">📌 预约</div>
+          <div class="more-item" onclick="openFavs()">❤️ 收藏</div>
+          <div class="more-item" onclick="openMyOrders()">📦 我的订单</div>
+          <div class="more-item" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1733,6 +1751,18 @@
     if (dbtn) {
       optimisticBorrow(dbtn.dataset.id, dbtn.dataset.name);
     }
+  });
+
+  // ===== "更多"下拉菜单（点击展开 / 点外部或选完收起）=====
+  function toggleMoreMenu(e) {
+    e.stopPropagation();
+    document.getElementById('navMore').classList.toggle('open');
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.nav-more')) document.getElementById('navMore').classList.remove('open');
+  });
+  document.getElementById('moreMenu').addEventListener('click', function () {
+    document.getElementById('navMore').classList.remove('open');
   });
 
   // ===== 搜索联想事件绑定（input 防抖 / 中文输入法 / 失焦隐藏）=====
