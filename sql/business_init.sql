@@ -29,7 +29,7 @@ CREATE TABLE `book` (
   PRIMARY KEY (`book_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, intro, create_by, create_time, update_by, update_time) VALUES (1,'三体','刘慈欣','1','重庆出版社',88.00,'2008-01-01',9,'0','科幻经典','admin','2026-08-12 09:40:40','',NULL),(2,'深入理解计算机系统','Randal E. Bryant','2','机械工业出版社',139.00,'2016-11-01',5,'0','计算机必读','admin','2026-08-12 09:40:40','',NULL),(3,'明朝那些事儿','当年明月','3','中国海关出版社',358.00,'2009-04-01',20,'1','通俗历史','admin','2026-08-12 09:40:40','',NULL),(4,'活着','余华','1','作家出版社',35.00,'2012-08-01',50,'0','经典文学','admin','2026-08-12 11:08:22','',NULL),(5,'哇奥','哇奥','1','哇奥',576.00,'2026-08-05',7,'0','经典文学','','2026-08-12 11:21:25','','2026-08-12 15:59:02'),(6,'百年孤独','加西亚·马尔克斯','1','南海出版公司',55.00,'2011-06-01',8,'0','魔幻现实主义','admin','2026-08-12 17:14:21','',NULL),(7,'围城','钱钟书','1','人民文学出版社',39.00,'1991-02-01',6,'0','经典讽刺小说','admin','2026-08-12 17:14:21','',NULL);
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, intro, create_by, create_time, update_by, update_time) VALUES (1,'三体','刘慈欣','1','重庆出版社',88.00,'2008-01-01',9,'0','科幻经典','admin','2026-08-12 09:40:40','',NULL),(2,'深入理解计算机系统','Randal E. Bryant','2','机械工业出版社',139.00,'2016-11-01',5,'0','计算机必读','admin','2026-08-12 09:40:40','',NULL),(3,'明朝那些事儿','当年明月','3','中国海关出版社',358.00,'2009-04-01',20,'1','通俗历史','admin','2026-08-12 09:40:40','',NULL),(4,'活着','余华','1','作家出版社',35.00,'2012-08-01',50,'0','经典文学','admin','2026-08-12 11:08:22','',NULL),(6,'百年孤独','加西亚·马尔克斯','1','南海出版公司',55.00,'2011-06-01',8,'0','魔幻现实主义','admin','2026-08-12 17:14:21','',NULL),(7,'围城','钱钟书','1','人民文学出版社',39.00,'1991-02-01',6,'0','经典讽刺小说','admin','2026-08-12 17:14:21','',NULL);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reader` (
@@ -48,15 +48,17 @@ CREATE TABLE `reader` (
   `update_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`reader_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='读者信息表';
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='读者信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
--- 测试读者（名字即用途说明：学生/教师/普通/挂失 四种类型，对应差异化借阅规则与补办演示）
-INSERT INTO `reader` (reader_id, reader_name, phone, card_no, reader_type, sex, status, remark, create_by, create_time) VALUES
-(1, '学生测试', '13800000001', 'JS20260001', '1', '1', '0', '测试数据-学生读者(借阅上限5本/借期30天)', 'admin', NOW()),
-(2, '教师测试', '13800000002', 'JS20260002', '2', '0', '0', '测试数据-教师读者(借阅上限10本/借期60天)', 'admin', NOW()),
-(3, '普通测试', '13800000003', 'JS20260003', '3', '0', '0', '测试数据-普通读者(借阅上限3本/借期30天)', 'admin', NOW()),
-(4, '挂失测试', '13800000004', 'JS20260004', '3', '0', '1', '测试数据-挂失读者(可演示前台申请补办)', 'admin', NOW()),
-(5, 'Jerry', '12345678901', 'DK', '2', '0', '0', '测试数据-项目作者账号(教师)', 'admin', NOW());
+-- 测试读者（名字即用途说明：学生/教师/普通/挂失/整体/邮箱 各类型，对应差异化借阅规则、补办与邮件通知演示）
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time) VALUES
+(1, '学生测试', '13800000001', 'stu_test@qq.com', 'JS20260001', '1', '1', '0', '测试数据-学生读者(借阅上限5本/借期30天)', 'admin', NOW()),
+(2, '教师测试', '13800000002', 'tea_test@qq.com', 'JS20260002', '2', '0', '0', '测试数据-教师读者(借阅上限10本/借期60天)', 'admin', NOW()),
+(3, '普通测试', '13800000003', 'gen_test@qq.com', 'JS20260003', '3', '0', '0', '测试数据-普通读者(借阅上限3本/借期30天)', 'admin', NOW()),
+(4, '挂失测试', '13800000004', 'gua_test@qq.com', 'JS20260004', '3', '0', '1', '测试数据-挂失读者(可演示前台申请补办)', 'admin', NOW()),
+(5, 'Jerry', '12345678901', 'jerry@qq.com', 'DK', '2', '0', '0', '测试数据-项目作者账号(教师)', 'admin', NOW()),
+(6, '整体测试', '13800008888', 'zhengti@qq.com', 'JS20260005', '1', '1', '0', '测试数据-整体回归读者(演示前台登记/修改手机号/看板统计全链路)', 'admin', NOW()),
+(7, '邮箱测试', '13877776666', 'mail_test@qq.com', 'JS20260006', '1', '2', '0', '测试数据-邮件通知读者(演示借书/续借/预约/荐购邮件提醒)', 'admin', NOW());
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `borrow_record` (
@@ -352,6 +354,14 @@ INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, 
 SELECT '算法导论（第3版）','Thomas H. Cormen','2','机械工业出版社',128.00,'2012-12-01',10,'0','9787111407010','算法领域的经典教材','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787111407010');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
 SELECT '万历十五年','黄仁宇','3','中华书局',18.00,'2007-01-01',20,'0','9787101054033','大历史观代表作，以小事见大时代','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787101054033');
+
+-- ---------- 初始 6 本书补齐 ISBN 与完整简介（幂等，统一与后 15 本一致的数据质量） ----------
+UPDATE book SET isbn='9787536692930', intro='亚洲首部获雨果奖的科幻巨著。文革期间，天文学家叶文洁向宇宙发出信号，意外引来四光年外的三体文明——一场关乎地球存亡的星际博弈就此展开，被誉为中国科幻的里程碑。' WHERE book_name='三体' AND (isbn IS NULL OR isbn='');
+UPDATE book SET isbn='9787111544937', intro='程序员视角的经典教材。以 C 语言和汇编为载体，讲透信息表示、程序执行、存储器层次与系统性能，帮助你真正理解程序如何在计算机上跑起来，而不是止步于表层。' WHERE book_name='深入理解计算机系统' AND (isbn IS NULL OR isbn='');
+UPDATE book SET isbn='9787505732534', intro='当年明月以幽默通俗的笔法讲述明朝三百年兴衰，从朱元璋到崇祯，把历史写成一个个鲜活的人和故事，一度掀起全民读史热潮。' WHERE book_name='明朝那些事儿' AND (isbn IS NULL OR isbn='');
+UPDATE book SET isbn='9787506365437', intro='余华代表作。地主少爷福贵嗜赌成性，输光家业后，亲人一个个在他眼前离去，只剩老牛相伴。他用平淡而冷静的笔触写尽苦难，也写尽人活着的韧性。' WHERE book_name='活着' AND (isbn IS NULL OR isbn='');
+UPDATE book SET isbn='9787544253994', intro='马尔克斯巅峰之作，魔幻现实主义的代名词。布恩迪亚家族七代人的传奇在马孔多小镇上演，孤独与宿命贯穿始终，被誉为"再现拉丁美洲历史社会图景的鸿篇巨著"。' WHERE book_name='百年孤独' AND (isbn IS NULL OR isbn='');
+UPDATE book SET isbn='9787020029532', intro='钱钟书唯一的长篇小说。留学归来的方鸿渐在爱情与事业间周旋，"城外的人想冲进去，城里的人想逃出来"——人生的围城隐喻百年来深入人心，讽刺与幽默并重的经典。' WHERE book_name='围城' AND (isbn IS NULL OR isbn='');
 
 -- ============================================
 -- 查询性能索引（幂等）：借阅/订单/预约按常用查询条件加索引，数据量增长后避免全表扫描
