@@ -129,7 +129,7 @@ export default {
   methods: {
     imgUrl(url) {
       if (!url) return ''
-      if (url.startsWith('http') || url.startsWith('/dev-api')) return url
+      if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
     },
     handleImageSuccess(res) {
