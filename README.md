@@ -318,6 +318,7 @@ npm run dev
 | `69cd6d49` | 四轮审查修复（库存一致性并发加固）：订单全流转 CAS 防取消后改回、删除未还借阅记录 CAS 防双回补、预约推进 CAS 不卡队、可借预约优先借、续借行锁、定时任务条件置逾期；小项（导入行级容错/手机号校验/公告去姓名/Safari 日期解析）；单测 12 类全绿 |
 | `3d4a556f` | 修复 Docker 部署前台打不开：API 前缀全环境统一 /prod-api（shop.html 写死 /dev-api 而生产 nginx 仅代理 /prod-api → 请求回退 index.html）；.env.development 同步 + 后台 3 处图片前缀判断去写死；dist 重新构建；本地重建镜像实测前台正常 |
 | `354f4b7d` | 清除若依框架残留（业务化改写，参考本地演进库）：upgrade_20260820_cleanup.sql 幂等清理 admin/ry 用户信息、部门改阅海图书公司结构、公告改业务内容、岗位改书店 10 岗、删若依官网菜单；投放 Docker 初始化 + 本地升级清单 |
+| `0c55e79d` | Docker v1.2 发布：镜像推送 Docker Hub（含四轮审查修复 + 前台 /prod-api 前缀修复 + 若依残留清理），compose 同步版本号 |
 
 ## 📜 声明
 
