@@ -508,3 +508,8 @@ INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame
 SELECT '图书回收站',(SELECT menu_id FROM sys_menu WHERE menu_name='回收站'),1,'book','system/recycle/book',1,0,'C','0','0','system:recycle:book:list','book','admin',NOW(),'误删图书恢复' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书回收站');
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '读者回收站',(SELECT menu_id FROM sys_menu WHERE menu_name='回收站'),2,'reader','system/recycle/reader',1,0,'C','0','0','system:recycle:reader:list','peoples','admin',NOW(),'误删读者恢复' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='读者回收站');
+
+-- ---------- 幂等补索引：shop_order 订单号唯一（README 承诺的唯一约束，老库补齐） ----------
+SET @so1 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='shop_order' AND index_name='uk_order_no');
+SET @so2 = IF(@so1=0, 'ALTER TABLE shop_order ADD UNIQUE INDEX uk_order_no (order_no)', 'SELECT 1');
+PREPARE so_stmt FROM @so2; EXECUTE so_stmt; DEALLOCATE PREPARE so_stmt;

@@ -176,7 +176,11 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             BorrowRecord old = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowRecord.getBorrowId());
             if (old != null)
             {
-                if (borrowRecord.getStatus() != null && !borrowRecord.getStatus().equals(old.getStatus()))
+                // 动态逾期例外：列表/详情回显的"2(逾期)"是按日期实时算的、不落库（库中仍是"0"），
+                // 编辑备注等字段会把回显的"2"带回来，与库中"0"的差异不算生命周期变更，放行
+                String newStatus = borrowRecord.getStatus();
+                boolean dynamicOverdue = "2".equals(newStatus) && "0".equals(old.getStatus());
+                if (newStatus != null && !dynamicOverdue && !newStatus.equals(old.getStatus()))
                 {
                     throw new ServiceException("借阅状态请通过还书/续借功能变更，不允许直接修改");
                 }

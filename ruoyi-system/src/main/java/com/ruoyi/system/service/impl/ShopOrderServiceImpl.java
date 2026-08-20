@@ -76,10 +76,21 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("不允许从" + orderStatusText(old.getStatus()) + "变更为" + orderStatusText(shopOrder.getStatus()));
         }
-        // 待付款 → 取消：回滚库存（原子回补）
-        if (BizStatus.ORDER_CANCELLED.equals(shopOrder.getStatus()) && old.getBookId() != null && old.getQuantity() != null)
+        // 待付款 → 取消：CAS 原子转换（与前台 cancelByCard 口径一致），只有抢到转换权的请求回补库存，
+        // 防止两个管理员同时取消同一订单导致库存双回补
+        if (BizStatus.ORDER_CANCELLED.equals(shopOrder.getStatus()))
         {
-            bookMapper.restoreStock(old.getBookId(), old.getQuantity());
+            int rows = shopOrderMapper.updateStatusIfCurrent(shopOrder.getOrderId(),
+                    BizStatus.ORDER_UNPAID, BizStatus.ORDER_CANCELLED);
+            if (rows == 0)
+            {
+                throw new ServiceException("该订单状态已变化，请刷新后重试");
+            }
+            if (old.getBookId() != null && old.getQuantity() != null)
+            {
+                bookMapper.restoreStock(old.getBookId(), old.getQuantity());
+            }
+            return rows;
         }
         return shopOrderMapper.updateShopOrder(shopOrder);
     }
@@ -119,10 +130,19 @@ public class ShopOrderServiceImpl implements IShopOrderService
             {
                 continue;
             }
-            if (BizStatus.ORDER_UNPAID.equals(order.getStatus())
-                    && order.getBookId() != null && order.getQuantity() != null)
+            if (BizStatus.ORDER_UNPAID.equals(order.getStatus()))
             {
-                bookMapper.restoreStock(order.getBookId(), order.getQuantity());
+                // CAS 先置"已取消"再删：并发删除同一待付款订单时只有一次回补成功（防库存双回补）
+                int locked = shopOrderMapper.updateStatusIfCurrent(orderId,
+                        BizStatus.ORDER_UNPAID, BizStatus.ORDER_CANCELLED);
+                if (locked == 0)
+                {
+                    continue; // 已被并发处理，跳过不再回补
+                }
+                if (order.getBookId() != null && order.getQuantity() != null)
+                {
+                    bookMapper.restoreStock(order.getBookId(), order.getQuantity());
+                }
             }
         }
         int rows = shopOrderMapper.deleteShopOrderByOrderIds(orderIds);
@@ -172,9 +192,10 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("库存不足，无法购买");
         }
-        // 创建订单
+        // 创建订单（订单号 = 毫秒时间戳 + 3 位随机后缀：order_no 有唯一索引，防同毫秒并发撞约束）
         ShopOrder order = new ShopOrder();
-        order.setOrderNo("WSW" + System.currentTimeMillis());
+        order.setOrderNo("WSW" + System.currentTimeMillis()
+                + String.format("%03d", java.util.concurrent.ThreadLocalRandom.current().nextInt(1000)));
         order.setReaderId(reader.getReaderId());
         order.setReaderName(reader.getReaderName());
         order.setCardNo(reader.getCardNo());
