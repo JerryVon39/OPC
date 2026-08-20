@@ -156,7 +156,10 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("该读者证号已停用/挂失，无法购买");
         }
-        Book book = bookMapper.selectBookByBookId(bookId);
+        // 锁图书行（FOR UPDATE，加锁顺序统一为 读者→图书，与借书/预约路径一致）：
+        // 与下架（changeBookStatus）/删除图书共享 book 行锁，下架完成后本事务读到的必是最新状态，
+        // 已下架的书在此被拦截（"该图书已下架，无法购买"），下架与新下单因此串行化
+        Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null)
         {
             throw new ServiceException("图书不存在");

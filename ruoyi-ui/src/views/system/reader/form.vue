@@ -65,8 +65,9 @@ export default {
       this.$refs['elForm'].validate(valid => {
         if (!valid) return
         this.submitting = true
-        // 系统自动分配借书证号（登记时生成）
-        this.formData.cardNo = 'JS' + Date.now().toString().slice(-8)
+        // 系统自动分配借书证号（登记时生成；随机 8 位数字，与后端 SecureRandom 规则一致，
+        // 不可用时间戳——证号即登录凭证，时间戳可被推算）
+        this.formData.cardNo = 'JS' + String(Math.floor(Math.random() * 100000000)).padStart(8, '0')
         addReader(this.formData).then(response => {
           this.$modal.msgSuccess("登记成功！借书证号：" + this.formData.cardNo)
           this.resetForm()

@@ -102,32 +102,42 @@ public class ReaderController extends BaseController
      * 新增读者管理
      */
     /** 前台读者登录（匿名）：姓名+借书证号验证
-     * 注意：按证号精确查询后精确比对姓名——不能用 LIKE 模糊匹配姓名（知道证号即可猜登录） */
+     * 注意：按证号精确查询后精确比对姓名——不能用 LIKE 模糊匹配姓名（知道证号即可猜登录）
+     * 证号即登录凭证：错误提示统一为"姓名或借书证号不正确"（不暴露证号是否存在，防枚举），
+     * 并按 IP+证号 维度频控（30 分钟窗口内失败 5 次拦截，防爆破） */
     @Anonymous
     @PostMapping("/login")
-    public AjaxResult login(String readerName, String cardNo)
+    public AjaxResult login(String readerName, String cardNo, jakarta.servlet.http.HttpServletRequest request)
     {
         if (readerName == null || readerName.trim().isEmpty() || cardNo == null || cardNo.trim().isEmpty())
         {
             return error("请输入姓名和借书证号");
+        }
+        String failKey = "login:" + com.ruoyi.common.utils.ip.IpUtils.getIpAddr(request) + ":" + cardNo.trim();
+        if (readerSessionService.isBlocked(failKey))
+        {
+            return error("尝试次数过多，请 30 分钟后再试");
         }
         Reader query = new Reader();
         query.setCardNo(cardNo.trim());
         java.util.List<Reader> list = readerService.selectReaderList(query);
         if (list == null || list.isEmpty())
         {
-            return error("借书证号不存在，请先登记");
+            readerSessionService.recordFail(failKey);
+            return error("姓名或借书证号不正确");
         }
         Reader r = list.get(0);
         if (!readerName.trim().equals(r.getReaderName()))
         {
-            return error("姓名与借书证号不匹配，请确认后重试");
+            readerSessionService.recordFail(failKey);
+            return error("姓名或借书证号不正确");
         }
         // 停用/挂失的证号不允许登录前台（借书、购书前就把问题拦下）
         if (!"0".equals(r.getStatus()))
         {
             return error("该借书证号已停用/挂失，请联系管理员");
         }
+        readerSessionService.clearFail(failKey);
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("readerId", r.getReaderId());
         result.put("readerName", r.getReaderName());
@@ -175,20 +185,27 @@ public class ReaderController extends BaseController
         return ajax;
     }
 
-    /** 前台补办借书证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废） */
+    /** 前台补办借书证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
+     * 频控：按 IP 维度（补办即换证号，防脚本批量作废他人证号） */
     @Anonymous
     @PostMapping("/applyReissue")
-    public AjaxResult applyReissue(String readerName, String phone)
+    public AjaxResult applyReissue(String readerName, String phone, jakarta.servlet.http.HttpServletRequest request)
     {
         if (readerName == null || readerName.trim().isEmpty() || phone == null || phone.trim().isEmpty())
         {
             return error("请输入姓名和登记手机号");
+        }
+        String failKey = "reissue:" + com.ruoyi.common.utils.ip.IpUtils.getIpAddr(request);
+        if (readerSessionService.isBlocked(failKey))
+        {
+            return error("尝试次数过多，请 30 分钟后再试");
         }
         Reader nameQuery = new Reader();
         nameQuery.setReaderName(readerName.trim());
         java.util.List<Reader> list = readerService.selectReaderList(nameQuery);
         if (list == null || list.isEmpty())
         {
+            readerSessionService.recordFail(failKey);
             return error("未找到该姓名的读者，请确认是否已登记");
         }
         // 手机号精确匹配（reader_name 是模糊查询，这里必须精确比对）
@@ -203,8 +220,10 @@ public class ReaderController extends BaseController
         }
         if (matched == null)
         {
+            readerSessionService.recordFail(failKey);
             return error("手机号与登记信息不匹配");
         }
+        readerSessionService.clearFail(failKey);
         AjaxResult ajax = AjaxResult.success();
         ajax.put("data", readerService.reissueCard(matched.getReaderId()));
         return ajax;

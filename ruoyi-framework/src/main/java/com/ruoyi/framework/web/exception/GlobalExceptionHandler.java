@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.text.Convert;
@@ -28,6 +29,21 @@ import com.ruoyi.common.utils.html.EscapeUtil;
 public class GlobalExceptionHandler
 {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * 静态资源不存在（如直接访问后端 8080 的 /shop.html）：给出友好引导，避免裸 500
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public AjaxResult handleNoResourceFound(NoResourceFoundException e)
+    {
+        String path = e.getResourcePath();
+        // 各 Spring 版本 resourcePath 带不带前导斜杠不一（如 "/shop.html" 或 "shop.html"）
+        if (path != null && path.replace("/", "").equals("shop.html"))
+        {
+            return AjaxResult.error("前台页面由前端服务提供，请访问 http://localhost:80/shop.html（后端 8080 仅提供 API）");
+        }
+        return AjaxResult.error("请求的静态资源不存在：" + path);
+    }
 
     /**
      * 权限校验异常

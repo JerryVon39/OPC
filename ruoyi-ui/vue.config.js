@@ -42,6 +42,16 @@ module.exports = {
           ['^' + process.env.VUE_APP_BASE_API]: ''
         }
       },
+      // 兼容生产前缀 /prod-api：浏览器缓存的生产版页面/脚本可能仍用 /prod-api 请求，
+      // 没有此代理时 dev server 会返回 index.html（HTML），前端 JSON 解析报
+      // "Unexpected token '<'"（加载失败）
+      '/prod-api': {
+        target: baseUrl,
+        changeOrigin: true,
+        pathRewrite: {
+          '^/prod-api': ''
+        }
+      },
       // springdoc proxy
       '^/v3/api-docs/(.*)': {
         target: baseUrl,

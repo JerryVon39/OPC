@@ -135,15 +135,24 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.renewByCard(sessionCard, borrowId));
     }
 
-    /** 借阅统计：热门图书 + 读者排行（匿名：前台热门推荐用，数据走 Redis 缓存） */
+    /** 借阅统计·热门图书（匿名：前台热门推荐用，数据走 Redis 缓存）
+     * 注意：读者排行（含借书证号）不在此匿名接口下发——姓名+证号即前台登录凭证，
+     * 明文公开等同把读者账户挂在公网上；管理端走下方 /stats/readers 权限接口 */
     @Anonymous
     @GetMapping("/stats")
     public AjaxResult stats()
     {
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("topBooks", statisticsService.topBooks());
-        result.put("topReaders", statisticsService.topReaders());
         return success(result);
+    }
+
+    /** 借阅统计·读者排行 Top10（管理端：含证号，需借阅统计权限） */
+    @PreAuthorize("@ss.hasPermi('system:borrow:stats')")
+    @GetMapping("/stats/readers")
+    public AjaxResult statsReaders()
+    {
+        return success(statisticsService.topReaders());
     }
 
     /** 还书：恢复库存 + 自动结算逾期罚款 */

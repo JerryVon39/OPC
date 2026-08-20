@@ -51,6 +51,10 @@ public interface BorrowRecordMapper
     /** 补办换证号：同步该读者历史借阅的快照证号 */
     public int updateCardNoSnapshot(@Param("readerId") Long readerId, @Param("newCardNo") String newCardNo);
 
+    /** 查询当前真实逾期记录：状态"2"只由每日定时任务落库，未跑前逾期记录仍是"0"，
+     * 必须按"借出中 + 应还日期已过"兜底（与 BorrowTask.remindOverdue 口径一致） */
+    public java.util.List<BorrowRecord> selectOverdueRecords();
+
     /** 读者借阅排行（按借阅次数） */
     public java.util.List<java.util.Map<String, Object>> selectTopReaders(BorrowRecord borrowRecord);
 }

@@ -77,8 +77,8 @@ spring:
       port: ${REDIS_PORT:6379}
       # 数据库索引
       database: 0
-      # 密码
-      password:
+      # 密码（生产建议设置，docker-compose 经 REDIS_PASSWORD 注入）
+      password: ${REDIS_PASSWORD:}
       # 连接超时时间
       timeout: 10s
       lettuce:
@@ -99,18 +99,20 @@ spring:
     port: 465
     username: ${MAIL_USERNAME:}
     password: ${MAIL_AUTH_CODE:}
-    # QQ 邮箱要求 SSL
+    # QQ 邮箱要求 SSL：port 465 + ssl.enable 已走 SSL 通道，
+    # 不要再配 socketFactory.class——jakarta.mail 2.x 已移除 jakarta.mail.util.SocketFactory，
+    # 指向它会导致 ClassNotFoundException、邮件静默发送失败
     properties:
       mail.smtp.auth: true
       mail.smtp.ssl.enable: true
-      mail.smtp.socketFactory.class: jakarta.mail.util.SocketFactory
 
 # token配置
 token:
   # 令牌自定义标识
   header: Authorization
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌密钥：默认值已换为随机长串（不再用 RuoYi 公开默认密钥）；
+  # 生产部署务必经 TOKEN_SECRET 环境变量注入（docker-compose 已支持）
+  secret: ${TOKEN_SECRET:25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c}
   # 令牌有效期（默认30分钟）
   expireTime: 30
 

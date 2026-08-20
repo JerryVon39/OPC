@@ -161,6 +161,12 @@
         </foreach>
     </delete>
 
+    <!-- 真实逾期记录：状态"2"仅定时任务落库，此处按"借出中 + 应还日期已过"兜底（与 dashboard 逾期口径一致） -->
+    <select id="selectOverdueRecords" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        where b.status in ('0','2') and b.due_date &lt; now()
+    </select>
+
     <!-- 补办换证号：同步该读者历史借阅的快照证号（同一人换证号，"我的借阅"仍可查全） -->
     <update id="updateCardNoSnapshot">
         update borrow_record set card_no = #{newCardNo}

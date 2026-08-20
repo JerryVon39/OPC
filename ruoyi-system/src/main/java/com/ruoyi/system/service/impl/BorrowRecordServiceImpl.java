@@ -294,9 +294,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
      */
     private void syncOverdueNotice()
     {
-        BorrowRecord q = new BorrowRecord();
-        q.setStatus("2");
-        List<BorrowRecord> overdue = borrowRecordMapper.selectBorrowRecordList(q);
+        // 逾期状态"2"仅每日定时任务落库，未跑前真实逾期记录仍是"0"：
+        // 必须按"借出中 + 应还日期已过"查询，否则会误删公告且不重建（与 BorrowTask.remindOverdue 口径一致）
+        List<BorrowRecord> overdue = borrowRecordMapper.selectOverdueRecords();
         // 删除旧的催还公告
         com.ruoyi.system.domain.SysNotice delQuery = new com.ruoyi.system.domain.SysNotice();
         delQuery.setNoticeTitle("逾期催还通知");
@@ -395,8 +395,11 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.updateBorrowRecord(record);
     }
 
-    /** 前台借书：按借书证号（匿名） */
+    /** 前台借书：按借书证号（匿名）
+     * 必须带事务：内部自调用 insertBorrowRecord，其 @Transactional 会被 Spring 代理绕过，
+     * 无事务时 FOR UPDATE 锁立即释放、检查与插入不原子（并发重复借/超上限拦不住） */
     @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int borrowByCard(String cardNo, Long bookId)
     {
         if (cardNo == null || cardNo.trim().isEmpty())

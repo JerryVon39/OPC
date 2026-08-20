@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import { borrowStats } from "@/api/system/borrow"
+import { borrowStats, borrowReaderStats } from "@/api/system/borrow"
 
 export default {
   name: "BorrowStats",
@@ -69,9 +69,12 @@ export default {
   },
   methods: {
     getStats() {
+      // 热门图书走匿名接口；读者排行含证号，走权限接口（匿名接口已不下发证号）
       borrowStats().then(res => {
-        this.topBooks = res.data.topBooks || []
-        this.topReaders = res.data.topReaders || []
+        this.topBooks = (res.data && res.data.topBooks) || []
+      })
+      borrowReaderStats().then(res => {
+        this.topReaders = res.data || []
       })
     }
   }

@@ -70,12 +70,12 @@ public class ReaderServiceImpl implements IReaderService
 
     /**
      * 新增读者管理
-     * 
+     *
      * @param reader 读者管理
      * @return 结果
      */
     @Override
-    /** 前台自助登记：证号由后端生成（JS+时间戳后8位），查重直到唯一，防止伪造/占坑
+    /** 前台自助登记：证号由后端生成（JS+8位随机数字），查重直到唯一，防止伪造/占坑
      * email 由 Controller 层完成必填/格式校验后传入，此处仅落库 */
     public Reader register(String readerName, String phone, String readerType, String email, String remark)
     {
@@ -91,12 +91,15 @@ public class ReaderServiceImpl implements IReaderService
         return reader;
     }
 
-    /** 生成唯一证号：JS + 时间戳后8位，查重直到唯一 */
+    /** 证号即登录凭证，必须不可预测：SecureRandom 8 位随机数字（时间戳可预测——
+     * 注册一个即可推算同窗口期他人证号），查重直到唯一 */
+    private static final java.security.SecureRandom CARD_RANDOM = new java.security.SecureRandom();
+
     private String generateCardNo()
     {
         for (int i = 0; i < 10; i++)
         {
-            String cardNo = "JS" + String.valueOf(System.currentTimeMillis()).substring(5);
+            String cardNo = "JS" + String.format("%08d", CARD_RANDOM.nextInt(100000000));
             Reader query = new Reader();
             query.setCardNo(cardNo);
             List<Reader> exists = readerMapper.selectReaderList(query);

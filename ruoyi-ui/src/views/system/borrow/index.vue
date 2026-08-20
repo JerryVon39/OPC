@@ -145,7 +145,7 @@ export default {
     // 从图书/读者管理再次跳转（路径相同、仅 query 变化）时组件会被复用、created 不再触发，
     // 这里监听路由变化同步筛选条件并刷新列表
     '$route'(to) {
-      if (to.path === '/business/borrow') {
+      if (to.path === '/business/book-mgmt/borrow') {
         const q = to.query || {}
         this.queryParams.readerId = q.readerId || null
         this.queryParams.bookId = q.bookId || null

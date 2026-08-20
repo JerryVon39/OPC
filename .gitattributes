@@ -1,0 +1,4 @@
+# 行尾规范：bat 必须 CRLF（cmd 解析），sh 必须 LF（bash 报 \r 错误）
+*.bat text eol=crlf
+*.sh text eol=lf
+*.ps1 text eol=crlf

@@ -103,7 +103,8 @@ public class SecurityConfig
                 requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
                     // 静态资源，可匿名访问
                     .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
-                    .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()
+                    .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                    // 注意：/druid/** 不放行匿名——监控台含全部 SQL 与 PII，需登录后访问（且默认已关闭）
                     // 除上面外的所有请求全部需要鉴权认证
                     .anyRequest().authenticated();
             })

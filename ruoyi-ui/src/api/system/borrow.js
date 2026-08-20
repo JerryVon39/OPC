@@ -26,18 +26,23 @@ export function returnBorrow(borrowId) {
 }
 
 // 续借
+export function renewBorrow(borrowId) {
+  return request({ url: '/system/borrow/renew/' + borrowId, method: 'put' })
+}
+
 // 罚款收款（缴纳逾期罚款）
 export function payFine(borrowId) {
   return request({ url: '/system/borrow/payFine/' + borrowId, method: 'put' })
 }
 
-export function renewBorrow(borrowId) {
-  return request({ url: '/system/borrow/renew/' + borrowId, method: 'put' })
-}
-
-// 借阅统计（热门图书+读者排行）
+// 借阅统计·热门图书（匿名接口，前台热门推荐用）
 export function borrowStats() {
   return request({ url: '/system/borrow/stats', method: 'get' })
+}
+
+// 借阅统计·读者排行（含证号，需 system:borrow:stats 权限）
+export function borrowReaderStats() {
+  return request({ url: '/system/borrow/stats/readers', method: 'get' })
 }
 
 // 删除借阅记录

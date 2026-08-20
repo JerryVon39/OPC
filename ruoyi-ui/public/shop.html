@@ -653,10 +653,11 @@
     });
     setInterval(() => showBanner(bannerIdx + 1), 5000);
   }
-  // 轮播跳转：/ 开头站内跳转，http 开头新标签打开
+  // 轮播跳转：仅允许 http/https 外链与 /、# 开头的站内跳转（白名单防 javascript: 等协议注入）
   function goBannerLink(link) {
     if (!link) return;
-    if (link.startsWith('http')) window.open(link, '_blank');
+    if (!/^(https?:\/\/|\/|#)/.test(link)) return;
+    if (link.startsWith('http')) window.open(link, '_blank', 'noopener');
     else location.href = link;
   }
   async function loadBanners() {
@@ -669,16 +670,23 @@
     const slidesBox = document.getElementById('bannerSlides');
     const dotsBox = document.getElementById('bannerDots');
     slidesBox.innerHTML = list.map((b, i) => {
-      const clickable = b.link ? ' style="cursor:pointer" onclick="goBannerLink(\'' + String(b.link).replace(/'/g, "\\'") + '\')"' : '';
-      return '<div class="banner-slide' + (i === 0 ? ' active' : '') + '"' + clickable + '>' +
-        (b.image ? '<img src="' + imgSrc(b.image) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />' : '') +
+      // 标题/副标题/图片地址全部过 esc（后台可写内容，公开匿名页，防存储型 XSS）
+      // 链接放 data-link 属性 + 事件委托统一处理，不再拼接内联 onclick（防属性注入）
+      const link = b.link ? esc(b.link) : '';
+      return '<div class="banner-slide' + (i === 0 ? ' active' : '') + '"' + (link ? ' data-link="' + link + '"' : '') + '>' +
+        (b.image ? '<img src="' + esc(imgSrc(b.image)) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />' : '') +
         '<div style="position:relative;z-index:2' + (b.image ? ';background:rgba(36,64,47,0.55);padding:16px 30px;border-radius:12px' : '') + '">' +
-          '<h1>' + (b.title || '') + '</h1>' +
-          (b.subtitle ? '<p>' + b.subtitle + '</p>' : '') +
+          '<h1>' + esc(b.title) + '</h1>' +
+          (b.subtitle ? '<p>' + esc(b.subtitle) + '</p>' : '') +
         '</div>' +
       '</div>';
     }).join('');
     dotsBox.innerHTML = list.map((_, i) => '<span' + (i === 0 ? ' class="active"' : '') + '></span>').join('');
+    // 事件委托：点击带 data-link 的轮播页跳转（后台链接字段可能含任意文本，白名单在 goBannerLink 兜底）
+    slidesBox.onclick = (e) => {
+      const slide = e.target.closest('.banner-slide');
+      if (slide && slide.dataset.link) goBannerLink(slide.dataset.link);
+    };
     initBanner();
   }
 
@@ -963,7 +971,10 @@
       renderBooks(books);
     } catch (e) {
       if (mySeq !== bookRequestSeq) return; // 旧请求失败不覆盖新结果（与成功路径的防覆盖一致）
-      document.getElementById('bookGrid').innerHTML = '<div class="loading">加载失败：' + e.message + '</div>';
+      // "Unexpected token '<'" 通常是请求返回了 HTML（如代理前缀不对/页面为缓存旧版），
+      // 引导强制刷新换新页面
+      const hint = /Unexpected token/.test(e.message) ? '（页面可能为缓存旧版，请按 Ctrl+F5 强制刷新重试）' : '';
+      document.getElementById('bookGrid').innerHTML = '<div class="loading">加载失败：' + esc(e.message) + hint + '</div>';
     }
   }
 
@@ -1555,7 +1566,7 @@
       const tagCls = { '0': 'tag-off', '1': 'tag-sale', '2': 'tag-sale', '3': 'tag-off' };
       box.innerHTML = d.data.map(r => `
         <div class="borrow-item" style="border-left-color:${barColor[r.status] || '#b9b0a2'}">
-          <div style="font-weight:bold;margin-bottom:4px">《${r.bookName || '未知图书'}》 <span class="tag ${tagCls[r.status] || 'tag-off'}">${RESERVE_STATUS[r.status] || '未知'}</span></div>
+          <div style="font-weight:bold;margin-bottom:4px">《${esc(r.bookName || '未知图书')}》 <span class="tag ${tagCls[r.status] || 'tag-off'}">${RESERVE_STATUS[r.status] || '未知'}</span></div>
           <div style="color:#999">预约时间：${r.reserveDate || '-'}</div>
           ${r.status === '1' ? '<div style="background:#eef7ef;border:1px solid #d5ead9;border-radius:8px;padding:6px 10px;font-size:12px;color:#4f8a62;margin-top:6px">✅ 图书已归还，请尽快到馆借阅（借出后预约自动完成）</div>' : ''}
           ${(r.status === '0' || r.status === '1') ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd;box-shadow:none" onclick="cancelReserve(' + r.reserveId + ')">取消预约</button>' : ''}

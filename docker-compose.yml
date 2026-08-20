@@ -1,8 +1,9 @@
 # ============================================
 # 万事屋图书管理系统 · Docker 一键编排
-# 启动：docker compose up -d --build
+# 启动：docker compose up -d --build（或直接运行一键脚本 scripts/start-all）
 # 访问：http://localhost:8080（后台 / 前台 shop.html）
 # 首次启动自动初始化数据库（sql/ 按依赖顺序导入）
+# 配置：复制 .env.example 为 .env 并按需修改（口令/邮箱/密钥等均环境变量注入）
 # ============================================
 services:
   # ---------- MySQL 8 ----------
@@ -10,7 +11,7 @@ services:
     image: mysql:8.0
     container_name: wanshiwu-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
       MYSQL_DATABASE: ry-vue
       TZ: Asia/Shanghai
     command:
@@ -24,7 +25,8 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      # $$ 转义为容器内环境变量 MYSQL_ROOT_PASSWORD（与口令环境变量化联动）
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -34,12 +36,19 @@ services:
   redis:
     image: redis:7-alpine
     container_name: wanshiwu-redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:-}
     volumes:
       - redis-data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # 有密码带 -a 验证，无密码直连（两种形态都覆盖）
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -58,9 +67,14 @@ services:
       DB_HOST: mysql
       DB_PORT: "3306"
       DB_USERNAME: root
-      DB_PASSWORD: password
+      DB_PASSWORD: ${DB_PASSWORD:-password}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      # JWT 签名密钥：必须传非空默认——Spring 的 ${VAR:默认} 对空字符串不回退，
+      # 若传空串会得到空密钥，登录后所有带 token 的请求报 signing key cannot be null
+      # （.env 设置 TOKEN_SECRET 后覆盖此默认值）
+      TOKEN_SECRET: ${TOKEN_SECRET:-25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c}
       # 邮件通知：docker compose 自动读取本目录 .env 文件（MAIL_USERNAME=发件邮箱、MAIL_AUTH_CODE=授权码；MAIL_ENABLED=false 可关）
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_AUTH_CODE: ${MAIL_AUTH_CODE:-}

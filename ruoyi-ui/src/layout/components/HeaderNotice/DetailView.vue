@@ -42,7 +42,7 @@
         </div>
 
         <div class="notice-body">
-          <div v-if="hasContent" class="notice-content" v-html="detail.noticeContent" />
+          <div v-if="hasContent" class="notice-content" v-html="safeContent" />
           <div v-else class="notice-empty notice-empty--inner">
             <i class="el-icon-document"></i> 暂无内容
           </div>
@@ -72,6 +72,10 @@ export default {
     hasContent() {
       const c = this.detail && this.detail.noticeContent
       return c != null && String(c).trim() !== ''
+    },
+    safeContent() {
+      if (!this.hasContent) return ''
+      return this.sanitizeNotice(this.detail.noticeContent)
     }
   },
   methods: {
@@ -109,6 +113,46 @@ export default {
       this.visible = false
       this.detail = null
       this.loading = false
+    },
+    // 公告内容白名单消毒：wangeditor 原始 HTML 直接 v-html 存在存储型 XSS（后台低权限用户可写）
+    // 用 DOMParser 解析成 DOM 后按标签/属性白名单重建：脚本/事件属性/iframe 一律移除
+    sanitizeNotice(html) {
+      const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'A', 'IMG', 'BLOCKQUOTE', 'CODE', 'PRE', 'HR', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'DIV', 'SPAN'])
+      // 危险标签整体移除（含内容，不留文本）
+      const DROP_TAGS = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'FORM', 'INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'SVG', 'MATH', 'VIDEO', 'AUDIO', 'SOURCE', 'TRACK', 'TEMPLATE'])
+      const doc = new DOMParser().parseFromString(String(html == null ? '' : html), 'text/html')
+      const sanitize = (node) => {
+        const children = Array.prototype.slice.call(node.childNodes)
+        children.forEach(child => {
+          if (child.nodeType !== 1) return // 文本节点原样保留
+          const tag = child.tagName
+          if (DROP_TAGS.has(tag)) {
+            node.removeChild(child)
+            return
+          }
+          if (!ALLOWED_TAGS.has(tag)) {
+            // 未知标签：先递归消毒内部，再剥离标签只留内容
+            sanitize(child)
+            while (child.firstChild) node.insertBefore(child.firstChild, child)
+            node.removeChild(child)
+            return
+          }
+          // 属性白名单：A 仅 http(s)/站内 href；IMG 仅 http(s)/站内/data 图片；事件属性一律不留
+          Array.prototype.slice.call(child.attributes).forEach(attr => {
+            const name = attr.name.toLowerCase()
+            const value = attr.value.trim()
+            let ok = false
+            if (tag === 'A' && name === 'href') ok = /^(https?:\/\/|\/|#)/i.test(value)
+            else if (tag === 'IMG' && name === 'src') ok = /^(https?:\/\/|\/|data:image\/(png|jpe?g|gif|webp);base64,)/i.test(value)
+            else if (tag === 'IMG' && name === 'alt') ok = true
+            else if ((tag === 'TD' || tag === 'TH') && (name === 'colspan' || name === 'rowspan')) ok = /^\d+$/.test(value)
+            if (!ok) child.removeAttribute(attr.name)
+          })
+          sanitize(child)
+        })
+      }
+      sanitize(doc.body)
+      return doc.body.innerHTML
     }
   }
 }
