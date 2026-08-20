@@ -48,10 +48,11 @@ public class BorrowTask
         {
             if (br.getDueDate() != null && br.getDueDate().before(now))
             {
-                br.setStatus("2");
-                br.setUpdateTime(now);
-                borrowRecordMapper.updateBorrowRecord(br);
-                count++;
+                // 条件更新（仅"借出中"可标记）：归还期间已还的记录（还书 CAS 0→1）不会被覆盖回逾期
+                if (borrowRecordMapper.markOverdue(br.getBorrowId(), now) > 0)
+                {
+                    count++;
+                }
             }
         }
         // 逾期状态影响看板口径（borrowingCount/overdueCount）：有变更就失效统计缓存
@@ -59,7 +60,6 @@ public class BorrowTask
         {
             statisticsService.evictAll();
         }
-        System.out.println("逾期检查完成，共标记 " + count + " 条记录为逾期");
     }
 
     /**
@@ -78,12 +78,16 @@ public class BorrowTask
             }
         }
         catch (Exception ignore) { }
+        // 配置下限：0/负数会全量取消"可借"预约，至少 1 天
+        if (expireDays < 1)
+        {
+            expireDays = 1;
+        }
         com.ruoyi.system.domain.BookReserve q = new com.ruoyi.system.domain.BookReserve();
         q.setStatus("1");
         java.util.List<com.ruoyi.system.domain.BookReserve> list = reserveMapper.selectBookReserveList(q);
         if (list == null || list.isEmpty())
         {
-            System.out.println("预约超时检查：无可借待取预约");
             return;
         }
         Date now = new Date();
@@ -95,25 +99,28 @@ public class BorrowTask
             {
                 continue;
             }
-            // 超时未取：取消该预约
-            r.setStatus("3");
-            r.setUpdateTime(now);
-            reserveMapper.updateBookReserve(r);
+            // 超时未取：CAS 取消（0 行说明已被并发推进/取消，不计入本次取消数）
+            if (reserveMapper.updateStatusIfCurrent(r.getReserveId(), "1", "3", now) == 0)
+            {
+                continue;
+            }
             count++;
-            // 通知下一位预约人（该书最早的'预约中'）
+            // 通知下一位预约人（该书最早的'预约中'，CAS 推进，失败取下一位）
             com.ruoyi.system.domain.BookReserve nq = new com.ruoyi.system.domain.BookReserve();
             nq.setBookId(r.getBookId());
             nq.setStatus("0");
             java.util.List<com.ruoyi.system.domain.BookReserve> next = reserveMapper.selectBookReserveList(nq);
-            if (next != null && !next.isEmpty())
+            if (next != null)
             {
-                com.ruoyi.system.domain.BookReserve n = next.get(0);
-                n.setStatus("1");
-                n.setUpdateTime(now);
-                reserveMapper.updateBookReserve(n);
+                for (com.ruoyi.system.domain.BookReserve n : next)
+                {
+                    if (reserveMapper.updateStatusIfCurrent(n.getReserveId(), "0", "1", now) > 0)
+                    {
+                        break; // 推进成功，通知权归这次更新
+                    }
+                }
             }
         }
-        System.out.println("预约超时检查完成，共取消 " + count + " 条超时可借预约");
     }
 
     /**
@@ -142,7 +149,6 @@ public class BorrowTask
         }
         if (overdue == null || overdue.isEmpty())
         {
-            System.out.println("催还检查：无逾期记录");
             return;
         }
         // 去重：今天已发布过催还公告则跳过（避免同一条逾期记录每天重复催收）
@@ -155,17 +161,16 @@ public class BorrowTask
         {
             if (sn.getCreateTime() != null && today.equals(sdf.format(sn.getCreateTime())))
             {
-                System.out.println("催还检查：今日已发布过催还公告，跳过");
                 return;
             }
         }
-        // 汇总逾期信息
+        // 汇总逾期信息（公告前台匿名可见，不列读者姓名，保护隐私）
         String books = "";
         int max = Math.min(overdue.size(), 5);
         for (int i = 0; i < max; i++)
         {
             BorrowRecord br = overdue.get(i);
-            books += "《" + (br.getBookName() == null ? "未知" : br.getBookName()) + "》(" + (br.getReaderName() == null ? "读者" : br.getReaderName()) + ") ";
+            books += "《" + (br.getBookName() == null ? "未知" : br.getBookName()) + "》 ";
         }
         if (overdue.size() > max)
         {
@@ -179,6 +184,5 @@ public class BorrowTask
         notice.setCreateBy("system");
         notice.setCreateTime(new Date());
         noticeMapper.insertNotice(notice);
-        System.out.println("催还公告已发布，涉及 " + overdue.size() + " 条逾期记录");
     }
 }

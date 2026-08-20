@@ -122,7 +122,7 @@ export default {
     /** 封面相对路径转完整地址 */
     imgUrl(url) {
       if (!url) return ''
-      if (url.startsWith('http') || url.startsWith('/dev-api')) return url
+      if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
     },
     /** 查询回收站图书数量 */

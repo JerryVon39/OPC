@@ -411,7 +411,7 @@ export default {
     /** 封面相对路径转完整地址（http 开头的不处理） */
     imgUrl(url) {
       if (!url) return ''
-      if (url.startsWith('http') || url.startsWith('/dev-api')) return url
+      if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
     },
     /** 查询图书信息列表 */

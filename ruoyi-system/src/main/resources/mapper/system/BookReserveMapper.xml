@@ -64,6 +64,12 @@
         </trim>
     </insert>
 
+    <!-- 预约状态 CAS 流转：仅当预约仍为指定状态时更新（可借推进/超时取消共用） -->
+    <update id="updateStatusIfCurrent">
+        update book_reserve set status = #{toStatus}, update_time = #{updateTime}
+        where reserve_id = #{reserveId} and status = #{fromStatus}
+    </update>
+
     <update id="updateBookReserve" parameterType="BookReserve">
         update book_reserve
         <trim prefix="SET" suffixOverrides=",">

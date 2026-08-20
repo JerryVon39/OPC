@@ -50,6 +50,11 @@
         where b.borrow_id = #{borrowId}
     </select>
 
+    <select id="selectBorrowRecordByBorrowIdForUpdate" parameterType="Long" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        where b.borrow_id = #{borrowId} for update
+    </select>
+
     <insert id="insertBorrowRecord" parameterType="BorrowRecord" useGeneratedKeys="true" keyProperty="borrowId">
         insert into borrow_record
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -102,6 +107,12 @@
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
         where borrow_id = #{borrowId}
+    </update>
+
+    <!-- 定时任务标记逾期：仅"借出中"可置逾期，归还期间已还的记录不会被覆盖回逾期 -->
+    <update id="markOverdue">
+        update borrow_record set status = '2', update_time = #{updateTime}
+        where borrow_id = #{borrowId} and status = '0'
     </update>
 
     <update id="updateStatusIfCurrent">

@@ -72,7 +72,7 @@ if [ "$DB_EXISTS" != "0" ]; then
 fi
 if [ "$DB_EXISTS" != "0" ] && [ "$TABLE_COUNT" = "3" ]; then
   echo "[4/5] Existing DB detected. Running idempotent upgrades..."
-  for f in sql/upgrade_20260818_purchase.sql sql/upgrade_20260819_recycle.sql sql/upgrade_20260819_mail.sql sql/upgrade_20260819_menu.sql; do
+  for f in sql/upgrade_20260818_purchase.sql sql/upgrade_20260819_recycle.sql sql/upgrade_20260819_mail.sql sql/upgrade_20260819_menu.sql sql/upgrade_20260820_cleanup.sql; do
     if [ -f "$f" ]; then
       echo "      executing $f"
       mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }

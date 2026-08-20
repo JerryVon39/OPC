@@ -56,7 +56,7 @@ public class BorrowRecordServiceImplTest
     @InjectMocks
     private BorrowRecordServiceImpl borrowRecordService;
 
-    /** 删除：未还记录(0) → 还原库存 + 删除 + 失效缓存 */
+    /** 删除：未还记录(0) → CAS 置已归还后还原库存 + 删除 + 失效缓存 */
     @Test
     void deleteBorrowRecordByBorrowIds_unreturned_restoresStock()
     {
@@ -65,6 +65,8 @@ public class BorrowRecordServiceImplTest
         br.setStatus("0");
         br.setBookId(3L);
         when(borrowRecordMapper.selectBorrowRecordByBorrowId(1L)).thenReturn(br);
+        // 删除前先 CAS 置"已归还"（防并发双删除双回补）
+        when(borrowRecordMapper.updateStatusIfCurrent(eq(1L), eq("0"), eq("1"), any(), any(), any(), any())).thenReturn(1);
         when(borrowRecordMapper.deleteBorrowRecordByBorrowIds(any())).thenReturn(1);
 
         assertEquals(1, borrowRecordService.deleteBorrowRecordByBorrowIds(new Long[] { 1L }));

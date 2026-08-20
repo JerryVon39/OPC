@@ -159,6 +159,10 @@ public class ReaderController extends BaseController
         {
             return error("请填写姓名、手机号和读者类型");
         }
+        if (!phone.trim().matches("\\d{11}"))
+        {
+            return error("手机号格式不正确（需 11 位数字）");
+        }
         String em = trimEmail(email);
         if (em == null)
         {
@@ -243,6 +247,10 @@ public class ReaderController extends BaseController
                 || phone == null || phone.trim().isEmpty())
         {
             return error("参数不完整");
+        }
+        if (!phone.trim().matches("\\d{11}"))
+        {
+            return error("手机号格式不正确（需 11 位数字）");
         }
         Reader query = new Reader();
         query.setCardNo(cardNo.trim());

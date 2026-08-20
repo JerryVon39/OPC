@@ -12,6 +12,9 @@ public interface BorrowRecordMapper
     /** 查询借阅记录 */
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId);
 
+    /** 加锁查询借阅记录（FOR UPDATE）：续借的校验与写入原子化，并发续借只有一次生效 */
+    public BorrowRecord selectBorrowRecordByBorrowIdForUpdate(Long borrowId);
+
     /** 查询借阅记录列表 */
     public List<BorrowRecord> selectBorrowRecordList(BorrowRecord borrowRecord);
 
@@ -20,6 +23,9 @@ public interface BorrowRecordMapper
 
     /** 修改借阅记录 */
     public int updateBorrowRecord(BorrowRecord borrowRecord);
+
+    /** 仅当记录仍为"借出中"时标记逾期（定时任务用，防覆盖归还期间已还的记录） */
+    public int markOverdue(@Param("borrowId") Long borrowId, @Param("updateTime") java.util.Date updateTime);
 
     /** 原子变更借阅状态，返回实际更新行数 */
     public int updateStatusIfCurrent(@Param("borrowId") Long borrowId, @Param("fromStatus") String fromStatus,

@@ -58,7 +58,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
     /** 修改订单：状态机校验 + 流转
      * 允许：0待付款 → 1完成 / 2取消 / 3已收款；3已收款 → 1完成。
      * 其余流转（含已取消/已完成订单再改单）一律拒绝，防止"库存已回补却仍被标记卖出"等账实不符。
-     * 仅"待付款 → 取消"回滚库存（与前台 cancelByCard 语义一致）；订单不存在抛明确异常。 */
+     * 所有流转统一走 CAS 原子转换：并发改单/前台取消时只有抢到转换权的请求生效，
+     * 防止"取消已回补库存、订单却被改回已完成"的账实不符（与前台 cancelByCard 口径一致）；
+     * 仅"待付款 → 取消"回滚库存。订单不存在抛明确异常。 */
     @Override
     @Transactional
     public int updateShopOrder(ShopOrder shopOrder)
@@ -76,23 +78,27 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("不允许从" + orderStatusText(old.getStatus()) + "变更为" + orderStatusText(shopOrder.getStatus()));
         }
-        // 待付款 → 取消：CAS 原子转换（与前台 cancelByCard 口径一致），只有抢到转换权的请求回补库存，
-        // 防止两个管理员同时取消同一订单导致库存双回补
+        // CAS 原子转换：只有抢到转换权的请求能改单（并发取消/改单时 0 行的一方被拦下）
+        int rows = shopOrderMapper.updateStatusIfCurrent(shopOrder.getOrderId(),
+                old.getStatus(), shopOrder.getStatus());
+        if (rows == 0)
+        {
+            throw new ServiceException("该订单状态已变化，请刷新后重试");
+        }
+        // 仅"待付款 → 取消"回滚库存（与前台 cancelByCard 语义一致）
         if (BizStatus.ORDER_CANCELLED.equals(shopOrder.getStatus()))
         {
-            int rows = shopOrderMapper.updateStatusIfCurrent(shopOrder.getOrderId(),
-                    BizStatus.ORDER_UNPAID, BizStatus.ORDER_CANCELLED);
-            if (rows == 0)
-            {
-                throw new ServiceException("该订单状态已变化，请刷新后重试");
-            }
             if (old.getBookId() != null && old.getQuantity() != null)
             {
                 bookMapper.restoreStock(old.getBookId(), old.getQuantity());
             }
-            return rows;
         }
-        return shopOrderMapper.updateShopOrder(shopOrder);
+        // CAS 成功后本事务已持有订单行锁：备注/操作人等其他字段安全补更
+        if (shopOrder.getRemark() != null || shopOrder.getUpdateBy() != null || shopOrder.getUpdateTime() != null)
+        {
+            shopOrderMapper.updateShopOrder(shopOrder);
+        }
+        return rows;
     }
 
     /** 订单状态机：允许的流转（0待付款/1完成/2取消/3已收款） */

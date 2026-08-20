@@ -287,8 +287,16 @@ public class BookServiceImpl implements IBookService
                 continue;
             }
             b.setStatus(b.getStatus() == null || b.getStatus().trim().isEmpty() ? "0" : b.getStatus());
-            insertBook(b);
-            success++;
+            try
+            {
+                insertBook(b);
+                success++;
+            }
+            catch (Exception ex)
+            {
+                // 行级异常（如超长字段等数据库约束）：不中断整批，收集行号明细（此前行保持已导入）
+                errors.add("第" + row + "行：《" + b.getBookName() + "》保存失败，请检查数据后重试");
+            }
         }
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("success", success);
