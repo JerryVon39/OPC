@@ -245,7 +245,7 @@ public class ShopOrderServiceImplTest
         verify(bookMapper).restoreStock(3L, 1L);
     }
 
-    /** 后台收款：待付款 → 已收款，合法流转（不动库存） */
+    /** 后台收款：待付款 → 已收款，合法流转（CAS 转换，不动库存） */
     @Test
     void updateShopOrder_payFromPending_ok()
     {
@@ -258,13 +258,15 @@ public class ShopOrderServiceImplTest
         update.setOrderId(1L);
         update.setStatus("3");
         when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
-        when(shopOrderMapper.updateShopOrder(update)).thenReturn(1);
+        // 合法流转统一走 CAS（防取消回补库存后订单仍被改回已完成）
+        when(shopOrderMapper.updateStatusIfCurrent(1L, "0", "3")).thenReturn(1);
 
         assertEquals(1, shopOrderService.updateShopOrder(update));
+        verify(shopOrderMapper).updateStatusIfCurrent(1L, "0", "3");
         verify(bookMapper, never()).restoreStock(any(), any());
     }
 
-    /** 后台完成：已收款 → 已完成，合法流转（不动库存） */
+    /** 后台完成：已收款 → 已完成，合法流转（CAS 转换，不动库存） */
     @Test
     void updateShopOrder_completeFromPaid_ok()
     {
@@ -275,9 +277,10 @@ public class ShopOrderServiceImplTest
         update.setOrderId(1L);
         update.setStatus("1");
         when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
-        when(shopOrderMapper.updateShopOrder(update)).thenReturn(1);
+        when(shopOrderMapper.updateStatusIfCurrent(1L, "3", "1")).thenReturn(1);
 
         assertEquals(1, shopOrderService.updateShopOrder(update));
+        verify(shopOrderMapper).updateStatusIfCurrent(1L, "3", "1");
         verify(bookMapper, never()).restoreStock(any(), any());
     }
 

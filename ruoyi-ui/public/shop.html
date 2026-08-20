@@ -1639,7 +1639,7 @@
       box.innerHTML = d.data.map(b => {
         let daysHtml = '';
         if (b.status === '0' && b.dueDate) {
-          const days = Math.ceil((new Date(b.dueDate) - today) / 86400000);
+          const days = Math.ceil((new Date(String(b.dueDate).replace(/-/g, '/')) - today) / 86400000);
           daysHtml = '<span class="days-left ' + (days < 0 ? 'days-danger' : 'days-ok') + '">' + (days < 0 ? '已逾期 ' + (-days) + ' 天' : '剩余 ' + days + ' 天') + '</span>';
         }
         // 状态色竖条：借出中蓝 / 已归还绿 / 已逾期红
