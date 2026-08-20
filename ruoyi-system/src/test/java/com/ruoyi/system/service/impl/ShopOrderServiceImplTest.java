@@ -92,7 +92,7 @@ public class ShopOrderServiceImplTest
         book.setStatus("1");
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         assertThrows(ServiceException.class, () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
     }
 
@@ -103,7 +103,7 @@ public class ShopOrderServiceImplTest
         book.setStock(1L);
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> shopOrderService.createOrder("JS12345678", 3L, 2L));
         assertTrue(e.getMessage().contains("库存不足"));
@@ -126,7 +126,7 @@ public class ShopOrderServiceImplTest
     {
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         when(bookMapper.updateStock(3L, 1L)).thenReturn(0);
         assertThrows(ServiceException.class, () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
     }
@@ -137,7 +137,7 @@ public class ShopOrderServiceImplTest
     {
         when(readerService.findActiveReader("JS12345678")).thenReturn(reader);
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(reader);
-        when(bookMapper.selectBookByBookId(3L)).thenReturn(book);
+        when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         when(bookMapper.updateStock(3L, 1L)).thenReturn(1);
         when(shopOrderMapper.insertShopOrder(any(ShopOrder.class))).thenReturn(1);
 
@@ -237,9 +237,11 @@ public class ShopOrderServiceImplTest
         update.setOrderId(1L);
         update.setStatus("2");
         when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(old);
-        when(shopOrderMapper.updateShopOrder(update)).thenReturn(1);
+        // 取消路径已改为 CAS 原子转换（防并发双回补），断言走 updateStatusIfCurrent
+        when(shopOrderMapper.updateStatusIfCurrent(1L, "0", "2")).thenReturn(1);
 
         assertEquals(1, shopOrderService.updateShopOrder(update));
+        verify(shopOrderMapper).updateStatusIfCurrent(1L, "0", "2");
         verify(bookMapper).restoreStock(3L, 1L);
     }
 
@@ -355,6 +357,8 @@ public class ShopOrderServiceImplTest
         order.setBookId(3L);
         order.setQuantity(2L);
         when(shopOrderMapper.selectShopOrderByOrderId(1L)).thenReturn(order);
+        // 删除前先 CAS 置"已取消"（防并发双回补）
+        when(shopOrderMapper.updateStatusIfCurrent(1L, "0", "2")).thenReturn(1);
         when(shopOrderMapper.deleteShopOrderByOrderIds(any())).thenReturn(1);
 
         assertEquals(1, shopOrderService.deleteShopOrderByOrderIds(new Long[] { 1L }));
