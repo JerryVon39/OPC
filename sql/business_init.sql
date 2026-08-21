@@ -1,44 +1,58 @@
 -- ============================================
--- 图书管理系统 业务初始化 SQL
+-- 数智游民创新工场 业务初始化 SQL
 -- 前置：先导入 ry_20260417.sql 和 quartz.sql
 -- 说明：本文件幂等，可重复执行
 -- 注意：必须指定字符集执行，否则中文会乱码入库（Windows 默认 GBK 会把 UTF-8 读坏）：
 --   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < business_init.sql
+-- 语义边界：Java 类名/表名/API URL 一律不变（Book→服务、Reader→成员、BorrowRecord→报名
+-- 等均为展示层语义），本文件只改：菜单名、字典标签、参数名、示例数据。
 -- ============================================
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `book` (
-  `book_id` bigint NOT NULL AUTO_INCREMENT COMMENT '图书ID',
-  `book_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT '图书名称',
-  `author` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '作者',
-  `book_type` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '图书类型(字典:book_type)',
-  `publisher` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '出版社',
-  `price` decimal(10,2) DEFAULT NULL COMMENT '价格(元)',
-  `publish_date` date DEFAULT NULL COMMENT '出版日期',
-  `stock` int DEFAULT '0' COMMENT '库存数量',
-  `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0在架 1下架)',
+CREATE TABLE IF NOT EXISTS `book` (
+  `book_id` bigint NOT NULL AUTO_INCREMENT COMMENT '服务ID',
+  `book_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT '服务名称',
+  `author` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '主办方',
+  `book_type` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '服务分类(字典:book_type)',
+  `publisher` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '合作机构',
+  `price` decimal(10,2) DEFAULT NULL COMMENT '费用(元)',
+  `publish_date` date DEFAULT NULL COMMENT '上线时间',
+  `stock` int DEFAULT '0' COMMENT '剩余名额',
+  `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0招募中 1已结束)',
   `cover` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '封面图片',
-  `isbn` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'ISBN书号',
-  `intro` varchar(1000) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '图书简介',
+  `isbn` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '服务编号',
+  `intro` varchar(1000) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '服务介绍',
   `remark` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '备注',
   `create_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`book_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书信息表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='服务信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, intro, create_by, create_time, update_by, update_time) VALUES (1,'三体','刘慈欣','1','重庆出版社',88.00,'2008-01-01',9,'0','科幻经典','admin','2026-08-12 09:40:40','',NULL),(2,'深入理解计算机系统','Randal E. Bryant','2','机械工业出版社',139.00,'2016-11-01',5,'0','计算机必读','admin','2026-08-12 09:40:40','',NULL),(3,'明朝那些事儿','当年明月','3','中国海关出版社',358.00,'2009-04-01',20,'1','通俗历史','admin','2026-08-12 09:40:40','',NULL),(4,'活着','余华','1','作家出版社',35.00,'2012-08-01',50,'0','经典文学','admin','2026-08-12 11:08:22','',NULL),(6,'百年孤独','加西亚·马尔克斯','1','南海出版公司',55.00,'2011-06-01',8,'0','魔幻现实主义','admin','2026-08-12 17:14:21','',NULL),(7,'围城','钱钟书','1','人民文学出版社',39.00,'1991-02-01',6,'0','经典讽刺小说','admin','2026-08-12 17:14:21','',NULL);
+-- 初始 6 条服务（覆盖：AI数字服务/创意设计/本地生活与创业 三类、已结束演示、免费体验、名额紧张；幂等按服务编号判重）
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time, update_by, update_time)
+SELECT 1,'AI 一人公司实战营','数智游民创新工场','1','清远高新区管委会',199.00,'2026-08-01',9,'0','9787536692930','从 0 到 1 打造一人公司：AI 工具矩阵、获客、交付全流程实操训练营。适合想用 AI 开启独立事业的个人主理人。','admin','2026-08-12 09:40:40','',NULL FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787536692930');
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time, update_by, update_time)
+SELECT 2,'提示词工程入门课','林晓川','1','网易有道',99.00,'2026-07-15',3,'0','9787111544937','提示词是 AI 时代的敲门砖。本课程从基础结构到高级技巧，带你掌握与大模型高效对话的方法论。','admin','2026-08-12 09:40:40','',NULL FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787111544937');
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time, update_by, update_time)
+SELECT 3,'共享工位月租计划','数智游民创新工场','3','清远智慧谷',500.00,'2026-06-01',20,'1','9787505732534','（已结束）共享办公工位月租计划，曾支持 20+ 位主理人入驻办公。','admin','2026-08-12 09:40:40','',NULL FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787505732534');
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time, update_by, update_time)
+SELECT 4,'AI 短视频代运营服务','陈晓工作室','1','清远融媒体中心',0.00,'2026-07-20',50,'0','9787506365437','免费体验：AI 辅助短视频策划、拍摄、剪辑全链路代运营，本地商家优先。','admin','2026-08-12 11:08:22','',NULL FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787506365437');
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time, update_by, update_time)
+SELECT 6,'一人公司法律咨询包','李律师团队','1','广东观澜律师事务所',299.00,'2026-07-10',8,'0','9787544253994','面向一人公司与小微团队：股权架构、合同审查、合规咨询一站式服务包。','admin','2026-08-12 17:14:21','',NULL FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544253994');
+INSERT INTO `book` (book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time, update_by, update_time)
+SELECT 7,'数字游民共居空间','清远青年社区','3','碧桂园清远',800.00,'2026-07-25',2,'0','9787020029532','共居 + 共创：按月租入住共居空间，含共享工位与社区活动，长住优惠。','admin','2026-08-12 17:14:21','',NULL FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020029532');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `reader` (
-  `reader_id` bigint NOT NULL AUTO_INCREMENT COMMENT '读者ID',
-  `reader_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT '读者姓名',
+CREATE TABLE IF NOT EXISTS `reader` (
+  `reader_id` bigint NOT NULL AUTO_INCREMENT COMMENT '成员ID',
+  `reader_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT '成员姓名',
   `phone` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '手机号码',
-  `email` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '电子邮箱（新读者登记必填，用于邮件通知）',
-  `card_no` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '借书证号',
-  `reader_type` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '读者类型',
+  `email` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '电子邮箱（新成员登记必填，用于邮件通知）',
+  `card_no` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '成员证号',
+  `reader_type` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '成员类型',
   `sex` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '性别(0男 1女 2未知)',
   `birth_date` date DEFAULT NULL COMMENT '出生日期',
   `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0正常 1停用)',
@@ -48,46 +62,56 @@ CREATE TABLE `reader` (
   `update_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`reader_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='读者信息表';
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='成员信息表';
 /*!40101 SET character_set_client = @saved_cs_client */;
--- 测试读者（名字即用途说明：学生/教师/普通/挂失/整体/邮箱 各类型，对应差异化借阅规则、补办与邮件通知演示）
-INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time) VALUES
-(1, '学生测试', '13800000001', 'stu_test@qq.com', 'JS20260001', '1', '1', '0', '测试数据-学生读者(借阅上限5本/借期30天)', 'admin', NOW()),
-(2, '教师测试', '13800000002', 'tea_test@qq.com', 'JS20260002', '2', '0', '0', '测试数据-教师读者(借阅上限10本/借期60天)', 'admin', NOW()),
-(3, '普通测试', '13800000003', 'gen_test@qq.com', 'JS20260003', '3', '0', '0', '测试数据-普通读者(借阅上限3本/借期30天)', 'admin', NOW()),
-(4, '挂失测试', '13800000004', 'gua_test@qq.com', 'JS20260004', '3', '0', '1', '测试数据-挂失读者(可演示前台申请补办)', 'admin', NOW()),
-(5, 'Jerry', '12345678901', 'jerry@qq.com', 'DK', '2', '0', '0', '测试数据-项目作者账号(教师)', 'admin', NOW()),
-(6, '整体测试', '13800008888', 'zhengti@qq.com', 'JS20260005', '1', '1', '0', '测试数据-整体回归读者(演示前台登记/修改手机号/看板统计全链路)', 'admin', NOW()),
-(7, '邮箱测试', '13877776666', 'mail_test@qq.com', 'JS20260006', '1', '2', '0', '测试数据-邮件通知读者(演示借书/续借/预约/荐购邮件提醒)', 'admin', NOW());
+-- 测试成员（名字即用途说明：个人主理人/团队/企业 各类型，对应差异化报名规则、停用与邮件通知演示；幂等按成员ID判重）
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 1, '周舟', '13800000001', 'stu_test@qq.com', 'JS20260001', '1', '1', '0', '个人主理人-演示报名与候补', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=1);
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 2, '李想', '13800000002', 'tea_test@qq.com', 'JS20260002', '2', '0', '0', '团队-演示长借期报名', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=2);
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 3, '王梅', '13800000003', 'gen_test@qq.com', 'JS20260003', '3', '0', '0', '企业-演示报名三态', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=3);
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 4, '吴挂', '13800000004', 'gua_test@qq.com', 'JS20260004', '1', '0', '1', '停用成员-演示前台登录被拒', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=4);
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 5, 'Jerry', '12345678901', 'jerry@qq.com', 'DK', '2', '0', '0', '项目作者账号', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=5);
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 6, '赵一', '13800008888', 'zhengti@qq.com', 'JS20260005', '1', '1', '0', '演示前台注册/修改资料/看板统计全链路', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=6);
+INSERT INTO `reader` (reader_id, reader_name, phone, email, card_no, reader_type, sex, status, remark, create_by, create_time)
+SELECT 7, '钱枫', '13877776666', 'mail_test@qq.com', 'JS20260006', '3', '2', '0', '演示邮件通知（报名/候补/申请结果）', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM reader WHERE reader_id=7);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `borrow_record` (
-  `borrow_id` bigint NOT NULL AUTO_INCREMENT COMMENT '借阅ID',
-  `reader_id` bigint DEFAULT NULL COMMENT '读者ID',
-  `book_id` bigint DEFAULT NULL COMMENT '图书ID',
-  `borrow_date` date DEFAULT NULL COMMENT '借出日期',
-  `due_date` date DEFAULT NULL COMMENT '应还日期',
-  `return_date` date DEFAULT NULL COMMENT '归还日期',
-  `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0借出中 1已归还 2已逾期)',
-  `reader_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '读者姓名(快照)',
-  `card_no` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '借书证号(快照)',
-  `book_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '图书名称(快照)',
+CREATE TABLE IF NOT EXISTS `borrow_record` (
+  `borrow_id` bigint NOT NULL AUTO_INCREMENT COMMENT '报名ID',
+  `reader_id` bigint DEFAULT NULL COMMENT '成员ID',
+  `book_id` bigint DEFAULT NULL COMMENT '服务ID',
+  `borrow_date` date DEFAULT NULL COMMENT '报名日期',
+  `due_date` date DEFAULT NULL COMMENT '截止日期',
+  `return_date` date DEFAULT NULL COMMENT '完成日期',
+  `status` char(1) COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '状态(0进行中 1已完成 2已截止)',
+  `reader_name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '成员姓名(快照)',
+  `card_no` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '成员证号(快照)',
+  `book_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '服务名称(快照)',
   `remark` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '备注',
   `create_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`borrow_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='借阅记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='报名记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
--- 测试借阅记录（覆盖：借出中/即将到期/教师60天借期/已归还/已逾期 五种状态）
-INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time) VALUES
-(1, 1, 1, '2026-08-13', '2026-09-12', NULL, '0', '学生测试', 'JS20260001', '三体', 'system', NOW()),
-(2, 1, 9, '2026-07-21', '2026-08-20', NULL, '0', '学生测试', 'JS20260001', '红楼梦', 'system', NOW()),
-(3, 2, 2, '2026-08-13', '2026-10-12', NULL, '0', '教师测试', 'JS20260002', '深入理解计算机系统', 'system', NOW()),
-(4, 3, 4, '2026-07-01', '2026-07-31', '2026-07-20', '1', '普通测试', 'JS20260003', '活着', 'system', NOW()),
-(5, 3, 13, '2026-07-02', '2026-08-01', NULL, '2', '普通测试', 'JS20260003', '小王子', 'system', NOW());
--- ---------- 购书订单表（建表必须在测试订单插入之前，全新库才能初始化成功） ----------
+-- 测试报名记录（覆盖：进行中/即将截止/团队长期限/已完成/已截止 五种状态；幂等按报名ID判重）
+INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)
+SELECT 1, 1, 1, '2026-08-13', '2026-09-12', NULL, '0', '周舟', 'JS20260001', 'AI 一人公司实战营', 'system', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM borrow_record WHERE borrow_id=1);
+INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)
+SELECT 2, 1, 9, '2026-07-21', '2026-08-20', NULL, '0', '周舟', 'JS20260001', '一人公司财税合规指南', 'system', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM borrow_record WHERE borrow_id=2);
+INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)
+SELECT 3, 2, 2, '2026-08-13', '2026-10-12', NULL, '0', '李想', 'JS20260002', '提示词工程入门课', 'system', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM borrow_record WHERE borrow_id=3);
+INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)
+SELECT 4, 3, 4, '2026-07-01', '2026-07-31', '2026-07-20', '1', '王梅', 'JS20260003', 'AI 短视频代运营服务', 'system', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM borrow_record WHERE borrow_id=4);
+INSERT INTO borrow_record (borrow_id, reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)
+SELECT 5, 3, 13, '2026-07-02', '2026-08-01', NULL, '2', '王梅', 'JS20260003', '小红书 AI 运营训练营', 'system', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM borrow_record WHERE borrow_id=5);
+-- ---------- 购书订单表（建表保留，订单模块已停用；全新库不插入演示订单） ----------
 CREATE TABLE IF NOT EXISTS `shop_order` (
   `order_id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `order_no` varchar(30) DEFAULT NULL COMMENT '订单号',
@@ -107,34 +131,24 @@ CREATE TABLE IF NOT EXISTS `shop_order` (
   PRIMARY KEY (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='购书订单表';
 
--- 测试订单（四种状态齐全：待付款/已收款/已完成/已取消）
-INSERT INTO shop_order (order_no, reader_id, reader_name, card_no, book_id, book_name, quantity, total_price, status, create_by, create_time) VALUES
-('WSW20260813001', 1, '学生测试', 'JS20260001', 13, '小王子', 1, 22.00, '0', '学生测试', NOW()),
-('WSW20260810001', 1, '学生测试', 'JS20260001', 15, '白夜行', 1, 59.60, '3', '学生测试', DATE_SUB(NOW(), INTERVAL 3 DAY)),
-('WSW20260812001', 2, '教师测试', 'JS20260002', 21, '算法导论（第3版）', 1, 128.00, '1', '教师测试', DATE_SUB(NOW(), INTERVAL 1 DAY)),
-('WSW20260811001', 3, '普通测试', 'JS20260003', 7, '围城', 2, 78.00, '2', '普通测试', DATE_SUB(NOW(), INTERVAL 2 DAY));
--- ---------- 图书预约表 ----------
+-- ---------- 服务候补表 ----------
 CREATE TABLE IF NOT EXISTS `book_reserve` (
-  `reserve_id` bigint NOT NULL AUTO_INCREMENT COMMENT '预约ID',
-  `book_id` bigint DEFAULT NULL COMMENT '图书ID',
-  `reader_id` bigint DEFAULT NULL COMMENT '读者ID',
-  `reader_name` varchar(50) DEFAULT NULL COMMENT '读者姓名(快照)',
-  `card_no` varchar(30) DEFAULT NULL COMMENT '借书证号(快照)',
-  `book_name` varchar(100) DEFAULT NULL COMMENT '图书名称(快照)',
-  `reserve_date` datetime DEFAULT NULL COMMENT '预约时间',
-  `status` char(1) DEFAULT '0' COMMENT '状态(0预约中 1可借 2已完成 3已取消)',
+  `reserve_id` bigint NOT NULL AUTO_INCREMENT COMMENT '候补ID',
+  `book_id` bigint DEFAULT NULL COMMENT '服务ID',
+  `reader_id` bigint DEFAULT NULL COMMENT '成员ID',
+  `reader_name` varchar(50) DEFAULT NULL COMMENT '成员姓名(快照)',
+  `card_no` varchar(30) DEFAULT NULL COMMENT '成员证号(快照)',
+  `book_name` varchar(100) DEFAULT NULL COMMENT '服务名称(快照)',
+  `reserve_date` datetime DEFAULT NULL COMMENT '候补时间',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0候补中 1有名额 2已完成 3已取消)',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`reserve_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书预约表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='服务候补表';
 
--- 分散演示书入库日期（前台"新"角标只显示最近入库的3本，其余为旧书）
-UPDATE book SET create_time='2026-06-15 10:00:00' WHERE book_name IN ('三体','深入理解计算机系统','明朝那些事儿','活着','百年孤独','围城');
-UPDATE book SET create_time='2026-07-01 10:00:00' WHERE book_name IN ('平凡的世界','红楼梦','西游记','三国演义','水浒传','小王子','老人与海','呐喊','边城','骆驼祥子','代码大全（第2版）','万历十五年');
-
--- ---------- 前台轮播图 ----------
+-- ---------- 前台轮播图（品牌首屏轮播） ----------
 CREATE TABLE IF NOT EXISTS `sys_banner` (
   `banner_id` bigint NOT NULL AUTO_INCREMENT COMMENT '轮播ID',
   `title` varchar(100) DEFAULT NULL COMMENT '标题',
@@ -149,137 +163,157 @@ CREATE TABLE IF NOT EXISTS `sys_banner` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`banner_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='前台轮播图';
-INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time) VALUES
-('万事屋', '万事屋，万事皆可办 ｜ 借书自助，还书请到服务台', '', 1, '0', 'admin', NOW()),
-('图书预约', '书被借光？一键预约，归还后自动通知您来借', '/shop.html', 2, '0', 'admin', NOW()),
-('新书上架', '藏书持续更新，文学 / 科技 / 历史任你挑选', '', 3, '0', 'admin', NOW())
-ON DUPLICATE KEY UPDATE title=VALUES(title);
+INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time)
+SELECT '数智游民创新工场', '清远首个 AI 一人公司生态社区 ｜ 一个人，也可以是一家公司', '', 1, '0', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_banner WHERE title='数智游民创新工场');
+INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time)
+SELECT 'AI 课程与服务', 'AI 技能课程 / 共享工位 / 孵化服务，一站式支持 OPC 成长', '', 2, '0', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_banner WHERE title='AI 课程与服务');
+INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time)
+SELECT '欢迎入驻', '一个人 + AI，在清远开启你的数智游民之旅', '', 3, '0', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_banner WHERE title='欢迎入驻');
 
--- ---------- 菜单：图书业务目录（必须先于所有引用它的子菜单插入，否则 parent_id 为 NULL 导致登录菜单树 NPE） ----------
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '图书业务',0,1,'business','',1,0,'M','0','0','','book','admin',NOW(),'图书业务模块' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书业务');
+-- ---------- 公告 → 新闻动态（3 条；正文用纯文本，规避前台 textContent 渲染的富文本降级） ----------
+UPDATE sys_dict_data SET dict_label='新闻动态' WHERE dict_type='sys_notice_type' AND dict_value='1';
+UPDATE sys_notice SET notice_title='数智游民创新工场正式启幕', notice_type='2',
+  notice_content='清远市首个人工智能 OPC（一人公司）生态社区「数智游民创新工场」正式启幕。社区提供 AI 技能课程、共享工位、孵化服务与政策对接，支持每一位"一个人 + AI"的创业者。'
+  WHERE notice_id=1;
+UPDATE sys_notice SET notice_title='首期 AI 一人公司实战营开放报名', notice_type='1',
+  notice_content='首期「AI 一人公司实战营」现已开放报名：AI 工具矩阵、获客、交付全流程实操，限额 20 席，报满即止。'
+  WHERE notice_id=2;
+UPDATE sys_notice SET notice_title='社区共创空间开放预约', notice_type='1',
+  notice_content='路演厅、直播间、洽谈室等共创空间已开放预约。名额有限，可先预约排队，释放名额后自动通知。'
+  WHERE notice_id=3;
 
--- 轮播图管理菜单与权限点
+-- ---------- 菜单：官网运营目录（必须先于所有引用它的子菜单插入，否则 parent_id 为 NULL 导致登录菜单树 NPE） ----------
+-- 双操作幂等：UPDATE 旧名→新名（存量库兜底，无匹配行则无害）+ INSERT 新名（全新库）
+UPDATE sys_menu SET menu_name='官网运营' WHERE menu_name='图书业务';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '轮播图管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),8,'banner','system/banner/index',1,0,'C','0','0','system:banner:list','picture','admin',NOW(),'前台轮播图管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图管理');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '轮播图查询',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),1,'','',1,0,'F','0','0','system:banner:query','#','admin',NOW(),'轮播图查询' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图查询');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '轮播图新增',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),2,'','',1,0,'F','0','0','system:banner:add','#','admin',NOW(),'轮播图新增' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图新增');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '轮播图修改',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),3,'','',1,0,'F','0','0','system:banner:edit','#','admin',NOW(),'轮播图修改' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图修改');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '轮播图删除',(SELECT menu_id FROM sys_menu WHERE menu_name='轮播图管理'),4,'','',1,0,'F','0','0','system:banner:remove','#','admin',NOW(),'轮播图删除' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图删除');
+SELECT '官网运营',0,1,'business','',1,0,'M','0','0','','book','admin',NOW(),'官网运营模块' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='官网运营');
 
--- ---------- 续借次数字段与参数 ----------
+-- 官网轮播菜单与权限点
+UPDATE sys_menu SET menu_name='官网轮播' WHERE menu_name='轮播图管理';
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '官网轮播',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),8,'banner','system/banner/index',1,0,'C','0','0','system:banner:list','picture','admin',NOW(),'官网轮播图管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='官网轮播');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图查询',(SELECT menu_id FROM sys_menu WHERE menu_name='官网轮播'),1,'','',1,0,'F','0','0','system:banner:query','#','admin',NOW(),'轮播图查询' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图查询');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图新增',(SELECT menu_id FROM sys_menu WHERE menu_name='官网轮播'),2,'','',1,0,'F','0','0','system:banner:add','#','admin',NOW(),'轮播图新增' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图新增');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图修改',(SELECT menu_id FROM sys_menu WHERE menu_name='官网轮播'),3,'','',1,0,'F','0','0','system:banner:edit','#','admin',NOW(),'轮播图修改' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图修改');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '轮播图删除',(SELECT menu_id FROM sys_menu WHERE menu_name='官网轮播'),4,'','',1,0,'F','0','0','system:banner:remove','#','admin',NOW(),'轮播图删除' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='轮播图删除');
+
+-- ---------- 续期次数字段与参数 ----------
 SET @rc = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='renew_count');
-SET @rs = IF(@rc=0, 'ALTER TABLE borrow_record ADD COLUMN renew_count int DEFAULT 0 COMMENT ''已续借次数''', 'SELECT 1');
+SET @rs = IF(@rc=0, 'ALTER TABLE borrow_record ADD COLUMN renew_count int DEFAULT 0 COMMENT ''已续期次数''', 'SELECT 1');
 PREPARE rst FROM @rs; EXECUTE rst; DEALLOCATE PREPARE rst;
+UPDATE sys_config SET config_name='报名续期次数上限', remark='每条服务最多可续期次数' WHERE config_key='book.borrow.renewLimit';
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
-SELECT '续借次数上限','book.borrow.renewLimit','1','Y','admin',NOW(),'每本图书最多可续借次数' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.borrow.renewLimit');
+SELECT '报名续期次数上限','book.borrow.renewLimit','1','Y','admin',NOW(),'每条服务最多可续期次数' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.borrow.renewLimit');
 
--- BBCODE 演示：小王子简介展示富文本效果
-UPDATE book SET intro = '写给大人的[b]童话[/b]，关于爱与责任的寓言。
-[quote]只有用心才能看得清，真正重要的东西用眼睛是看不见的。[/quote]
-[color=#c65d43]全球销量超 2 亿册[/color]，[url=https://baike.baidu.com/item/小王子]了解更多 →[/url]' WHERE book_name='小王子';
+-- BBCODE 演示：小红书 AI 运营训练营简介展示富文本效果
+UPDATE book SET intro = '[b]AI 时代的内容运营课[/b]：爆款选题、AI 图文生成、笔记优化、涨粉变现全链路。
+[quote]内容力 = AI 提效 × 真实人设[/quote]
+[color=#c65d43]往期学员 200+[/color]，[url=#]查看学员案例 →[/url]' WHERE book_name='小红书 AI 运营训练营';
 
--- 预约管理菜单
+-- 活动预约菜单
+UPDATE sys_menu SET menu_name='活动预约' WHERE menu_name='预约管理';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '预约管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),7,'reserve','system/reserve/index',1,0,'C','0','0','system:borrow:list','date','admin',NOW(),'图书预约管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='预约管理');
+SELECT '活动预约',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),7,'reserve','system/reserve/index',1,0,'C','0','0','system:borrow:list','date','admin',NOW(),'活动预约管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='活动预约');
 
--- 预约参数与定时任务
+-- 候补参数与定时任务
+UPDATE sys_config SET config_name='候补名额保留天数', remark='有名额状态超过该天数未确认自动取消' WHERE config_key='book.reserve.expireDays';
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
-SELECT '预约可借保留天数','book.reserve.expireDays','2','Y','admin',NOW(),'可借状态超过该天数未到馆借阅自动取消' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.reserve.expireDays');
+SELECT '候补名额保留天数','book.reserve.expireDays','2','Y','admin',NOW(),'有名额状态超过该天数未确认自动取消' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.reserve.expireDays');
+UPDATE sys_job SET job_name='候补超时检查' WHERE job_name='预约超时检查';
 INSERT INTO sys_job (job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, remark)
-SELECT '预约超时检查','SYSTEM','borrowTask.reserveExpireCheck()','0 0 8 * * ?','3','1','0','admin',NOW(),'每天8点自动取消超时未取的可借预约并通知下一位' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='预约超时检查');
+SELECT '候补超时检查','SYSTEM','borrowTask.reserveExpireCheck()','0 0 8 * * ?','3','1','0','admin',NOW(),'每天8点自动取消超时未确认的候补名额并通知下一位' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='候补超时检查');
 
--- 预约演示数据（《白夜行》完整状态链：可借/预约中/已完成/已取消，打开"我的预约"即见）
-INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time) VALUES
-(15, 2, '教师测试', 'JS20260002', '白夜行', DATE_SUB(NOW(), INTERVAL 2 DAY), '1', '教师测试', NOW()),
-(15, 1, '学生测试', 'JS20260001', '白夜行', DATE_SUB(NOW(), INTERVAL 1 DAY), '0', '学生测试', NOW()),
-(15, 3, '普通测试', 'JS20260003', '白夜行', DATE_SUB(NOW(), INTERVAL 5 DAY), '2', '普通测试', NOW()),
-(15, 5, 'Jerry', 'DK', '白夜行', DATE_SUB(NOW(), INTERVAL 7 DAY), '3', 'Jerry', NOW());
--- 白夜行库存置 1（对应"可借"那本，与预约状态自洽）
-UPDATE book SET stock=1 WHERE book_id=15 AND stock=18;
+-- 候补演示数据（《社区共创空间预约》完整状态链：有名额/候补中/已完成/已取消，打开"我的候补"即见；幂等按成员+服务判重）
+INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time)
+SELECT 15, 2, '李想', 'JS20260002', '社区共创空间预约', DATE_SUB(NOW(), INTERVAL 2 DAY), '1', '李想', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book_reserve WHERE book_id=15 AND reader_id=2);
+INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time)
+SELECT 15, 1, '周舟', 'JS20260001', '社区共创空间预约', DATE_SUB(NOW(), INTERVAL 1 DAY), '0', '周舟', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book_reserve WHERE book_id=15 AND reader_id=1);
+INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time)
+SELECT 15, 3, '王梅', 'JS20260003', '社区共创空间预约', DATE_SUB(NOW(), INTERVAL 5 DAY), '2', '王梅', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book_reserve WHERE book_id=15 AND reader_id=3);
+INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time)
+SELECT 15, 5, 'Jerry', 'DK', '社区共创空间预约', DATE_SUB(NOW(), INTERVAL 7 DAY), '3', 'Jerry', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book_reserve WHERE book_id=15 AND reader_id=5);
+-- 社区共创空间预约剩余名额置 0（满员可候补，与候补状态链自洽）
+UPDATE book SET stock=0 WHERE book_id=15;
 
--- 挂失测试历史借阅（已归还，演示补办后历史保留）
-INSERT INTO borrow_record (reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time) VALUES
-(4, 18, '2026-07-10', '2026-08-09', '2026-07-25', '1', '挂失测试', 'JS20260004', '边城', 'system', NOW());
+-- 停用成员历史报名（已完成，演示资料保留；幂等按成员+服务+报名日期判重）
+INSERT INTO borrow_record (reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)
+SELECT 4, 18, '2026-07-10', '2026-08-09', '2026-07-25', '1', '吴挂', 'JS20260004', 'AI 绘画与设计基础', 'system', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM borrow_record WHERE reader_id=4 AND book_id=18 AND borrow_date='2026-07-10');
 
 -- ============================================
--- 图书管理系统 业务初始化 SQL（幂等，可重复执行）
+-- 数智游民创新工场 业务初始化 SQL（幂等，可重复执行）
 -- 使用：导入 ry_20260417.sql + quartz.sql 后，再导入本文件
 -- 包含：业务表(book/reader/borrow_record) + 字典 + 业务菜单
 -- ============================================
 
--- ---------- 字典：图书分类 ----------
+-- ---------- 字典：服务分类 ----------
+UPDATE sys_dict_type SET dict_name='服务分类', remark='服务分类' WHERE dict_type='book_type';
 INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
-SELECT '图书分类','book_type','0','admin',NOW(),'图书分类' WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type='book_type');
+SELECT '服务分类','book_type','0','admin',NOW(),'服务分类' WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type='book_type');
+UPDATE sys_dict_data SET dict_label='AI与数字服务', list_class='primary' WHERE dict_type='book_type' AND dict_value='1';
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
-SELECT 1,'文学','1','book_type','primary','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='book_type' AND dict_value='1');
+SELECT 1,'AI与数字服务','1','book_type','primary','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='book_type' AND dict_value='1');
+UPDATE sys_dict_data SET dict_label='创意设计', list_class='success' WHERE dict_type='book_type' AND dict_value='2';
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
-SELECT 2,'科技','2','book_type','success','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='book_type' AND dict_value='2');
+SELECT 2,'创意设计','2','book_type','success','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='book_type' AND dict_value='2');
+UPDATE sys_dict_data SET dict_label='本地生活与创业', list_class='warning' WHERE dict_type='book_type' AND dict_value='3';
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
-SELECT 3,'历史','3','book_type','warning','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='book_type' AND dict_value='3');
+SELECT 3,'本地生活与创业','3','book_type','warning','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='book_type' AND dict_value='3');
 
--- ---------- 字典：读者类型 ----------
+-- ---------- 字典：成员类型 ----------
+UPDATE sys_dict_type SET dict_name='成员类型', remark='成员分类' WHERE dict_type='reader_type';
 INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
-SELECT '读者类型','reader_type','0','admin',NOW(),'读者分类' WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type='reader_type');
+SELECT '成员类型','reader_type','0','admin',NOW(),'成员分类' WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type='reader_type');
+UPDATE sys_dict_data SET dict_label='个人主理人', list_class='primary' WHERE dict_type='reader_type' AND dict_value='1';
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
-SELECT 1,'学生','1','reader_type','primary','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='1');
+SELECT 1,'个人主理人','1','reader_type','primary','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='1');
+UPDATE sys_dict_data SET dict_label='团队', list_class='success' WHERE dict_type='reader_type' AND dict_value='2';
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
-SELECT 2,'教师','2','reader_type','success','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='2');
+SELECT 2,'团队','2','reader_type','success','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='2');
+UPDATE sys_dict_data SET dict_label='企业', list_class='warning' WHERE dict_type='reader_type' AND dict_value='3';
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, list_class, status, create_by, create_time)
-SELECT 3,'普通读者','3','reader_type','warning','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='3');
+SELECT 3,'企业','3','reader_type','warning','0','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type='reader_type' AND dict_value='3');
 
--- 图书信息
+-- 服务信息
+UPDATE sys_menu SET menu_name='服务信息' WHERE menu_name='图书信息';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '图书信息',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),1,'book','system/book/index',1,0,'C','0','0','system:book:list','book','admin',NOW(),'图书信息菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书信息');
--- 读者管理
+SELECT '服务信息',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),1,'book','system/book/index',1,0,'C','0','0','system:book:list','book','admin',NOW(),'服务信息菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='服务信息');
+-- 成员管理
+UPDATE sys_menu SET menu_name='成员管理' WHERE menu_name='读者管理';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '读者管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),2,'reader','system/reader/index',1,0,'C','0','0','system:reader:list','peoples','admin',NOW(),'读者管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='读者管理');
--- 读者登记（表单构建产物页面）
+SELECT '成员管理',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),2,'reader','system/reader/index',1,0,'C','0','0','system:reader:list','peoples','admin',NOW(),'成员管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='成员管理');
+-- 报名管理
+UPDATE sys_menu SET menu_name='报名管理' WHERE menu_name='借阅记录';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '读者登记',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),3,'reader/form','system/reader/form',1,0,'C','0','0','system:reader:add','form','admin',NOW(),'读者登记表' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='读者登记');
--- 借阅记录
+SELECT '报名管理',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),4,'borrow','system/borrow/index',1,0,'C','0','0','system:borrow:list','reading','admin',NOW(),'报名管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='报名管理');
+-- 报名导出（按钮权限点）
+UPDATE sys_menu SET menu_name='报名导出' WHERE menu_name='借阅导出';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '借阅记录',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),4,'borrow','system/borrow/index',1,0,'C','0','0','system:borrow:list','reading','admin',NOW(),'借阅管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='借阅记录');
--- 借阅导出（按钮权限点）
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '借阅导出',(SELECT menu_id FROM sys_menu WHERE menu_name='借阅记录'),6,'','',1,0,'F','0','0','system:borrow:export','#','admin',NOW(),'借阅记录导出按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='借阅导出');
--- 借阅统计
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '借阅统计',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),5,'borrow/stats','system/borrow/stats',1,0,'C','0','0','system:borrow:stats','chart','admin',NOW(),'借阅统计报表' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='借阅统计');
+SELECT '报名导出',(SELECT menu_id FROM sys_menu WHERE menu_name='报名管理'),6,'','',1,0,'F','0','0','system:borrow:export','#','admin',NOW(),'报名记录导出按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='报名导出');
 
--- ---------- 定时任务：逾期检查 ----------
+-- ---------- 定时任务：报名截止检查 ----------
+UPDATE sys_job SET job_name='报名截止检查' WHERE job_name='逾期检查';
 INSERT INTO sys_job (job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, remark)
-SELECT '逾期检查','SYSTEM','borrowTask.updateOverdueStatus()','0 0 0 * * ?','3','1','0','admin',NOW(),'每天0点自动标记逾期借阅' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='逾期检查');
+SELECT '报名截止检查','SYSTEM','borrowTask.updateOverdueStatus()','0 0 0 * * ?','3','1','0','admin',NOW(),'每天0点自动标记报名截止' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='报名截止检查');
 
 -- ============================================
--- 以下为后续版本补充（幂等）：图书封面/ISBN/简介列、购书订单表、订单菜单
+-- 以下为后续版本补充（幂等）：服务封面/编号/介绍列、购书订单表
 -- ============================================
 
--- ---------- 幂等补列：book 表封面/ISBN/简介（老库自动补齐，新库跳过） ----------
+-- ---------- 幂等补列：book 表封面/编号/介绍（老库自动补齐，新库跳过） ----------
 SET @c1 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='cover');
 SET @s1 = IF(@c1=0, 'ALTER TABLE book ADD COLUMN cover varchar(255) DEFAULT NULL COMMENT ''封面图片''', 'SELECT 1');
 PREPARE st1 FROM @s1; EXECUTE st1; DEALLOCATE PREPARE st1;
 SET @c2 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='isbn');
-SET @s2 = IF(@c2=0, 'ALTER TABLE book ADD COLUMN isbn varchar(20) DEFAULT NULL COMMENT ''ISBN书号''', 'SELECT 1');
+SET @s2 = IF(@c2=0, 'ALTER TABLE book ADD COLUMN isbn varchar(20) DEFAULT NULL COMMENT ''服务编号''', 'SELECT 1');
 PREPARE st2 FROM @s2; EXECUTE st2; DEALLOCATE PREPARE st2;
 SET @c3 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='book' AND column_name='intro');
-SET @s3 = IF(@c3=0, 'ALTER TABLE book ADD COLUMN intro varchar(1000) DEFAULT NULL COMMENT ''图书简介''', 'SELECT 1');
+SET @s3 = IF(@c3=0, 'ALTER TABLE book ADD COLUMN intro varchar(1000) DEFAULT NULL COMMENT ''服务介绍''', 'SELECT 1');
 PREPARE st3 FROM @s3; EXECUTE st3; DEALLOCATE PREPARE st3;
-
--- ---------- 菜单：订单管理（图书业务目录下） ----------
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '订单管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),6,'order','system/order/index',1,0,'C','0','0','system:order:list','shopping','admin',NOW(),'购书订单管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单管理');
--- 订单权限点（按钮）
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '订单查询',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管理'),1,'','',1,0,'F','0','0','system:order:query','#','admin',NOW(),'订单查询按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单查询');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '订单修改',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管理'),2,'','',1,0,'F','0','0','system:order:edit','#','admin',NOW(),'订单状态流转按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单修改');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '订单删除',(SELECT menu_id FROM sys_menu WHERE menu_name='订单管理'),3,'','',1,0,'F','0','0','system:order:remove','#','admin',NOW(),'订单删除按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='订单删除');
 
 -- ---------- 清理测试残留数据（精确匹配，不影响正式数据） ----------
 DELETE FROM book WHERE book_name='哇奥' AND price=576;
@@ -287,87 +321,93 @@ DELETE FROM reader WHERE reader_name='前台登记测试';
 DELETE FROM reader WHERE reader_name='test2';
 
 -- ============================================
--- 以下为后续版本补充（幂等）：证号唯一索引、库存预警参数、演示图书
+-- 以下为后续版本补充（幂等）：证号唯一索引、名额预警参数、演示服务
 -- ============================================
 
--- ---------- 读者证号唯一索引 ----------
+-- ---------- 成员证号唯一索引 ----------
 SET @idx = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='reader' AND index_name='uk_card_no');
 SET @sql_idx = IF(@idx=0, 'ALTER TABLE reader ADD UNIQUE INDEX uk_card_no (card_no)', 'SELECT 1');
 PREPARE st_idx FROM @sql_idx; EXECUTE st_idx; DEALLOCATE PREPARE st_idx;
 
--- ---------- 借阅记录快照列（老库自动补齐：读者/图书删除后历史记录仍完整） ----------
+-- ---------- 报名记录快照列（老库自动补齐：成员/服务删除后历史记录仍完整） ----------
 SET @bc1 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='reader_name');
-SET @bs1 = IF(@bc1=0, 'ALTER TABLE borrow_record ADD COLUMN reader_name varchar(50) DEFAULT NULL COMMENT ''读者姓名(快照)''', 'SELECT 1');
+SET @bs1 = IF(@bc1=0, 'ALTER TABLE borrow_record ADD COLUMN reader_name varchar(50) DEFAULT NULL COMMENT ''成员姓名(快照)''', 'SELECT 1');
 PREPARE bst1 FROM @bs1; EXECUTE bst1; DEALLOCATE PREPARE bst1;
 SET @bc2 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='card_no');
-SET @bs2 = IF(@bc2=0, 'ALTER TABLE borrow_record ADD COLUMN card_no varchar(30) DEFAULT NULL COMMENT ''借书证号(快照)''', 'SELECT 1');
+SET @bs2 = IF(@bc2=0, 'ALTER TABLE borrow_record ADD COLUMN card_no varchar(30) DEFAULT NULL COMMENT ''成员证号(快照)''', 'SELECT 1');
 PREPARE bst2 FROM @bs2; EXECUTE bst2; DEALLOCATE PREPARE bst2;
 SET @bc3 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='book_name');
-SET @bs3 = IF(@bc3=0, 'ALTER TABLE borrow_record ADD COLUMN book_name varchar(100) DEFAULT NULL COMMENT ''图书名称(快照)''', 'SELECT 1');
+SET @bs3 = IF(@bc3=0, 'ALTER TABLE borrow_record ADD COLUMN book_name varchar(100) DEFAULT NULL COMMENT ''服务名称(快照)''', 'SELECT 1');
 PREPARE bst3 FROM @bs3; EXECUTE bst3; DEALLOCATE PREPARE bst3;
 
--- ---------- 逾期罚款字段（老库自动补齐） ----------
+-- ---------- 截止逾期字段（老库自动补齐） ----------
 SET @fc1 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='fine_amount');
-SET @fs1 = IF(@fc1=0, 'ALTER TABLE borrow_record ADD COLUMN fine_amount decimal(10,2) DEFAULT 0.00 COMMENT ''逾期罚款金额(元)''', 'SELECT 1');
+SET @fs1 = IF(@fc1=0, 'ALTER TABLE borrow_record ADD COLUMN fine_amount decimal(10,2) DEFAULT 0.00 COMMENT ''截止逾期费用(元)''', 'SELECT 1');
 PREPARE fst1 FROM @fs1; EXECUTE fst1; DEALLOCATE PREPARE fst1;
 SET @fc2 = (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='borrow_record' AND column_name='fine_paid');
-SET @fs2 = IF(@fc2=0, 'ALTER TABLE borrow_record ADD COLUMN fine_paid char(1) DEFAULT ''0'' COMMENT ''罚款是否已缴(0未缴 1已缴)''', 'SELECT 1');
+SET @fs2 = IF(@fc2=0, 'ALTER TABLE borrow_record ADD COLUMN fine_paid char(1) DEFAULT ''0'' COMMENT ''费用是否已缴(0未缴 1已缴)''', 'SELECT 1');
 PREPARE fst2 FROM @fs2; EXECUTE fst2; DEALLOCATE PREPARE fst2;
--- 罚款参数
+-- 截止逾期费用参数
+UPDATE sys_config SET config_name='截止逾期费用(元/天)', remark='截止逾期后每天产生的费用(元)' WHERE config_key='book.fine.perDay';
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
-SELECT '逾期罚款单价','book.fine.perDay','0.10','Y','admin',NOW(),'逾期每天罚款金额(元)' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.fine.perDay');
+SELECT '截止逾期费用(元/天)','book.fine.perDay','0.10','Y','admin',NOW(),'截止逾期后每天产生的费用(元)' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.fine.perDay');
+UPDATE sys_config SET config_name='截止逾期免计天数', remark='截止逾期超过该天数才计费' WHERE config_key='book.fine.graceDays';
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
-SELECT '罚款免罚天数','book.fine.graceDays','0','Y','admin',NOW(),'逾期超过该天数才计罚' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.fine.graceDays');
+SELECT '截止逾期免计天数','book.fine.graceDays','0','Y','admin',NOW(),'截止逾期超过该天数才计费' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.fine.graceDays');
 
--- ---------- 库存预警阈值参数 ----------
+-- ---------- 名额预警阈值参数 ----------
+UPDATE sys_config SET config_name='名额预警阈值', remark='剩余名额低于或等于该值时，前后台显示名额紧张标签' WHERE config_key='book.stock.warn';
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
-SELECT '库存预警阈值','book.stock.warn','3','Y','admin',NOW(),'库存低于或等于该值时，前后台显示库存预警标签' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.stock.warn');
+SELECT '名额预警阈值','book.stock.warn','3','Y','admin',NOW(),'剩余名额低于或等于该值时，前后台显示名额紧张标签' WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key='book.stock.warn');
 
--- ---------- 演示图书扩充（幂等：按 ISBN 判重） ----------
+-- ---------- 演示服务扩充（幂等：按服务编号判重；与升级脚本 upgrade_20260821_official.sql 第 6 节数据一致） ----------
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '平凡的世界','路遥','1','北京十月文艺出版社',79.60,'2017-06-01',30,'0','9787530216781','全景式展现中国当代城乡社会生活，茅盾文学奖获奖作品','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787530216781');
+SELECT 'AI 数字分身工作坊','刘洋','1','腾讯云',149.00,'2026-08-19',30,'0','9787530216781','新服务：手把手搭建你的 AI 数字分身——形象定制、语音克隆、直播带货实操。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787530216781');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '红楼梦','曹雪芹','1','人民文学出版社',59.70,'1996-12-01',25,'0','9787020002207','中国古典四大名著之首，封建社会的百科全书','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020002207');
+SELECT '一人公司财税合规指南','王会计工作室','3','清远税务学会',0.00,'2026-06-28',25,'0','9787020002207','个体户注册、小规模纳税申报、发票管理全流程指南，财税小白也能听得懂。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020002207');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '西游记','吴承恩','1','人民文学出版社',47.20,'1980-05-01',28,'0','9787020008735','中国古典神魔小说巅峰，唐僧师徒西天取经','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008735');
+SELECT 'AI 写作与内容创作营','张敏','1','知乎',129.00,'2026-07-08',28,'0','9787020008735','公众号 / 知乎 / 小红书多平台 AI 内容生产实战：选题、提纲、成稿、分发。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008735');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '三国演义','罗贯中','1','人民文学出版社',39.50,'1992-06-01',26,'0','9787020008728','中国第一部长篇章回体历史演义小说','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008728');
+SELECT '零代码 AI 应用搭建','赵宇','1','飞书',169.00,'2026-07-12',26,'0','9787020008728','不写代码也能搭 AI 应用：表单、知识库、自动化工作流的零代码方案。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008728');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '水浒传','施耐庵','1','人民文学出版社',50.60,'1997-01-01',24,'0','9787020008759','一百零八将聚义梁山，中国古典英雄传奇','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008759');
+SELECT '数字游民保险方案咨询','平安保险清远','3','中国平安',0.00,'2026-07-05',24,'0','9787020008759','灵活就业社保、补充商业险、意外险——数字游民的保障方案一对一咨询。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008759');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '小王子','圣埃克苏佩里','1','人民文学出版社',22.00,'2003-08-01',40,'0','9787020042494','写给大人的童话，关于爱与责任的寓言','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020042494');
+SELECT '小红书 AI 运营训练营','孙悦','1','小红书',88.00,'2026-06-20',40,'0','9787020042494','[b]AI 时代的内容运营课[/b]：爆款选题、AI 图文生成、笔记优化、涨粉变现全链路。
+[quote]内容力 = AI 提效 × 真实人设[/quote]
+[color=#c65d43]往期学员 200+[/color]，[url=#]查看学员案例 →[/url]','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020042494');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '老人与海','海明威','1','上海译文出版社',25.00,'2009-07-01',35,'0','9787532748662','硬汉文学经典，人可以被毁灭但不能被打败','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787532748662');
+SELECT '视频号 AI 剪辑速成','周涛','1','微信视频号',0.00,'2026-07-18',35,'0','9787532748662','剪映 + AI 工具快速出片：从素材管理到成片发布，一天学会日更节奏。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787532748662');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '白夜行','东野圭吾','2','南海出版公司',59.60,'2013-01-01',18,'0','9787544270878','东野圭吾巅峰之作，绝望与救赎的悲歌','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544270878');
+SELECT '社区共创空间预约','数智游民创新工场','3','清远图书馆',0.00,'2026-06-15',0,'0','9787544270878','（满员可候补）社区共创空间按场次预约：路演厅、直播间、洽谈室。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544270878');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '解忧杂货店','东野圭吾','2','南海出版公司',39.50,'2014-05-01',22,'0','9787544270879','温暖治愈的推理小说，穿越时空的回信','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544270879');
+SELECT 'AI 心理陪伴体验','心光工作室','1','广东工业大学清远校区',0.00,'2026-08-18',0,'0','9787544270879','新服务：AI 心理陪伴对话体验 + 真人倾听服务，关注数字游民的心理健康。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787544270879');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '呐喊','鲁迅','1','人民文学出版社',22.00,'1973-03-01',30,'0','9787020008742','中国现代小说奠基之作，唤醒沉睡的灵魂','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008742');
+SELECT '一人公司品牌设计','绘境设计','2','站酷',129.00,'2026-07-22',30,'0','9787020008742','logo / VI / 包装设计一条龙，AI 辅助出稿、设计师精修，适合初创一人公司。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020008742');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '边城','沈从文','1','北岳文艺出版社',18.00,'2002-04-01',32,'0','9787537812249','湘西田园牧歌，翠翠与傩送的爱情','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787537812249');
+SELECT 'AI 绘画与设计基础','阿杰','2','花瓣',0.00,'2026-06-18',32,'0','9787537812249','Midjourney / Stable Diffusion 入门：从提示词到商业级出图的工作流。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787537812249');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '骆驼祥子','老舍','1','人民文学出版社',25.00,'1962-11-01',27,'0','9787020009626','旧社会人力车夫的命运，现实主义经典','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020009626');
+SELECT '本地生活探店 AI 写作','清远探店团','3','抖音生活服务',0.00,'2026-07-28',27,'0','9787020009626','本地商家探店内容 AI 化：短视频脚本、点评文案、直播话术模板库。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787020009626');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '代码大全（第2版）','Steve McConnell','2','电子工业出版社',128.00,'2006-03-01',12,'0','9787121022982','软件构建的百科全书，程序员必读','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787121022982');
+SELECT '低代码小程序开发课','小码匠','2','微信开放平台',128.00,'2026-07-30',2,'0','9787121022982','名额紧张：低代码 + AI 辅助开发微信小程序，一人也能接外包项目。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787121022982');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '算法导论（第3版）','Thomas H. Cormen','2','机械工业出版社',128.00,'2012-12-01',10,'0','9787111407010','算法领域的经典教材','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787111407010');
+SELECT 'AI 算法与模型微调','清远 AI 实验室','1','华为云',128.00,'2026-08-05',10,'0','9787111407010','面向中小企业：开源模型私有化部署与微调实战，数据不出域。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787111407010');
 INSERT INTO book (book_name, author, book_type, publisher, price, publish_date, stock, status, isbn, intro, create_by, create_time)
-SELECT '万历十五年','黄仁宇','3','中华书局',18.00,'2007-01-01',20,'0','9787101054033','大历史观代表作，以小事见大时代','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787101054033');
+SELECT '清远非遗文创 AI 化','岭南文创社','2','清远市文化馆',0.00,'2026-08-20',20,'0','9787101054033','新服务：清远非遗 IP 数字化共创——AI 文创设计、数字藏品、研学课程。','admin',NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn='9787101054033');
 
--- ---------- 初始 6 本书补齐 ISBN 与完整简介（幂等，统一与后 15 本一致的数据质量） ----------
-UPDATE book SET isbn='9787536692930', intro='亚洲首部获雨果奖的科幻巨著。文革期间，天文学家叶文洁向宇宙发出信号，意外引来四光年外的三体文明——一场关乎地球存亡的星际博弈就此展开，被誉为中国科幻的里程碑。' WHERE book_name='三体' AND (isbn IS NULL OR isbn='');
-UPDATE book SET isbn='9787111544937', intro='程序员视角的经典教材。以 C 语言和汇编为载体，讲透信息表示、程序执行、存储器层次与系统性能，帮助你真正理解程序如何在计算机上跑起来，而不是止步于表层。' WHERE book_name='深入理解计算机系统' AND (isbn IS NULL OR isbn='');
-UPDATE book SET isbn='9787505732534', intro='当年明月以幽默通俗的笔法讲述明朝三百年兴衰，从朱元璋到崇祯，把历史写成一个个鲜活的人和故事，一度掀起全民读史热潮。' WHERE book_name='明朝那些事儿' AND (isbn IS NULL OR isbn='');
-UPDATE book SET isbn='9787506365437', intro='余华代表作。地主少爷福贵嗜赌成性，输光家业后，亲人一个个在他眼前离去，只剩老牛相伴。他用平淡而冷静的笔触写尽苦难，也写尽人活着的韧性。' WHERE book_name='活着' AND (isbn IS NULL OR isbn='');
-UPDATE book SET isbn='9787544253994', intro='马尔克斯巅峰之作，魔幻现实主义的代名词。布恩迪亚家族七代人的传奇在马孔多小镇上演，孤独与宿命贯穿始终，被誉为"再现拉丁美洲历史社会图景的鸿篇巨著"。' WHERE book_name='百年孤独' AND (isbn IS NULL OR isbn='');
-UPDATE book SET isbn='9787020029532', intro='钱钟书唯一的长篇小说。留学归来的方鸿渐在爱情与事业间周旋，"城外的人想冲进去，城里的人想逃出来"——人生的围城隐喻百年来深入人心，讽刺与幽默并重的经典。' WHERE book_name='围城' AND (isbn IS NULL OR isbn='');
+-- 分散演示服务上线日期（前台"新服务"角标只显示最近上线的3条，其余为老服务）
+-- 注意：必须位于全部服务 INSERT 之后（含上方扩充段），否则 UPDATE 匹配不到刚插入的行
+UPDATE book SET create_time='2026-06-15 10:00:00' WHERE book_name IN ('AI 一人公司实战营','提示词工程入门课','共享工位月租计划','AI 短视频代运营服务','一人公司法律咨询包','数字游民共居空间');
+UPDATE book SET create_time='2026-07-01 10:00:00' WHERE book_name IN ('一人公司财税合规指南','AI 写作与内容创作营','零代码 AI 应用搭建','数字游民保险方案咨询','小红书 AI 运营训练营','视频号 AI 剪辑速成','社区共创空间预约','一人公司品牌设计','AI 绘画与设计基础','本地生活探店 AI 写作','低代码小程序开发课','AI 算法与模型微调');
+-- 新服务角标：近 7 天上线（幂等：只对未设过的时间覆盖一次）
+UPDATE book SET create_time=DATE_SUB(NOW(), INTERVAL 2 DAY) WHERE isbn='9787530216781' AND create_time < DATE_SUB(NOW(), INTERVAL 7 DAY);
+UPDATE book SET create_time=DATE_SUB(NOW(), INTERVAL 3 DAY) WHERE isbn='9787544270879' AND create_time < DATE_SUB(NOW(), INTERVAL 7 DAY);
+UPDATE book SET create_time=DATE_SUB(NOW(), INTERVAL 1 DAY) WHERE isbn='9787101054033' AND create_time < DATE_SUB(NOW(), INTERVAL 7 DAY);
 
 -- ============================================
--- 查询性能索引（幂等）：借阅/订单/预约按常用查询条件加索引，数据量增长后避免全表扫描
+-- 查询性能索引（幂等）：报名/订单/候补按常用查询条件加索引，数据量增长后避免全表扫描
 -- ============================================
 
--- ---------- 借阅记录：按读者查（借书校验/我的借阅）、按图书查（归还后预约联动/重复借校验） ----------
+-- ---------- 报名记录：按成员查（报名校验/我的报名）、按服务查（完成候补联动/重复报名校验） ----------
 SET @i1 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='borrow_record' AND index_name='idx_br_reader');
 SET @si1 = IF(@i1=0, 'ALTER TABLE borrow_record ADD INDEX idx_br_reader (reader_id)', 'SELECT 1');
 PREPARE st1 FROM @si1; EXECUTE st1; DEALLOCATE PREPARE st1;
@@ -380,7 +420,7 @@ SET @i3 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema
 SET @si3 = IF(@i3=0, 'ALTER TABLE shop_order ADD INDEX idx_so_card (card_no)', 'SELECT 1');
 PREPARE st3 FROM @si3; EXECUTE st3; DEALLOCATE PREPARE st3;
 
--- ---------- 图书预约：按证号查（前台"我的预约"）、按图书查（还书后找最早预约） ----------
+-- ---------- 服务候补：按证号查（前台"我的候补"）、按服务查（完成后找最早候补） ----------
 SET @i4 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='book_reserve' AND index_name='idx_res_card');
 SET @si4 = IF(@i4=0, 'ALTER TABLE book_reserve ADD INDEX idx_res_card (card_no)', 'SELECT 1');
 PREPARE st4 FROM @si4; EXECUTE st4; DEALLOCATE PREPARE st4;
@@ -392,82 +432,96 @@ PREPARE st5 FROM @si5; EXECUTE st5; DEALLOCATE PREPARE st5;
 -- 孤儿菜单自愈（幂等）：历史脚本顺序问题可能让菜单 parent_id 为 NULL，
 -- 会导致登录后路由构建 NPE（Cannot invoke getParentId().longValue()）
 -- ============================================
-UPDATE sys_menu m JOIN sys_menu p ON p.menu_name='图书业务' SET m.parent_id=p.menu_id
-WHERE m.menu_name='预约管理' AND m.parent_id IS NULL;
-UPDATE sys_menu m JOIN sys_menu p ON p.menu_name='订单管理' SET m.parent_id=p.menu_id
-WHERE m.menu_name='订单删除' AND m.parent_id IS NULL;
+UPDATE sys_menu m JOIN sys_menu p ON p.menu_name='官网运营' SET m.parent_id=p.menu_id
+WHERE m.menu_name='活动预约' AND m.parent_id IS NULL;
 
 -- ============================================
--- 荐购申请（前端搜索无结果 → "申请荐购"收集读者想看的书，后台处理）
+-- 入驻/合作申请（前端搜索无结果 → "申请入驻"收集合作意向，后台审核处理）
 -- ============================================
 CREATE TABLE IF NOT EXISTS `book_purchase_req` (
   `req_id` bigint NOT NULL AUTO_INCREMENT COMMENT '申请ID',
-  `book_name` varchar(100) NOT NULL COMMENT '书名',
-  `author` varchar(60) DEFAULT NULL COMMENT '作者',
-  `email` varchar(50) DEFAULT NULL COMMENT '申请者邮箱（荐购结果通知用）',
-  `status` char(1) DEFAULT '0' COMMENT '状态(0待处理 1已处理 2已拒绝)',
-  `remark` varchar(255) DEFAULT NULL COMMENT '读者附言（出版社/版次等）',
+  `book_name` varchar(100) NOT NULL COMMENT '服务名称',
+  `author` varchar(60) DEFAULT NULL COMMENT '申请人/团队',
+  `email` varchar(50) DEFAULT NULL COMMENT '申请者邮箱（审核结果通知用）',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0待审核 1已通过 2已婉拒)',
+  `remark` varchar(255) DEFAULT NULL COMMENT '申请人附言（合作意向说明等）',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`req_id`),
   KEY `idx_purchase_book_name` (`book_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='图书荐购申请';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='服务入驻申请';
 
--- 荐购管理菜单（图书业务目录下）
+-- 入驻申请菜单（官网运营目录下）
+UPDATE sys_menu SET menu_name='入驻申请' WHERE menu_name='荐购管理';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '荐购管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),9,'purchase','system/purchase/index',1,0,'C','0','0','system:purchase:list','shopping-cart-full','admin',NOW(),'读者荐购申请管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='荐购管理');
--- 荐购权限点（按钮）
+SELECT '入驻申请',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),9,'purchase','system/purchase/index',1,0,'C','0','0','system:purchase:list','shopping-cart-full','admin',NOW(),'入驻合作申请管理菜单' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='入驻申请');
+-- 入驻申请权限点（按钮）
+UPDATE sys_menu SET menu_name='入驻申请查询' WHERE menu_name='荐购查询';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '荐购查询',(SELECT menu_id FROM sys_menu WHERE menu_name='荐购管理'),1,'','',1,0,'F','0','0','system:purchase:query','#','admin',NOW(),'荐购查询按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='荐购查询');
+SELECT '入驻申请查询',(SELECT menu_id FROM sys_menu WHERE menu_name='入驻申请'),1,'','',1,0,'F','0','0','system:purchase:query','#','admin',NOW(),'入驻申请查询按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='入驻申请查询');
+UPDATE sys_menu SET menu_name='入驻申请处理' WHERE menu_name='荐购处理';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '荐购处理',(SELECT menu_id FROM sys_menu WHERE menu_name='荐购管理'),2,'','',1,0,'F','0','0','system:purchase:edit','#','admin',NOW(),'荐购处理按钮(标记已处理/已拒绝)' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='荐购处理');
+SELECT '入驻申请处理',(SELECT menu_id FROM sys_menu WHERE menu_name='入驻申请'),2,'','',1,0,'F','0','0','system:purchase:edit','#','admin',NOW(),'入驻申请处理按钮(标记已通过/已婉拒)' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='入驻申请处理');
+UPDATE sys_menu SET menu_name='入驻申请删除' WHERE menu_name='荐购删除';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '荐购删除',(SELECT menu_id FROM sys_menu WHERE menu_name='荐购管理'),3,'','',1,0,'F','0','0','system:purchase:remove','#','admin',NOW(),'荐购删除按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='荐购删除');
+SELECT '入驻申请删除',(SELECT menu_id FROM sys_menu WHERE menu_name='入驻申请'),3,'','',1,0,'F','0','0','system:purchase:remove','#','admin',NOW(),'入驻申请删除按钮' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='入驻申请删除');
+
+-- 入驻/合作申请示例（0待审核/1已通过/2已婉拒；按 book_name 判重幂等）
+INSERT INTO book_purchase_req (book_name, author, email, status, remark, create_by, create_time)
+SELECT 'AI 电商代运营团队招募', '郑浩', 'zhenghao@qq.com', '0', '希望入驻社区并招募 3 人 AI 代运营团队，需要共享工位与政策对接', 'admin', DATE_SUB(NOW(), INTERVAL 1 DAY) FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM book_purchase_req WHERE book_name='AI 电商代运营团队招募');
+INSERT INTO book_purchase_req (book_name, author, email, status, remark, create_by, create_time)
+SELECT '数字游民签证与出海服务', '陈立', 'chenli@qq.com', '1', '提供数字游民签证咨询与跨境财税服务，寻求社区合作挂牌', 'admin', DATE_SUB(NOW(), INTERVAL 3 DAY) FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM book_purchase_req WHERE book_name='数字游民签证与出海服务');
+INSERT INTO book_purchase_req (book_name, author, email, status, remark, create_by, create_time)
+SELECT '本地 AI 茶饮品牌', '何雨', 'heyu@qq.com', '2', '计划用 AI 运营一家茶饮店，申请入驻被婉拒（店铺资质待补）', 'admin', DATE_SUB(NOW(), INTERVAL 5 DAY) FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM book_purchase_req WHERE book_name='本地 AI 茶饮品牌');
 
 -- ============================================
--- 菜单重组（幂等）：图书业务 → 3 个二级目录（图书管理/读者服务/经营管理），
+-- 菜单重组（幂等）：官网运营 → 3 个二级目录（服务管理/成员服务/合作经营），
 -- 便于管理员按业务域整理。角色-菜单绑定（sys_role_menu）按 menu_id 关联，
 -- 层级变化自动跟随，无需迁移；角色目录可见性由 role_init.sql 补充
 -- ============================================
--- 1) 插入 3 个二级目录（C 类型，挂在图书业务下）
+-- 1) 插入 3 个二级目录（C 类型，挂在官网运营下）
+UPDATE sys_menu SET menu_name='服务管理' WHERE menu_name='图书管理';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '图书管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),1,'book-mgmt','',1,0,'M','0','0','','book','admin',NOW(),'馆藏与借阅：图书信息/借阅记录/轮播图' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书管理');
+SELECT '服务管理',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),1,'book-mgmt','',1,0,'M','0','0','','book','admin',NOW(),'服务管理：服务信息/报名管理/官网轮播' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='服务管理');
+UPDATE sys_menu SET menu_name='成员服务' WHERE menu_name='读者服务';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '读者服务',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),2,'reader-mgmt','',1,0,'M','0','0','','peoples','admin',NOW(),'读者业务：读者管理/登记/预约' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='读者服务');
+SELECT '成员服务',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),2,'reader-mgmt','',1,0,'M','0','0','','peoples','admin',NOW(),'成员服务：成员管理/活动预约' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='成员服务');
+UPDATE sys_menu SET menu_name='合作经营' WHERE menu_name='经营管理';
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '经营管理',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),3,'ops','',1,0,'M','0','0','','shopping','admin',NOW(),'经营业务：订单/荐购/统计' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='经营管理');
+SELECT '合作经营',(SELECT menu_id FROM sys_menu WHERE menu_name='官网运营'),3,'ops','',1,0,'M','0','0','','shopping','admin',NOW(),'合作经营：入驻申请' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='合作经营');
 
--- 2) 原 9 个子菜单改挂新目录（按 menu_name 定位；重复执行结果相同，天然幂等）
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='图书管理') tmp), order_num=1 WHERE menu_name='图书信息';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='图书管理') tmp), order_num=2 WHERE menu_name='借阅记录';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='图书管理') tmp), order_num=3 WHERE menu_name='轮播图管理';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='读者服务') tmp), order_num=1 WHERE menu_name='读者管理';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='读者服务') tmp), order_num=2 WHERE menu_name='读者登记';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='读者服务') tmp), order_num=3 WHERE menu_name='预约管理';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='经营管理') tmp), order_num=1 WHERE menu_name='订单管理';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='经营管理') tmp), order_num=2 WHERE menu_name='荐购管理';
-UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='经营管理') tmp), order_num=3 WHERE menu_name='借阅统计';
+-- 2) 子菜单改挂新目录（按 menu_name 定位；重复执行结果相同，天然幂等）
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='服务管理') tmp), order_num=1 WHERE menu_name='服务信息';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='服务管理') tmp), order_num=2 WHERE menu_name='报名管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='服务管理') tmp), order_num=3 WHERE menu_name='官网轮播';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='成员服务') tmp), order_num=1 WHERE menu_name='成员管理';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='成员服务') tmp), order_num=2 WHERE menu_name='活动预约';
+UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='合作经营') tmp), order_num=1 WHERE menu_name='入驻申请';
 
 -- ============================================
--- 回收站（幂等）：防止管理员误删图书/读者，删除时快照进回收站表，支持还原/彻底删除
+-- 回收站（幂等）：防止管理员误删服务/成员，删除时快照进回收站表，支持还原/彻底删除
 -- 结构 = 原表字段 + deleted_by/deleted_time；还原优先保原主键（被占用则自动换新）
+-- 注意：仅建表，不插菜单（回收站菜单在存量库由 upgrade 脚本停用）
 -- ============================================
 CREATE TABLE IF NOT EXISTS `book_recycle` (
   `recycle_id` bigint NOT NULL AUTO_INCREMENT COMMENT '回收站ID',
-  `book_id` bigint DEFAULT NULL COMMENT '原图书ID',
-  `book_name` varchar(100) NOT NULL COMMENT '图书名称',
-  `author` varchar(50) DEFAULT NULL COMMENT '作者',
-  `book_type` varchar(10) DEFAULT NULL COMMENT '图书类型(字典:book_type)',
-  `publisher` varchar(100) DEFAULT NULL COMMENT '出版社',
-  `price` decimal(10,2) DEFAULT NULL COMMENT '价格(元)',
-  `publish_date` date DEFAULT NULL COMMENT '出版日期',
-  `stock` int DEFAULT '0' COMMENT '库存数量',
-  `status` char(1) DEFAULT '0' COMMENT '状态(0在架 1下架)',
+  `book_id` bigint DEFAULT NULL COMMENT '原服务ID',
+  `book_name` varchar(100) NOT NULL COMMENT '服务名称',
+  `author` varchar(50) DEFAULT NULL COMMENT '主办方',
+  `book_type` varchar(10) DEFAULT NULL COMMENT '服务分类(字典:book_type)',
+  `publisher` varchar(100) DEFAULT NULL COMMENT '合作机构',
+  `price` decimal(10,2) DEFAULT NULL COMMENT '费用(元)',
+  `publish_date` date DEFAULT NULL COMMENT '上线时间',
+  `stock` int DEFAULT '0' COMMENT '剩余名额',
+  `status` char(1) DEFAULT '0' COMMENT '状态(0招募中 1已结束)',
   `cover` varchar(255) DEFAULT NULL COMMENT '封面图片',
-  `isbn` varchar(20) DEFAULT NULL COMMENT 'ISBN书号',
-  `intro` varchar(1000) DEFAULT NULL COMMENT '图书简介',
+  `isbn` varchar(20) DEFAULT NULL COMMENT '服务编号',
+  `intro` varchar(1000) DEFAULT NULL COMMENT '服务介绍',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -477,16 +531,16 @@ CREATE TABLE IF NOT EXISTS `book_recycle` (
   `deleted_time` datetime DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`recycle_id`),
   KEY `idx_book_recycle_name` (`book_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='图书回收站';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='服务回收站';
 
 CREATE TABLE IF NOT EXISTS `reader_recycle` (
   `recycle_id` bigint NOT NULL AUTO_INCREMENT COMMENT '回收站ID',
-  `reader_id` bigint DEFAULT NULL COMMENT '原读者ID',
-  `reader_name` varchar(50) NOT NULL COMMENT '读者姓名',
+  `reader_id` bigint DEFAULT NULL COMMENT '原成员ID',
+  `reader_name` varchar(50) NOT NULL COMMENT '成员姓名',
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号码',
   `email` varchar(50) DEFAULT NULL COMMENT '电子邮箱',
-  `card_no` varchar(30) DEFAULT NULL COMMENT '借书证号',
-  `reader_type` varchar(10) DEFAULT NULL COMMENT '读者类型',
+  `card_no` varchar(30) DEFAULT NULL COMMENT '成员证号',
+  `reader_type` varchar(10) DEFAULT NULL COMMENT '成员类型',
   `sex` char(1) DEFAULT '0' COMMENT '性别(0男 1女 2未知)',
   `birth_date` date DEFAULT NULL COMMENT '出生日期',
   `status` char(1) DEFAULT '0' COMMENT '状态(0正常 1停用)',
@@ -499,15 +553,7 @@ CREATE TABLE IF NOT EXISTS `reader_recycle` (
   `deleted_time` datetime DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`recycle_id`),
   KEY `idx_reader_recycle_name` (`reader_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='读者回收站';
-
--- 回收站菜单（图书业务下第 4 个目录）
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '回收站',(SELECT menu_id FROM sys_menu WHERE menu_name='图书业务'),4,'recycle','',1,0,'M','0','0','','delete','admin',NOW(),'误删数据恢复' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='回收站');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '图书回收站',(SELECT menu_id FROM sys_menu WHERE menu_name='回收站'),1,'book','system/recycle/book',1,0,'C','0','0','system:recycle:book:list','book','admin',NOW(),'误删图书恢复' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='图书回收站');
-INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '读者回收站',(SELECT menu_id FROM sys_menu WHERE menu_name='回收站'),2,'reader','system/recycle/reader',1,0,'C','0','0','system:recycle:reader:list','peoples','admin',NOW(),'误删读者恢复' WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='读者回收站');
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='成员回收站';
 
 -- ---------- 幂等补索引：shop_order 订单号唯一（README 承诺的唯一约束，老库补齐） ----------
 SET @so1 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='shop_order' AND index_name='uk_order_no');

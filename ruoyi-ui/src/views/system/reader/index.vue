@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="读者姓名" prop="readerName">
+      <el-form-item label="成员姓名" prop="readerName">
         <el-input
           v-model="queryParams.readerName"
-          placeholder="请输入读者姓名"
+          placeholder="请输入成员姓名"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -17,10 +17,10 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="借书证号" prop="cardNo">
+      <el-form-item label="成员编号" prop="cardNo">
         <el-input
           v-model="queryParams.cardNo"
-          placeholder="请输入借书证号"
+          placeholder="请输入成员编号"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -97,12 +97,12 @@
 
     <el-table v-loading="loading" :data="readerList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="读者ID" align="center" prop="readerId" />
-      <el-table-column label="读者姓名" align="center" prop="readerName" />
+      <el-table-column label="成员ID" align="center" prop="readerId" />
+      <el-table-column label="成员姓名" align="center" prop="readerName" />
       <el-table-column label="手机号码" align="center" prop="phone" />
       <el-table-column label="电子邮箱" align="center" prop="email" min-width="160" />
-      <el-table-column label="借书证号" align="center" prop="cardNo" />
-      <el-table-column label="读者类型" align="center" prop="readerType" width="80">
+      <el-table-column label="成员编号" align="center" prop="cardNo" />
+      <el-table-column label="成员类型" align="center" prop="readerType" width="80">
         <template slot-scope="scope">
           <dict-tag :options="readerTypeOptions" :value="scope.row.readerType" />
         </template>
@@ -126,14 +126,14 @@
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)" v-hasPermi="['system:borrow:list']">借阅记录</el-button>
+          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)" v-hasPermi="['system:borrow:list']">报名记录</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-refresh"
             @click="handleReissue(scope.row)"
             v-hasPermi="['system:reader:edit']"
-          >补办</el-button>
+          >重发编号</el-button>
           <el-button
             size="mini"
             type="text"
@@ -161,10 +161,10 @@
     />
 
     <!-- 批量导入对话框 -->
-    <el-dialog title="批量导入读者" :visible.sync="importOpen" width="560px" append-to-body>
+    <el-dialog title="批量导入成员" :visible.sync="importOpen" width="560px" append-to-body>
       <div class="import-tip">
         <p>① 先<a class="import-link" @click="downloadTemplate">下载导入模板</a>，按表头填写数据（姓名/手机号/电子邮箱必填）</p>
-        <p>② 借书证号留空将自动生成；证号已存在、类型不在字典内、邮箱缺失/格式错的行会跳过并提示</p>
+        <p>② 成员编号留空将自动生成；编号已存在、类型不在字典内、邮箱缺失/格式错的行会跳过并提示</p>
       </div>
       <el-upload
         :action="importUrl"
@@ -189,13 +189,13 @@
       </div>
     </el-dialog>
 
-    <!-- 添加或修改读者管理对话框 -->
+    <!-- 添加或修改成员管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="读者姓名" prop="readerName">
-              <el-input v-model="form.readerName" placeholder="请输入读者姓名" />
+            <el-form-item label="成员姓名" prop="readerName">
+              <el-input v-model="form.readerName" placeholder="请输入成员姓名" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -205,17 +205,17 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="电子邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="用于接收借阅/预约邮件通知" />
+              <el-input v-model="form.email" placeholder="用于接收报名/候补邮件通知" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="借书证号" prop="cardNo">
+            <el-form-item label="成员编号" prop="cardNo">
               <el-input v-model="form.cardNo" placeholder="留空则自动生成" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="读者类型" prop="readerType">
-              <el-select v-model="form.readerType" placeholder="请选择读者类型" style="width:100%">
+            <el-form-item label="成员类型" prop="readerType">
+              <el-select v-model="form.readerType" placeholder="请选择成员类型" style="width:100%">
                 <el-option
                   v-for="dict in readerTypeOptions"
                   :key="dict.dictValue"
@@ -277,7 +277,7 @@ export default {
   name: "Reader",
   data() {
     return {
-      // 读者类型字典
+      // 成员类型字典
       readerTypeOptions: [],
       // 批量导入弹窗
       importOpen: false,
@@ -296,7 +296,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 读者管理表格数据
+      // 成员管理表格数据
       readerList: [],
       // 弹出层标题
       title: "",
@@ -319,7 +319,7 @@ export default {
       // 表单校验
       rules: {
         readerName: [
-          { required: true, message: "读者姓名不能为空", trigger: "blur" }
+          { required: true, message: "成员姓名不能为空", trigger: "blur" }
         ],
         phone: [
           { required: true, message: "手机号码不能为空", trigger: "blur" },
@@ -339,7 +339,7 @@ export default {
     this.getList()
   },
   methods: {
-    /** 查询读者管理列表 */
+    /** 查询成员管理列表 */
     getList() {
       this.loading = true
       listReader(this.queryParams).then(response => {
@@ -396,18 +396,18 @@ export default {
     handleAdd() {
       this.reset()
       this.open = true
-      this.title = "添加读者管理"
+      this.title = "添加成员管理"
     },
     /** 修改按钮操作 */
     handleBorrow(row) {
       this.$router.push({ path: '/business/book-mgmt/borrow', query: { readerId: row.readerId } })
     },
-    /** 挂失补办：生成新证号并恢复状态 */
+    /** 重发编号：生成新编号并恢复状态 */
     handleReissue(row) {
-      this.$modal.confirm('确认给《' + row.readerName + '》补办借书证吗？将生成新证号，旧证号作废').then(() => {
+      this.$modal.confirm('确认给《' + row.readerName + '》重发成员编号吗？将生成新编号，旧编号作废').then(() => {
         return reissueCard(row.readerId)
       }).then(res => {
-        this.$modal.msgSuccess('补办成功！新证号：' + res.data + '（旧证号已作废）')
+        this.$modal.msgSuccess('重发成功！新成员编号：' + res.data + '（旧编号已作废）')
         this.getList()
       }).catch(() => {})
     },
@@ -417,7 +417,7 @@ export default {
       getReader(readerId).then(response => {
         this.form = response.data
         this.open = true
-        this.title = "修改读者管理"
+        this.title = "修改成员管理"
       })
     },
     /** 提交按钮 */
@@ -443,7 +443,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const readerIds = row.readerId || this.ids
-      this.$modal.confirm('是否确认删除读者管理编号为"' + readerIds + '"的数据项？').then(function() {
+      this.$modal.confirm('是否确认删除成员管理编号为"' + readerIds + '"的数据项？').then(function() {
         return delReader(readerIds)
       }).then(() => {
         this.getList()

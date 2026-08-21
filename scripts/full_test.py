@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# ⚠️ 归档说明：本脚本面向改造前的"万事屋图书系统"种子数据（21 本书/证号 JS20260001-06 等），
+# 与 2026-08-21 官网改造后的种子不兼容（多数用例将失败）。
+# 官网改造后的冒烟测试请使用：python scripts/smoke_official.py（与新种子对齐，可重复执行）。
 import urllib.request, urllib.parse, json, subprocess
 import time
 

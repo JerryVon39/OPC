@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>万事屋 · 在线书店</title>
+<title>数智游民创新工场 · 清远 AI 一人公司生态社区</title>
 <style>
-  /* ================= 品牌色板（暖木书店调） ================= */
+  /* ================= 品牌色板（暖木绿金调） ================= */
   :root {
     --primary-dark: #24402f;   /* 深墨绿（导航） */
     --primary: #2f4f3e;        /* 墨绿主色 */
@@ -33,7 +33,7 @@
   .nav-search input { flex: 1; padding: 9px 14px; border: none; border-radius: 8px 0 0 8px; font-size: 14px; outline: none; }
   .nav-search button { padding: 9px 18px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; font-size: 14px; font-weight: bold; border-radius: 0 8px 8px 0; cursor: pointer; transition: filter .2s; }
   .nav-search button:hover { filter: brightness(1.08); }
-  /* 搜索联想下拉（像百度一样边打字边出书名） */
+  /* 搜索联想下拉（像百度一样边打字边出服务名） */
   .suggest-box { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border-radius: 0 0 10px 10px; box-shadow: 0 10px 24px rgba(20,35,28,0.28); z-index: 950; display: none; max-height: 340px; overflow-y: auto; text-align: left; }
   .suggest-item { padding: 9px 14px; font-size: 14px; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
   .suggest-item:last-child { border-bottom: none; }
@@ -78,7 +78,7 @@
   .banner-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: background .3s; }
   .banner-dots span.active { background: #fff; }
 
-  /* ================= 店铺数据条（实时统计四格） ================= */
+  /* ================= 社区数据条（实时统计三格） ================= */
   .shop-stats { max-width: 1200px; margin: 14px auto 0; padding: 0 20px; display: flex; gap: 12px; }
   .shop-stats .stat-item { flex: 1; background: var(--card); border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 3px 12px rgba(60,50,30,0.1); }
   .shop-stats .stat-num { font-size: 24px; font-weight: bold; color: var(--primary); display: block; line-height: 1.3; }
@@ -94,7 +94,7 @@
   .banner::before { left: 9%; }
   .banner::after { right: 9%; transform: translateY(-50%) rotate(14deg); background: linear-gradient(180deg, #6b8a76, #4a6b57); }
 
-  /* ================= 热门推荐（金/银/铜徽章） ================= */
+  /* ================= 热门服务（金/银/铜徽章） ================= */
   .hot-bar { max-width: 1200px; margin: 24px auto 0; padding: 0 20px; }
   .hot-bar .hot-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; padding-left: 10px; border-left: 4px solid var(--accent); }
   .hot-items { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -106,7 +106,7 @@
   .hot-item:nth-child(3) .rank { color: #c08a5a; }   /* 铜牌 */
   .hot-item .cnt { color: var(--text-light); margin-left: 6px; }
 
-  /* ================= 图书网格与卡片 ================= */
+  /* ================= 服务网格与卡片 ================= */
   .container { max-width: 1200px; margin: 24px auto 30px; padding: 0 20px; }
   .section-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid var(--accent); }
   #clearSearch { font-size: 13px; color: var(--accent-deep); margin-left: 12px; cursor: pointer; font-weight: normal; vertical-align: middle; }
@@ -117,16 +117,13 @@
   .sort-tabs a { padding: 4px 14px; border-radius: 16px; cursor: pointer; color: var(--text-light); background: #fff; border: 1px solid var(--line); transition: all .2s; }
   .sort-tabs a:hover { color: var(--primary); border-color: var(--primary-light); }
   .sort-tabs a.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
-  /* 无结果引导（含"申请荐购"） */
+  /* 无结果引导（含"入驻申请"） */
   .no-result { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-light); }
   .no-result .nr-icon { font-size: 56px; margin-bottom: 12px; }
   .no-result .nr-title { font-size: 18px; font-weight: bold; color: var(--text); margin-bottom: 6px; }
   .no-result .nr-desc { font-size: 14px; margin-bottom: 18px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
   .book-card { background: var(--card); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(60,50,30,0.05), 0 4px 14px rgba(60,50,30,0.06); transition: transform .25s, box-shadow .25s; cursor: pointer; position: relative; }
-  .fav-btn { position: absolute; top: 28px; right: 28px; z-index: 2; font-size: 17px; cursor: pointer; color: #b9b0a2; background: rgba(255,255,255,0.92); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.12); transition: all .2s; }
-  .fav-btn:hover { transform: scale(1.12); }
-  .fav-btn.fav-on { color: #e0524a; }
   .book-card:hover { transform: translateY(-6px); box-shadow: 0 8px 24px rgba(60,50,30,0.14); }
   .book-cover { height: 190px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 12px; overflow: hidden; background: #f2efe8; }
   .book-name { font-size: 17px; font-weight: bold; margin-bottom: 6px; }
@@ -188,36 +185,17 @@
   .related-price { font-size: 12px; color: var(--danger); font-weight: bold; }
   .related-empty { color: var(--text-light); font-size: 13px; padding: 8px 0; text-align: center; }
 
-  /* ================= 借阅/订单条目（状态色竖条卡片） ================= */
+  /* ================= 报名/候补条目（状态色竖条卡片） ================= */
   .borrow-item { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; background: #fff; transition: background .2s; }
   .borrow-item:hover { background: #faf7f0; }
   .days-left { font-weight: bold; }
   .days-danger { color: var(--danger); }
   .days-ok { color: var(--success); }
 
-  /* ================= 购物车条目（封面 + 圆形数量控件） ================= */
-  .cart-item { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; background: #fff; transition: background .2s; }
-  .cart-item:hover { background: #faf7f0; }
-  .cart-cover { width: 40px; height: 54px; border-radius: 4px; overflow: hidden; background: #f2efe8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .cart-cover img { height: 100%; width: auto; max-width: 100%; }
-  .cart-info { flex: 1; min-width: 0; }
-  .cart-name { font-weight: bold; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cart-price { color: var(--text-light); font-size: 12px; margin-top: 2px; }
-  .cart-qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 14px; color: var(--primary); display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
-  .cart-qty-btn:hover { border-color: var(--accent); color: var(--accent-deep); }
-  .cart-qty-num { display: inline-block; min-width: 26px; text-align: center; font-weight: bold; border: 1px solid var(--line); border-radius: 6px; padding: 2px 0; font-size: 12px; }
-  .cart-remove { color: #c0b7a6; cursor: pointer; font-size: 14px; padding: 4px; border-radius: 50%; transition: all .15s; flex-shrink: 0; }
-  .cart-remove:hover { color: var(--danger); background: #fdf0ec; }
-  .cart-total-bar { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; margin: 4px 0 12px; }
-
   /* ================= 空状态 ================= */
   .empty-state { text-align: center; padding: 26px 0 14px; color: #b9b0a2; }
   .empty-state .empty-icon { font-size: 42px; display: block; margin-bottom: 8px; }
   .empty-state .empty-text { font-size: 13px; }
-
-  /* ================= 收藏爱心弹跳 ================= */
-  @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1); } }
-  .fav-btn.fav-on { animation: heartPop .35s ease; }
 
   /* ================= 加载骨架屏 ================= */
   .skeleton-card { cursor: default; pointer-events: none; }
@@ -284,49 +262,91 @@
     .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .footer-cols { grid-template-columns: 1fr; gap: 16px; }
   }
+  /* ================= 服务区块导航 Tab（分类/排序移入服务项目区块头部） ================= */
+  .type-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .type-tabs a { padding: 5px 16px; border-radius: 16px; cursor: pointer; color: var(--text-light); background: #fff; border: 1px solid var(--line); font-size: 13px; transition: all .2s; }
+  .type-tabs a:hover { color: var(--primary); border-color: var(--primary-light); }
+  .type-tabs a.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: bold; }
+
+  /* ================= 锚点区块（吸顶导航下方预留高度） ================= */
+  section[id] { scroll-margin-top: 70px; }
+
+  /* ================= 新闻动态 #news ================= */
+  .news-list { display: grid; gap: 12px; }
+  .news-card { background: var(--card); border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(60,50,30,0.05), 0 4px 14px rgba(60,50,30,0.06); cursor: pointer; border-left: 4px solid var(--accent); transition: transform .2s, box-shadow .2s; }
+  .news-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(60,50,30,0.13); }
+  .news-card .news-title { font-size: 16px; font-weight: bold; color: var(--text); margin-bottom: 4px; }
+  .news-card .news-date { font-size: 12px; color: var(--text-light); margin-bottom: 6px; }
+  .news-card .news-summary { font-size: 13px; color: #666; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ================= 关于我们 #about ================= */
+  .about-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .about-card { background: var(--card); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(60,50,30,0.05), 0 4px 14px rgba(60,50,30,0.06); }
+  .about-card .about-icon { font-size: 26px; margin-bottom: 8px; }
+  .about-card .about-title { font-size: 15px; font-weight: bold; color: var(--primary); margin-bottom: 8px; }
+  .about-card p { font-size: 13px; color: #666; line-height: 1.8; }
+
+  /* ================= 联系我们 #contact ================= */
+  .contact-list { display: grid; gap: 12px; max-width: 640px; }
+  .contact-item { background: var(--card); border-radius: 12px; padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 1px 3px rgba(60,50,30,0.05), 0 4px 14px rgba(60,50,30,0.06); }
+  .contact-item .c-icon { font-size: 20px; }
+  .contact-item .c-label { font-size: 12px; color: var(--text-light); }
+  .contact-item .c-value { font-size: 14px; color: var(--text); }
+
+  /* ================= 手机版适配：新增区块（沿用现有 ≤768px 媒体查询模式） ================= */
+  @media (max-width: 768px) {
+    .about-cards { grid-template-columns: 1fr; gap: 12px; }
+    .about-card { padding: 14px; }
+    .news-card { padding: 12px 14px; }
+    .news-card .news-title { font-size: 14px; }
+    .contact-list { max-width: none; }
+    .contact-item { padding: 12px 14px; }
+  }
 </style>
 </head>
 <body>
-  <!-- 顶部导航 -->
+  <!-- 顶部导航（锚点 + 搜索 + 我的报名 + 登录区 + "更多"下拉） -->
   <div class="navbar">
-    <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部图书">万事<span>屋</span></div>
+    <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部服务">数智游民<span>创新工场</span></div>
+    <div class="nav-links" id="navAnchors">
+      <a data-target="home" class="active">首页</a>
+      <a data-target="services">服务项目</a>
+      <a data-target="news">新闻动态</a>
+      <a data-target="about">关于我们</a>
+      <a data-target="contact">联系我们</a>
+    </div>
     <div class="nav-search">
-      <input id="searchInput" placeholder="搜索书名 / 作者 / ISBN" autocomplete="off" onkeydown="onSearchKeyDown(event)" />
+      <input id="searchInput" placeholder="搜索服务 / 主办方 / 服务编号" autocomplete="off" onkeydown="onSearchKeyDown(event)" />
       <button onclick="loadBooks()">搜索</button>
       <div id="suggestBox" class="suggest-box"></div>
     </div>
-    <div class="nav-links" id="typeTabs">
-      <a class="active" data-type="" onclick="switchType(this)">全部</a>
-    </div>
     <div class="nav-right">
-      <span onclick="openMyBorrow()" title="我的借阅">📖 我的借阅</span>
+      <span onclick="openMyBorrow()" title="我的报名">📋 我的报名</span>
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
-      <span id="cartArea" style="cursor:pointer" onclick="openCart()">🛒 购物车 (0)</span>
       <div class="nav-more" id="navMore">
         <span class="more-trigger" onclick="toggleMoreMenu(event)">☰ 更多</span>
         <div class="more-menu" id="moreMenu">
-          <div class="more-item" id="registerEntry" onclick="openRegister()">📝 读者登记</div>
-          <div class="more-item" onclick="openReissue()">🪪 补办证号</div>
-          <div class="more-item" onclick="openMyReserves()">📌 预约</div>
-          <div class="more-item" onclick="openFavs()">❤️ 收藏</div>
-          <div class="more-item" onclick="openMyOrders()">📦 我的订单</div>
+          <div class="more-item" id="registerEntry" onclick="openRegister()">📝 成员注册</div>
+          <div class="more-item" onclick="openMyReserves()">📌 活动候补</div>
+          <div class="more-item" onclick="openMyBorrow()">📋 我的报名</div>
+          <div class="more-item" onclick="openPurchase()">🏢 入驻申请</div>
           <div class="more-item" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 公告横幅（可关闭） -->
+  <!-- 新闻跑马灯（可关闭，滚动播放最新动态） -->
   <div class="notice-bar" id="noticeBar" style="display:none" onclick="openNoticeDetail(event)">
-    <span class="n-title">📢 公告</span>
+    <span class="n-title">📢 新闻</span>
     <span id="noticeText">加载中…</span>
     <span class="notice-close" onclick="event.stopPropagation();closeNotice()">✕</span>
   </div>
 
-  <!-- 公告详情弹窗 -->
+  <!-- 新闻详情弹窗 -->
   <div id="noticeDetailModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3>📢 公告详情</h3>
+      <h3 id="noticeDetailTitle">📰 新闻详情</h3>
       <div id="noticeDetailText" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap"></div>
       <div class="modal-btns">
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('noticeDetailModal')">关闭</button>
@@ -334,139 +354,167 @@
     </div>
   </div>
 
-  <!-- 横幅（轮播，内容由后台"轮播图管理"动态加载） -->
-  <div class="banner">
-    <div id="bannerSlides"></div>
-    <div class="banner-dots" id="bannerDots"></div>
-  </div>
+  <!-- ================= 首屏 #home：轮播 + 数据条 ================= -->
+  <section id="home">
+    <!-- 横幅（轮播，内容由后台"轮播图管理"动态加载） -->
+    <div class="banner">
+      <div id="bannerSlides"></div>
+      <div class="banner-dots" id="bannerDots"></div>
+    </div>
 
-  <!-- 店铺数据条（实时统计） -->
-  <div class="shop-stats" id="shopStats" style="display:none">
-    <div class="stat-item"><span class="stat-num" id="stBooks">0</span><span class="stat-label">馆藏图书</span></div>
-    <div class="stat-item"><span class="stat-num" id="stReaders">0</span><span class="stat-label">注册读者</span></div>
-    <div class="stat-item"><span class="stat-num" id="stBorrowToday">0</span><span class="stat-label">今日借出</span></div>
-    <div class="stat-item"><span class="stat-num" id="stOrderToday">0</span><span class="stat-label">今日订单</span></div>
-  </div>
+    <!-- 社区数据条（实时统计三格） -->
+    <div class="shop-stats" id="shopStats" style="display:none">
+      <div class="stat-item"><span class="stat-num" id="stBooks">0</span><span class="stat-label">服务总数</span></div>
+      <div class="stat-item"><span class="stat-num" id="stReaders">0</span><span class="stat-label">社区成员</span></div>
+      <div class="stat-item"><span class="stat-num" id="stBorrowToday">0</span><span class="stat-label">今日报名</span></div>
+    </div>
+  </section>
 
-  <!-- 热门推荐 -->
-  <div class="hot-bar" id="hotBar" style="display:none">
-    <div class="hot-title">🔥 热门推荐</div>
-    <div class="hot-items" id="hotItems"></div>
-  </div>
+  <!-- ================= 服务项目 #services：热门服务 + 分类/排序 Tab + 服务网格 ================= -->
+  <section id="services">
+    <!-- 热门服务 -->
+    <div class="hot-bar" id="hotBar" style="display:none">
+      <div class="hot-title">🔥 热门服务</div>
+      <div class="hot-items" id="hotItems"></div>
+    </div>
 
-  <!-- 图书列表 -->
-  <div class="container">
-    <div class="section-head">
-      <div class="section-title" id="listTitle">全部图书 <a id="clearSearch" style="display:none" onclick="resetAll()">✕ 清除筛选</a></div>
-      <div class="sort-tabs" id="sortTabs">
-        <a class="active" data-sort="" onclick="switchSort(this)">综合</a>
-        <a data-sort="borrowCount" data-asc="desc" onclick="switchSort(this)">借阅最多</a>
-        <a data-sort="publishDate" data-asc="desc" onclick="switchSort(this)">最新出版</a>
+    <!-- 服务列表 -->
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title" id="listTitle">全部服务 <a id="clearSearch" style="display:none" onclick="resetAll()">✕ 清除筛选</a></div>
+        <div class="sort-tabs" id="sortTabs">
+          <a class="active" data-sort="" onclick="switchSort(this)">综合</a>
+          <a data-sort="borrowCount" data-asc="desc" onclick="switchSort(this)">报名最多</a>
+          <a data-sort="publishDate" data-asc="desc" onclick="switchSort(this)">最新上线</a>
+        </div>
+      </div>
+      <!-- 分类 Tab（由后台字典 book_type 动态加载） -->
+      <div class="type-tabs" id="typeTabs">
+        <a class="active" data-type="" onclick="switchType(this)">全部</a>
+      </div>
+      <div id="bookGrid" class="grid"></div>
+    </div>
+  </section>
+
+  <!-- ================= 新闻动态 #news ================= -->
+  <section id="news" class="container">
+    <div class="section-title">📰 新闻动态</div>
+    <div id="newsList" class="news-list"><div class="loading">加载中…</div></div>
+  </section>
+
+  <!-- ================= 关于我们 #about（静态区块） ================= -->
+  <section id="about" class="container">
+    <div class="section-title">🏭 关于我们</div>
+    <div class="about-cards">
+      <div class="about-card">
+        <div class="about-icon">📍</div>
+        <div class="about-title">社区定位</div>
+        <p>清远市首个 AI 一人公司（One Person Company）生态社区，聚集"一个人 + AI"的数字游民与小微创业者，让个人也能轻松开办一家公司。</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🎯</div>
+        <div class="about-title">愿景与使命</div>
+        <p>支持每一位"一个人 + AI"的创业者，用更低的启动成本、更快的交付速度，把创意变成可持续的事业。</p>
+      </div>
+      <div class="about-card">
+        <div class="about-icon">🧭</div>
+        <div class="about-title">四大核心支持</div>
+        <p>AI 技能课程 ｜ 共享工位与办公空间 ｜ 创业孵化服务 ｜ 政策申报对接，从 0 到 1 全程陪跑。</p>
       </div>
     </div>
-    <div id="bookGrid" class="grid"></div>
-  </div>
+  </section>
 
-  <!-- 页脚 -->
+  <!-- ================= 联系我们 #contact（静态区块） ================= -->
+  <section id="contact" class="container">
+    <div class="section-title">📮 联系我们</div>
+    <div class="contact-list">
+      <div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">广东省清远市 XX 区 XX 路（占位）</div></div></div>
+      <div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-XXXXXXX（占位）</div></div></div>
+      <div class="contact-item"><span class="c-icon">📧</span><div><div class="c-label">邮箱</div><div class="c-value">contact@example.com（占位）</div></div></div>
+    </div>
+  </section>
+
+  <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
       <div class="footer-col">
-        <h4>🏪 关于万事屋</h4>
-        <p>基于 RuoYi-Vue 二次开发的图书管理系统学习项目<br>前台自助 · 后台管理 · 数据同源</p>
+        <h4>🏭 关于我们</h4>
+        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>让"一个人 + AI"成为可能</p>
       </div>
       <div class="footer-col">
-        <h4>📖 借阅规则</h4>
-        <p>借期 30 天 · 可续借 1 次<br>逾期请尽快归还，还书请到服务台</p>
+        <h4>📮 联系我们</h4>
+        <p>地址：广东省清远市 XX 区 XX 路（占位）<br>电话：0763-XXXXXXX（占位）<br>邮箱：contact@example.com（占位）</p>
       </div>
       <div class="footer-col">
-        <h4>🕐 服务时间</h4>
-        <p>周一至周日 9:00 - 21:00<br>节假日正常营业</p>
+        <h4>🤝 入驻与合作</h4>
+        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>商务合作请联系 contact@example.com（占位）</p>
       </div>
     </div>
-    <div class="footer-bottom">© <span id="footerYear">2026</span> 万事屋 · 前端界面与后台管理共用同一数据库</div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-  <!-- 图书详情弹窗 -->
+  <!-- 服务详情弹窗 -->
   <div id="detailModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3 id="detailName">图书详情</h3>
+      <h3 id="detailName">服务详情</h3>
       <div class="detail-cover" id="detailCover">📕</div>
       <div class="detail-section-title">基本信息</div>
-      <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor"></span></div>
-      <div class="detail-row"><span class="d-label">类型</span><span class="d-value" id="detailType"></span></div>
-      <div class="detail-row"><span class="d-label">出版社</span><span class="d-value" id="detailPublisher"></span></div>
-      <div class="detail-row"><span class="d-label">出版日期</span><span class="d-value" id="detailDate"></span></div>
-      <div class="detail-row"><span class="d-label">价格</span><span class="d-value" id="detailPrice"></span></div>
-      <div class="detail-row"><span class="d-label">库存</span><span class="d-value" id="detailStock"></span></div>
+      <div class="detail-row"><span class="d-label">主办方</span><span class="d-value" id="detailAuthor"></span></div>
+      <div class="detail-row"><span class="d-label">分类</span><span class="d-value" id="detailType"></span></div>
+      <div class="detail-row"><span class="d-label">合作机构</span><span class="d-value" id="detailPublisher"></span></div>
+      <div class="detail-row"><span class="d-label">上线时间</span><span class="d-value" id="detailDate"></span></div>
+      <div class="detail-row"><span class="d-label">费用</span><span class="d-value" id="detailPrice"></span></div>
+      <div class="detail-row"><span class="d-label">剩余名额</span><span class="d-value" id="detailStock"></span></div>
       <div class="detail-row"><span class="d-label">状态</span><span class="d-value" id="detailStatus"></span></div>
-      <div class="detail-row"><span class="d-label">ISBN</span><span class="d-value" id="detailIsbn"></span></div>
+      <div class="detail-row"><span class="d-label">服务编号</span><span class="d-value" id="detailIsbn"></span></div>
       <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
-      <div class="detail-section-title">内容简介</div>
+      <div class="detail-section-title">服务介绍</div>
       <div class="detail-intro" id="detailIntro">—</div>
-      <div class="detail-section-title">同类好书</div>
+      <div class="detail-section-title">相关服务</div>
       <div id="relatedBooks" class="related-grid"><div class="related-empty">加载中…</div></div>
       <div class="modal-btns">
-        <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">借阅</button>
-        <button class="btn-buy" style="background:#8a6d3b;display:none" onclick="detailReserve()" id="detailReserveBtn">📌 预约</button>
-        <button class="btn-buy" onclick="detailAddCart()" id="detailCartBtn" style="display:none">加入购物车</button>
+        <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">报名</button>
+        <button class="btn-buy" style="background:#8a6d3b;display:none" onclick="detailReserve()" id="detailReserveBtn">📌 候补</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
       </div>
     </div>
   </div>
 
-  <!-- 购物车弹窗 -->
-  <div id="cartModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>🛒 购物车</h3>
-      <p class="empty-state" id="cartEmpty" style="display:none"><span class="empty-icon">🛒</span><span class="empty-text">购物车是空的，去挑选几本好书吧</span></p>
-      <div id="cartItems" style="margin-bottom:4px"></div>
-      <div class="cart-total-bar">
-        <span style="color:#999;font-size:13px" id="cartCount">共 0 件</span>
-        <span style="font-weight:bold">合计：<span style="color:#c65d43;font-size:20px" id="cartTotal">¥0</span></span>
-      </div>
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="checkout()">结算</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('cartModal')">关闭</button>
-      </div>
-      <div id="cartMsg" class="modal-msg"></div>
-    </div>
-  </div>
-
-  <!-- 读者登记弹窗 -->
+  <!-- 成员注册弹窗 -->
   <div id="regModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3>📝 读者登记</h3>
-      <p class="modal-tip">登记后可在本店借阅图书</p>
-      <input id="regName" class="modal-input" placeholder="👤 读者姓名" />
+      <h3>📝 成员注册</h3>
+      <p class="modal-tip">注册后自动生成成员编号，凭编号登录并报名服务</p>
+      <input id="regName" class="modal-input" placeholder="👤 成员姓名" />
       <input id="regPhone" class="modal-input" placeholder="📱 手机号码" />
-      <input id="regEmail" class="modal-input" placeholder="📧 电子邮箱（必填，用于接收借阅/预约通知）" />
+      <input id="regEmail" class="modal-input" placeholder="📧 电子邮箱（必填，用于接收报名/候补通知）" />
       <select id="regType" class="modal-input">
-        <option value="">请选择读者类型</option>
-        <option value="1">学生</option>
-        <option value="2">教师</option>
-        <option value="3">普通读者</option>
+        <option value="">请选择成员类型</option>
+        <option value="1">个人主理人</option>
+        <option value="2">团队</option>
+        <option value="3">企业</option>
       </select>
       <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
       <div class="modal-btns">
-        <button class="btn-buy" onclick="submitRegister()">提交登记</button>
+        <button class="btn-buy" onclick="submitRegister()">提交注册</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('regModal')">取消</button>
       </div>
       <div id="regMsg" class="modal-msg"></div>
     </div>
   </div>
 
-  <!-- 我的借阅弹窗 -->
+  <!-- 我的报名弹窗 -->
   <div id="borrowModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3>📖 我的借阅</h3>
-      <p class="modal-tip">登录后自动显示；未登录请输入借书证号查询</p>
-      <input id="qCardNo" class="modal-input" placeholder="🎫 借书证号（如 JS12345678）" />
+      <h3>📋 我的报名</h3>
+      <p class="modal-tip">登录后自动显示；未登录请输入成员编号查询</p>
+      <input id="qCardNo" class="modal-input" placeholder="🎫 成员编号（如 JS12345678）" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="queryMyBorrow()">查询</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('borrowModal')">关闭</button>
       </div>
       <div id="borrowResult" style="margin-top:14px"></div>
-      <!-- 我的信息：登录态显示，可修改手机号 -->
+      <!-- 我的信息：登录态显示，可修改手机号/邮箱 -->
       <div id="myInfoArea" style="display:none;margin-top:14px;border-top:1px solid #efe9dd;padding-top:12px">
         <div style="font-weight:bold;margin-bottom:8px">📱 我的信息</div>
         <input id="myPhone" class="modal-input" placeholder="📱 修改手机号码" />
@@ -477,27 +525,13 @@
     </div>
   </div>
 
-  <!-- 我的订单弹窗 -->
-  <div id="orderModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>📦 我的订单</h3>
-      <p class="modal-tip">登录后自动显示；未登录请输入借书证号</p>
-      <input id="qOrderCard" class="modal-input" placeholder="🎫 借书证号" />
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="queryMyOrders()">查询</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('orderModal')">关闭</button>
-      </div>
-      <div id="orderResult" style="margin-top:14px"></div>
-    </div>
-  </div>
-
   <!-- 登录弹窗 -->
   <div id="loginModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3>👤 读者登录</h3>
-      <p class="modal-tip">使用登记时填写的姓名与借书证号登录，登录后可一键借书、购书</p>
-      <input id="loginName" class="modal-input" placeholder="👤 读者姓名" />
-      <input id="loginCard" class="modal-input" placeholder="🎫 借书证号" />
+      <h3>👤 成员登录</h3>
+      <p class="modal-tip">使用注册时填写的姓名与成员编号登录，登录后可一键报名、提交候补</p>
+      <input id="loginName" class="modal-input" placeholder="👤 成员姓名" />
+      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitLogin()">登 录</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('loginModal')">取消</button>
@@ -506,27 +540,12 @@
     </div>
   </div>
 
-  <!-- 补办借书证弹窗 -->
-  <div id="reissueModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>🪪 补办借书证</h3>
-      <p class="modal-tip">借书证遗失可在线上补办，生成新证号（旧证号立即作废）</p>
-      <input id="reissueName" class="modal-input" placeholder="👤 读者姓名" />
-      <input id="reissuePhone" class="modal-input" placeholder="📱 登记手机号" />
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="applyReissue()">申请补办</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('reissueModal')">取消</button>
-      </div>
-      <div id="reissueMsg" class="modal-msg"></div>
-    </div>
-  </div>
-
-  <!-- 我的预约弹窗 -->
+  <!-- 活动候补弹窗 -->
   <div id="reserveModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3>📌 我的预约</h3>
-      <p class="modal-tip">登录后自动显示；未登录请输入借书证号查询</p>
-      <input id="qReserveCard" class="modal-input" placeholder="🎫 借书证号" />
+      <h3>📌 活动候补</h3>
+      <p class="modal-tip">登录后自动显示；未登录请输入成员编号查询</p>
+      <input id="qReserveCard" class="modal-input" placeholder="🎫 成员编号" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="queryMyReserves()">查询</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('reserveModal')">关闭</button>
@@ -535,27 +554,15 @@
     </div>
   </div>
 
-  <!-- 我的收藏弹窗 -->
-  <div id="favModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>❤️ 我的收藏</h3>
-      <p class="modal-tip">收藏的图书（保存在当前浏览器）</p>
-      <div id="favResult"></div>
-      <div class="modal-btns">
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('favModal')">关闭</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 申请荐购弹窗（搜索无结果引导入口） -->
+  <!-- 入驻申请弹窗（搜索无结果引导入口 / "更多"下拉） -->
   <div id="purchaseModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3>📝 申请荐购</h3>
-      <p class="modal-tip">告诉我们你想看的书，采购后会尽快上架</p>
-      <input id="pBookName" class="modal-input" placeholder="📖 书名（必填）" />
-      <input id="pAuthor" class="modal-input" placeholder="✍️ 作者（选填）" />
+      <h3>🏢 入驻申请</h3>
+      <p class="modal-tip">欢迎 AI 数字服务 / 创意设计 / 本地生活与创业团队入驻，提交后运营团队将尽快与您联系</p>
+      <input id="pBookName" class="modal-input" placeholder="🏢 项目/组织名称（必填）" />
+      <input id="pAuthor" class="modal-input" placeholder="✍️ 联系人（选填）" />
       <input id="pEmail" class="modal-input" placeholder="📧 电子邮箱（必填，处理结果将邮件通知）" />
-      <textarea id="pRemark" class="modal-input" rows="2" placeholder="备注：出版社 / 版次 / 想看的理由（选填）" style="height:auto"></textarea>
+      <textarea id="pRemark" class="modal-input" rows="2" placeholder="申请说明：项目简介 / 服务内容 / 合作需求（选填）" style="height:auto"></textarea>
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitPurchase()">提交申请</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('purchaseModal')">取消</button>
@@ -575,13 +582,8 @@
   const LOGIN_API = '/prod-api/system/reader/login';
   const BORROW_API = '/prod-api/system/borrow/borrowByCard';
   const CARD_API = '/prod-api/system/borrow/queryByCard';
-  const ORDER_CREATE = '/prod-api/system/order/create';
-  const ORDER_QUERY = '/prod-api/system/order/queryByCard';
-  const ORDER_CANCEL = '/prod-api/system/order/cancelByCard';
-  const RENEW_API = '/prod-api/system/borrow/renewByCard';
   const CONFIG_API = '/prod-api/system/config/configKey/book.stock.warn';
   const MYINFO_API = '/prod-api/system/reader/updateMyInfo';
-  const REISSUE_API = '/prod-api/system/reader/applyReissue';
   const RESERVE_API = '/prod-api/system/reserve/add';
   const MY_RESERVE_API = '/prod-api/system/reserve/myList';
   const RESERVE_CANCEL = '/prod-api/system/reserve/cancel';
@@ -596,29 +598,26 @@
 
   // ===== 字典翻译（分类由后台字典动态加载）=====
   let TYPE_MAP = {};
-  const STATUS_MAP = { '0': '在售', '1': '已下架' };
-  const BORROW_STATUS = { '0': '借出中', '1': '已归还', '2': '已逾期' };
-  const ORDER_STATUS = { '0': '待付款', '1': '已完成', '2': '已取消', '3': '已收款' };
-  const RESERVE_STATUS = { '0': '预约中', '1': '可借', '2': '已完成', '3': '已取消' };
+  const STATUS_MAP = { '0': '招募中', '1': '已结束' };
+  const BORROW_STATUS = { '0': '进行中', '1': '已完成', '2': '已截止' };
+  const RESERVE_STATUS = { '0': '候补中', '1': '有名额', '2': '已完成', '3': '已取消' };
   const COVER_COLORS = ['#e8f0e9', '#f6efe2', '#eef4ef', '#f4e9ea', '#e9eef6', '#f3efe4'];
 
   // ===== 全局状态 =====
   let currentType = '';
   let currentUser = null;
   let detailBook = null;
-  let cart = [];
-  let warnThreshold = 3;   // 库存预警阈值（从系统参数读取，后台可改）
-  let noticeTexts = [];    // 公告全文列表（点击横幅看全文）
-  let noticeIdx = 0;       // 当前显示的公告下标
-  let borrowedIds = [];    // 当前登录读者未还的图书ID（"已借"标识）
-  let reservedIds = [];    // 当前登录读者预约中的图书ID（预约中/可借，"已预约"标识）
-  const CART_KEY = 'wswCart';
-  const FAV_KEY = 'wswFav';
+  let warnThreshold = 3;   // 名额预警阈值（从系统参数读取，后台可改）
+  let noticeTexts = [];    // 新闻全文列表（跑马灯轮播）
+  let noticeIdx = 0;       // 当前显示的新闻下标
+  let noticeList = [];     // 新闻完整列表（卡片渲染）
+  let borrowedIds = [];    // 当前登录成员已报名的服务ID（"已报名"标识）
+  let reservedIds = [];    // 当前登录成员候补中的服务ID（候补中/有名额，"已候补"标识）
   const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
   const PLACEHOLDER = 'img/book-placeholder.svg';
   const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
 
-  // ===== 店铺数据条：实时统计（馆藏/读者/今日借出/今日订单）=====
+  // ===== 社区数据条：实时统计（服务总数/社区成员/今日报名）=====
   async function loadShopStats() {
     try {
       const res = await fetch(PUBLIC_STATS_API);
@@ -627,16 +626,15 @@
       document.getElementById('stBooks').textContent = s.bookTotal || 0;
       document.getElementById('stReaders').textContent = s.readerTotal || 0;
       document.getElementById('stBorrowToday').textContent = s.borrowToday || 0;
-      document.getElementById('stOrderToday').textContent = s.orderToday || 0;
       document.getElementById('shopStats').style.display = 'flex';
     } catch (e) { }
   }
 
   // ===== Banner 轮播（后台"轮播图管理"动态加载，无图渐变背景+文字，有图显示图片）=====
   const DEFAULT_BANNERS = [
-    { title: '万事屋', subtitle: '万事屋，万事皆可办 ｜ 借书自助，还书请到服务台' },
-    { title: '图书预约', subtitle: '书被借光？一键预约，归还后自动通知您来借' },
-    { title: '新书上架', subtitle: '藏书持续更新，文学 / 科技 / 历史任你挑选' }
+    { title: '数智游民创新工场', subtitle: '清远 AI 一人公司生态社区 ｜ 一个人 + AI，把想法变成事业' },
+    { title: '服务报名', subtitle: '名额有限，先到先得 ｜ 满员可提交候补，有名额自动通知' },
+    { title: '新服务上线', subtitle: 'AI 数字服务 / 创意设计 / 本地生活创业 持续上新' }
   ];
   let bannerIdx = 0;
   function showBanner(i) {
@@ -697,7 +695,7 @@
     return (Date.now() - t.getTime()) < 7 * 24 * 3600 * 1000;
   }
 
-  // ===== 图书分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
+  // ===== 服务分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
   async function loadTypes() {
     try {
       const res = await fetch(DICT_API);
@@ -714,55 +712,7 @@
     } catch (e) { }
   }
 
-  // ===== 我的收藏（localStorage：bookId 列表）=====
-  let favs = [];
-  function loadFavs() {
-    try { favs = JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { favs = []; }
-  }
-  function saveFavs() {
-    localStorage.setItem(FAV_KEY, JSON.stringify(favs));
-  }
-  function isFav(bookId) { return favs.includes(Number(bookId)); }
-  function toggleFav(bookId) {
-    bookId = Number(bookId);
-    const idx = favs.indexOf(bookId);
-    if (idx >= 0) { favs.splice(idx, 1); toast('已取消收藏'); }
-    else { favs.push(bookId); toast('已收藏 ❤️'); }
-    saveFavs();
-    renderFavBtns();
-  }
-  // 刷新所有卡片上的爱心状态
-  function renderFavBtns() {
-    document.querySelectorAll('.fav-btn').forEach(b => {
-      const on = isFav(b.dataset.id);
-      b.textContent = on ? '♥' : '♡';
-      b.classList.toggle('fav-on', on);
-    });
-  }
-  // 我的收藏弹窗（从全量在售书匹配）
-  async function openFavs() {
-    document.getElementById('favModal').style.display = 'flex';
-    const box = document.getElementById('favResult');
-    box.innerHTML = '<div class="loading" style="padding:10px">加载中…</div>';
-    if (!favs.length) { box.innerHTML = '<div class="empty-state"><span class="empty-icon">💔</span><span class="empty-text">还没有收藏任何图书</span></div>'; return; }
-    try {
-      const res = await fetch(API + '?pageNum=1&pageSize=100');
-      const all = (await res.json()).rows || [];
-      const list = all.filter(b => favs.includes(b.bookId) && b.status === '0');
-      if (!list.length) { box.innerHTML = '<div class="empty-state"><span class="empty-icon">📭</span><span class="empty-text">收藏的图书已下架或不存在</span></div>'; return; }
-      box.innerHTML = list.map(b =>
-        '<div class="cart-item">' +
-          '<div class="cart-cover" style="cursor:pointer" onclick="closeModal(\'favModal\');showDetail(' + b.bookId + ',0)">' + (b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" />' : '<img src="' + PLACEHOLDER + '" />') + '</div>' +
-          '<div class="cart-info"><div class="cart-name" style="cursor:pointer" onclick="closeModal(\'favModal\');showDetail(' + b.bookId + ',0)">《' + esc(b.bookName) + '》</div><div class="cart-price">¥' + (b.price ?? '--') + '</div></div>' +
-          '<button class="btn-buy" style="padding:4px 10px;background:#e0524a;box-shadow:none" onclick="toggleFav(' + b.bookId + ');openFavs()">取消收藏</button>' +
-        '</div>'
-      ).join('');
-    } catch (e) {
-      box.innerHTML = '<div class="loading" style="padding:10px">加载失败：' + e.message + '</div>';
-    }
-  }
-
-  // ===== 当前读者的预约中图书（"已预约"标识，登录后加载）=====
+  // ===== 当前成员候补中的服务（"已候补"标识，登录后加载）=====
   async function loadReserved() {
     reservedIds = [];
     if (!currentUser) return;
@@ -775,7 +725,7 @@
     } catch (e) { }
   }
 
-  // ===== 当前读者的未还借阅（"已借"标识，登录后加载）=====
+  // ===== 当前成员的报名记录（"已报名"标识，登录后加载）=====
   async function loadBorrowed() {
     borrowedIds = [];
     if (!currentUser) return;
@@ -827,13 +777,13 @@
       suggestItems = items;
       suggestIdx = -1;
       if (!items.length) {
-        box.innerHTML = '<div class="suggest-empty">无匹配书名，回车试试全字段搜索</div>';
+        box.innerHTML = '<div class="suggest-empty">无匹配服务，回车试试全字段搜索</div>';
         box.style.display = 'block';
         return;
       }
       box.innerHTML = items.map(function (it, i) {
         return '<div class="suggest-item' + (i === suggestIdx ? ' active' : '') + '" data-i="' + i + '" onmouseover="hoverSuggest(this)" onmousedown="event.preventDefault();pickSuggest(' + i + ')">' +
-          '<span>《' + esc(it.bookName) + '》</span>' +
+          '<span>' + esc(it.bookName) + '</span>' +
           (it.author ? '<span class="s-author">' + esc(it.author) + '</span>' : '') +
         '</div>';
       }).join('');
@@ -886,7 +836,7 @@
     suggestIdx = -1;
   }
 
-  // ===== 申请荐购（搜索无结果 → 收集读者想看的书）=====
+  // ===== 入驻申请（搜索无结果引导入口 / "更多"下拉）=====
   let purchaseBusy = false; // 防重复提交
   function openPurchase() {
     document.getElementById('pBookName').value = '';
@@ -899,7 +849,7 @@
     const name = document.getElementById('pBookName').value.trim();
     const email = document.getElementById('pEmail').value.trim();
     const msg = document.getElementById('purchaseMsg');
-    if (!name) { msg.textContent = '请填写书名'; msg.style.color = '#c65d43'; return; }
+    if (!name) { msg.textContent = '请填写项目/组织名称'; msg.style.color = '#c65d43'; return; }
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（处理结果将邮件通知）'; msg.style.color = '#c65d43'; return; }
     if (purchaseBusy) return;
     purchaseBusy = true;
@@ -914,7 +864,7 @@
       const res = await fetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
-        msg.textContent = '提交成功！采购入库后会上架，敬请期待'; msg.style.color = '#4f8a62';
+        msg.textContent = '入驻申请已提交！运营团队将尽快与您联系'; msg.style.color = '#4f8a62';
         setTimeout(() => closeModal('purchaseModal'), 2500);
       } else {
         msg.textContent = d.msg || '提交失败'; msg.style.color = '#c65d43';
@@ -926,10 +876,10 @@
     }
   }
 
-  // ===== 图书列表（keyword 搜索 + 分类 + 排序 + 加载骨架屏）=====
-  let currentBooks = [];   // 当前渲染的图书列表（详情弹窗从这里取数，保证与搜索/分类同步）
+  // ===== 服务列表（keyword 搜索 + 分类 + 排序 + 加载骨架屏）=====
+  let currentBooks = [];   // 当前渲染的服务列表（详情弹窗从这里取数，保证与搜索/分类同步）
   let bookRequestSeq = 0;  // 请求序号：只渲染最后一次请求的结果（防止快速搜索时旧结果覆盖新结果）
-  let currentSort = '';    // 排序：'' 综合 | borrowCount 借阅最多 | publishDate 最新出版
+  let currentSort = '';    // 排序：'' 综合 | borrowCount 报名最多 | publishDate 最新上线
   let currentAsc = '';     // 排序方向（'' 默认 | desc 降序）
   function switchSort(el) {
     document.querySelectorAll('#sortTabs a').forEach(a => a.classList.remove('active'));
@@ -951,20 +901,20 @@
       const res = await fetch(API + '?' + params.toString());
       const data = await res.json();
       if (mySeq !== bookRequestSeq) return; // 已有更新的搜索请求，丢弃本次结果
-      // 前台只展示在售图书（下架书不出现在列表）
+      // 前台只展示招募中的服务（已结束服务不出现在列表）
       const books = (data.rows || []).filter(b => b.status === '0');
       currentBooks = books;
       const title = document.getElementById('listTitle');
       // 标题文字 + "清除筛选"快捷入口（有搜索词或分类时显示）
-      title.innerHTML = (currentType ? (TYPE_MAP[currentType] || '') + '图书' : (kw ? '搜索：' + esc(kw) : '全部图书'))
+      title.innerHTML = (currentType ? (TYPE_MAP[currentType] || '') + '服务' : (kw ? '搜索：' + esc(kw) : '全部服务'))
         + '<a id="clearSearch" style="' + ((kw || currentType) ? '' : 'display:none') + '" onclick="resetAll()">✕ 清除筛选</a>';
       if (!books.length) {
         document.getElementById('bookGrid').innerHTML =
           '<div class="no-result">' +
-            '<div class="nr-icon">📚</div>' +
-            '<div class="nr-title">没找到这本书</div>' +
-            '<div class="nr-desc">试试其他关键词，或告诉我们你想看什么书</div>' +
-            '<button class="btn-buy" onclick="openPurchase()">📝 申请荐购</button>' +
+            '<div class="nr-icon">🧭</div>' +
+            '<div class="nr-title">暂无匹配服务</div>' +
+            '<div class="nr-desc">试试其他关键词，或提交入驻申请告诉我们你需要的服务</div>' +
+            '<button class="btn-buy" onclick="openPurchase()">🏢 入驻申请</button>' +
           '</div>';
         return;
       }
@@ -978,51 +928,50 @@
     }
   }
 
-  // 渲染图书卡片网格（从 currentBooks 取数；乐观 UI 下借/续借/预约瞬间刷新按钮态复用）
+  // 渲染服务卡片网格（从 currentBooks 取数；乐观 UI 下报名/候补瞬间刷新按钮态复用）
   function renderBooks(books) {
     if (!books.length) {
       document.getElementById('bookGrid').innerHTML =
         '<div class="no-result">' +
-          '<div class="nr-icon">📚</div>' +
-          '<div class="nr-title">没找到这本书</div>' +
-          '<div class="nr-desc">试试其他关键词，或告诉我们你想看什么书</div>' +
-          '<button class="btn-buy" onclick="openPurchase()">📝 申请荐购</button>' +
+          '<div class="nr-icon">🧭</div>' +
+          '<div class="nr-title">暂无匹配服务</div>' +
+          '<div class="nr-desc">试试其他关键词，或提交入驻申请告诉我们你需要的服务</div>' +
+          '<button class="btn-buy" onclick="openPurchase()">🏢 入驻申请</button>' +
         '</div>';
       return;
     }
     document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
       const onSale = b.status === '0';
       const borrowed = borrowedIds.includes(b.bookId);
-      // 按钮区：已借→已借出 / 已预约→已预约 / 有库存→借阅+购物车 / 无库存未借未约→预约（避免模板内嵌套 ${}）
+      // 按钮区：已报名→置灰 / 有名额→报名 / 满员且未候补→候补 / 已候补→置灰（避免模板内嵌套 ${}）
       const reserved = reservedIds.includes(b.bookId);
       let btns = '';
       if (borrowed && onSale) {
-        btns = '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已借阅该书，归还后才能再借">已借出</button>';
+        btns = '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已报名该服务">已报名</button>';
       } else if (onSale && b.stock > 0) {
-        btns = '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticBorrow(this.dataset.id, this.dataset.name)">借阅</button>';
-        btns += '<button class="btn-buy" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" data-price="' + esc(b.price || 0) + '" onclick="event.stopPropagation();addCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price))">购物车</button>';
+        btns = '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticBorrow(this.dataset.id, this.dataset.name)">报名</button>';
       } else if (onSale && reserved) {
-        btns = '<button class="btn-buy" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已预约该书，请关注我的预约状态">已预约</button>';
+        btns = '<button class="btn-buy" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已提交候补，请关注候补状态">已候补</button>';
       } else if (onSale) {
-        btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticReserve(this.dataset.id, this.dataset.name)">📌 预约</button>';
+        btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticReserve(this.dataset.id, this.dataset.name)">📌 候补</button>';
       }
       return `
         <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
           <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
-            ${isNewBook(b) ? '<span class="new-badge">🆕 新</span>' : ''}
-            <span class="fav-btn ${isFav(b.bookId) ? 'fav-on' : ''}" data-id="${b.bookId}" title="收藏" onclick="event.stopPropagation();toggleFav(this.dataset.id)">${isFav(b.bookId) ? '♥' : '♡'}</span>
+            ${isNewBook(b) ? '<span class="new-badge">🆕 新服务</span>' : ''}
             ${b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />'}
           </div>
           <div class="book-name">${esc(b.bookName)}</div>
-          <div class="book-author">作者：${esc(b.author) || '未知'}</div>
+          <div class="book-author">主办方：${esc(b.author) || '未知'}</div>
           <div class="book-meta">
             <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
             <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
-            ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">库存紧张</span>' : ''}
-            ${onSale && borrowed ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已借</span>' : ''}
+            ${onSale && b.stock > 0 ? '<span class="tag tag-off" style="background:#eef7ef;color:#4f8a62">仅剩 ' + b.stock + ' 席</span>' : ''}
+            ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">名额紧张</span>' : ''}
+            ${onSale && borrowed ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已报名</span>' : ''}
           </div>
           <div class="book-bottom">
-            <div class="book-price"><small>¥</small>${b.price ?? '--'}</div>
+            <div class="book-price" style="${b.price == 0 ? 'color:#4f8a62;font-size:15px' : ''}">${b.price == 0 ? '免费' : '<small>¥</small>' + (b.price ?? '--')}</div>
             <div style="display:flex;gap:8px">${btns}</div>
           </div>
         </div>`;
@@ -1030,15 +979,15 @@
   }
 
   // ===== 乐观 UI：点击瞬间改按钮态，失败再回滚（体验"系统反应真快"）=====
-  let pendingBorrow = new Set();  // 借书请求进行中的 bookId（按书粒度防重复，不再用全局单锁）
-  let pendingReserve = new Set(); // 预约请求进行中的 bookId
+  let pendingBorrow = new Set();  // 报名请求进行中的 bookId（按服务粒度防重复，不再用全局单锁）
+  let pendingReserve = new Set(); // 候补请求进行中的 bookId
   function optimisticBorrow(bookId, name) {
     bookId = Number(bookId);
-    if (!currentUser) { toast('请先登录后再借书'); openLogin(); return; }
+    if (!currentUser) { toast('请先登录后再报名'); openLogin(); return; }
     if (pendingBorrow.has(bookId) || borrowedIds.includes(bookId)) return;
     pendingBorrow.add(bookId);
-    borrowedIds.push(bookId);            // 乐观置为已借
-    renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已借出"
+    borrowedIds.push(bookId);            // 乐观置为已报名
+    renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已报名"
     syncDetailAfterBorrow(bookId, true);
     const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
     fetch(BORROW_API, {
@@ -1049,21 +998,21 @@
       const d = await res.json();
       if (d.code === 200) {
         pendingBorrow.delete(bookId);
-        toast('借书成功：《' + name + '》可在"我的借阅"查看');
+        toast('报名成功：' + name + '，可在"我的报名"查看');
         await loadBorrowed();
         loadBooks();
       } else {
-        throw new Error(d.msg || '借书失败');
+        throw new Error(d.msg || '报名失败');
       }
     }).catch(async err => {
-      // 失败回滚：还原按钮态 + 移除已借标识 + 刷新真实数据
+      // 失败回滚：还原按钮态 + 移除已报名标识 + 刷新真实数据
       if (pendingBorrow.has(bookId)) {
         pendingBorrow.delete(bookId);
         const i = borrowedIds.indexOf(bookId);
         if (i >= 0) borrowedIds.splice(i, 1);
         syncDetailAfterBorrow(bookId, false);
         renderBooks(currentBooks);
-        toast(err.message || '借书失败');
+        toast(err.message || '报名失败');
         await loadBorrowed();
         loadBooks();
       }
@@ -1071,11 +1020,11 @@
   }
   function optimisticReserve(bookId, name) {
     bookId = Number(bookId);
-    if (!currentUser) { toast('请先登录后再预约'); openLogin(); return; }
+    if (!currentUser) { toast('请先登录后再提交候补'); openLogin(); return; }
     if (pendingReserve.has(bookId) || reservedIds.includes(bookId)) return;
     pendingReserve.add(bookId);
-    reservedIds.push(bookId);            // 乐观置为已预约
-    renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已预约"
+    reservedIds.push(bookId);            // 乐观置为已候补
+    renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已候补"
     const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
     fetch(RESERVE_API, {
       method: 'POST',
@@ -1085,11 +1034,11 @@
       const d = await res.json();
       if (d.code === 200) {
         pendingReserve.delete(bookId);
-        toast('预约成功！可在"📌 预约"查看排队状态');
+        toast('候补提交成功！可在"📌 活动候补"查看状态');
         await loadReserved();
         loadBooks();
       } else {
-        throw new Error(d.msg || '预约失败');
+        throw new Error(d.msg || '候补失败');
       }
     }).catch(async err => {
       if (pendingReserve.has(bookId)) {
@@ -1097,27 +1046,25 @@
         const i = reservedIds.indexOf(bookId);
         if (i >= 0) reservedIds.splice(i, 1);
         renderBooks(currentBooks);
-        toast(err.message || '预约失败');
+        toast(err.message || '候补失败');
         await loadReserved();
         loadBooks();
       }
     });
   }
-  // 详情弹窗按钮与网格按钮同步：乐观借书成功/失败时刷新详情按钮区
+  // 详情弹窗按钮与网格按钮同步：乐观报名成功/失败时刷新详情按钮区
   function syncDetailAfterBorrow(bookId, borrowed) {
     if (!detailBook || detailBook.bookId !== bookId) return;
     const bBtn = document.getElementById('detailBorrowBtn');
-    const cBtn = document.getElementById('detailCartBtn');
     const rBtn = document.getElementById('detailReserveBtn');
     if (borrowed) {
       bBtn.style.display = 'none';
-      cBtn.style.display = 'none';
       rBtn.style.display = 'none';
     } else {
       const onSale = detailBook.status === '0';
-      if (onSale && detailBook.stock > 0) { bBtn.style.display = 'inline-block'; cBtn.style.display = 'inline-block'; rBtn.style.display = 'none'; }
-      else if (onSale && detailBook.stock <= 0) { bBtn.style.display = 'none'; cBtn.style.display = 'none'; rBtn.style.display = 'inline-block'; }
-      else { bBtn.style.display = 'none'; cBtn.style.display = 'none'; rBtn.style.display = 'none'; }
+      if (onSale && detailBook.stock > 0) { bBtn.style.display = 'inline-block'; rBtn.style.display = 'none'; }
+      else if (onSale && detailBook.stock <= 0) { bBtn.style.display = 'none'; rBtn.style.display = 'inline-block'; }
+      else { bBtn.style.display = 'none'; rBtn.style.display = 'none'; }
     }
   }
 
@@ -1126,14 +1073,14 @@
     document.querySelectorAll('#typeTabs a').forEach(a => a.classList.remove('active'));
     el.classList.add('active');
     currentType = el.dataset.type;
-    // 点"全部"时同时清空搜索词，真正回到全部书籍
+    // 点"全部"时同时清空搜索词，真正回到全部服务
     if (currentType === '') {
       document.getElementById('searchInput').value = '';
     }
     loadBooks();
   }
 
-  // ===== 返回全部图书（logo / "清除筛选"链接）=====
+  // ===== 返回全部服务（logo / "清除筛选"链接）=====
   function resetAll() {
     document.getElementById('searchInput').value = '';
     currentType = '';
@@ -1147,7 +1094,7 @@
     loadBooks();
   }
 
-  // ===== 图书详情 =====
+  // ===== 服务详情 =====
   // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /prod-api 代理到后端才能加载
   function imgSrc(url) {
     if (!url) return '';
@@ -1155,7 +1102,7 @@
     if (url.startsWith('/')) return '/prod-api' + url;
     return url;
   }
-  // HTML 转义：图书名/作者/读者名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
+  // HTML 转义：服务名/主办方/成员名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -1164,7 +1111,7 @@
   async function showDetail(bookId, idx) {
     let b = currentBooks.find(x => x.bookId === bookId);
     if (!b) {
-      // 兜底：当前列表没有这本书（分页/搜索场景），全量拉一次（仅看在售）
+      // 兜底：当前列表没有这个服务（分页/搜索场景），全量拉一次（仅看招募中）
       const res = await fetch(API + '?pageNum=1&pageSize=100');
       b = ((await res.json()).rows || []).filter(x => x.status === '0').find(x => x.bookId === bookId);
       if (!b) return;
@@ -1178,58 +1125,52 @@
     document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
     document.getElementById('detailPublisher').textContent = b.publisher || '—';
     document.getElementById('detailDate').textContent = b.publishDate || '—';
-    document.getElementById('detailPrice').textContent = '¥' + (b.price ?? '—');
-    document.getElementById('detailStock').textContent = (b.stock ?? 0) + ' 本';
-    document.getElementById('detailStatus').textContent = onSale ? '在售' : '已下架';
+    document.getElementById('detailPrice').textContent = (b.price == 0 ? '免费' : '¥' + (b.price ?? '—'));
+    document.getElementById('detailStock').textContent = (b.stock ?? 0) + ' 席';
+    document.getElementById('detailStatus').textContent = STATUS_MAP[b.status] || '未知';
     document.getElementById('detailIsbn').textContent = b.isbn || '—';
-    document.getElementById('detailIntro').innerHTML = b.intro || '—';
+    // XSS 修复：服务介绍可能含后台写入的不可信 HTML，一律按纯文本展示
+    document.getElementById('detailIntro').textContent = b.intro || '—';
     document.getElementById('detailRemark').textContent = b.remark || '—';
     const bBtn = document.getElementById('detailBorrowBtn');
-    const cBtn = document.getElementById('detailCartBtn');
     const rBtn = document.getElementById('detailReserveBtn');
     if (onSale && b.stock > 0 && !borrowedIds.includes(b.bookId)) {
       bBtn.style.display = 'inline-block';
       bBtn.dataset.id = b.bookId;
       bBtn.dataset.name = b.bookName;
-      cBtn.style.display = 'inline-block';
       rBtn.style.display = 'none';
     } else if (onSale && b.stock <= 0 && !borrowedIds.includes(b.bookId)) {
-      // 库存为0且未借：隐藏借阅/购物车，显示预约
+      // 名额为0且未报名：隐藏报名，显示候补
       bBtn.style.display = 'none';
-      cBtn.style.display = 'none';
       rBtn.style.display = 'inline-block';
     } else {
-      // 已借该书（无论库存）：不显示借阅/预约
+      // 已报名该服务（无论名额）：不显示报名/候补
       bBtn.style.display = 'none';
-      cBtn.style.display = 'none';
       rBtn.style.display = 'none';
     }
     document.getElementById('detailModal').style.display = 'flex';
     loadRelated(b);
   }
-  // ===== 同类好书（同分类在架书，最多4本）=====
+  // ===== 相关服务（同分类招募中服务，最多4个）=====
   async function loadRelated(book) {
     const box = document.getElementById('relatedBooks');
-    if (!book.bookType) { box.innerHTML = '<div class="related-empty">暂无同类图书</div>'; return; }
+    if (!book.bookType) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
     box.innerHTML = '<div class="related-empty">加载中…</div>';
     try {
       const res = await fetch(RELATED_API + '?bookId=' + book.bookId + '&bookType=' + encodeURIComponent(book.bookType));
       const d = await res.json();
       const list = (d.data || []).slice(0, 4);
-      if (!list.length) { box.innerHTML = '<div class="related-empty">暂无同类图书</div>'; return; }
+      if (!list.length) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
       box.innerHTML = list.map(b =>
         '<div class="related-item" onclick="showDetail(' + b.bookId + ',0)">' +
           '<div class="related-cover">' + (b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />') + '</div>' +
           '<div class="related-name">' + esc(b.bookName) + '</div>' +
-          '<div class="related-price">¥' + (b.price ?? '--') + '</div>' +
+          '<div class="related-price">' + (b.price == 0 ? '免费' : '¥' + (b.price ?? '--')) + '</div>' +
         '</div>'
       ).join('');
     } catch (e) {
-      box.innerHTML = '<div class="related-empty">暂无同类图书</div>';
+      box.innerHTML = '<div class="related-empty">暂无相关服务</div>';
     }
-  }
-  function detailAddCart() {
-    if (detailBook) addCart(detailBook.bookId, detailBook.bookName, detailBook.price || 0);
   }
 
   // ===== 热门推荐 =====
@@ -1241,7 +1182,7 @@
       if (!tops.length) return;
       document.getElementById('hotBar').style.display = 'block';
       document.getElementById('hotItems').innerHTML = tops.slice(0, 5).map((t, i) =>
-        '<span class="hot-item" onclick="searchBook(\'' + esc(t.bookName || '') + '\')"><span class="rank">TOP' + (i + 1) + '</span>' + esc(t.bookName || '未知') + '<span class="cnt">借阅' + t.borrowCount + '次</span></span>'
+        '<span class="hot-item" onclick="searchBook(\'' + esc(t.bookName || '') + '\')"><span class="rank">TOP' + (i + 1) + '</span>' + esc(t.bookName || '未知') + '<span class="cnt">报名' + t.borrowCount + '次</span></span>'
       ).join('');
     } catch (e) { }
   }
@@ -1250,17 +1191,19 @@
     loadBooks();
   }
 
-  // ===== 公告横幅（完整内容 + 跑马灯 + 当日可关闭）=====
+  // ===== 新闻动态（顶部跑马灯 + 新闻卡片列表 + 详情弹窗，跑马灯当日可关闭）=====
   async function loadNotices() {
     try {
-      // 当日已手动关闭过则不再显示
-      if (localStorage.getItem(NOTICE_CLOSED_KEY) === new Date().toDateString()) return;
       const res = await fetch(NOTICE_API);
       const d = await res.json();
       const list = d.data || [];
       if (!list.length) return;
-      // 完整内容，不再截断
+      // 新闻卡片列表与跑马灯共用同一份数据（完整内容，不截断）
+      noticeList = list;
       noticeTexts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || ''));
+      renderNews(list);
+      // 当日已手动关闭过跑马灯则不再显示（新闻卡片列表不受影响）
+      if (localStorage.getItem(NOTICE_CLOSED_KEY) === new Date().toDateString()) return;
       const bar = document.getElementById('noticeBar');
       bar.style.display = 'block';
       const textEl = document.getElementById('noticeText');
@@ -1269,7 +1212,28 @@
       setInterval(() => { noticeIdx = (noticeIdx + 1) % noticeTexts.length; showNotice(textEl, noticeTexts[noticeIdx]); }, 6000);
     } catch (e) { }
   }
-  // 显示公告：内容超宽时跑马灯滚动（完整显示），否则静态展示
+  // 渲染新闻卡片列表（标题 + 发布时间 + 摘要，点击打开详情弹窗）
+  function renderNews(list) {
+    const box = document.getElementById('newsList');
+    box.innerHTML = list.map((n, i) => {
+      const raw = String(n.noticeContent || '').replace(/<[^>]+>/g, ''); // 去掉 HTML 标签后再截取摘要
+      return '<div class="news-card" onclick="openNewsDetail(' + i + ')">' +
+        '<div class="news-title">' + esc(n.noticeTitle || '未命名新闻') + '</div>' +
+        '<div class="news-date">🕐 ' + esc(n.createTime || '') + '</div>' +
+        '<div class="news-summary">' + esc(raw.slice(0, 120)) + (raw.length > 120 ? '…' : '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+  // 打开新闻详情（newsList 下标；跑马灯点击时传入当前轮播项）
+  function openNewsDetail(i) {
+    const n = noticeList[i];
+    if (!n) return;
+    document.getElementById('noticeDetailTitle').textContent = '📰 ' + (n.noticeTitle || '新闻详情');
+    // XSS 修复：公告内容为后端渲染的 HTML，textContent 会显示纯文本——安全优先的降级（不解析不可信 HTML，防存储型 XSS）
+    document.getElementById('noticeDetailText').textContent = n.noticeTitle + '：' + (n.noticeContent || '');
+    document.getElementById('noticeDetailModal').style.display = 'flex';
+  }
+  // 显示跑马灯：内容超宽时滚动（完整显示），否则静态展示
   function showNotice(el, text) {
     el.textContent = text;
     el.style.animation = 'none';
@@ -1282,13 +1246,12 @@
       el.style.paddingLeft = '0';
     }
   }
-  // 点击公告栏：查看当前公告全文（关闭按钮已 stopPropagation 不会触发；内容为 BBCODE 渲染后的 HTML）
+  // 点击跑马灯：查看当前新闻全文（关闭按钮已 stopPropagation 不会触发）
   function openNoticeDetail(event) {
-    if (!noticeTexts.length) return;
-    document.getElementById('noticeDetailText').innerHTML = noticeTexts[noticeIdx];
-    document.getElementById('noticeDetailModal').style.display = 'flex';
+    if (!noticeList.length) return;
+    openNewsDetail(noticeIdx);
   }
-  // 关闭公告：当天不再显示
+  // 关闭跑马灯：当天不再显示
   function closeNotice() {
     document.getElementById('noticeBar').style.display = 'none';
     localStorage.setItem(NOTICE_CLOSED_KEY, new Date().toDateString());
@@ -1300,7 +1263,7 @@
     const name = document.getElementById('loginName').value.trim();
     const card = document.getElementById('loginCard').value.trim();
     const msg = document.getElementById('loginMsg');
-    if (!name || !card) { msg.textContent = '请输入姓名和借书证号'; msg.style.color = '#c65d43'; return; }
+    if (!name || !card) { msg.textContent = '请输入姓名和成员编号'; msg.style.color = '#c65d43'; return; }
     try {
       const body = new URLSearchParams({ readerName: name, cardNo: card });
       const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
@@ -1312,7 +1275,7 @@
         closeModal('loginModal');
         msg.textContent = '';
         toast('登录成功，欢迎 ' + currentUser.readerName + '！');
-        // 加载未还借阅与预约（"已借"/"已预约"标识）并刷新列表
+        // 加载报名与候补状态（"已报名"/"已候补"标识）并刷新列表
         await loadBorrowed();
         await loadReserved();
         loadBooks();
@@ -1338,11 +1301,11 @@
     area.innerHTML = currentUser
       ? '<span style="cursor:pointer" onclick="logout()">你好，' + esc(currentUser.readerName) + '（退出）</span>'
       : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
-    // 已登录用户不再需要"读者登记"（登记过的读者才能登录）
+    // 已登录用户不再需要"成员注册"（注册过的成员才能登录）
     document.getElementById('registerEntry').style.display = currentUser ? 'none' : '';
   }
 
-  // ===== 读者登记 =====
+  // ===== 成员注册（注册后自动生成成员编号）=====
   function openRegister() { document.getElementById('regModal').style.display = 'flex'; }
   async function submitRegister() {
     const name = document.getElementById('regName').value.trim();
@@ -1350,10 +1313,10 @@
     const email = document.getElementById('regEmail').value.trim();
     const type = document.getElementById('regType').value;
     const msg = document.getElementById('regMsg');
-    if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和读者类型'; msg.style.color = '#c65d43'; return; }
-    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收借阅/预约通知）'; msg.style.color = '#c65d43'; return; }
+    if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和成员类型'; msg.style.color = '#c65d43'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收报名/候补通知）'; msg.style.color = '#c65d43'; return; }
     try {
-      // 证号由后端生成（防伪造/占坑）
+      // 成员编号由后端生成（防伪造/占坑）
       const res = await fetch(REG_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1361,179 +1324,32 @@
       });
       const d = await res.json();
       if (d.code === 200 && d.data) {
-        msg.textContent = '登记成功！您的借书证号：' + d.data.cardNo + '，请记住并登录';
+        msg.textContent = '注册成功！您的成员编号：' + d.data.cardNo + '，请记住并登录';
         msg.style.color = '#4f8a62';
       } else {
-        msg.textContent = '登记失败：' + (d.msg || '未知错误');
+        msg.textContent = '注册失败：' + (d.msg || '未知错误');
         msg.style.color = '#c65d43';
       }
     } catch (e) {
-      msg.textContent = '登记失败：' + e.message;
+      msg.textContent = '注册失败：' + e.message;
       msg.style.color = '#c65d43';
     }
   }
 
-  // ===== 购物车（localStorage 持久化，按 bookId 存，防重名书下错单）=====
-  function loadCart() {
-    try { cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (e) { cart = []; }
-    // 兼容旧版购物车（只存了书名没有 bookId，无法下单）：直接清理
-    cart = cart.filter(i => i.bookId != null);
-    renderCartCount();
-  }
-  function saveCart() {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    renderCartCount();
-  }
-  function renderCartCount() {
-    const total = cart.reduce((s, i) => s + (i.qty || 1), 0);
-    document.getElementById('cartArea').textContent = '🛒 购物车 (' + total + ')';
-  }
-  function addCart(bookId, name, price) {
-    bookId = Number(bookId);
-    const item = cart.find(i => i.bookId === bookId);
-    if (item) item.qty = (item.qty || 1) + 1;
-    else cart.push({ bookId: bookId, bookName: name, price: price || 0, qty: 1 });
-    saveCart();
-    toast('已加入购物车：' + name);
-  }
-  function openCart() {
-    document.getElementById('cartItems').innerHTML = '';
-    document.getElementById('cartMsg').textContent = '';
-    if (!cart.length) {
-      document.getElementById('cartEmpty').style.display = 'block';
-      document.getElementById('cartTotal').textContent = '¥0';
-      document.getElementById('cartCount').textContent = '共 0 件';
-      document.getElementById('cartModal').style.display = 'flex';
-      return;
-    }
-    document.getElementById('cartEmpty').style.display = 'none';
-    let total = 0;
-    const count = cart.reduce((s, i) => s + (i.qty || 1), 0);
-    document.getElementById('cartItems').innerHTML = cart.map((i, idx) => {
-      const book = currentBooks.find(b => b.bookId === i.bookId);
-      const cover = book && book.cover ? book.cover : '';
-      const sub = (i.price || 0) * (i.qty || 1);
-      total += sub;
-      return '<div class="cart-item">' +
-        '<div class="cart-cover">' + (cover ? '<img src="' + esc(imgSrc(cover)) + '" />' : '<img src="' + PLACEHOLDER + '" />') + '</div>' +
-        '<div class="cart-info"><div class="cart-name">《' + esc(i.bookName) + '》</div><div class="cart-price">¥' + (i.price || 0) + ' / 本</div></div>' +
-        '<button class="cart-qty-btn" onclick="cartQty(' + idx + ',-1)">−</button>' +
-        '<span class="cart-qty-num">' + i.qty + '</span>' +
-        '<button class="cart-qty-btn" onclick="cartQty(' + idx + ',1)">+</button>' +
-        '<span style="color:#c65d43;font-weight:bold;min-width:54px;text-align:right">¥' + sub.toFixed(2) + '</span>' +
-        '<span class="cart-remove" onclick="cartRemove(' + idx + ')">✕</span>' +
-      '</div>';
-    }).join('');
-    document.getElementById('cartCount').textContent = '共 ' + count + ' 件';
-    document.getElementById('cartTotal').textContent = '¥' + total.toFixed(2);
-    document.getElementById('cartModal').style.display = 'flex';
-  }
-  function cartQty(idx, delta) {
-    cart[idx].qty = Math.max(1, (cart[idx].qty || 1) + delta);
-    saveCart();
-    openCart();
-  }
-  function cartRemove(idx) {
-    cart.splice(idx, 1);
-    saveCart();
-    openCart();
-  }
-  // ===== 结算（登录状态逐项下单，库存-1）=====
-  let checkoutBusy = false; // 防重复提交：下单进行中忽略再次点击
-  async function checkout() {
-    const msg = document.getElementById('cartMsg');
-    if (!currentUser) {
-      msg.textContent = '请先登录后再结算';
-      msg.style.color = '#c65d43';
-      closeModal('cartModal');
-      openLogin();
-      return;
-    }
-    if (!cart.length) { msg.textContent = '购物车是空的'; msg.style.color = '#c65d43'; return; }
-    if (checkoutBusy) return;
-    checkoutBusy = true;
-    msg.textContent = '下单中…'; msg.style.color = '#999';
-    try {
-      let ok = 0, fail = 0, failMsg = '';
-      for (const item of cart) {
-        // 直接按 bookId 下单（书名校验/库存校验由后端 createOrder 负责）
-        const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: item.bookId, quantity: item.qty || 1 });
-        const o = await fetch(ORDER_CREATE, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-        const od = await o.json();
-        if (od.code === 200) ok++; else { fail++; failMsg = od.msg || '下单失败'; }
-      }
-      if (fail === 0) {
-        msg.textContent = '下单成功 ' + ok + ' 件！可在"我的订单"查看';
-        msg.style.color = '#4f8a62';
-        cart = [];
-        saveCart();
-        setTimeout(() => closeModal('cartModal'), 2500);
-      } else {
-        msg.textContent = '部分成功：' + ok + ' 件成功，' + fail + ' 件失败（' + failMsg + '）';
-        msg.style.color = '#c65d43';
-      }
-      loadBooks();
-    } catch (e) {
-      msg.textContent = '下单失败：' + e.message;
-      msg.style.color = '#c65d43';
-    } finally {
-      checkoutBusy = false;
-    }
-  }
-
-  // ===== 我的订单 =====
-  function openMyOrders() {
-    document.getElementById('orderModal').style.display = 'flex';
-    if (currentUser) {
-      document.getElementById('qOrderCard').style.display = 'none';
-      queryMyOrders();
-    } else {
-      document.getElementById('qOrderCard').style.display = 'block';
-      document.getElementById('orderResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的订单</div>';
-    }
-  }
-  async function queryMyOrders() {
-    const box = document.getElementById('orderResult');
-    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的订单</div>'; openLogin(); return; }
-    const cardNo = currentUser.cardNo;
-    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
-    box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
-    try {
-      const res = await fetch(ORDER_QUERY + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
-      const d = await res.json();
-      if (d.code !== 200 || !d.data || !d.data.length) {
-        box.innerHTML = '<div class="loading" style="padding:10px">暂无订单</div>';
-        return;
-      }
-      // 状态色竖条：待处理金 / 已完成绿 / 已取消灰
-      const barColor = { '0': '#d4a24e', '1': '#4f8a62', '2': '#b9b0a2' };
-      box.innerHTML = d.data.map(o => `
-        <div class="borrow-item" style="border-left-color:${barColor[o.status] || '#b9b0a2'}">
-          <div style="font-weight:bold;margin-bottom:4px">《${esc(o.bookName) || '未知图书'}》 × ${o.quantity || 1}</div>
-          <div style="color:#999">订单号：${esc(o.orderNo) || '-'} ｜ ${o.createTime || ''}</div>
-          <span style="color:#c65d43;font-weight:bold">¥${o.totalPrice}</span>
-          <span class="tag ${(o.status === '0' || o.status === '2') ? 'tag-off' : 'tag-sale'}" style="margin-left:8px">${ORDER_STATUS[o.status] || '未知'}</span>
-          ${o.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-left:8px" onclick="cancelOrder(' + o.orderId + ')">取消订单</button>' : ''}
-        </div>`).join('');
-    } catch (e) {
-      box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
-    }
-  }
-
-  // ===== 图书预约（库存为0时排队，归还后可借）=====
+  // ===== 活动候补（名额满时排队，有名额后优先报名）=====
   async function openReserve(bookId, bookName) {
-    if (!currentUser) { toast('请先登录后再预约'); openLogin(); return; }
-    if (!confirm('确认预约《' + bookName + '》？图书归还后您将收到"可借"通知')) return;
+    if (!currentUser) { toast('请先登录后再提交候补'); openLogin(); return; }
+    if (!confirm('确认提交候补申请？有名额时将尽快通知您报名')) return;
     try {
       const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
       const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
-        toast('预约成功！可在"📌 预约"查看排队状态');
+        toast('候补提交成功！可在"📌 活动候补"查看状态');
         await loadReserved();
         loadBooks();
-      } else toast(d.msg || '预约失败');
-    } catch (e) { toast('预约失败：' + e.message); }
+      } else toast(d.msg || '候补失败');
+    } catch (e) { toast('候补失败：' + e.message); }
   }
   function detailReserve() {
     if (detailBook) optimisticReserve(detailBook.bookId, detailBook.bookName);
@@ -1545,31 +1361,31 @@
       queryMyReserves();
     } else {
       document.getElementById('qReserveCard').style.display = 'block';
-      document.getElementById('reserveResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的预约</div>';
+      document.getElementById('reserveResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询活动候补</div>';
     }
   }
   async function queryMyReserves() {
     const box = document.getElementById('reserveResult');
-    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的预约</div>'; openLogin(); return; }
+    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询活动候补</div>'; openLogin(); return; }
     const cardNo = currentUser.cardNo;
-    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
+    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
       const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
-        box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无预约记录</span></div>';
+        box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无候补记录</span></div>';
         return;
       }
-      // 状态色竖条：预约中金 / 可借绿 / 已完成灰 / 已取消灰
+      // 状态色竖条：候补中金 / 有名额绿 / 已完成灰 / 已取消灰
       const barColor = { '0': '#d4a24e', '1': '#4f8a62', '2': '#b9b0a2', '3': '#b9b0a2' };
       const tagCls = { '0': 'tag-off', '1': 'tag-sale', '2': 'tag-sale', '3': 'tag-off' };
       box.innerHTML = d.data.map(r => `
         <div class="borrow-item" style="border-left-color:${barColor[r.status] || '#b9b0a2'}">
-          <div style="font-weight:bold;margin-bottom:4px">《${esc(r.bookName || '未知图书')}》 <span class="tag ${tagCls[r.status] || 'tag-off'}">${RESERVE_STATUS[r.status] || '未知'}</span></div>
-          <div style="color:#999">预约时间：${r.reserveDate || '-'}</div>
-          ${r.status === '1' ? '<div style="background:#eef7ef;border:1px solid #d5ead9;border-radius:8px;padding:6px 10px;font-size:12px;color:#4f8a62;margin-top:6px">✅ 图书已归还，请尽快到馆借阅（借出后预约自动完成）</div>' : ''}
-          ${(r.status === '0' || r.status === '1') ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd;box-shadow:none" onclick="cancelReserve(' + r.reserveId + ')">取消预约</button>' : ''}
+          <div style="font-weight:bold;margin-bottom:4px">${esc(r.bookName || '未知服务')} <span class="tag ${tagCls[r.status] || 'tag-off'}">${RESERVE_STATUS[r.status] || '未知'}</span></div>
+          <div style="color:#999">候补时间：${r.reserveDate || '-'}</div>
+          ${r.status === '1' ? '<div style="background:#eef7ef;border:1px solid #d5ead9;border-radius:8px;padding:6px 10px;font-size:12px;color:#4f8a62;margin-top:6px">✅ 已有名额，请尽快报名（名额有限，先到先得，报名后候补自动完成）</div>' : ''}
+          ${(r.status === '0' || r.status === '1') ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd;box-shadow:none" onclick="cancelReserve(' + r.reserveId + ')">取消候补</button>' : ''}
         </div>`).join('');
     } catch (e) {
       box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
@@ -1578,14 +1394,14 @@
   async function cancelReserve(reserveId) {
     if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
     const cardNo = currentUser.cardNo;
-    if (!cardNo) { toast('请先输入借书证号'); return; }
-    if (!confirm('确认取消该预约吗？')) return;
+    if (!cardNo) { toast('请先输入成员编号'); return; }
+    if (!confirm('确认取消该候补吗？')) return;
     try {
       const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), reserveId: reserveId });
       const res = await fetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
-        toast('预约已取消');
+        toast('候补已取消');
         await loadReserved();
         loadBooks();
         queryMyReserves();
@@ -1593,22 +1409,7 @@
     } catch (e) { toast('取消失败：' + e.message); }
   }
 
-  // ===== 取消订单（仅待处理，自动回滚库存）=====
-  async function cancelOrder(orderId) {
-    if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
-    const cardNo = currentUser.cardNo;
-    if (!cardNo) { toast('请先输入借书证号'); return; }
-    if (!confirm('确认取消该订单吗？取消后库存自动恢复')) return;
-    try {
-      const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), orderId: orderId });
-      const res = await fetch(ORDER_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-      const d = await res.json();
-      if (d.code === 200) { toast('订单已取消，库存已恢复'); queryMyOrders(); }
-      else toast(d.msg || '取消失败');
-    } catch (e) { toast('取消失败：' + e.message); }
-  }
-
-  // ===== 我的借阅 =====
+  // ===== 我的报名 =====
   function openMyBorrow() {
     document.getElementById('borrowModal').style.display = 'flex';
     document.getElementById('myPhone').value = '';
@@ -1619,20 +1420,20 @@
       queryMyBorrow();
     } else {
       document.getElementById('qCardNo').style.display = 'block';
-      document.getElementById('borrowResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的借阅</div>';
+      document.getElementById('borrowResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的报名</div>';
     }
   }
   async function queryMyBorrow() {
     const box = document.getElementById('borrowResult');
-    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的借阅</div>'; openLogin(); return; }
+    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的报名</div>'; openLogin(); return; }
     const cardNo = currentUser.cardNo;
-    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入借书证号</div>'; return; }
+    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
       const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
-        box.innerHTML = '<div class="loading" style="padding:10px">未查询到借阅记录（请确认证号）</div>';
+        box.innerHTML = '<div class="loading" style="padding:10px">未查询到报名记录（请确认成员编号）</div>';
         return;
       }
       const today = new Date();
@@ -1640,21 +1441,15 @@
         let daysHtml = '';
         if (b.status === '0' && b.dueDate) {
           const days = Math.ceil((new Date(String(b.dueDate).replace(/-/g, '/')) - today) / 86400000);
-          daysHtml = '<span class="days-left ' + (days < 0 ? 'days-danger' : 'days-ok') + '">' + (days < 0 ? '已逾期 ' + (-days) + ' 天' : '剩余 ' + days + ' 天') + '</span>';
+          daysHtml = '<span class="days-left ' + (days < 0 ? 'days-danger' : 'days-ok') + '">' + (days < 0 ? '已截止 ' + (-days) + ' 天' : '剩余 ' + days + ' 天') + '</span>';
         }
-        // 状态色竖条：借出中蓝 / 已归还绿 / 已逾期红
+        // 状态色竖条：进行中蓝 / 已完成绿 / 已截止红
         const barColor = { '0': '#409eff', '1': '#4f8a62', '2': '#c65d43' };
         return `
           <div class="borrow-item" style="border-left-color:${barColor[b.status] || '#b9b0a2'}">
-            <div style="font-weight:bold;margin-bottom:4px">《${esc(b.bookName) || '未知图书'}》 ${daysHtml}</div>
-            <div style="color:#999">借出 ${b.borrowDate || '-'} ｜ 应还 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 归还 ' + b.returnDate : ''}</div>
+            <div style="font-weight:bold;margin-bottom:4px">${esc(b.bookName) || '未知服务'} ${daysHtml}</div>
+            <div style="color:#999">报名 ${b.borrowDate || '-'} ｜ 截止 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 完成 ' + b.returnDate : ''}</div>
             <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
-            ${b.fineAmount > 0 && b.finePaid === '0' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">欠费 ¥' + b.fineAmount + '</span>' : ''}
-            ${(b.renewCount || 0) > 0 && b.status === '0' ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已续借' + (b.renewCount || 0) + '次</span>' : ''}
-            ${b.status === '0' && (b.renewCount || 0) >= 1 ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled>已续借</button>'
-              : (b.status === '0' ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px" onclick="renewBorrow(' + b.borrowId + ', this)">续借30天</button>' : '')}
-            ${b.fineAmount > 0 && b.finePaid === '0' ? '<div style="background:#fdf0ec;border:1px solid #f5d9d1;border-radius:8px;padding:6px 10px;font-size:12px;color:#c65d43;margin-top:6px">⚠️ 您有未缴罚款，请到服务台缴费后方可继续借书</div>' : ''}
-            ${b.status !== '1' ? '<div style="background:#fdf6e7;border:1px solid #f0e6c8;border-radius:8px;padding:6px 10px;font-size:12px;color:#8a6d3b;margin-top:6px">📖 还书请携带借书证到服务台办理</div>' : ''}
           </div>`;
       }).join('');
     } catch (e) {
@@ -1662,49 +1457,7 @@
     }
   }
 
-  // ===== 补办借书证（姓名+登记手机号校验，证号丢失也能补办）=====
-  function openReissue() {
-    document.getElementById('reissueModal').style.display = 'flex';
-    document.getElementById('reissueMsg').textContent = '';
-    // 已登录自动填姓名
-    document.getElementById('reissueName').value = currentUser ? currentUser.readerName : '';
-    document.getElementById('reissuePhone').value = '';
-  }
-  let reissueBusy = false; // 防重复提交：补办请求进行中忽略再次点击
-  async function applyReissue() {
-    const name = document.getElementById('reissueName').value.trim();
-    const phone = document.getElementById('reissuePhone').value.trim();
-    const msg = document.getElementById('reissueMsg');
-    if (!name || !phone) { msg.textContent = '请输入姓名和登记手机号'; msg.style.color = '#c65d43'; return; }
-    if (!confirm('确认补办借书证？新证号生成后旧证号立即作废')) return;
-    if (reissueBusy) return;
-    reissueBusy = true;
-    try {
-      const body = new URLSearchParams({ readerName: name, phone: phone });
-      const res = await fetch(REISSUE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-      const d = await res.json();
-      if (d.code === 200 && d.data) {
-        msg.textContent = '补办成功！新证号：' + d.data + '，请使用新证号登录（旧证号已作废）';
-        msg.style.color = '#4f8a62';
-        // 若是本人补办，同步更新当前登录态证号并清除旧会话（需重新登录获取新会话）
-        if (currentUser && currentUser.readerName === name) {
-          currentUser = null;
-          localStorage.removeItem('shopUser');
-          renderLoginState();
-        }
-      } else {
-        msg.textContent = d.msg || '补办失败';
-        msg.style.color = '#c65d43';
-      }
-    } catch (e) {
-      msg.textContent = '补办失败：' + e.message;
-      msg.style.color = '#c65d43';
-    } finally {
-      reissueBusy = false;
-    }
-  }
-
-  // ===== 我的信息：修改手机号（证号+姓名校验）=====
+  // ===== 我的信息：修改手机号/邮箱（成员编号+姓名校验）=====
   async function updateMyInfo() {
     const phone = document.getElementById('myPhone').value.trim();
     const email = document.getElementById('myEmail').value.trim();
@@ -1721,38 +1474,42 @@
     } catch (e) { msg.textContent = '修改失败：' + e.message; msg.style.color = '#c65d43'; }
   }
 
-  // ===== 续借（仅借出中且未逾期，应还日期 +30 天）=====
-  let renewPending = new Set(); // 续借请求进行中的 borrowId（按书粒度防重复）
-  async function renewBorrow(borrowId, btn) {
-    borrowId = Number(borrowId);
-    if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
-    if (renewPending.has(borrowId)) return; // 防重复：该笔续借请求进行中忽略再次点击
-    renewPending.add(borrowId);
-    // 乐观：点击瞬间按钮变"已续借"，失败再回滚
-    if (btn) { btn.textContent = '已续借'; btn.disabled = true; btn.style.background = '#cfc9bd'; btn.style.boxShadow = 'none'; btn.style.cursor = 'not-allowed'; }
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), borrowId: borrowId });
-    const revertBtn = function () {
-      if (btn && document.body.contains(btn)) { btn.textContent = '续借30天'; btn.disabled = false; btn.style.background = ''; btn.style.boxShadow = ''; btn.style.cursor = ''; }
-    };
-    try {
-      const res = await fetch(RENEW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-      const d = await res.json();
-      if (d.code === 200) { toast('续借成功，应还日期顺延 30 天'); queryMyBorrow(); }
-      else { revertBtn(); toast(d.msg || '续借失败'); }
-    } catch (e) { revertBtn(); toast('续借失败：' + e.message); }
-    finally { renewPending.delete(borrowId); }
-  }
-
   // ===== 通用 =====
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
   // 跳转后台管理（同源根路径，未登录会引导登录）
   function goAdmin() { location.href = '/'; }
+  // ===== 锚点导航：平滑滚动 + 滚动监听高亮当前栏目（scroll-spy）=====
+  function initNav() {
+    document.querySelectorAll('.nav-links a[data-target]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const el = document.getElementById(a.dataset.target);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    const targets = ['home', 'services', 'news', 'about', 'contact']
+      .map(id => document.getElementById(id)).filter(Boolean);
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const pos = window.scrollY + 120;
+        let cur = 'home';
+        targets.forEach(s => { if (s.offsetTop <= pos) cur = s.id; });
+        document.querySelectorAll('.nav-links a[data-target]').forEach(a => {
+          a.classList.toggle('active', a.dataset.target === cur);
+        });
+        ticking = false;
+      });
+    }, { passive: true });
+  }
   function toast(text) {
     const t = document.getElementById('toast');
     // 自动判断图标：失败类 ❌ / 成功类 ✅ / 其余 ℹ️（调用处无需改动）
     let icon = 'ℹ️';
     if (/失败|错误|已取消|不可|无法|请先/.test(text)) icon = '❌';
-    else if (/成功|已收藏|已加入|欢迎|已退出|已借|登记/.test(text)) icon = '✅';
+    else if (/成功|欢迎|已退出|已报名|已提交/.test(text)) icon = '✅';
     const safe = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     t.innerHTML = '<span class="toast-icon">' + icon + '</span>' + safe;
     t.classList.add('show');
@@ -1766,7 +1523,7 @@
     });
   });
 
-  // ===== 详情弹窗内借阅按钮（委托）=====
+  // ===== 详情弹窗内报名按钮（委托）=====
   document.addEventListener('click', function (e) {
     const dbtn = e.target.closest('.btn-borrow-detail');
     if (dbtn) {
@@ -1806,10 +1563,9 @@
   } catch (e) {}
   document.getElementById('footerYear').textContent = new Date().getFullYear();
   renderLoginState();
-  loadFavs();
-  loadCart();
+  initNav();
   loadConfig();
-  // 先加载分类字典与"已借/已预约"标识（依赖登录态），再加载图书
+  // 先加载分类字典与"已报名/已候补"标识（依赖登录态），再加载服务
   loadTypes().then(async () => {
     await loadBorrowed();
     await loadReserved();

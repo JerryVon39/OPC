@@ -1,11 +1,11 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="读者姓名" prop="readerName">
-        <el-input v-model="queryParams.readerName" placeholder="请输入读者姓名" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="成员姓名" prop="readerName">
+        <el-input v-model="queryParams.readerName" placeholder="请输入成员姓名" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="图书名称" prop="bookName">
-        <el-input v-model="queryParams.bookName" placeholder="请输入图书名称" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="服务名称" prop="bookName">
+        <el-input v-model="queryParams.bookName" placeholder="请输入服务名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
@@ -27,15 +27,15 @@
 
     <el-table v-loading="loading" :data="reserveList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="预约ID" align="center" prop="reserveId" width="80" />
-      <el-table-column label="读者" align="center" prop="readerName" width="120" />
-      <el-table-column label="借书证号" align="center" prop="cardNo" width="120" />
-      <el-table-column label="图书" align="center" prop="bookName" min-width="140" />
-      <el-table-column label="预约时间" align="center" prop="reserveDate" width="160" />
+      <el-table-column label="候补ID" align="center" prop="reserveId" width="80" />
+      <el-table-column label="成员" align="center" prop="readerName" width="120" />
+      <el-table-column label="成员编号" align="center" prop="cardNo" width="120" />
+      <el-table-column label="服务" align="center" prop="bookName" min-width="140" />
+      <el-table-column label="候补时间" align="center" prop="reserveDate" width="160" />
       <el-table-column label="状态" align="center" width="90">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="warning">预约中</el-tag>
-          <el-tag v-else-if="scope.row.status === '1'" type="success">可借</el-tag>
+          <el-tag v-if="scope.row.status === '0'" type="warning">候补中</el-tag>
+          <el-tag v-else-if="scope.row.status === '1'" type="success">有名额</el-tag>
           <el-tag v-else-if="scope.row.status === '2'" type="info">已完成</el-tag>
           <el-tag v-else type="info">已取消</el-tag>
         </template>
@@ -65,8 +65,8 @@ export default {
       total: 0,
       reserveList: [],
       statusOptions: [
-        { dictValue: '0', dictLabel: '预约中' },
-        { dictValue: '1', dictLabel: '可借' },
+        { dictValue: '0', dictLabel: '候补中' },
+        { dictValue: '1', dictLabel: '有名额' },
         { dictValue: '2', dictLabel: '已完成' },
         { dictValue: '3', dictLabel: '已取消' }
       ],
@@ -96,7 +96,7 @@ export default {
     },
     handleDelete(row) {
       const reserveIds = row.reserveId || this.ids
-      this.$modal.confirm('确认删除该预约记录吗？').then(() => {
+      this.$modal.confirm('确认删除该候补记录吗？').then(() => {
         return delReserve(reserveIds)
       }).then(() => {
         this.getList()

@@ -155,7 +155,7 @@ if not "%DB_EXISTS%"=="0" (
 if "%DB_EXISTS%"=="0" goto :db_fresh
 if not "%TABLE_COUNT%"=="3" goto :db_fresh
 echo [5/5] Existing DB detected. Running idempotent upgrades...
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_recycle.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql) do (
+for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_recycle.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql) do (
   if exist "%%f" (
     echo   executing %%f
     "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul

@@ -1,34 +1,34 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="图书名称" prop="bookName">
+      <el-form-item label="服务名称" prop="bookName">
         <el-input
           v-model="queryParams.bookName"
-          placeholder="请输入图书名称"
+          placeholder="请输入服务名称"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="作者" prop="author">
+      <el-form-item label="主办方" prop="author">
         <el-input
           v-model="queryParams.author"
-          placeholder="请输入作者"
+          placeholder="请输入主办方"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="出版社" prop="publisher">
+      <el-form-item label="合作机构" prop="publisher">
         <el-input
           v-model="queryParams.publisher"
-          placeholder="请输入出版社"
+          placeholder="请输入合作机构"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="图书类型" prop="bookType">
+      <el-form-item label="服务分类" prop="bookType">
         <el-select
           v-model="queryParams.bookType"
-          placeholder="请选择图书类型"
+          placeholder="请选择服务分类"
           clearable
           @keyup.enter.native="handleQuery"
         >
@@ -42,8 +42,8 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
-          <el-option label="在架" value="0" />
-          <el-option label="下架" value="1" />
+          <el-option label="招募中" value="0" />
+          <el-option label="已结束" value="1" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -110,25 +110,25 @@
 
     <el-table v-loading="loading" :data="bookList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="图书ID" align="center" prop="bookId" width="70" />
+      <el-table-column label="服务ID" align="center" prop="bookId" width="70" />
       <el-table-column label="封面" align="center" width="80">
         <template slot-scope="scope">
           <el-image v-if="scope.row.cover" :src="imgUrl(scope.row.cover)" style="width:44px;height:58px" fit="cover" :preview-src-list="[imgUrl(scope.row.cover)]" />
           <span v-else>📕</span>
         </template>
       </el-table-column>
-      <el-table-column label="图书名称" align="center" prop="bookName" min-width="140" />
-      <el-table-column label="作者" align="center" prop="author" />
-      <el-table-column label="图书类型" align="center" prop="bookType" width="80">
+      <el-table-column label="服务名称" align="center" prop="bookName" min-width="140" />
+      <el-table-column label="主办方" align="center" prop="author" />
+      <el-table-column label="服务分类" align="center" prop="bookType" width="80">
         <template slot-scope="scope">
           <dict-tag :options="bookTypeOptions" :value="scope.row.bookType" />
         </template>
       </el-table-column>
-      <el-table-column label="出版社" align="center" prop="publisher" />
-      <el-table-column label="价格(元)" align="center" prop="price" />
-      <el-table-column label="库存数量" align="center" width="100">
+      <el-table-column label="合作机构" align="center" prop="publisher" />
+      <el-table-column label="费用(元)" align="center" prop="price" />
+      <el-table-column label="剩余名额" align="center" width="100">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.stock <= warnThreshold" type="danger" size="mini">仅剩 {{ scope.row.stock }} 本</el-tag>
+          <el-tag v-if="scope.row.stock <= warnThreshold" type="danger" size="mini">仅剩 {{ scope.row.stock }} 席</el-tag>
           <span v-else>{{ scope.row.stock }}</span>
         </template>
       </el-table-column>
@@ -139,22 +139,22 @@
             v-model="scope.row.status"
             :active-value="'0'"
             :inactive-value="'1'"
-            active-text="在架"
-            inactive-text="下架"
+            active-text="招募中"
+            inactive-text="已结束"
             :loading="scope.row.statusLoading === true"
-            title="拨动开关直接上架/下架（有未完成预约的图书禁止下架）"
+            title="拨动开关直接切换招募中/已结束（有未完成报名的服务禁止结束）"
             @change="handleStatusChange(scope.row)"
           />
           <span v-else>
-            <el-tag v-if="scope.row.status === '0'" type="success" size="mini">在架</el-tag>
-            <el-tag v-else type="info" size="mini">下架</el-tag>
+            <el-tag v-if="scope.row.status === '0'" type="success" size="mini">招募中</el-tag>
+            <el-tag v-else type="info" size="mini">已结束</el-tag>
           </span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" show-overflow-tooltip />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)">借阅历史</el-button>
+          <el-button size="mini" type="text" icon="el-icon-reading" @click="handleBorrow(scope.row)">报名记录</el-button>
           <el-button
             size="mini"
             type="text"
@@ -182,10 +182,10 @@
     />
 
     <!-- 批量导入对话框 -->
-    <el-dialog title="批量导入图书" :visible.sync="importOpen" width="560px" append-to-body>
+    <el-dialog title="批量导入服务" :visible.sync="importOpen" width="560px" append-to-body>
       <div class="import-tip">
-        <p>① 先<a class="import-link" @click="downloadTemplate">下载导入模板</a>，按表头填写数据（书名必填）</p>
-        <p>② 同名图书自动跳过并提示；图书类型需为系统字典内（文学/科技/历史）</p>
+        <p>① 先<a class="import-link" @click="downloadTemplate">下载导入模板</a>，按表头填写数据（服务名称必填）</p>
+        <p>② 同名服务自动跳过并提示；服务分类需为系统字典内</p>
       </div>
       <el-upload
         :action="importUrl"
@@ -210,28 +210,28 @@
       </div>
     </el-dialog>
 
-    <!-- 添加或修改图书信息对话框 -->
+    <!-- 添加或修改服务信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="图书名称" prop="bookName">
-              <el-input v-model="form.bookName" placeholder="请输入图书名称" />
+            <el-form-item label="服务名称" prop="bookName">
+              <el-input v-model="form.bookName" placeholder="请输入服务名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="作者" prop="author">
-              <el-input v-model="form.author" placeholder="请输入作者" />
+            <el-form-item label="主办方" prop="author">
+              <el-input v-model="form.author" placeholder="请输入主办方" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="出版社" prop="publisher">
-              <el-input v-model="form.publisher" placeholder="请输入出版社" />
+            <el-form-item label="合作机构" prop="publisher">
+              <el-input v-model="form.publisher" placeholder="请输入合作机构" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="图书类型" prop="bookType">
-              <el-select v-model="form.bookType" placeholder="请选择图书类型" style="width:100%">
+            <el-form-item label="服务分类" prop="bookType">
+              <el-select v-model="form.bookType" placeholder="请选择服务分类" style="width:100%">
                 <el-option
                   v-for="dict in bookTypeOptions"
                   :key="dict.dictValue"
@@ -242,37 +242,37 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="价格(元)" prop="price">
-              <el-input v-model="form.price" placeholder="请输入价格(元)" />
+            <el-form-item label="费用(元)" prop="price">
+              <el-input v-model="form.price" placeholder="请输入费用(元)" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="出版日期" prop="publishDate">
+            <el-form-item label="上线时间" prop="publishDate">
               <el-date-picker clearable
                 v-model="form.publishDate"
                 type="date"
                 value-format="yyyy-MM-dd"
-                placeholder="请选择出版日期"
+                placeholder="请选择上线时间"
                 style="width:100%">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="库存数量" prop="stock">
-              <el-input v-model="form.stock" placeholder="请输入库存数量" />
+            <el-form-item label="剩余名额" prop="stock">
+              <el-input v-model="form.stock" placeholder="请输入剩余名额" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
-                <el-radio label="0">在架</el-radio>
-                <el-radio label="1">下架</el-radio>
+                <el-radio label="0">招募中</el-radio>
+                <el-radio label="1">已结束</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="ISBN" prop="isbn">
-              <el-input v-model="form.isbn" placeholder="请输入 ISBN 书号" />
+            <el-form-item label="服务编号" prop="isbn">
+              <el-input v-model="form.isbn" placeholder="请输入服务编号" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -290,7 +290,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="图书简介" prop="intro">
+            <el-form-item label="服务介绍" prop="intro">
               <div class="bbcode-toolbar">
                 <el-button size="mini" @click="insertBbcode('[b]','[/b]')">B</el-button>
                 <el-button size="mini" @click="insertBbcode('[i]','[/i]')">I</el-button>
@@ -344,7 +344,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 图书信息表格数据
+      // 服务信息表格数据
       bookList: [],
       // 弹出层标题
       title: "",
@@ -353,9 +353,9 @@ export default {
       // 封面上传地址与请求头（携带登录令牌）
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
       uploadHeaders: { Authorization: "Bearer " + getToken() },
-      // 库存预警阈值（系统参数 book.stock.warn，后台参数设置可改）
+      // 名额预警阈值（系统参数 book.stock.warn，后台参数设置可改）
       warnThreshold: 3,
-      // 是否有图书修改权限（决定列表显示开关 or 只读标签）
+      // 是否有服务修改权限（决定列表显示开关 or 只读标签）
       hasEditPermi: false,
       // 批量导入弹窗
       importOpen: false,
@@ -379,7 +379,7 @@ export default {
       // 表单校验
       rules: {
         bookName: [
-          { required: true, message: "图书名称不能为空", trigger: "blur" }
+          { required: true, message: "服务名称不能为空", trigger: "blur" }
         ],
       }
     }
@@ -395,11 +395,11 @@ export default {
     this.getDicts("book_type").then(response => {
       this.bookTypeOptions = response.data;
     });
-    // 读取库存预警阈值参数（RuoYi 该接口把参数值放在 msg 字段）
+    // 读取名额预警阈值参数（RuoYi 该接口把参数值放在 msg 字段）
     getConfigKey('book.stock.warn').then(res => {
       const v = parseInt(res.msg, 10)
       if (!isNaN(v)) this.warnThreshold = v
-      // 看板"库存预警"跳转：lowStock=1 时按阈值过滤低库存书
+      // 看板"名额预警"跳转：lowStock=1 时按阈值过滤名额紧张的服务
       if (this.$route.query.lowStock) {
         this.queryParams.stock = this.warnThreshold
         this.getList()
@@ -414,7 +414,7 @@ export default {
       if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
     },
-    /** 查询图书信息列表 */
+    /** 查询服务信息列表 */
     getList() {
       this.loading = true
       listBook(this.queryParams).then(response => {
@@ -423,7 +423,7 @@ export default {
         this.loading = false
       })
     },
-    /** 上下架拨动开关：乐观切换，请求失败回滚；请求进行中忽略再次拨动 */
+    /** 招募状态拨动开关：乐观切换，请求失败回滚；请求进行中忽略再次拨动 */
     handleStatusChange(row) {
       if (row.statusLoading) return // 在途防重：避免连续拨动发重复/过期请求
       const target = row.status // el-switch v-model 已乐观改写
@@ -431,7 +431,7 @@ export default {
       this.$set(row, 'statusLoading', true)
       changeBookStatus(row.bookId, target).then(() => {
         this.$set(row, 'statusLoading', false)
-        this.$modal.msgSuccess(target === '0' ? '已上架' : '已下架')
+        this.$modal.msgSuccess(target === '0' ? '已开始招募' : '招募已结束')
       }).catch(() => {
         this.$set(row, 'status', revertTo)
         this.$set(row, 'statusLoading', false)
@@ -527,9 +527,9 @@ export default {
     handleAdd() {
       this.reset()
       this.open = true
-      this.title = "添加图书信息"
+      this.title = "添加服务信息"
     },
-    /** 跳转借阅历史（带图书ID过滤；路由由菜单生成：图书业务目录business下） */
+    /** 跳转报名记录（带服务ID过滤；路由由菜单生成：服务业务目录business下） */
     handleBorrow(row) {
       this.$router.push({ path: '/business/book-mgmt/borrow', query: { bookId: row.bookId } })
     },
@@ -540,7 +540,7 @@ export default {
       getBook(bookId).then(response => {
         this.form = response.data
         this.open = true
-        this.title = "修改图书信息"
+        this.title = "修改服务信息"
       })
     },
     /** 提交按钮 */
@@ -566,7 +566,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const bookIds = row.bookId || this.ids
-      this.$modal.confirm('是否确认删除图书信息编号为"' + bookIds + '"的数据项？').then(function() {
+      this.$modal.confirm('是否确认删除服务信息编号为"' + bookIds + '"的数据项？').then(function() {
         return delBook(bookIds)
       }).then(() => {
         this.getList()
