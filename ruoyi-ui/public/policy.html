@@ -86,7 +86,54 @@
         </tbody>
       </table>
     </div>
-    <div class="highlight-box" style="margin-top:14px">注：政策奖补以官方正式文件为准，社区提供一站式对接服务。<br>[待补] 政策奖补文件原文链接，确认后将在本页补充。</div>
+    <div class="highlight-box" style="margin-top:14px">注：政策奖补以官方正式文件为准，社区提供一站式对接服务。政策原文与文号详见下方「政策文件库」。</div>
+  </div>
+
+  <!-- 政策文件库（CMS 动态加载：后台"文章管理-政策文件"栏目维护，前台自动更新） -->
+  <div class="content-section">
+    <div class="sub-title">📚 政策文件库</div>
+    <div class="info-grid" id="policyGrid">
+      <div class="loading">加载中…</div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px">注：点击政策卡片可查看文号、核心要点与原文链接；政策内容以官方正式文件为准。</div>
+  </div>
+
+  <!-- 省级行动方案解读（静态板块，核心目标与六大任务） -->
+  <div class="content-section">
+    <div class="sub-title">📜 省级蓝图：100 个 OPC 生态社区</div>
+    <div class="highlight-box"><b>《广东省支持人工智能 OPC 创新发展行动方案（2026—2028年）》（粤发改高技〔2026〕78 号）</b>：2026 年先行培育 <b>10 个</b>具有引领效应的人工智能 OPC 生态社区；到 2028 年建成 <b>100 个</b>生态社区、培育 <b>1000 家</b>标杆企业、集聚 <b>10000 名</b>创新创业人才，将广东打造成为全国领先的人工智能 OPC 发展高地。</div>
+    <div class="info-grid" style="margin-top:16px">
+      <div class="info-card">
+        <div class="ic-icon">⚡</div>
+        <h3>基础能力保障</h3>
+        <p>算力券制度降低算力支出；算力公共服务平台优化供需匹配；"政府—社区—平台—OPC"联动机制；公共数据开放与授权运营；免费模型接口与安全合规检测的公共模型服务平台。</p>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🏢</div>
+        <h3>空间载体配套</h3>
+        <p>打造"拎脑入驻"的 OPC 生态社区并给予算力补贴；开展省级社区认定评估；推动传统孵化器重构空间布局、向灵活共享工位转型。</p>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🎬</div>
+        <h3>场景开放创新</h3>
+        <p>构建短剧短视频、电子商务、知识付费、数字文创、软件开发"场景池"；依托湾区应用场景发布厅供需对接；以琶洲算法大赛等"以会促兴、以赛促创"。</p>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">💰</div>
+        <h3>多元融资渠道</h3>
+        <p>创投基金矩阵接力投资（大湾区国家创投引导基金等）；银行业推出"人才贷、研发贷、成果贷、算力贷"全周期信贷产品。</p>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🧑‍💻</div>
+        <h3>人才政策供给</h3>
+        <p>OPC 人才纳入高层次人才认定；高校设置"人工智能+"交叉学科；人工智能训练师职业技能等级认定；创业导师专家库；"一张床、一间房、一套房"安居保障。</p>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🛡️</div>
+        <h3>服务保障体系</h3>
+        <p>企业开办"一日办结、一网通办"；知识产权质押处置板块；调解/公证/仲裁特色法律服务；人工智能应用中试基地；出海一站式服务（ODI 备案、跨境支付）。</p>
+      </div>
+    </div>
   </div>
 
   <!-- 结尾 CTA -->
@@ -95,6 +142,21 @@
       <h3>政策咨询，一步到位</h3>
       <p>咨询电话：0763-3391888 ｜ 入驻即可享受三大赋能体系</p>
       <button class="btn-buy" onclick="location.href='join.html'">前往入驻招商</button>
+    </div>
+  </div>
+
+  <!-- 政策详情弹窗（正文 textContent 渲染，安全优先，与 news.html 一致） -->
+  <div id="detailModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 id="detailTitle">📜 政策详情</h3>
+      <div class="detail-row"><span class="d-label">级别</span><span class="d-value" id="detailCategory">—</span></div>
+      <div class="detail-row"><span class="d-label">发布时间</span><span class="d-value" id="detailTime">—</span></div>
+      <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor">—</span></div>
+      <div class="detail-section-title">政策内容</div>
+      <div id="detailContent" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap">加载中…</div>
+      <div class="modal-btns">
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
+      </div>
     </div>
   </div>
 
@@ -118,11 +180,90 @@
   </footer>
 
 <script>
-  // ===== 共享：页脚年份 =====
+  // ===== 政策文件库：CMS 动态加载（匿名公开接口，与 news.html 同前缀）=====
+  const CAT_API = '/prod-api/system/cmsCategory/publicList';
+  const LIST_API = '/prod-api/system/cms/publicList';
+  const DETAIL_API = '/prod-api/system/cms/publicDetail/';
+
+  // HTML 转义：标题/摘要等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // 政策级别徽章（按标题关键词映射：省级/高新区/区级/市级）
+  function levelOf(title) {
+    if (title.indexOf('广东省') >= 0) return '省级';
+    if (title.indexOf('清城区') >= 0) return '区级';
+    if (title.indexOf('高新区') >= 0) return '高新区';
+    return '市级';
+  }
+
+  // 政策卡片渲染（标题 + 级别 + 摘要；点击打开详情）
+  async function loadPolicyLib() {
+    const grid = document.getElementById('policyGrid');
+    try {
+      const res = await fetch(CAT_API);
+      const d = await res.json();
+      const cat = (d.data || []).find(c => c.categoryName === '政策文件');
+      if (!cat) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
+      const r2 = await fetch(LIST_API + '?pageNum=1&pageSize=50&categoryId=' + cat.categoryId);
+      const d2 = await r2.json();
+      const rows = d2.rows || [];
+      if (!rows.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
+      grid.innerHTML = rows.map(p => {
+        const raw = String(p.summary || '').replace(/<[^>]+>/g, '');
+        return '<div class="info-card" style="cursor:pointer" onclick="openPolicy(' + p.articleId + ')">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<h3 style="margin:0">' + esc(p.title) + '</h3>' +
+            '<span class="tag tag-sale">' + levelOf(p.title) + '</span></div>' +
+          '<p style="margin-top:10px">' + esc(raw.slice(0, 100)) + (raw.length > 100 ? '…' : '') + '</p>' +
+          '<div style="color:#8a7d5c;font-size:13px">点击查看详情 →</div>' +
+        '</div>';
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
+    }
+  }
+
+  // 政策详情（正文剥离标签后 textContent 渲染，防存储型 XSS）
+  async function openPolicy(articleId) {
+    const modal = document.getElementById('detailModal');
+    const contentEl = document.getElementById('detailContent');
+    contentEl.textContent = '加载中…';
+    modal.style.display = 'flex';
+    try {
+      const res = await fetch(DETAIL_API + articleId);
+      const d = await res.json();
+      if (d.code !== 200 || !d.data) { contentEl.textContent = '政策不存在或未发布'; return; }
+      const a = d.data;
+      document.getElementById('detailTitle').textContent = '📜 ' + (a.title || '政策详情');
+      document.getElementById('detailCategory').textContent = levelOf(a.title || '');
+      document.getElementById('detailTime').textContent = a.publishTime || '—';
+      document.getElementById('detailAuthor').textContent = a.author || '—';
+      const text = String(a.content || '').replace(/<[^>]+>/g, '');
+      contentEl.textContent = text || '（内容为空）';
+    } catch (e) {
+      contentEl.textContent = '加载失败：' + e.message;
+    }
+  }
+
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  // 弹窗点击空白处（遮罩）自动关闭
+  document.querySelectorAll('.modal').forEach(function (m) {
+    m.addEventListener('click', function (e) {
+      if (e.target === m) m.style.display = 'none';
+    });
+  });
+
+  // ===== 初始化 =====
   (function () {
     var el = document.getElementById('footerYear');
     if (el) el.textContent = new Date().getFullYear();
   })();
+  loadPolicyLib();
 </script>
 </body>
 </html>
