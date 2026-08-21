@@ -19,5 +19,7 @@ mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DA
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260822_realcontent.sql
 # CMS 文章管理（幂等）：cms_category/cms_article 表/栏目/文章/菜单
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260822_cms.sql
+# 系统数据 OPC 化（幂等）：若依官网菜单/部门/岗位
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_opc_cleanup.sql
 
 echo "数智游民创新工场数据库初始化完成"
