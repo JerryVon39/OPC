@@ -120,7 +120,7 @@ export default {
     },
     goShop() {
       // 前台官网（新标签打开，便于来回切换）
-      window.open('/shop.html')
+      window.open('/home.html')
     },
     logout() {
       this.$confirm('确定注销并退出系统吗？', '提示', {

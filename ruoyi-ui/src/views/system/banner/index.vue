@@ -78,7 +78,7 @@
           <div style="color:#999;font-size:12px">可不上传图片，留空则前台显示渐变背景+文字</div>
         </el-form-item>
         <el-form-item label="跳转链接" prop="link">
-          <el-input v-model="form.link" placeholder="如 /shop.html 或空" />
+          <el-input v-model="form.link" placeholder="如 /home.html 或空" />
         </el-form-item>
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="form.sort" :min="0" :max="99" />
