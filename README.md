@@ -241,6 +241,24 @@ npm run dev
 | `0c55e79d` | Docker v1.2 发布：镜像推送 Docker Hub（含四轮审查修复 + 前台前缀修复 + 若依残留清理），compose 同步版本号 |
 | `2026-08-21` | **官网化改造**：数智游民创新工场官网（8 栏目前台 + 服务/成员/报名/候补/入驻申请/CMS/运营看板后台 + 成员体系 + 21 条真实 AI 服务与新闻），业务语义全面映射为官网语义，文档/注释/注解同步清理 |
 
+## 💾 数据库数据自动同步 GitHub（git 钩子）
+
+**你的问题**：在后台增删的成员/服务/文章只存在本地数据库，如何让 GitHub 仓库也同步？
+
+**方案（已内置）**：仓库内置 `.githooks/pre-commit` 钩子——**每次 `git commit` 前自动把当前数据库的业务数据（13 张表：成员/服务/报名/候补/申请/文章/轮播/公告/字典）导出为 `sql/data_snapshot.sql` 并加入提交**。你正常 commit + push，数据就跟着走了；别人 clone 后导入该文件即可看到你的全部改动。
+
+**使用**：
+1. 首次配置（仓库内执行一次）：`git config core.hooksPath .githooks`
+2. 日常照常 `git commit` / `git push`——数据快照自动随提交更新
+3. 数据库未运行时钩子自动跳过（不阻塞提交）；也可手动运行 `scripts\export-data.bat` 刷新快照
+
+**数据导入（对方/新机器）**：
+```bash
+mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql   # REPLACE 模式，可重复执行
+```
+
+**注意**：快照包含全部业务数据（成员邮箱等真实信息）——私密仓库适用；若转公开仓库请先脱敏。
+
 ## 📜 声明
 
 本项目基于开源框架 **RuoYi-Vue**（[gitee.com/y_project/RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)）二次开发，遵循 MIT 开源协议。仅用于学习交流。
