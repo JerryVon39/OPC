@@ -991,7 +991,7 @@
   // ===== 通用 =====
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
   // 跳转后台管理（同源根路径，未登录会引导登录）
-  function goAdmin() { location.href = '/index.html'; }
+  function goAdmin() { location.href = '/index'; }
   // ===== 锚点导航：平滑滚动 + 滚动监听高亮当前栏目（scroll-spy）=====
   function initNav() {
     document.querySelectorAll('.nav-links a[data-target]').forEach(a => {

@@ -195,7 +195,7 @@
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
         renderLoginState();
   // 跳转后台管理（根路径已重定向到首页，后台改走 /index.html）
-  function goAdmin() { location.href = '/index.html'; }
+  function goAdmin() { location.href = '/index'; }
         closeModal('loginModal');
         toast('欢迎回来，' + name);
       } else {
