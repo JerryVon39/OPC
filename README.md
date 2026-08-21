@@ -66,7 +66,7 @@
 从 GitHub 克隆仓库后，**只需安装 Docker**（Windows: Docker Desktop；无需 MySQL/Redis/Java/Node）：
 
 ```bash
-git clone <你的私有仓库地址>（本仓库为私密项目，push 前替换为实际仓库 URL）
+git clone https://github.com/JerryVon39/OPC.git
 cd OPC
 
 # Windows：双击 scripts\start-all.bat，或在命令行运行
@@ -90,7 +90,7 @@ scripts\start-all.bat
 已有 JDK 17 / Node.js（以及本机 MySQL、Redis，或用 Docker）的开发者，推荐用脚本：
 
 ```bash
-git clone <你的私有仓库地址>（本仓库为私密项目，push 前替换为实际仓库 URL）
+git clone https://github.com/JerryVon39/OPC.git
 cd OPC
 
 # Windows：双击 scripts\start-local.bat，或在命令行运行
