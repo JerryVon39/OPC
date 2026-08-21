@@ -43,7 +43,14 @@
     <p>AI 内容创作 · AI 技术应用 · AI 硬件与场景 —— 名额有限，先到先得，满员可候补</p>
   </div>
 
-  <!-- 服务列表（搜索 + 分类 Tab + 排序 + 网格） -->
+  <!-- 顶部服务分类标签页（全部服务 + 各分类，支持 ?type= 直达与标签切换） -->
+  <div class="svc-top-tabs">
+    <div class="type-tabs" id="typeTabs">
+      <a class="active" data-type="" onclick="switchType(this)">全部服务</a>
+    </div>
+  </div>
+
+  <!-- 服务列表（搜索 + 排序 + 网格） -->
   <div class="content-section">
     <div class="sub-title">🔍 查找服务</div>
     <div class="page-search">
@@ -58,9 +65,6 @@
           <a data-sort="borrowCount" data-asc="desc" onclick="switchSort(this)">报名最多</a>
           <a data-sort="publishDate" data-asc="desc" onclick="switchSort(this)">最新上线</a>
         </div>
-      </div>
-      <div class="type-tabs" id="typeTabs">
-        <a class="active" data-type="" onclick="switchType(this)">全部</a>
       </div>
       <div id="bookGrid" class="grid"></div>
     </div>
@@ -569,7 +573,7 @@
       const list = d.data || [];
       if (!list.length) return;
       const tabs = document.getElementById('typeTabs');
-      let html = '<a class="active" data-type="" onclick="switchType(this)">全部</a>';
+      let html = '<a class="active" data-type="" onclick="switchType(this)">全部服务</a>';
       list.forEach(v => {
         TYPE_MAP[v.dictValue] = v.dictLabel;
         html += '<a data-type="' + v.dictValue + '" onclick="switchType(this)">' + v.dictLabel + '</a>';
@@ -985,13 +989,20 @@
   document.getElementById('footerYear').textContent = new Date().getFullYear();
   renderLoginState();
   loadConfig();
-  // URL 参数 kw（首页热门服务/其他入口跳转带搜索词）
-  const urlKw = new URLSearchParams(location.search).get('kw');
+  // URL 参数：kw（搜索词）+ type（分类直达，首页分类卡跳转）
+  const urlParams = new URLSearchParams(location.search);
+  const urlKw = urlParams.get('kw');
+  const urlType = urlParams.get('type');
   if (urlKw) document.getElementById('searchInput').value = urlKw;
   // 先加载分类字典与"已报名/已候补"标识（依赖登录态），再加载服务
   loadTypes().then(async () => {
     await loadBorrowed();
     await loadReserved();
+    // ?type= 直达：激活对应分类标签并筛选
+    if (urlType) {
+      const tab = document.querySelector('#typeTabs a[data-type="' + urlType + '"]');
+      if (tab) { switchType(tab); return; }
+    }
     loadBooks();
   });
 </script>
