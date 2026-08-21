@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 >nul
 REM ============================================
-REM æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœº Â· Windows æœåŠ¡åŒ–å¸è½½ï¼ˆä¸ install-services.bat é…å¥—ï¼‰
-REM ç”¨æ³•: ä»¥ç®¡ç†å‘˜èº«ä»½è¿è¡Œ scripts\uninstall-services.bat
+REM ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡ ¡¤ Windows ·şÎñ»¯Ğ¶ÔØ£¨Óë install-services.bat ÅäÌ×£©
+REM ÓÃ·¨: ÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ scripts\uninstall-services.bat
 REM ============================================
 setlocal
 net session >nul 2>&1
 if errorlevel 1 (
-  echo [é”™è¯¯] è¯·ä»¥ç®¡ç†å‘˜èº«ä»½è¿è¡Œæœ¬è„šæœ¬
+  echo [´íÎó] ÇëÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ±¾½Å±¾
   pause & exit /b 1
 )
 if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
@@ -16,7 +16,7 @@ set "NSSM=%TOOLS_HOME%\nssm\nssm.exe"
 for %%s in (wanshiwu-backend wanshiwu-redis wanshiwu-mysql) do (
   sc query %%s >nul 2>&1
   if not errorlevel 1 (
-    echo åœæ­¢å¹¶å¸è½½æœåŠ¡ %%s ...
+    echo Í£Ö¹²¢Ğ¶ÔØ·şÎñ %%s ...
     net stop %%s >nul 2>&1
     if exist "%NSSM%" (
       "%NSSM%" remove %%s confirm >nul 2>&1
@@ -25,6 +25,6 @@ for %%s in (wanshiwu-backend wanshiwu-redis wanshiwu-mysql) do (
     )
   )
 )
-echo æœåŠ¡åŒ–å·²å…¨éƒ¨å¸è½½ï¼ˆå‰ç«¯ä¸å—å½±å“ï¼‰ã€‚
+echo ·şÎñ»¯ÒÑÈ«²¿Ğ¶ÔØ£¨Ç°¶Ë²»ÊÜÓ°Ïì£©¡£
 pause
 exit /b 0
