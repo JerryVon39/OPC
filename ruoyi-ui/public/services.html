@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数智游民创新工场 · 清远市首个人工智能 OPC 生态社区</title>
-<meta name="description" content="清远市首个人工智能 OPC（一人公司）生态社区，清城区政府与星链科技共建，"国企引领、民企赋能"。一个人 + AI 即可创业：AI 微短剧、AI 应用开发、数字人创作，免费工位与政策赋能。入驻咨询：0763-3391888">
+<title>服务项目 · 数智游民创新工场｜AI 服务 / 培训课程 / 活动报名</title>
+<meta name="description" content="数智游民创新工场服务列表：AI 内容创作、AI 技术应用、AI 硬件与场景三大类服务与培训课程，支持按分类筛选、关键词搜索、报名与满员候补。入驻咨询：0763-3391888">
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-  <!-- 顶部导航（锚点 + 搜索 + 我的报名 + 登录区 + "更多"下拉） -->
+  <!-- 顶部导航（吸顶） -->
   <div class="navbar">
-    <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部服务">数智游民<span>创新工场</span></div>
-    <div class="nav-links" id="navAnchors">
-      <a data-target="home" class="active">首页</a>
+    <div class="logo" style="cursor:pointer" onclick="location.href='shop.html'">数智游民<span>创新工场</span></div>
+    <div class="nav-links">
+      <a href="shop.html">首页</a>
       <a href="about.html">走进社区</a>
       <a href="industry.html">产业生态</a>
       <a href="policy.html">政策赋能</a>
       <a href="join.html">入驻招商</a>
       <a href="talent.html">人才培养</a>
       <a href="news.html">新闻动态</a>
-      <a data-target="contact">联系我们</a>
+      <a href="shop.html#contact">联系我们</a>
     </div>
     <div class="nav-right">
       <span onclick="openMyBorrow()" title="我的报名">📋 我的报名</span>
@@ -37,164 +37,34 @@
     </div>
   </div>
 
-  <!-- 新闻跑马灯（可关闭，滚动播放最新动态） -->
-  <div class="notice-bar" id="noticeBar" style="display:none" onclick="openNoticeDetail(event)">
-    <span class="n-title">📢 新闻</span>
-    <span id="noticeText">加载中…</span>
-    <span class="notice-close" onclick="event.stopPropagation();closeNotice()">✕</span>
+  <!-- 栏目页头部 -->
+  <div class="page-hero">
+    <h1>服务<span>项目</span></h1>
+    <p>AI 内容创作 · AI 技术应用 · AI 硬件与场景 —— 名额有限，先到先得，满员可候补</p>
   </div>
 
-  <!-- 新闻详情弹窗 -->
-  <div id="noticeDetailModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3 id="noticeDetailTitle">📰 新闻详情</h3>
-      <div id="noticeDetailText" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap"></div>
-      <div class="modal-btns">
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('noticeDetailModal')">关闭</button>
-      </div>
+  <!-- 服务列表（搜索 + 分类 Tab + 排序 + 网格） -->
+  <div class="content-section">
+    <div class="sub-title">🔍 查找服务</div>
+    <div class="page-search">
+      <input id="searchInput" placeholder="搜索服务名称 / 主办方" autocomplete="off" />
+      <button class="btn-buy" style="padding:10px 22px" onclick="loadBooks()">搜索</button>
     </div>
-  </div>
-
-  <!-- ================= 首屏 #home：轮播 + 数据条 ================= -->
-  <section id="home">
-    <!-- 横幅（轮播，内容由后台"轮播图管理"动态加载） -->
-    <div class="banner">
-      <div id="bannerSlides"></div>
-      <div class="banner-dots" id="bannerDots"></div>
-    </div>
-
-    <!-- 社区数据条（实时统计三格） -->
-    <div class="shop-stats" id="shopStats" style="display:none">
-      <div class="stat-item"><span class="stat-num" id="stBooks">0</span><span class="stat-label">服务总数</span></div>
-      <div class="stat-item"><span class="stat-num" id="stReaders">0</span><span class="stat-label">社区成员</span></div>
-      <div class="stat-item"><span class="stat-num" id="stBorrowToday">0</span><span class="stat-label">今日报名</span></div>
-    </div>
-  </section>
-
-  <!-- ================= 品牌理念（宣传区，详情见 about.html） ================= -->
-  <section id="concept" class="container" style="padding-top:26px">
-    <div class="section-title">🧠 品牌理念</div>
-    <div class="about-cards">
-      <div class="about-card">
-        <div class="about-icon">🏢</div>
-        <div class="about-title">OPC 新内涵</div>
-        <p>一人公司（One Person Company）不只是法律载体，更是 AI 时代的"生产力引擎"——以最低合规成本注册经营主体，以 AI 深度协同放大个人产出。<a href="about.html" style="color:var(--accent);text-decoration:none">走进社区 →</a></p>
-      </div>
-      <div class="about-card">
-        <div class="about-icon">🧑‍💻</div>
-        <div class="about-title">什么是"数智游民"</div>
-        <p>"数智游民"= 一个人 + 一台高性能 AI 电脑即可创业：不依赖场地、不依赖团队规模，只要有创意与 AI 工具，就能承接内容创作、技术开发、创意设计等订单。</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 三大赋能（宣传区，详情见 policy.html） ================= -->
-  <section id="empower" class="container">
-    <div class="section-title">🚀 三大赋能体系</div>
-    <div class="about-cards">
-      <div class="about-card">
-        <div class="about-icon">💻</div>
-        <div class="about-title">算力与技术支持</div>
-        <p>阿里 AI 生态私有化部署、智谱开源大模型平台、70B 以内大模型一体机试用、算力券补贴——为 OPC 创业提供低门槛算力底座。</p>
-      </div>
-      <div class="about-card">
-        <div class="about-icon">🏦</div>
-        <div class="about-title">政策与金融服务</div>
-        <p>创客特色贷款（财政贴息）、最高 2 万元数字游民奖励、80 万元担保贷款、300㎡ 三年免租——政策与资金全程护航。</p>
-      </div>
-      <div class="about-card">
-        <div class="about-icon">📦</div>
-        <div class="about-title">订单与市场牵引</div>
-        <p>文旅/政务/城市形象文创订单对接、创客基金、2026 首届 AI OPC 创客短视频大赛——以订单和赛事吸引产业集聚。</p>
-      </div>
-    </div>
-    <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="policy.html">查看政策赋能详情 →</a></div>
-  </section>
-
-  <!-- ================= 产业生态（宣传区，详情见 industry.html） ================= -->
-  <section id="ecosystem" class="container">
-    <div class="section-title">🏭 产业生态</div>
-    <div class="ecosystem-tags">
-      <span>塔链人工智能科技</span><span>南京世东智脑</span><span>正经点赞（清远）媒体科技</span>
-      <span>北江人工智能产教融合研究院</span><span>光年制造工作室</span><span>彗星互娱工作室</span>
-    </div>
-    <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="industry.html">查看产业生态详情 →</a></div>
-  </section>
-
-  <!-- ================= 服务项目 #services：精选服务（完整列表见 services.html） ================= -->
-  <section id="services">
-    <!-- 热门服务 -->
-    <div class="hot-bar" id="hotBar" style="display:none">
-      <div class="hot-title">🔥 热门服务</div>
-      <div class="hot-items" id="hotItems"></div>
-    </div>
-
-    <!-- 精选服务（完整列表见 services.html） -->
-    <div class="container">
+    <div style="margin-top:16px">
       <div class="section-head">
-        <div class="section-title" id="listTitle">🔥 精选服务</div>
-        <a class="btn-buy" style="padding:7px 18px;text-decoration:none" href="services.html">查看全部服务 →</a>
+        <div class="section-title" id="listTitle">全部服务 <a id="clearSearch" style="display:none" onclick="resetAll()">✕ 清除筛选</a></div>
+        <div class="sort-tabs" id="sortTabs">
+          <a class="active" data-sort="" onclick="switchSort(this)">综合</a>
+          <a data-sort="borrowCount" data-asc="desc" onclick="switchSort(this)">报名最多</a>
+          <a data-sort="publishDate" data-asc="desc" onclick="switchSort(this)">最新上线</a>
+        </div>
+      </div>
+      <div class="type-tabs" id="typeTabs">
+        <a class="active" data-type="" onclick="switchType(this)">全部</a>
       </div>
       <div id="bookGrid" class="grid"></div>
     </div>
-  </section>
-
-  <!-- ================= 新闻动态 #news ================= -->
-  <section id="news" class="container">
-    <div class="section-title">📰 新闻动态</div>
-    <div id="newsList" class="news-list"><div class="loading">加载中…</div></div>
-  </section>
-
-  <!-- ================= 关于我们 #about（静态区块） ================= -->
-  <section id="about" class="container">
-    <div class="section-title">🏭 关于我们</div>
-    <div class="about-cards">
-      <div class="about-card">
-        <div class="about-icon">📍</div>
-        <div class="about-title">社区定位</div>
-        <p>清远市首个人工智能 OPC（一人公司）生态社区。"一人公司"= 一个人 + AI 深度协同：OPC 作为法律载体，AI 作为生产力引擎，让个人也能轻松开办一家公司。</p>
-      </div>
-      <div class="about-card">
-        <div class="about-icon">🤝</div>
-        <div class="about-title">合作模式</div>
-        <p>清城区政府 × 清远市星链科技有限公司合作共建；区属国企顺拓集团与星链科技合资组建星拓公司负责运营，"国企引领、民企赋能"。</p>
-      </div>
-      <div class="about-card">
-        <div class="about-icon">🎯</div>
-        <div class="about-title">愿景</div>
-        <p>打造低门槛、高赋能的 AI 创业生态：聚集"一个人 + AI"的数字游民与小微创业者，让每一个创意都能以更低成本、更快速度变成事业。</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 联系我们 #contact（静态区块） ================= -->
-  <section id="contact" class="container">
-    <div class="section-title">📮 联系我们</div>
-    <div class="contact-list">
-      <div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>
-      <div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-3391888</div></div></div>
-      <div class="contact-item"><span class="c-icon">📧</span><div><div class="c-label">邮箱</div><div class="c-value">contact@example.com（[待补]）</div></div></div>
-    </div>
-  </section>
-
-  <!-- 页脚（三栏） -->
-  <footer class="footer">
-    <div class="footer-cols">
-      <div class="footer-col">
-        <h4>🏭 关于我们</h4>
-        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>清远市首个人工智能 OPC 生态社区 ｜ 让"一个人 + AI"成为可能</p>
-      </div>
-      <div class="footer-col">
-        <h4>📮 联系我们</h4>
-        <p>地址：清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105<br>电话：0763-3391888<br>邮箱：contact@example.com（[待补]）</p>
-      </div>
-      <div class="footer-col">
-        <h4>🤝 入驻与合作</h4>
-        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>入驻咨询：0763-3391888</p>
-      </div>
-    </div>
-    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
-  </footer>
+  </div>
 
   <!-- 服务详情弹窗 -->
   <div id="detailModal" class="modal" style="display:none">
@@ -316,6 +186,26 @@
 
   <div id="toast" class="toast"></div>
 
+
+  <!-- 页脚（三栏） -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>🏭 关于我们</h4>
+        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>清远市首个人工智能 OPC 生态社区 ｜ 让"一个人 + AI"成为可能</p>
+      </div>
+      <div class="footer-col">
+        <h4>📮 联系我们</h4>
+        <p>地址：清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105<br>电话：0763-3391888<br>邮箱：contact@example.com（[待补]）</p>
+      </div>
+      <div class="footer-col">
+        <h4>🤝 入驻与合作</h4>
+        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>入驻咨询：0763-3391888</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
+  </footer>
+
 <script>
   // ===== 接口地址（匿名公开接口）=====
   const API = '/prod-api/system/book/list';
@@ -333,13 +223,13 @@
   const PUBLIC_STATS_API = '/prod-api/system/dashboard/publicStats';
   const BANNER_API = '/prod-api/system/banner/publicList';
   const RELATED_API = '/prod-api/system/book/related';
+  const DICT_API = '/prod-api/system/dict/data/type/book_type';
   const PURCHASE_API = '/prod-api/system/purchase/apply';
   const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
   const authParams = () => ({ cardNo: currentUser ? currentUser.cardNo : '', sessionToken: sessionToken() });
 
   // ===== 字典翻译（分类由后台字典动态加载）=====
-  // 服务分类映射（首页写死与后台字典 book_type 一致的 3 类；services.html 动态加载）
-  const TYPE_MAP = { '1': 'AI 内容创作', '2': 'AI 技术应用', '3': 'AI 硬件与场景' };
+  let TYPE_MAP = {};  // 分类映射（loadTypes 从后台字典动态填充）
   const STATUS_MAP = { '0': '招募中', '1': '已结束' };
   const BORROW_STATUS = { '0': '进行中', '1': '已完成', '2': '已截止' };
   const RESERVE_STATUS = { '0': '候补中', '1': '有名额', '2': '已完成', '3': '已取消' };
@@ -527,8 +417,9 @@
     const mySeq = ++bookRequestSeq;
     // 加载前显示骨架屏
     document.getElementById('bookGrid').innerHTML = SKELETON.repeat(6);
-    // 首页精选 6 条（完整列表见 services.html，含分类/排序/搜索）
-    const params = new URLSearchParams({ pageNum: 1, pageSize: 6 });
+    const kw = document.getElementById('searchInput').value.trim();
+    const params = new URLSearchParams({ pageNum: 1, pageSize: 30 });
+    if (kw) params.set('keyword', kw);
     if (currentType) params.set('bookType', currentType);
     if (currentSort) { params.set('orderByColumn', currentSort); params.set('isAsc', currentAsc || 'desc'); }
     try {
@@ -539,15 +430,16 @@
       const books = (data.rows || []).filter(b => b.status === '0');
       currentBooks = books;
       const title = document.getElementById('listTitle');
-      // 首页固定"精选服务"标题（分类/搜索在 services.html）
-      title.innerHTML = '🔥 精选服务';
+      // 标题文字 + "清除筛选"快捷入口（有搜索词或分类时显示）
+      title.innerHTML = (currentType ? (TYPE_MAP[currentType] || '') + '服务' : (kw ? '搜索：' + esc(kw) : '全部服务'))
+        + '<a id="clearSearch" style="' + ((kw || currentType) ? '' : 'display:none') + '" onclick="resetAll()">✕ 清除筛选</a>';
       if (!books.length) {
         document.getElementById('bookGrid').innerHTML =
           '<div class="no-result">' +
             '<div class="nr-icon">🧭</div>' +
-            '<div class="nr-title">服务准备中</div>' +
-            '<div class="nr-desc">完整服务列表与筛选功能见服务列表页</div>' +
-            '<a class="btn-buy" style="text-decoration:none" href="services.html">前往服务列表 →</a>' +
+            '<div class="nr-title">暂无匹配服务</div>' +
+            '<div class="nr-desc">试试其他关键词，或提交入驻申请告诉我们你需要的服务</div>' +
+            '<button class="btn-buy" onclick="openPurchase()">🏢 入驻申请</button>' +
           '</div>';
         return;
       }
@@ -567,9 +459,9 @@
       document.getElementById('bookGrid').innerHTML =
         '<div class="no-result">' +
           '<div class="nr-icon">🧭</div>' +
-          '<div class="nr-title">服务准备中</div>' +
-          '<div class="nr-desc">完整服务列表与筛选功能见服务列表页</div>' +
-          '<a class="btn-buy" style="text-decoration:none" href="services.html">前往服务列表 →</a>' +
+          '<div class="nr-title">暂无匹配服务</div>' +
+          '<div class="nr-desc">试试其他关键词，或提交入驻申请告诉我们你需要的服务</div>' +
+          '<button class="btn-buy" onclick="openPurchase()">🏢 入驻申请</button>' +
         '</div>';
       return;
     }
@@ -702,11 +594,50 @@
   }
 
   // ===== 返回全部服务（logo / "清除筛选"链接）=====
+  // ===== 服务分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
+  async function loadTypes() {
+    try {
+      const res = await fetch(DICT_API);
+      const d = await res.json();
+      const list = d.data || [];
+      if (!list.length) return;
+      const tabs = document.getElementById('typeTabs');
+      let html = '<a class="active" data-type="" onclick="switchType(this)">全部</a>';
+      list.forEach(v => {
+        TYPE_MAP[v.dictValue] = v.dictLabel;
+        html += '<a data-type="' + v.dictValue + '" onclick="switchType(this)">' + v.dictLabel + '</a>';
+      });
+      tabs.innerHTML = html;
+    } catch (e) { }
+  }
+
+  // ===== 分类切换 =====
+  function switchType(el) {
+    document.querySelectorAll('#typeTabs a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    currentType = el.dataset.type;
+    loadBooks();
+  }
+
+  // ===== 排序切换 =====
+  function switchSort(el) {
+    document.querySelectorAll('#sortTabs a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    currentSort = el.dataset.sort || '';
+    currentAsc = el.dataset.asc || '';
+    loadBooks();
+  }
+
+  // ===== 返回全部服务（logo / "清除筛选"链接）=====
   function resetAll() {
-    // 首页无分类/排序 Tab：回到精选服务（logo 点击）
+    document.getElementById('searchInput').value = '';
     currentType = '';
     currentSort = '';
     currentAsc = '';
+    document.querySelectorAll('#typeTabs a').forEach(a => a.classList.remove('active'));
+    document.querySelector('#typeTabs a[data-type=""]').classList.add('active');
+    document.querySelectorAll('#sortTabs a').forEach(a => a.classList.remove('active'));
+    document.querySelector('#sortTabs a[data-sort=""]').classList.add('active');
     loadBooks();
   }
 
@@ -1156,6 +1087,19 @@
     document.getElementById('navMore').classList.remove('open');
   });
 
+  // ===== 页面内搜索（防抖直搜，无联想下拉）=====
+  (function () {
+    const el = document.getElementById('searchInput');
+    let t = null;
+    el.addEventListener('input', function () {
+      clearTimeout(t);
+      t = setTimeout(loadBooks, 300);
+    });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { clearTimeout(t); loadBooks(); }
+    });
+  })();
+
   // ===== 初始化 =====
   try {
     const saved = localStorage.getItem('shopUser');
@@ -1163,18 +1107,16 @@
   } catch (e) {}
   document.getElementById('footerYear').textContent = new Date().getFullYear();
   renderLoginState();
-  initNav();
   loadConfig();
-  // 首页精选：加载"已报名/已候补"标识（依赖登录态）后再加载服务
-  (async () => {
+  // URL 参数 kw（首页热门服务/其他入口跳转带搜索词）
+  const urlKw = new URLSearchParams(location.search).get('kw');
+  if (urlKw) document.getElementById('searchInput').value = urlKw;
+  // 先加载分类字典与"已报名/已候补"标识（依赖登录态），再加载服务
+  loadTypes().then(async () => {
     await loadBorrowed();
     await loadReserved();
     loadBooks();
-  })();
-  loadShopStats();
-  loadBanners();
-  loadHot();
-  loadNotices();
+  });
 </script>
 </body>
 </html>
