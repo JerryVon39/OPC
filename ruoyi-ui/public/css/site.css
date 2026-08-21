@@ -431,14 +431,33 @@ textarea.form-input { resize: vertical; }
   .home-hero .banner-slide, .home-hero .banner-dots { z-index: 2; }
   /* 向下滚动提示 */
   .home-scroll-hint {
-    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 3;
-    color: rgba(255,255,255,0.75); font-size: 13px; letter-spacing: 2px; text-align: center;
-    animation: hintFloat 2.2s ease-in-out infinite; cursor: pointer;
+    margin-top: 34px; color: var(--accent); font-size: 13px; letter-spacing: 3px; text-align: center;
+    animation: hintFloat 2.2s ease-in-out infinite; cursor: pointer; opacity: 0.85;
   }
-  @keyframes hintFloat { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.65; } 50% { transform: translateX(-50%) translateY(8px); opacity: 1; } }
+  @keyframes hintFloat { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(7px); opacity: 1; } }
   /* 章节模块头：编号水印 + 居中标题 + 英文副标 */
   .home-mod { padding: 34px 0 40px; }
-  .home-alt { background: #eef2f9; }
+  /* 模块背景色阶（由浅到深交替，保持科技蓝协调） */
+  .home-alt { background: #e8eef8; }   /* 02 三大赋能 / 04 服务概览 */
+  .home-alt2 { background: #dde7f4; }  /* 03 产业生态 */
+  .home-alt3 { background: #f0f4fa; }  /* 07 联系我们 */
+  /* 06 发展历程：深蓝渐变模块（白字适配） */
+  .home-deep {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+    position: relative; overflow: hidden;
+  }
+  .home-deep::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+  .home-deep .container { position: relative; z-index: 2; }
+  .home-deep .home-mod-title { color: #fff; }
+  .home-deep .home-mod-en { color: rgba(255,255,255,0.6); }
+  .home-deep .home-mod-no { color: rgba(255,255,255,0.08); }
+  .home-deep .tl-date { color: var(--accent-light); }
+  .home-deep .tl-title { color: #fff; }
+  .home-deep .tl-desc { color: rgba(255,255,255,0.75); }
   .home-mod-head { text-align: center; position: relative; margin-bottom: 26px; }
   .home-mod-no {
     position: absolute; top: -26px; left: 50%; transform: translateX(-50%); z-index: 0;
@@ -472,7 +491,6 @@ textarea.form-input { resize: vertical; }
   }
 
   /* ================= 首页 v2 全屏翻页（body.home-page 专属） ================= */
-  html.home-page { scroll-snap-type: y proximity; } /* 原生弱吸附兜底，平滑翻页由 JS 接管 */
   body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta { scroll-snap-align: start; }
   body.home-page section.home-mod { min-height: 100vh; display: flex; align-items: center; padding: 90px 0 40px; }
   body.home-page .home-cta { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -521,7 +539,6 @@ textarea.form-input { resize: vertical; }
   @media (max-width: 900px) { .svc-cat-cards { grid-template-columns: 1fr; } .home-market-stats { flex-direction: column; } }
   /* 移动端：取消全屏翻页（内容自适应） */
   @media (max-width: 768px) {
-    body.home-page { scroll-snap-type: none; }
     body.home-page section.home-mod { min-height: auto; padding: 70px 0 34px; }
     .home-hero { min-height: 100vh; background: var(--bg); }
     .home-hero-carousel { height: 34vh; }

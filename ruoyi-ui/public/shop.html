@@ -44,7 +44,6 @@
         <div id="bannerSlides"></div>
         <div class="banner-dots" id="bannerDots"></div>
       </div>
-      <div class="home-scroll-hint">▼ 向下滚动探索</div>
     </div>
     <div class="home-intro">
       <h2 class="home-intro-title">清远市首个人工智能 OPC 生态社区</h2>
@@ -54,6 +53,7 @@
         <a class="btn-buy" href="about.html" style="text-decoration:none">走进社区</a>
         <a class="btn-buy home-btn-ghost" href="join.html" style="text-decoration:none">立即入驻</a>
       </div>
+      <div class="home-scroll-hint">▼ 向下滚动探索</div>
     </div>
   </section>
 
@@ -116,7 +116,7 @@
   </section>
 
   <!-- ================= 03 产业生态 ================= -->
-  <section id="ecosystem" class="home-mod">
+  <section id="ecosystem" class="home-mod home-alt2">
     <div class="container">
       <div class="home-mod-head">
         <span class="home-mod-no">03</span>
@@ -195,7 +195,7 @@
   </section>
 
   <!-- ================= 06 关于我们 ================= -->
-  <section id="about" class="home-mod home-alt">
+  <section id="about" class="home-mod home-deep">
     <div class="container">
       <div class="home-mod-head">
         <span class="home-mod-no">06</span>
@@ -222,7 +222,7 @@
   </section>
 
   <!-- ================= 07 联系我们 ================= -->
-  <section id="contact" class="home-mod">
+  <section id="contact" class="home-mod home-alt3">
     <div class="container">
       <div class="home-mod-head">
         <span class="home-mod-no">07</span>
@@ -1063,23 +1063,37 @@
     els.forEach(el => io.observe(el));
   })();
 
-  // ===== 全屏翻页：滚动结束后平滑吸附到最近模块（原生 mandatory 突兀，改 JS 接管）=====
+  // ===== 全屏翻页：滚轮累积 18% 屏高即翻页（慢速滚动同样灵敏，方向跟随滚轮）=====
   (function () {
     const mods = document.querySelectorAll('body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta');
     if (!mods.length) return;
     if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return; // 移动端自由滚动
-    let t = null;
-    window.addEventListener('scroll', function () {
-      clearTimeout(t);
-      t = setTimeout(function () {
-        const center = window.scrollY + window.innerHeight * 0.45; // 视口偏上 45% 为判定线
-        let best = mods[0];
-        mods.forEach(m => { if (m.offsetTop <= center) best = m; });
-        const target = best.offsetTop;
-        if (Math.abs(window.scrollY - target) > 40) {
-          window.scrollTo({ top: target, behavior: 'smooth' }); // 浏览器原生平滑缓动，约 400ms
-        }
-      }, 130);
+    let acc = 0;          // 滚轮累积量
+    let locking = false;  // 翻页动画期间锁定，防止连翻
+    function go(targetTop) {
+      locking = true;
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+      setTimeout(function () { locking = false; }, 650);
+    }
+    window.addEventListener('wheel', function (e) {
+      if (locking) return;
+      acc += e.deltaY;
+      const vh = window.innerHeight;
+      if (Math.abs(acc) < vh * 0.18) return;
+      const dir = acc > 0 ? 1 : -1;
+      acc = 0;
+      // 当前所在模块（视口中心线向下最近的模块顶）
+      const center = window.scrollY + vh * 0.5;
+      let cur = mods[0];
+      mods.forEach(m => { if (m.offsetTop <= center) cur = m; });
+      const i = Array.from(mods).indexOf(cur);
+      const target = mods[Math.min(Math.max(i + dir, 0), mods.length - 1)];
+      if (target.offsetTop !== cur.offsetTop || Math.abs(window.scrollY - cur.offsetTop) > 20) {
+        go(target.offsetTop);
+      } else {
+        // 已停在模块顶且方向相同：仍平滑滚动一下（当前模块回正）
+        go(cur.offsetTop);
+      }
     }, { passive: true });
   })();
 
