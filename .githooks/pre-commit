@@ -1,0 +1,72 @@
+#!/bin/sh
+# ============================================
+# pre-commit 钩子：自动导出数据库业务数据到 sql/data_snapshot.sql
+# 效果：每次 git commit 前自动把当前数据库的成员/服务/文章等数据
+#       快照进仓库——commit + push 后，GitHub 上的 data_snapshot.sql
+#       即最新数据，其他人 clone 后导入即可看到你的全部改动。
+#
+# 配置（仓库内执行一次）：git config core.hooksPath .githooks
+# 依赖：本机 MySQL 运行中（start-local 或 Docker 均可，端口 3306）
+# 说明：数据库未运行时自动跳过（不阻塞提交）；导出为 REPLACE 模式，可重复导入
+# ============================================
+
+# ---------- 定位工具 ----------
+MYSQL_DUMP=""
+for cand in "$(command -v mysqldump 2>/dev/null)" \
+            "$HOME/tools/mysql-8.4.9-winx64/bin/mysqldump.exe" \
+            "/c/Users/1/tools/mysql-8.4.9-winx64/bin/mysqldump.exe"; do
+  if [ -n "$cand" ] && [ -x "$cand" ]; then MYSQL_DUMP="$cand"; break; fi
+done
+if [ -z "$MYSQL_DUMP" ]; then
+  echo "[pre-commit] mysqldump 未找到，跳过数据快照（不影响提交）"
+  exit 0
+fi
+
+# ---------- 读取 .env 的 DB 配置（缺省用演示默认值） ----------
+DB_PASS="password"
+DB_HOST="localhost"
+DB_PORT="3306"
+DB_NAME="ry-vue"
+if [ -f ".env" ]; then
+  while IFS='=' read -r k v; do
+    v="${v%$'\r'}"   # .env 为 CRLF 行尾，去掉回车符
+    case "$k" in
+      DB_PASSWORD) DB_PASS="$v" ;;
+      DB_HOST)     DB_HOST="$v" ;;
+      DB_PORT)     DB_PORT="$v" ;;
+    esac
+  done < .env
+fi
+
+# ---------- MySQL 是否运行 ----------
+if ! mysqladmin -h"$DB_HOST" -P"$DB_PORT" -uroot -p"$DB_PASS" ping >/dev/null 2>&1; then
+  echo "[pre-commit] MySQL 未运行，跳过数据快照（不影响提交）"
+  exit 0
+fi
+
+# ---------- 导出业务数据（REPLACE 模式，可重复导入） ----------
+TABLES="book reader borrow_record shop_order book_reserve book_purchase_req sys_banner sys_notice sys_notice_read cms_category cms_article sys_dict_type sys_dict_data"
+OUT="sql/data_snapshot.sql"
+
+{
+  echo "-- ============================================"
+  echo "-- 数据快照：由 .githooks/pre-commit 自动生成（$(date '+%Y-%m-%d %H:%M:%S')）"
+  echo "-- 来源：数智游民创新工场官网数据库（ry-vue）业务数据"
+  echo "-- 导入（可重复执行，REPLACE 模式）："
+  echo "--   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql"
+  echo "-- 提示：本文件为自动生成，请勿手工编辑；运行 scripts/export-data.bat 可手动刷新"
+  echo "-- ============================================"
+  echo ""
+} > "$OUT"
+
+if "$MYSQL_DUMP" --default-character-set=utf8mb4 -h"$DB_HOST" -P"$DB_PORT" -uroot -p"$DB_PASS" \
+    --no-create-info --replace --skip-comments --skip-add-locks --skip-lock-tables \
+    --set-gtid-purged=OFF "$DB_NAME" $TABLES >> "$OUT" 2>/dev/null; then
+  git add "$OUT"
+  echo "[pre-commit] 数据快照已更新: $OUT ($(wc -l < "$OUT") 行)"
+else
+  echo "[pre-commit] 数据导出失败（跳过，不影响提交）"
+  exit 0
+fi
+
+exit 0
