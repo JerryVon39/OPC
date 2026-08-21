@@ -45,7 +45,7 @@ if not exist ".env" (
 
 REM 3. Start all services (first run pulls images and initializes the database)
 echo [start-all] Starting MySQL / Redis / backend / frontend ...
-docker image inspect jerryvon/book-system-backend:v2.0 >nul 2>&1
+docker image inspect jerryvon/opc-backend:v2.0 >nul 2>&1
 if errorlevel 1 (
   echo [start-all] v2.0 image not found locally - building from source, takes a few minutes...
   docker compose build
