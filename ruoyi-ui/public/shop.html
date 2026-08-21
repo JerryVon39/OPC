@@ -55,42 +55,55 @@
     </div>
   </div>
 
-  <!-- ================= 首屏 #home：轮播 + 数据条 ================= -->
+  <!-- ================= 首屏 #home：Hero 全屏轮播 + 数据条半叠 ================= -->
   <section id="home">
-    <!-- 横幅（轮播，内容由后台"轮播图管理"动态加载） -->
-    <div class="banner">
-      <div id="bannerSlides"></div>
-      <div class="banner-dots" id="bannerDots"></div>
+    <div class="home-hero">
+      <div class="banner">
+        <div id="bannerSlides"></div>
+        <div class="banner-dots" id="bannerDots"></div>
+      </div>
+      <div class="home-scroll-hint">▼ 向下滚动探索</div>
     </div>
-
-    <!-- 社区数据条（实时统计三格） -->
-    <div class="shop-stats" id="shopStats" style="display:none">
+    <!-- 社区数据条（实时统计四格，半叠 Hero 底部） -->
+    <div class="shop-stats home-stats" id="shopStats" style="display:none">
       <div class="stat-item"><span class="stat-num" id="stBooks">0</span><span class="stat-label">服务总数</span></div>
       <div class="stat-item"><span class="stat-num" id="stReaders">0</span><span class="stat-label">社区成员</span></div>
       <div class="stat-item"><span class="stat-num" id="stBorrowToday">0</span><span class="stat-label">今日报名</span></div>
+      <div class="stat-item"><span class="stat-num" id="stCompanies">6</span><span class="stat-label">入驻企业</span></div>
     </div>
   </section>
 
-  <!-- ================= 品牌理念（宣传区，详情见 about.html） ================= -->
-  <section id="concept" class="container" style="padding-top:26px">
-    <div class="section-title">🧠 品牌理念</div>
-    <div class="about-cards">
-      <div class="about-card">
-        <div class="about-icon">🏢</div>
-        <div class="about-title">OPC 新内涵</div>
-        <p>一人公司（One Person Company）不只是法律载体，更是 AI 时代的"生产力引擎"——以最低合规成本注册经营主体，以 AI 深度协同放大个人产出。<a href="about.html" style="color:var(--accent);text-decoration:none">走进社区 →</a></p>
+  <!-- ================= 01 品牌理念 ================= -->
+  <section id="concept" class="home-mod">
+    <div class="container">
+      <div class="home-mod-head">
+        <span class="home-mod-no">01</span>
+        <h2 class="home-mod-title">品牌理念</h2>
+        <span class="home-mod-en">WHAT IS OPC</span>
       </div>
-      <div class="about-card">
-        <div class="about-icon">🧑‍💻</div>
-        <div class="about-title">什么是"数智游民"</div>
-        <p>"数智游民"= 一个人 + 一台高性能 AI 电脑即可创业：不依赖场地、不依赖团队规模，只要有创意与 AI 工具，就能承接内容创作、技术开发、创意设计等订单。</p>
+      <div class="about-cards">
+        <div class="about-card">
+          <div class="about-icon">🏢</div>
+          <div class="about-title">OPC 新内涵</div>
+          <p>一人公司（One Person Company）不只是法律载体，更是 AI 时代的"生产力引擎"——以最低合规成本注册经营主体，以 AI 深度协同放大个人产出。<a href="about.html" style="color:var(--accent);text-decoration:none">走进社区 →</a></p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🧑‍💻</div>
+          <div class="about-title">什么是"数智游民"</div>
+          <p>"数智游民"= 一个人 + 一台高性能 AI 电脑即可创业：不依赖场地、不依赖团队规模，只要有创意与 AI 工具，就能承接内容创作、技术开发、创意设计等订单。</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ================= 三大赋能（宣传区，详情见 policy.html） ================= -->
-  <section id="empower" class="container">
-    <div class="section-title">🚀 三大赋能体系</div>
+  <!-- ================= 02 三大赋能 ================= -->
+  <section id="empower" class="home-mod home-alt">
+    <div class="container">
+      <div class="home-mod-head">
+        <span class="home-mod-no">02</span>
+        <h2 class="home-mod-title">三大赋能体系</h2>
+        <span class="home-mod-en">EMPOWERMENT</span>
+      </div>
     <div class="about-cards">
       <div class="about-card">
         <div class="about-icon">💻</div>
@@ -109,20 +122,27 @@
       </div>
     </div>
     <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="policy.html">查看政策赋能详情 →</a></div>
-  </section>
-
-  <!-- ================= 产业生态（宣传区，详情见 industry.html） ================= -->
-  <section id="ecosystem" class="container">
-    <div class="section-title">🏭 产业生态</div>
-    <div class="ecosystem-tags">
-      <span>塔链人工智能科技</span><span>南京世东智脑</span><span>正经点赞（清远）媒体科技</span>
-      <span>北江人工智能产教融合研究院</span><span>光年制造工作室</span><span>彗星互娱工作室</span>
     </div>
-    <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="industry.html">查看产业生态详情 →</a></div>
   </section>
 
-  <!-- ================= 服务项目 #services：精选服务（完整列表见 services.html） ================= -->
-  <section id="services">
+  <!-- ================= 03 产业生态 ================= -->
+  <section id="ecosystem" class="home-mod">
+    <div class="container">
+      <div class="home-mod-head">
+        <span class="home-mod-no">03</span>
+        <h2 class="home-mod-title">产业生态</h2>
+        <span class="home-mod-en">INDUSTRY</span>
+      </div>
+      <div class="ecosystem-tags">
+        <span>塔链人工智能科技</span><span>南京世东智脑</span><span>正经点赞（清远）媒体科技</span>
+        <span>北江人工智能产教融合研究院</span><span>光年制造工作室</span><span>彗星互娱工作室</span>
+      </div>
+      <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="industry.html">查看产业生态详情 →</a></div>
+    </div>
+  </section>
+
+  <!-- ================= 04 精选服务（完整列表见 services.html） ================= -->
+  <section id="services" class="home-mod home-alt">
     <!-- 热门服务 -->
     <div class="hot-bar" id="hotBar" style="display:none">
       <div class="hot-title">🔥 热门服务</div>
@@ -131,23 +151,37 @@
 
     <!-- 精选服务（完整列表见 services.html） -->
     <div class="container">
-      <div class="section-head">
-        <div class="section-title" id="listTitle">🔥 精选服务</div>
-        <a class="btn-buy" style="padding:7px 18px;text-decoration:none" href="services.html">查看全部服务 →</a>
+      <div class="home-mod-head" style="margin-bottom:22px">
+        <span class="home-mod-no">04</span>
+        <h2 class="home-mod-title">精选服务</h2>
+        <span class="home-mod-en">SERVICES</span>
+        <a class="btn-buy home-mod-more" style="text-decoration:none" href="services.html">查看全部服务 →</a>
       </div>
       <div id="bookGrid" class="grid"></div>
     </div>
   </section>
 
-  <!-- ================= 新闻动态 #news ================= -->
-  <section id="news" class="container">
-    <div class="section-title">📰 新闻动态</div>
-    <div id="newsList" class="news-list"><div class="loading">加载中…</div></div>
+  <!-- ================= 05 新闻动态 ================= -->
+  <section id="news" class="home-mod">
+    <div class="container">
+      <div class="home-mod-head">
+        <span class="home-mod-no">05</span>
+        <h2 class="home-mod-title">新闻动态</h2>
+        <span class="home-mod-en">NEWS</span>
+        <a class="btn-buy home-mod-more" style="text-decoration:none" href="news.html">查看全部动态 →</a>
+      </div>
+      <div id="newsList" class="news-list"><div class="loading">加载中…</div></div>
+    </div>
   </section>
 
-  <!-- ================= 关于我们 #about（静态区块） ================= -->
-  <section id="about" class="container">
-    <div class="section-title">🏭 关于我们</div>
+  <!-- ================= 06 关于我们 ================= -->
+  <section id="about" class="home-mod home-alt">
+    <div class="container">
+      <div class="home-mod-head">
+        <span class="home-mod-no">06</span>
+        <h2 class="home-mod-title">关于我们</h2>
+        <span class="home-mod-en">ABOUT</span>
+      </div>
     <div class="about-cards">
       <div class="about-card">
         <div class="about-icon">📍</div>
@@ -167,13 +201,28 @@
     </div>
   </section>
 
-  <!-- ================= 联系我们 #contact（静态区块） ================= -->
-  <section id="contact" class="container">
-    <div class="section-title">📮 联系我们</div>
-    <div class="contact-list">
-      <div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>
-      <div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-3391888</div></div></div>
-      <div class="contact-item"><span class="c-icon">📧</span><div><div class="c-label">邮箱</div><div class="c-value">contact@example.com（[待补]）</div></div></div>
+  <!-- ================= 07 联系我们 ================= -->
+  <section id="contact" class="home-mod">
+    <div class="container">
+      <div class="home-mod-head">
+        <span class="home-mod-no">07</span>
+        <h2 class="home-mod-title">联系我们</h2>
+        <span class="home-mod-en">CONTACT</span>
+      </div>
+      <div class="contact-list">
+        <div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>
+        <div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-3391888</div></div></div>
+        <div class="contact-item"><span class="c-icon">📧</span><div><div class="c-label">邮箱</div><div class="c-value">contact@example.com（[待补]）</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 入驻 CTA 横幅（首尾呼应） ================= -->
+  <section class="home-cta">
+    <div class="home-cta-inner">
+      <h3>一个人 + AI，开启你的 OPC 事业</h3>
+      <p>免费工位 · 政策赋能 · 订单对接 ｜ 咨询电话：0763-3391888</p>
+      <a class="btn-buy home-cta-btn" href="join.html">立即入驻</a>
     </div>
   </section>
 
@@ -523,9 +572,7 @@
       // 前台只展示招募中的服务（已结束服务不出现在列表）
       const books = (data.rows || []).filter(b => b.status === '0');
       currentBooks = books;
-      const title = document.getElementById('listTitle');
-      // 首页固定"精选服务"标题（分类/搜索在 services.html）
-      title.innerHTML = '🔥 精选服务';
+      // 首页精选服务标题已静态化（04 精选服务），无需 JS 写入
       if (!books.length) {
         document.getElementById('bookGrid').innerHTML =
           '<div class="no-result">' +
@@ -1032,6 +1079,20 @@
   document.getElementById('moreMenu').addEventListener('click', function () {
     document.getElementById('navMore').classList.remove('open');
   });
+
+  // ===== 首页滚动动画（模块进入视口淡入上移；低动效偏好自动禁用）=====
+  (function () {
+    const els = document.querySelectorAll('.home-mod > .container, .home-stats, .home-cta-inner');
+    if (!els.length || !('IntersectionObserver' in window)) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    els.forEach(el => el.classList.add('reveal'));
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(en => {
+        if (en.isIntersecting) { en.target.classList.add('reveal-in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(el => io.observe(el));
+  })();
 
   // ===== 初始化 =====
   try {

@@ -418,3 +418,67 @@ textarea.form-input { resize: vertical; }
   .ecosystem-tags { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   .ecosystem-tags span { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 8px 18px; font-size: 14px; color: var(--text); box-shadow: 0 1px 3px rgba(18,41,74,0.06); transition: all .2s; cursor: default; }
   .ecosystem-tags span:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+  /* ================= 首页长滚动单页（home-* 专属，不影响其他页面） ================= */
+  /* Hero 全屏：深蓝渐变 + 科技网格 + 光晕 */
+  .home-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); }
+  .home-hero .banner { min-height: calc(100vh - 60px); background: transparent; }
+  .home-hero::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+  .home-hero::after {
+    content: ''; position: absolute; top: -18%; right: -8%; width: 560px; height: 560px; z-index: 1; pointer-events: none;
+    border-radius: 50%; background: radial-gradient(circle, rgba(47,111,237,0.4), transparent 70%);
+  }
+  .home-hero .banner h1 { font-size: 46px; letter-spacing: 6px; text-shadow: 0 4px 24px rgba(0,0,0,0.35); }
+  .home-hero .banner p { font-size: 17px; opacity: 0.92; letter-spacing: 1px; }
+  .home-hero .banner-slide, .home-hero .banner-dots { z-index: 2; }
+  /* 向下滚动提示 */
+  .home-scroll-hint {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 3;
+    color: rgba(255,255,255,0.75); font-size: 13px; letter-spacing: 2px; text-align: center;
+    animation: hintFloat 2.2s ease-in-out infinite; cursor: pointer;
+  }
+  @keyframes hintFloat { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.65; } 50% { transform: translateX(-50%) translateY(8px); opacity: 1; } }
+  /* 数据条半叠 Hero 底部 */
+  .home-stats { margin-top: -52px; position: relative; z-index: 6; padding-bottom: 6px; }
+  .home-stats .stat-item { padding: 18px 8px; border-radius: 14px; box-shadow: 0 10px 30px rgba(11,26,46,0.12); }
+  .home-stats .stat-num { font-size: 27px; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  /* 章节模块头：编号水印 + 居中标题 + 英文副标 */
+  .home-mod { padding: 34px 0 40px; }
+  .home-alt { background: #eef2f9; }
+  .home-mod-head { text-align: center; position: relative; margin-bottom: 26px; }
+  .home-mod-no {
+    position: absolute; top: -26px; left: 50%; transform: translateX(-50%); z-index: 0;
+    font-size: 96px; font-weight: bold; color: rgba(18,41,74,0.07); line-height: 1; pointer-events: none; user-select: none;
+  }
+  .home-mod-title { position: relative; font-size: 26px; letter-spacing: 3px; color: var(--primary); }
+  .home-mod-title::after { content: ''; display: block; width: 46px; height: 3px; margin: 10px auto 0; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+  .home-mod-en { position: relative; display: block; margin-top: 8px; font-size: 12px; letter-spacing: 5px; color: var(--text-light); text-transform: uppercase; }
+  .home-mod-more { position: absolute; right: 0; top: 50%; transform: translateY(-50%); padding: 8px 18px; font-size: 13px; }
+  @media (max-width: 900px) { .home-mod-more { position: static; transform: none; margin-top: 14px; display: inline-block; } }
+  /* 滚动动画 */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .5s ease, transform .5s ease; }
+  .reveal-in { opacity: 1; transform: translateY(0); }
+  /* 入驻 CTA 横幅 */
+  .home-cta { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%); padding: 46px 20px; text-align: center; position: relative; overflow: hidden; }
+  .home-cta::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+  .home-cta-inner { position: relative; z-index: 2; }
+  .home-cta h3 { color: #fff; font-size: 26px; letter-spacing: 3px; margin-bottom: 10px; }
+  .home-cta p { color: rgba(255,255,255,0.85); font-size: 15px; margin-bottom: 20px; letter-spacing: 1px; }
+  .home-cta-btn { padding: 12px 40px; font-size: 15px; }
+  @media (max-width: 768px) {
+    .home-hero .banner { min-height: 72vh; }
+    .home-hero .banner h1 { font-size: 30px; letter-spacing: 3px; }
+    .home-stats { margin-top: -36px; }
+    .home-stats .stat-num { font-size: 21px; }
+    .home-mod-no { font-size: 72px; }
+  }
