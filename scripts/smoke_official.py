@@ -46,7 +46,7 @@ def main():
     books = d.get("rows", [])
     check("服务列表 21 条", d.get("total") == 21, f"total={d.get('total')}")
     names = [b["bookName"] for b in books]
-    check("服务名已业务化", "AI 一人公司实战营" in names, str(names[:3]))
+    check("服务名已业务化", "AI 微短剧制作实战营" in names, str(names[:3]))
     on_sale = [b for b in books if b["status"] == "0"]
     check("招募中服务 20 条", len(on_sale) == 20, f"{len(on_sale)}")
     check("满员服务可候补", any(b["stock"] == 0 for b in on_sale))
@@ -58,7 +58,7 @@ def main():
 
     d = req("GET", "/system/dict/data/type/book_type")
     labels = [x["dictLabel"] for x in d.get("data", [])]
-    check("服务分类字典", labels == ["AI与数字服务", "创意设计", "本地生活与创业"], str(labels))
+    check("服务分类字典", labels == ["AI 内容创作", "AI 技术应用", "AI 硬件与场景"], str(labels))
 
     d = req("GET", "/system/dict/data/type/reader_type")
     labels = [x["dictLabel"] for x in d.get("data", [])]
@@ -67,7 +67,7 @@ def main():
     d = req("GET", "/system/notice/publicList")
     titles = [n["noticeTitle"] for n in d.get("data", [])]
     check("新闻动态 3 条", len(titles) == 3, str(titles))
-    check("新闻标题业务化", any("数智游民" in t for t in titles), str(titles))
+    check("新闻标题业务化", any("OPC" in t for t in titles), str(titles))
 
     d = req("GET", "/system/banner/publicList")
     check("品牌轮播 3 条", len(d.get("data", [])) == 3, str(d.get("data", []))[:100])
@@ -86,7 +86,7 @@ def main():
     # 报名（先查周舟是否已报过该服务——重跑幂等：已报名则跳过实际报名）
     my = req("GET", f"/system/borrow/queryByCard?cardNo=JS20260001&sessionToken={token}")
     my_books = {r["bookName"] for r in my.get("data", [])}
-    if "AI 一人公司实战营" in my_books:
+    if "AI 微短剧制作实战营" in my_books:
         check("报名(已存在,跳过)", True)
     else:
         d = req("POST", "/system/borrow/borrowByCard", {"bookId": 1, "cardNo": "JS20260001", "sessionToken": token})
