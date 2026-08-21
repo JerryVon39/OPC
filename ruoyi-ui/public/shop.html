@@ -7,7 +7,7 @@
 <meta name="description" content="清远市首个人工智能 OPC（一人公司）生态社区，清城区政府与星链科技共建，"国企引领、民企赋能"。一个人 + AI 即可创业：AI 微短剧、AI 应用开发、数字人创作，免费工位与政策赋能。入驻咨询：0763-3391888">
 <link rel="stylesheet" href="css/site.css">
 </head>
-<body>
+<body class="home-page">
   <!-- 顶部导航（锚点 + 搜索 + 我的报名 + 登录区 + "更多"下拉） -->
   <div class="navbar">
     <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部服务">数智游民<span>创新工场</span></div>
@@ -55,22 +55,24 @@
     </div>
   </div>
 
-  <!-- ================= 首屏 #home：Hero 全屏轮播 + 数据条半叠 ================= -->
-  <section id="home">
-    <div class="home-hero">
+  <!-- ================= ① Hero：轮播（小）+ 公司整体简介 ================= -->
+  <section id="home" class="home-hero">
+    <div class="home-hero-carousel">
       <div class="banner">
         <div id="bannerSlides"></div>
         <div class="banner-dots" id="bannerDots"></div>
       </div>
-      <div class="home-scroll-hint">▼ 向下滚动探索</div>
     </div>
-    <!-- 社区数据条（实时统计四格，半叠 Hero 底部） -->
-    <div class="shop-stats home-stats" id="shopStats" style="display:none">
-      <div class="stat-item"><span class="stat-num" id="stBooks">0</span><span class="stat-label">服务总数</span></div>
-      <div class="stat-item"><span class="stat-num" id="stReaders">0</span><span class="stat-label">社区成员</span></div>
-      <div class="stat-item"><span class="stat-num" id="stBorrowToday">0</span><span class="stat-label">今日报名</span></div>
-      <div class="stat-item"><span class="stat-num" id="stCompanies">6</span><span class="stat-label">入驻企业</span></div>
+    <div class="home-intro">
+      <h2 class="home-intro-title">清远市首个人工智能 OPC 生态社区</h2>
+      <p class="home-intro-sub">一个人 + AI，把想法变成事业</p>
+      <p class="home-intro-text">数智游民创新工场由清城区政府与清远星链科技合作共建，以"国企引领、民企赋能"模式运营。社区整合算力、政策、订单、人才四大资源，为 AI 时代的超级个体与一人公司提供"拎脑入驻"的创业生态——从签约到揭牌仅用 21 天，跑出"清城速度"。</p>
+      <div class="home-intro-btns">
+        <a class="btn-buy" href="about.html" style="text-decoration:none">走进社区</a>
+        <a class="btn-buy home-btn-ghost" href="join.html" style="text-decoration:none">立即入驻</a>
+      </div>
     </div>
+    <div class="home-scroll-hint">▼ 向下滚动探索</div>
   </section>
 
   <!-- ================= 01 品牌理念 ================= -->
@@ -85,14 +87,20 @@
         <div class="about-card">
           <div class="about-icon">🏢</div>
           <div class="about-title">OPC 新内涵</div>
-          <p>一人公司（One Person Company）不只是法律载体，更是 AI 时代的"生产力引擎"——以最低合规成本注册经营主体，以 AI 深度协同放大个人产出。<a href="about.html" style="color:var(--accent);text-decoration:none">走进社区 →</a></p>
+          <p>一人公司（One Person Company）不只是法律意义上的企业形态，更是 AI 时代的"生产力引擎"：以最低合规成本注册经营主体，再以 AI 深度协同放大个人产出，实现"单人成军"的轻量化创业。</p>
         </div>
         <div class="about-card">
           <div class="about-icon">🧑‍💻</div>
           <div class="about-title">什么是"数智游民"</div>
-          <p>"数智游民"= 一个人 + 一台高性能 AI 电脑即可创业：不依赖场地、不依赖团队规模，只要有创意与 AI 工具，就能承接内容创作、技术开发、创意设计等订单。</p>
+          <p>"数智游民"= 一个人 + 一台高性能 AI 电脑即可创业：不依赖场地、不依赖团队规模，只要有创意与 AI 工具，就能承接内容创作、技术开发、创意设计等订单，把想法变成事业。</p>
         </div>
       </div>
+      <div class="home-market-stats">
+        <div class="hms-item"><span class="hms-num">1200 亿</span><span class="hms-label">2025 年国内 AI 视频市场规模</span></div>
+        <div class="hms-item"><span class="hms-num">5800 亿</span><span class="hms-label">预计 2030 年市场空间</span></div>
+        <div class="hms-item"><span class="hms-num">95%</span><span class="hms-label">2026 年 Q1 上新微短剧 AI 制作占比</span></div>
+      </div>
+      <div style="text-align:center;margin-top:26px"><a class="btn-buy" style="text-decoration:none" href="about.html">走进社区，了解 OPC →</a></div>
     </div>
   </section>
 
@@ -108,20 +116,20 @@
       <div class="about-card">
         <div class="about-icon">💻</div>
         <div class="about-title">算力与技术支持</div>
-        <p>阿里 AI 生态私有化部署、智谱开源大模型平台、70B 以内大模型一体机试用、算力券补贴——为 OPC 创业提供低门槛算力底座。</p>
+        <p>与阿里巴巴达成深度合作意向，核心 AI 生态体系清城区私有化部署；同步部署智谱等开源大模型开发支撑平台；加速 SD-WAN 网络接入国内外优质大模型；入驻企业可申请试用 70B 以内大模型一体机，并享省级算力券补贴。</p>
       </div>
       <div class="about-card">
         <div class="about-icon">🏦</div>
         <div class="about-title">政策与金融服务</div>
-        <p>创客特色贷款（财政贴息）、最高 2 万元数字游民奖励、80 万元担保贷款、300㎡ 三年免租——政策与资金全程护航。</p>
+        <p>联动金融机构开发创客特色贷款（财政贴息、低息）；数字游民最高 2 万元资金奖励、80 万元担保贷款、3 万元运营激励；市级孵化基地最高 300㎡ 三年免费；发改/工信/人社等多部门一站式政策对接。</p>
       </div>
       <div class="about-card">
         <div class="about-icon">📦</div>
         <div class="about-title">订单与市场牵引</div>
-        <p>文旅/政务/城市形象文创订单对接、创客基金、2026 首届 AI OPC 创客短视频大赛——以订单和赛事吸引产业集聚。</p>
+        <p>全面梳理文旅推广、政务科普、城市形象等文创订单需求；联动星火深智等 AI 头部企业对接全国稳定内容订单；筹备 2026 首届人工智能 OPC 创客短视频创作大赛；成立创客基金，以订单和赛事吸引产业集聚。</p>
       </div>
     </div>
-    <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="policy.html">查看政策赋能详情 →</a></div>
+    <div style="text-align:center;margin-top:26px"><a class="btn-buy" style="text-decoration:none" href="policy.html">查看政策赋能详情 →</a></div>
     </div>
   </section>
 
@@ -133,31 +141,61 @@
         <h2 class="home-mod-title">产业生态</h2>
         <span class="home-mod-en">INDUSTRY</span>
       </div>
-      <div class="ecosystem-tags">
+      <div class="about-cards">
+        <div class="about-card">
+          <div class="about-icon">🎬</div>
+          <div class="about-title">AI 内容创作</div>
+          <p>AI 微短剧、超级数字人、AIGC 内容创作——2026 年一季度上新微短剧中 AI 制作占比已超 95%，内容创作进入"一人成军"时代。</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">⚙️</div>
+          <div class="about-title">AI 技术应用</div>
+          <p>AI 获客系统、GEO（生成式引擎优化）、AI 应用开发——以 AI 工具重构获客与交付流程，让个人与小微企业也能用上企业级 AI 能力。</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">🤖</div>
+          <div class="about-title">AI 硬件与场景</div>
+          <p>AI 眼镜、AI 手机、AI 工牌、AI 玩具、AI 陪伴、AI 外骨骼辅助装置，以及具身智能训练场、工业/生活场景训练场——硬件长生态链正在成形。</p>
+        </div>
+      </div>
+      <div class="ecosystem-tags" style="margin-top:22px">
         <span>塔链人工智能科技</span><span>南京世东智脑</span><span>正经点赞（清远）媒体科技</span>
         <span>北江人工智能产教融合研究院</span><span>光年制造工作室</span><span>彗星互娱工作室</span>
       </div>
-      <div style="text-align:center;margin-top:16px"><a class="btn-buy" style="text-decoration:none" href="industry.html">查看产业生态详情 →</a></div>
+      <div style="text-align:center;margin-top:26px"><a class="btn-buy" style="text-decoration:none" href="industry.html">查看产业生态详情 →</a></div>
     </div>
   </section>
 
-  <!-- ================= 04 精选服务（完整列表见 services.html） ================= -->
+  <!-- ================= 04 服务概览（报名与完整列表见 services.html） ================= -->
   <section id="services" class="home-mod home-alt">
-    <!-- 热门服务 -->
-    <div class="hot-bar" id="hotBar" style="display:none">
-      <div class="hot-title">🔥 热门服务</div>
-      <div class="hot-items" id="hotItems"></div>
-    </div>
-
-    <!-- 精选服务（完整列表见 services.html） -->
     <div class="container">
-      <div class="home-mod-head" style="margin-bottom:22px">
+      <div class="home-mod-head">
         <span class="home-mod-no">04</span>
-        <h2 class="home-mod-title">精选服务</h2>
+        <h2 class="home-mod-title">服务概览</h2>
         <span class="home-mod-en">SERVICES</span>
-        <a class="btn-buy home-mod-more" style="text-decoration:none" href="services.html">查看全部服务 →</a>
       </div>
-      <div id="bookGrid" class="grid"></div>
+      <p class="home-mod-lead">社区汇聚 AI 微短剧制作、超级数字人、AI 获客、具身智能训练场开放日等 20+ 项服务与课程，覆盖内容创作、技术应用、硬件场景三大方向。服务免费与付费并存，名额有限、先到先得，满员可提交候补。</p>
+      <div class="svc-cat-cards">
+        <a class="svc-cat-card" href="services.html">
+          <div class="scc-icon">🎬</div>
+          <div class="scc-title">AI 内容创作</div>
+          <div class="scc-desc">微短剧实战营、超级数字人实操课、短视频运营训练营——从创作到变现的全链路课程。</div>
+          <div class="scc-more">进入分类 →</div>
+        </a>
+        <a class="svc-cat-card" href="services.html">
+          <div class="scc-icon">⚙️</div>
+          <div class="scc-title">AI 技术应用</div>
+          <div class="scc-desc">AI 获客系统实战营、AI 应用开发、GEO 优化——让技术能力变成接单与获客优势。</div>
+          <div class="scc-more">进入分类 →</div>
+        </a>
+        <a class="svc-cat-card" href="services.html">
+          <div class="scc-icon">🤖</div>
+          <div class="scc-title">AI 硬件与场景</div>
+          <div class="scc-desc">具身智能训练场开放日、AI 硬件生态体验——触摸 AI 硬件长生态链的最前沿。</div>
+          <div class="scc-more">进入分类 →</div>
+        </a>
+      </div>
+      <div style="text-align:center;margin-top:26px"><a class="btn-buy" style="text-decoration:none" href="services.html">浏览全部服务 →</a></div>
     </div>
   </section>
 
@@ -179,24 +217,24 @@
     <div class="container">
       <div class="home-mod-head">
         <span class="home-mod-no">06</span>
-        <h2 class="home-mod-title">关于我们</h2>
-        <span class="home-mod-en">ABOUT</span>
+        <h2 class="home-mod-title">发展历程</h2>
+        <span class="home-mod-en">MILESTONES</span>
       </div>
-    <div class="about-cards">
-      <div class="about-card">
-        <div class="about-icon">📍</div>
-        <div class="about-title">社区定位</div>
-        <p>清远市首个人工智能 OPC（一人公司）生态社区。"一人公司"= 一个人 + AI 深度协同：OPC 作为法律载体，AI 作为生产力引擎，让个人也能轻松开办一家公司。</p>
+    <div class="timeline" style="max-width:640px;margin:0 auto">
+      <div class="tl-item">
+        <div class="tl-date">2026-04-29</div>
+        <div class="tl-title">运营公司成立</div>
+        <div class="tl-desc">数智游民创新工场（清远）科技有限公司注册成立（注册资本 100 万元）。</div>
       </div>
-      <div class="about-card">
-        <div class="about-icon">🤝</div>
-        <div class="about-title">合作模式</div>
-        <p>清城区政府 × 清远市星链科技有限公司合作共建；区属国企顺拓集团与星链科技合资组建星拓公司负责运营，"国企引领、民企赋能"。</p>
+      <div class="tl-item">
+        <div class="tl-date">2026-07-11</div>
+        <div class="tl-title">签署合作框架协议</div>
+        <div class="tl-desc">清城区政府与清远市星链科技有限公司签署协议，共建人工智能 OPC 生态社区。</div>
       </div>
-      <div class="about-card">
-        <div class="about-icon">🎯</div>
-        <div class="about-title">愿景</div>
-        <p>打造低门槛、高赋能的 AI 创业生态：聚集"一个人 + AI"的数字游民与小微创业者，让每一个创意都能以更低成本、更快速度变成事业。</p>
+      <div class="tl-item">
+        <div class="tl-date">2026-08-01</div>
+        <div class="tl-title">正式揭牌运营</div>
+        <div class="tl-desc">揭牌当天 6 家企业签约入驻、3 所本地高校共建实践基地——从签约到揭牌仅 21 天，被誉为"清城速度"。</div>
       </div>
     </div>
   </section>
@@ -1082,7 +1120,7 @@
 
   // ===== 首页滚动动画（模块进入视口淡入上移；低动效偏好自动禁用）=====
   (function () {
-    const els = document.querySelectorAll('.home-mod > .container, .home-stats, .home-cta-inner');
+    const els = document.querySelectorAll('.home-mod > .container, .home-intro, .home-cta-inner');
     if (!els.length || !('IntersectionObserver' in window)) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     els.forEach(el => el.classList.add('reveal'));
@@ -1103,15 +1141,7 @@
   renderLoginState();
   initNav();
   loadConfig();
-  // 首页精选：加载"已报名/已候补"标识（依赖登录态）后再加载服务
-  (async () => {
-    await loadBorrowed();
-    await loadReserved();
-    loadBooks();
-  })();
-  loadShopStats();
   loadBanners();
-  loadHot();
   loadNotices();
 </script>
 </body>
