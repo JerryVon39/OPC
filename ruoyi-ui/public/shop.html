@@ -194,45 +194,42 @@
     </div>
   </section>
 
-  <!-- ================= 06 关于我们 ================= -->
-  <section id="about" class="home-mod home-deep">
+  <!-- ================= 06 发展历程 & 联系我们 ================= -->
+  <section id="contact" class="home-mod home-deep">
     <div class="container">
       <div class="home-mod-head">
         <span class="home-mod-no">06</span>
-        <h2 class="home-mod-title">发展历程</h2>
-        <span class="home-mod-en">MILESTONES</span>
+        <h2 class="home-mod-title">发展历程 & 联系我们</h2>
+        <span class="home-mod-en">MILESTONES & CONTACT</span>
       </div>
-    <div class="timeline" style="max-width:640px;margin:0 auto">
-      <div class="tl-item">
-        <div class="tl-date">2026-04-29</div>
-        <div class="tl-title">运营公司成立</div>
-        <div class="tl-desc">数智游民创新工场（清远）科技有限公司注册成立（注册资本 100 万元）。</div>
-      </div>
-      <div class="tl-item">
-        <div class="tl-date">2026-07-11</div>
-        <div class="tl-title">签署合作框架协议</div>
-        <div class="tl-desc">清城区政府与清远市星链科技有限公司签署协议，共建人工智能 OPC 生态社区。</div>
-      </div>
-      <div class="tl-item">
-        <div class="tl-date">2026-08-01</div>
-        <div class="tl-title">正式揭牌运营</div>
-        <div class="tl-desc">揭牌当天 6 家企业签约入驻、3 所本地高校共建实践基地——从签约到揭牌仅 21 天，被誉为"清城速度"。</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 07 联系我们 ================= -->
-  <section id="contact" class="home-mod home-alt3">
-    <div class="container">
-      <div class="home-mod-head">
-        <span class="home-mod-no">07</span>
-        <h2 class="home-mod-title">联系我们</h2>
-        <span class="home-mod-en">CONTACT</span>
-      </div>
-      <div class="contact-list">
-        <div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>
-        <div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-3391888</div></div></div>
-        <div class="contact-item"><span class="c-icon">📧</span><div><div class="c-label">邮箱</div><div class="c-value">contact@example.com（[待补]）</div></div></div>
+      <div class="home-merge">
+        <div class="timeline" style="flex:1.1;max-width:560px">
+          <div class="tl-item">
+            <div class="tl-date">2026-04-29</div>
+            <div class="tl-title">运营公司成立</div>
+            <div class="tl-desc">数智游民创新工场（清远）科技有限公司注册成立（注册资本 100 万元）。</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">2026-07-11</div>
+            <div class="tl-title">签署合作框架协议</div>
+            <div class="tl-desc">清城区政府与清远市星链科技有限公司签署协议，共建人工智能 OPC 生态社区。</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">2026-08-01</div>
+            <div class="tl-title">正式揭牌运营</div>
+            <div class="tl-desc">揭牌当天 6 家企业签约入驻、3 所本地高校共建实践基地——从签约到揭牌仅 21 天，被誉为"清城速度"。</div>
+          </div>
+        </div>
+        <div style="flex:1;max-width:420px">
+          <div class="contact-list">
+            <div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>
+            <div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-3391888</div></div></div>
+            <div class="contact-item"><span class="c-icon">📧</span><div><div class="c-label">邮箱</div><div class="c-value">contact@example.com（[待补]）</div></div></div>
+          </div>
+          <div style="text-align:center;margin-top:24px">
+            <a class="btn-buy home-cta-btn" href="join.html" style="text-decoration:none">立即入驻，开启 OPC 事业 →</a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1065,7 +1062,7 @@
 
   // ===== 全屏翻页：滚轮累积 18% 屏高即翻页（慢速滚动同样灵敏，方向跟随滚轮）=====
   (function () {
-    const mods = document.querySelectorAll('body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta');
+    const mods = document.querySelectorAll('body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta, body.home-page footer.footer');
     if (!mods.length) return;
     if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return; // 移动端自由滚动
     let acc = 0;          // 滚轮累积量

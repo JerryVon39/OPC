@@ -437,6 +437,17 @@ textarea.form-input { resize: vertical; }
   @keyframes hintFloat { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(7px); opacity: 1; } }
   /* 章节模块头：编号水印 + 居中标题 + 英文副标 */
   .home-mod { padding: 34px 0 40px; }
+  .home-mod .about-card .about-title { font-size: 18px; }
+  .home-mod .about-card p { font-size: 14.5px; line-height: 1.95; }
+  .home-mod .hms-num { font-size: 26px; }
+  .home-mod .hms-label { font-size: 13px; }
+  .home-mod .scc-title { font-size: 18px; }
+  .home-mod .scc-desc { font-size: 14px; line-height: 1.95; }
+  .home-mod .tl-title { font-size: 16px; }
+  .home-mod .tl-desc { font-size: 14.5px; line-height: 1.9; }
+  .home-mod .contact-item .c-value { font-size: 15px; }
+  .home-mod .news-title { font-size: 16px; }
+  .home-mod .news-summary { font-size: 14px; }
   /* 模块背景色阶（由浅到深交替，保持科技蓝协调） */
   .home-alt { background: #e8eef8; }   /* 02 三大赋能 / 04 服务概览 */
   .home-alt2 { background: #dde7f4; }  /* 03 产业生态 */
@@ -458,14 +469,16 @@ textarea.form-input { resize: vertical; }
   .home-deep .tl-date { color: var(--accent-light); }
   .home-deep .tl-title { color: #fff; }
   .home-deep .tl-desc { color: rgba(255,255,255,0.75); }
-  .home-mod-head { text-align: center; position: relative; margin-bottom: 26px; }
+  .home-deep .home-cta-btn { padding: 12px 36px; font-size: 15px; }
+  /* 模块头：左上角对齐（标题区占模块上部约 20% 高度，不贴顶） */
+  .home-mod-head { text-align: left; position: relative; margin: 0 0 34px; padding-left: 8px; }
   .home-mod-no {
-    position: absolute; top: -26px; left: 50%; transform: translateX(-50%); z-index: 0;
-    font-size: 96px; font-weight: bold; color: rgba(18,41,74,0.07); line-height: 1; pointer-events: none; user-select: none;
+    position: absolute; top: -30px; left: 0; z-index: 0;
+    font-size: 88px; font-weight: bold; color: rgba(18,41,74,0.08); line-height: 1; pointer-events: none; user-select: none; letter-spacing: 2px;
   }
-  .home-mod-title { position: relative; font-size: 26px; letter-spacing: 3px; color: var(--primary); }
-  .home-mod-title::after { content: ''; display: block; width: 46px; height: 3px; margin: 10px auto 0; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
-  .home-mod-en { position: relative; display: block; margin-top: 8px; font-size: 12px; letter-spacing: 5px; color: var(--text-light); text-transform: uppercase; }
+  .home-mod-title { position: relative; font-size: 28px; letter-spacing: 3px; color: var(--primary); }
+  .home-mod-title::after { content: ''; display: block; width: 52px; height: 3px; margin: 10px 0 0; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+  .home-mod-en { position: relative; display: block; margin-top: 9px; font-size: 12px; letter-spacing: 5px; color: var(--text-light); text-transform: uppercase; }
   .home-mod-more { position: absolute; right: 0; top: 50%; transform: translateY(-50%); padding: 8px 18px; font-size: 13px; }
   @media (max-width: 900px) { .home-mod-more { position: static; transform: none; margin-top: 14px; display: inline-block; } }
   /* 滚动动画 */
@@ -493,10 +506,10 @@ textarea.form-input { resize: vertical; }
   /* ================= 首页 v2 全屏翻页（body.home-page 专属） ================= */
   body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta { scroll-snap-align: start; }
   body.home-page section.home-mod { min-height: 100vh; display: flex; align-items: center; padding: 90px 0 40px; }
-  body.home-page .home-cta { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  body.home-page .home-cta { min-height: auto; display: flex; align-items: center; justify-content: center; }
   /* Hero：轮播 40vh + 简介区 */
   .home-hero { min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--bg); }
-  .home-hero-carousel { height: 40vh; min-height: 260px; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); }
+  .home-hero-carousel { height: 25vh; min-height: 190px; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); }
   .home-hero-carousel .banner { height: 100%; min-height: 0; background: transparent; }
   .home-hero-carousel::before {
     content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -522,7 +535,7 @@ textarea.form-input { resize: vertical; }
   .home-btn-ghost { background: transparent !important; border: 1.5px solid var(--accent) !important; color: var(--accent) !important; box-shadow: none !important; }
   .home-btn-ghost:hover { background: rgba(47,111,237,0.08) !important; }
   /* 模块导语 */
-  .home-mod-lead { max-width: 720px; margin: 0 auto 26px; text-align: center; font-size: 14px; line-height: 2; color: var(--text-light); }
+  .home-mod-lead { max-width: 760px; margin: 0 auto 28px; text-align: center; font-size: 15px; line-height: 2; color: var(--text-light); }
   /* 市场数据三格（01 模块） */
   .home-market-stats { display: flex; gap: 14px; max-width: 760px; margin: 30px auto 0; }
   .hms-item { flex: 1; background: var(--card); border-radius: 12px; padding: 18px 10px; text-align: center; box-shadow: 0 4px 16px rgba(18,41,74,0.08); }
@@ -541,9 +554,13 @@ textarea.form-input { resize: vertical; }
   @media (max-width: 768px) {
     body.home-page section.home-mod { min-height: auto; padding: 70px 0 34px; }
     .home-hero { min-height: 100vh; background: var(--bg); }
-    .home-hero-carousel { height: 34vh; }
+    .home-hero-carousel { height: 25vh; min-height: 150px; }
     .home-hero .banner h1 { font-size: 26px; letter-spacing: 3px; }
     .home-intro-title { font-size: 26px; letter-spacing: 2px; }
     .home-intro-sub { font-size: 15px; }
     .home-intro { padding: 20px 16px 56px; }
   }
+
+  /* 06 合并模块：时间线 + 联系方式左右分栏 */
+  .home-merge { display: flex; gap: 44px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+  @media (max-width: 900px) { .home-merge { flex-direction: column; align-items: center; gap: 28px; } }
