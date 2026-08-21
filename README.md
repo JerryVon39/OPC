@@ -75,7 +75,9 @@ scripts\start-all.bat
 ./scripts/start-all.sh
 ```
 
-脚本会自动：检查 Docker → 生成 `.env`（默认配置可直接启动）→ 拉取线上镜像并启动 MySQL/Redis/后端/前端 → 等待后端就绪。
+脚本会自动：检查/自动启动 Docker Desktop（未运行时自动拉起并等待就绪）→ 生成 `.env`（默认配置可直接启动）→ 检查本地 v2.0 镜像（缺失则自动用源码构建）→ 启动 MySQL/Redis/后端/前端四容器 → 等待后端就绪。
+
+> 💡 **镜像说明**：本项目为私有项目，镜像不推 Docker Hub——`start-all.bat` 检测到本地无 v2.0 镜像时自动 `docker compose build` 构建（首次需几分钟）。
 
 - 管理后台：`http://localhost/`（默认账号 admin / admin123，首次登录请修改密码）
 - 官网前台：`http://localhost/shop.html`
@@ -105,7 +107,8 @@ scripts\start-local.bat
 - 官网前台：`http://localhost:8081/shop.html`
 - 前端端口可在 `.env` 用 `FE_PORT` 修改；本机原生 MySQL/Redis 不在 PATH 时可设 `TOOLS_HOME` 指向其安装目录
 - 停止：`scripts\stop-local.bat` / `./scripts/stop-local.sh`（数据保留，重跑 start 即恢复）
-- 服务注册（开机自启）：Windows 下用 `scripts\svc.bat` 把后端注册为系统服务
+- 统一管理：`scripts\svc.bat start|stop|status|restart`（一键启动/停止/查看四服务状态，端口检测自动跳过已在运行的服务）
+- 服务化注册（开机自启 + 崩溃自动重启）：管理员运行 `scripts\install-services.bat`（nssm 注册 MySQL/Redis/后端为 Windows 服务），卸载用 `scripts\uninstall-services.bat`
 
 ### 手动启动（可选）
 
