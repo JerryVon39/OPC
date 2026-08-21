@@ -232,3 +232,24 @@ UPDATE sys_notice SET notice_title='首期 AI 一人公司实战营开放报名'
 UPDATE sys_notice SET notice_title='社区共创空间开放预约', notice_type='1',
   notice_content='路演厅、直播间、洽谈室等共创空间已开放预约。名额有限，可先预约排队，释放名额后自动通知。'
   WHERE notice_id=3;
+
+-- ============================================
+-- 14. 孤儿菜单自愈（幂等）：start-local 升级清单曾包含旧脚本（purchase/recycle），
+--     在官网改造后的库上按旧名反查父级失败会插入 parent_id 为 NULL 的孤儿菜单，
+--     导致登录后菜单树构建 NPE（Cannot invoke Long.longValue() because getParentId() is null）。
+--     本段清理：① 挂在孤儿目录下的子菜单 ② 孤儿目录本身 ③ 悬空引用与角色关联。
+--     自愈后正确的官网菜单树（官网运营→服务管理/成员服务/合作经营/CMS 管理）不受影响。
+-- ============================================
+DELETE FROM sys_menu WHERE parent_id IN (
+  SELECT mid FROM (SELECT m.menu_id mid FROM sys_menu m JOIN sys_menu p ON p.menu_id=m.parent_id
+    WHERE p.parent_id IS NULL AND p.menu_type='M' AND p.menu_id>1) t
+);
+DELETE FROM sys_menu WHERE parent_id IS NULL AND menu_type='M' AND menu_id>1;
+-- 悬空菜单/角色关联清理（循环：物化子查询基于删除前快照，连锁悬空需多轮）
+-- ⚠️ 必须带 parent_id>0 条件：parent_id=0 是合法顶级菜单，NOT IN 会误删
+DELETE FROM sys_menu WHERE parent_id > 0 AND parent_id NOT IN (SELECT mid FROM (SELECT menu_id mid FROM sys_menu) t);
+DELETE FROM sys_menu WHERE parent_id > 0 AND parent_id NOT IN (SELECT mid FROM (SELECT menu_id mid FROM sys_menu) t);
+DELETE FROM sys_menu WHERE parent_id > 0 AND parent_id NOT IN (SELECT mid FROM (SELECT menu_id mid FROM sys_menu) t);
+DELETE FROM sys_menu WHERE parent_id > 0 AND parent_id NOT IN (SELECT mid FROM (SELECT menu_id mid FROM sys_menu) t);
+DELETE FROM sys_menu WHERE parent_id > 0 AND parent_id NOT IN (SELECT mid FROM (SELECT menu_id mid FROM sys_menu) t);
+DELETE FROM sys_role_menu WHERE menu_id NOT IN (SELECT mid FROM (SELECT menu_id mid FROM sys_menu) t);
