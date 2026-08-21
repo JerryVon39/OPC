@@ -34,6 +34,17 @@
       <a href="news.html">新闻动态</a>
       <a href="shop.html#contact">联系我们</a>
     </div>
+    <div class="nav-right">
+      <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
+      <div class="nav-more" id="navMore">
+        <span class="more-trigger" onclick="toggleMoreMenu(event)">☰ 更多</span>
+        <div class="more-menu" id="moreMenu">
+          <div class="more-item" onclick="openRegister()">📝 成员注册</div>
+          <div class="more-item" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- 文章详情 -->
@@ -161,6 +172,132 @@
     if (el) el.textContent = new Date().getFullYear();
   })();
   loadArticle();
+
+  // ===== 共享：成员登录 / 注册 / 更多下拉（与 shop.html 同一套公开接口）=====
+  const REG_API = '/prod-api/system/reader/register';
+  const LOGIN_API = '/prod-api/system/reader/login';
+  let currentUser = null;
+  try {
+    const saved = localStorage.getItem('shopUser');
+    if (saved) currentUser = JSON.parse(saved);
+  } catch (e) {}
+  function toast(text) {
+    const t = document.getElementById('toast');
+    let icon = 'ℹ️';
+    if (/失败|错误|已取消|不可|无法|请先/.test(text)) icon = '❌';
+    else if (/成功|欢迎|已退出|已报名|已提交/.test(text)) icon = '✅';
+    const safe = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    t.innerHTML = '<span class="toast-icon">' + icon + '</span>' + safe;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  function openLogin() {
+    document.getElementById('loginMsg').textContent = '';
+    document.getElementById('loginModal').style.display = 'flex';
+  }
+  async function submitLogin() {
+    const name = document.getElementById('loginName').value.trim();
+    const card = document.getElementById('loginCard').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if (!name || !card) { msg.textContent = '请填写姓名与成员编号'; return; }
+    const body = new URLSearchParams({ name: name, cardNo: card });
+    try {
+      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
+        closeModal('loginModal');
+        toast('欢迎回来，' + name);
+      } else {
+        msg.textContent = d.msg || '登录失败：请确认姓名与编号正确';
+      }
+    } catch (e) { msg.textContent = '登录失败：' + e.message; }
+  }
+  function renderLoginState() {
+    const area = document.getElementById('loginArea');
+    if (area) {
+      area.innerHTML = currentUser
+        ? '<span style="cursor:pointer" onclick="openRegister()">👤 ' + String(currentUser.name || '成员').replace(/</g, '&lt;') + '</span>'
+        : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
+    }
+  }
+  function openRegister() {
+    document.getElementById('regMsg').textContent = '';
+    document.getElementById('regModal').style.display = 'flex';
+  }
+  async function submitRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const type = document.getElementById('regType').value;
+    const remark = document.getElementById('regRemark').value.trim();
+    const msg = document.getElementById('regMsg');
+    if (!name) { msg.textContent = '请填写成员姓名'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
+    const body = new URLSearchParams({ name: name, phone: phone, email: email, readerType: type, remark: remark });
+    try {
+      const res = await fetch(REG_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        msg.style.color = '#12b886';
+        msg.textContent = '注册成功！成员编号：' + d.data.cardNo + '（请牢记，登录用）';
+        setTimeout(() => closeModal('regModal'), 2600);
+      } else {
+        msg.style.color = '#e2554b';
+        msg.textContent = d.msg || '注册失败';
+      }
+    } catch (e) { msg.style.color = '#e2554b'; msg.textContent = '注册失败：' + e.message; }
+  }
+  function toggleMoreMenu(e) {
+    e.stopPropagation();
+    document.getElementById('navMore').classList.toggle('open');
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.nav-more')) {
+      const m = document.getElementById('navMore');
+      if (m) m.classList.remove('open');
+    }
+  });
+  document.querySelectorAll('.modal').forEach(function (m) {
+    m.addEventListener('click', function (e) {
+      if (e.target === m) m.style.display = 'none';
+    });
+  });
+  renderLoginState();
 </script>
+  <!-- 登录弹窗 -->
+  <div id="loginModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 style="text-align:center;margin-bottom:16px">👤 成员登录</h3>
+      <input id="loginName" class="modal-input" placeholder="👤 成员姓名" />
+      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+      <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn-buy" style="width:100%;padding:11px" onclick="submitLogin()">登 录</button>
+    </div>
+  </div>
+
+  <!-- 注册弹窗 -->
+  <div id="regModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 style="text-align:center;margin-bottom:16px">📝 成员注册</h3>
+      <input id="regName" class="modal-input" placeholder="👤 成员姓名" />
+      <input id="regPhone" class="modal-input" placeholder="📱 手机号码" />
+      <input id="regEmail" class="modal-input" placeholder="📧 电子邮箱（必填，用于接收报名/候补通知）" />
+      <select id="regType" class="modal-input">
+        <option value="1">个人主理人</option>
+        <option value="2">团队</option>
+        <option value="3">企业</option>
+      </select>
+      <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
+      <div id="regMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn-buy" style="width:100%;padding:11px" onclick="submitRegister()">注 册</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
 </body>
 </html>
