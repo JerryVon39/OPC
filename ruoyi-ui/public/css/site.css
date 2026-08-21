@@ -42,13 +42,6 @@
   .more-item { padding: 9px 14px; font-size: 14px; color: var(--text); border-radius: 8px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
   .more-item:hover { background: #eaf1fb; color: var(--primary); }
 
-  /* ================= 公告栏（可关闭） ================= */
-  .notice-bar { background: #eef3fb; color: #3d5a80; font-size: 13px; padding: 8px 48px 8px 40px; border-bottom: 1px solid #dfe7f3; overflow: hidden; white-space: nowrap; position: relative; cursor: pointer; }
-  .notice-bar .n-title { color: var(--danger); font-weight: bold; margin-right: 10px; display: inline-block; vertical-align: middle; }
-  #noticeText { display: inline-block; vertical-align: middle; }
-  .notice-close { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #5b78a5; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
-  .notice-close:hover { color: var(--danger); background: rgba(0,0,0,0.05); }
-  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 
   /* ================= 横幅（渐变 + 书本装饰 + 轮播） ================= */
   .banner { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); color: #fff; position: relative; overflow: hidden; min-height: 148px; }
@@ -223,7 +216,6 @@
     .banner::before, .banner::after { display: none; }
     .shop-stats { flex-wrap: wrap; margin-top: 10px; }
     .shop-stats .stat-item { flex: 1 1 40%; }
-    .notice-bar { padding: 8px 40px 8px 14px; }
     .hot-bar { padding: 0 12px; }
     .container { padding: 0 12px; }
     .section-title { font-size: 17px; }
@@ -480,7 +472,7 @@ textarea.form-input { resize: vertical; }
   }
 
   /* ================= 首页 v2 全屏翻页（body.home-page 专属） ================= */
-  html.home-page { scroll-snap-type: y mandatory; }
+  html.home-page { scroll-snap-type: y proximity; } /* 原生弱吸附兜底，平滑翻页由 JS 接管 */
   body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta { scroll-snap-align: start; }
   body.home-page section.home-mod { min-height: 100vh; display: flex; align-items: center; padding: 90px 0 40px; }
   body.home-page .home-cta { min-height: 100vh; display: flex; align-items: center; justify-content: center; }

@@ -37,24 +37,6 @@
     </div>
   </div>
 
-  <!-- 新闻跑马灯（可关闭，滚动播放最新动态） -->
-  <div class="notice-bar" id="noticeBar" style="display:none" onclick="openNoticeDetail(event)">
-    <span class="n-title">📢 新闻</span>
-    <span id="noticeText">加载中…</span>
-    <span class="notice-close" onclick="event.stopPropagation();closeNotice()">✕</span>
-  </div>
-
-  <!-- 新闻详情弹窗 -->
-  <div id="noticeDetailModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3 id="noticeDetailTitle">📰 新闻详情</h3>
-      <div id="noticeDetailText" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap"></div>
-      <div class="modal-btns">
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('noticeDetailModal')">关闭</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ================= ① Hero：轮播（小）+ 公司整体简介 ================= -->
   <section id="home" class="home-hero">
     <div class="home-hero-carousel">
@@ -380,7 +362,6 @@
   // ===== 接口地址（匿名公开接口）=====
   const API = '/prod-api/system/book/list';
   const STATS_API = '/prod-api/system/borrow/stats';
-  const NOTICE_API = '/prod-api/system/notice/publicList';
   const REG_API = '/prod-api/system/reader/register';
   const LOGIN_API = '/prod-api/system/reader/login';
   const BORROW_API = '/prod-api/system/borrow/borrowByCard';
@@ -409,12 +390,8 @@
   let currentType = '';
   let currentUser = null;
   let warnThreshold = 3;   // 名额预警阈值（从系统参数读取，后台可改）
-  let noticeTexts = [];    // 新闻全文列表（跑马灯轮播）
-  let noticeIdx = 0;       // 当前显示的新闻下标
-  let noticeList = [];     // 新闻完整列表（卡片渲染）
   let borrowedIds = [];    // 当前登录成员已报名的服务ID（"已报名"标识）
   let reservedIds = [];    // 当前登录成员候补中的服务ID（候补中/有名额，"已候补"标识）
-  const NOTICE_CLOSED_KEY = 'wswNoticeClosed';
   const PLACEHOLDER = 'img/book-placeholder.svg';
   const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
 
@@ -776,29 +753,7 @@
     } catch (e) { }
   }
 
-  // ===== 新闻动态（顶部跑马灯 + 新闻卡片列表 + 详情弹窗，跑马灯当日可关闭）=====
-  async function loadNotices() {
-    try {
-      const res = await fetch(NOTICE_API);
-      const d = await res.json();
-      const list = d.data || [];
-      if (!list.length) return;
-      // 跑马灯用公告数据；新闻卡片列表改由 CMS 文章渲染（点击进文章详情页）
-      noticeList = list;
-      noticeTexts = list.map(n => n.noticeTitle + '：' + (n.noticeContent || ''));
-      renderCmsNews();
-      // 当日已手动关闭过跑马灯则不再显示（新闻卡片列表不受影响）
-      if (localStorage.getItem(NOTICE_CLOSED_KEY) === new Date().toDateString()) return;
-      const bar = document.getElementById('noticeBar');
-      bar.style.display = 'block';
-      const textEl = document.getElementById('noticeText');
-      noticeIdx = 0;
-      showNotice(textEl, noticeTexts[0]);
-      setInterval(() => { noticeIdx = (noticeIdx + 1) % noticeTexts.length; showNotice(textEl, noticeTexts[noticeIdx]); }, 6000);
-    } catch (e) { }
-  }
-  // 渲染新闻卡片列表（标题 + 发布时间 + 摘要，点击打开详情弹窗）
-  // 渲染首页新闻卡片列表（CMS 文章最新 3 条，点击进文章详情页）
+  // ===== 渲染首页新闻卡片列表（CMS 文章最新 3 条，点击进文章详情页）=====
   async function renderCmsNews() {
     const box = document.getElementById('newsList');
     try {
@@ -818,30 +773,6 @@
       box.innerHTML = '<div class="no-result">新闻加载失败</div>';
     }
   }
-  // 显示跑马灯：内容超宽时滚动（完整显示），否则静态展示
-  function showNotice(el, text) {
-    el.textContent = text;
-    el.style.animation = 'none';
-    if (el.scrollWidth > el.parentElement.clientWidth) {
-      const dur = (el.scrollWidth + el.parentElement.clientWidth) / 50; // 约50px/秒匀速滚动
-      el.style.paddingLeft = '100%';
-      void el.offsetWidth; // 强制重排，重置动画
-      el.style.animation = 'marquee ' + dur + 's linear infinite';
-    } else {
-      el.style.paddingLeft = '0';
-    }
-  }
-  // 点击跑马灯：查看当前新闻全文（关闭按钮已 stopPropagation 不会触发）
-  function openNoticeDetail(event) {
-    if (!noticeList.length) return;
-    openNewsDetail(noticeIdx);
-  }
-  // 关闭跑马灯：当天不再显示
-  function closeNotice() {
-    document.getElementById('noticeBar').style.display = 'none';
-    localStorage.setItem(NOTICE_CLOSED_KEY, new Date().toDateString());
-  }
-
   // ===== 登录 =====
   function openLogin() { document.getElementById('loginModal').style.display = 'flex'; }
   async function submitLogin() {
@@ -1132,6 +1063,26 @@
     els.forEach(el => io.observe(el));
   })();
 
+  // ===== 全屏翻页：滚动结束后平滑吸附到最近模块（原生 mandatory 突兀，改 JS 接管）=====
+  (function () {
+    const mods = document.querySelectorAll('body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta');
+    if (!mods.length) return;
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return; // 移动端自由滚动
+    let t = null;
+    window.addEventListener('scroll', function () {
+      clearTimeout(t);
+      t = setTimeout(function () {
+        const center = window.scrollY + window.innerHeight * 0.45; // 视口偏上 45% 为判定线
+        let best = mods[0];
+        mods.forEach(m => { if (m.offsetTop <= center) best = m; });
+        const target = best.offsetTop;
+        if (Math.abs(window.scrollY - target) > 40) {
+          window.scrollTo({ top: target, behavior: 'smooth' }); // 浏览器原生平滑缓动，约 400ms
+        }
+      }, 130);
+    }, { passive: true });
+  })();
+
   // ===== 初始化 =====
   try {
     const saved = localStorage.getItem('shopUser');
@@ -1142,7 +1093,7 @@
   initNav();
   loadConfig();
   loadBanners();
-  loadNotices();
+  renderCmsNews();
 </script>
 </body>
 </html>
