@@ -17,9 +17,21 @@ if errorlevel 1 (
 )
 docker info >nul 2>&1
 if errorlevel 1 (
-  echo [start-all] Docker is not running. Please start Docker Desktop first.
-  pause
-  exit /b 1
+  echo [start-all] Docker is not running. Trying to start Docker Desktop automatically...
+  powershell -NoProfile -Command "$p1='C:\Program Files\Docker\Docker\Docker Desktop.exe'; $p2=\"$env:LOCALAPPDATA\Programs\DockerDesktop\Docker Desktop.exe\"; if(Test-Path $p1){Start-Process $p1} elseif(Test-Path $p2){Start-Process $p2} else {Write-Host 'Docker Desktop not found at default paths'}"
+  set /a ok=0
+  for /l %%i in (1,1,30) do (
+    docker info >nul 2>&1
+    if not errorlevel 1 (set /a ok=1 & goto docker_ready)
+    ping -n 3 127.0.0.1 >nul
+  )
+  :docker_ready
+  if not "%ok%"=="1" (
+    echo [start-all] Docker Desktop did not start within ~90s. Please start it manually and rerun.
+    pause
+    exit /b 1
+  )
+  echo [start-all] Docker Desktop is ready.
 )
 
 REM 2. Generate .env on first run (defaults work out of the box)
@@ -30,6 +42,12 @@ if not exist ".env" (
 
 REM 3. Start all services (first run pulls images and initializes the database)
 echo [start-all] Starting MySQL / Redis / backend / frontend ...
+docker image inspect jerryvon/book-system-backend:v2.0 >nul 2>&1
+if errorlevel 1 (
+  echo [start-all] v2.0 image not found locally - building from source (takes a few minutes)...
+  docker compose build
+  if errorlevel 1 (echo [start-all] Build failed & pause & exit /b 1)
+)
 docker compose up -d
 if errorlevel 1 (
   echo [start-all] Failed to start. Check logs: docker compose logs -f
