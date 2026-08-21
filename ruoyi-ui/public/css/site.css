@@ -439,7 +439,7 @@ textarea.form-input { resize: vertical; }
   .home-hero .banner-slide, .home-hero .banner-dots { z-index: 2; }
   /* 向下滚动提示 */
   .home-scroll-hint {
-    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 3;
+    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 3;
     color: rgba(255,255,255,0.75); font-size: 13px; letter-spacing: 2px; text-align: center;
     animation: hintFloat 2.2s ease-in-out infinite; cursor: pointer;
   }
@@ -480,37 +480,37 @@ textarea.form-input { resize: vertical; }
   }
 
   /* ================= 首页 v2 全屏翻页（body.home-page 专属） ================= */
-  body.home-page { scroll-snap-type: y mandatory; }
+  html.home-page { scroll-snap-type: y mandatory; }
   body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta { scroll-snap-align: start; }
   body.home-page section.home-mod { min-height: 100vh; display: flex; align-items: center; padding: 90px 0 40px; }
   body.home-page .home-cta { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
   /* Hero：轮播 40vh + 简介区 */
-  .home-hero { min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); }
-  .home-hero-carousel { height: 40vh; min-height: 260px; position: relative; }
+  .home-hero { min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--bg); }
+  .home-hero-carousel { height: 40vh; min-height: 260px; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%); }
   .home-hero-carousel .banner { height: 100%; min-height: 0; background: transparent; }
-  .home-hero::before {
+  .home-hero-carousel::before {
     content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
     background-image:
       linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
     background-size: 46px 46px;
   }
-  .home-hero::after {
+  .home-hero-carousel::after {
     content: ''; position: absolute; top: -18%; right: -8%; width: 560px; height: 560px; z-index: 1; pointer-events: none;
     border-radius: 50%; background: radial-gradient(circle, rgba(47,111,237,0.4), transparent 70%);
   }
-  .home-hero .banner-slide, .home-hero .banner-dots, .home-intro { z-index: 2; }
+  .home-hero .banner-slide, .home-hero .banner-dots { z-index: 2; }
   .home-hero .banner h1 { font-size: 34px; letter-spacing: 5px; text-shadow: 0 4px 24px rgba(0,0,0,0.35); }
   .home-hero .banner p { font-size: 15px; opacity: 0.92; letter-spacing: 1px; }
-  /* 简介区 */
-  .home-intro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px 24px 56px; color: #fff; }
-  .home-intro-title { font-size: 34px; letter-spacing: 4px; margin-bottom: 12px; }
-  .home-intro-sub { font-size: 18px; letter-spacing: 2px; color: var(--accent-light); margin-bottom: 18px; }
-  .home-intro-text { max-width: 720px; font-size: 14px; line-height: 2; opacity: 0.9; margin-bottom: 26px; }
+  /* 简介区（独立浅色背景，与轮播区分开） */
+  .home-intro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px 30px; background: var(--bg); }
+  .home-intro-title { font-size: 34px; letter-spacing: 4px; margin-bottom: 12px; color: var(--primary); }
+  .home-intro-sub { font-size: 18px; letter-spacing: 2px; color: var(--accent); margin-bottom: 18px; }
+  .home-intro-text { max-width: 720px; font-size: 14px; line-height: 2; color: var(--text); opacity: 0.85; margin-bottom: 26px; }
   .home-intro-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
   .home-intro-btns .btn-buy { padding: 11px 36px; font-size: 15px; }
-  .home-btn-ghost { background: transparent !important; border: 1.5px solid rgba(255,255,255,0.65) !important; box-shadow: none !important; }
-  .home-btn-ghost:hover { background: rgba(255,255,255,0.12) !important; }
+  .home-btn-ghost { background: transparent !important; border: 1.5px solid var(--accent) !important; color: var(--accent) !important; box-shadow: none !important; }
+  .home-btn-ghost:hover { background: rgba(47,111,237,0.08) !important; }
   /* 模块导语 */
   .home-mod-lead { max-width: 720px; margin: 0 auto 26px; text-align: center; font-size: 14px; line-height: 2; color: var(--text-light); }
   /* 市场数据三格（01 模块） */
@@ -531,7 +531,7 @@ textarea.form-input { resize: vertical; }
   @media (max-width: 768px) {
     body.home-page { scroll-snap-type: none; }
     body.home-page section.home-mod { min-height: auto; padding: 70px 0 34px; }
-    .home-hero { min-height: 100vh; }
+    .home-hero { min-height: 100vh; background: var(--bg); }
     .home-hero-carousel { height: 34vh; }
     .home-hero .banner h1 { font-size: 26px; letter-spacing: 3px; }
     .home-intro-title { font-size: 26px; letter-spacing: 2px; }
