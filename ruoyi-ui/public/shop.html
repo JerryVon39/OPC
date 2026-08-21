@@ -393,19 +393,6 @@
   const PLACEHOLDER = 'img/book-placeholder.svg';
   const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
 
-  // ===== 社区数据条：实时统计（服务总数/社区成员/今日报名）=====
-  async function loadShopStats() {
-    try {
-      const res = await fetch(PUBLIC_STATS_API);
-      const d = await res.json();
-      const s = d.data || {};
-      document.getElementById('stBooks').textContent = s.bookTotal || 0;
-      document.getElementById('stReaders').textContent = s.readerTotal || 0;
-      document.getElementById('stBorrowToday').textContent = s.borrowToday || 0;
-      document.getElementById('shopStats').style.display = 'flex';
-    } catch (e) { }
-  }
-
   // ===== Banner 轮播（后台"轮播图管理"动态加载，无图渐变背景+文字，有图显示图片）=====
   const DEFAULT_BANNERS = [
     { title: '数智游民创新工场', subtitle: '清远 AI 一人公司生态社区 ｜ 一个人 + AI，把想法变成事业' },
@@ -735,20 +722,6 @@
     currentSort = '';
     currentAsc = '';
     loadBooks();
-  }
-
-  // ===== 热门推荐 =====
-  async function loadHot() {
-    try {
-      const res = await fetch(STATS_API);
-      const d = await res.json();
-      const tops = (d.data && d.data.topBooks) || [];
-      if (!tops.length) return;
-      document.getElementById('hotBar').style.display = 'block';
-      document.getElementById('hotItems').innerHTML = tops.slice(0, 5).map((t, i) =>
-        '<span class="hot-item" onclick="location.href=\'services.html?kw=' + encodeURIComponent(t.bookName || '') + '\'"><span class="rank">TOP' + (i + 1) + '</span>' + esc(t.bookName || '未知') + '<span class="cnt">报名' + t.borrowCount + '次</span></span>'
-      ).join('');
-    } catch (e) { }
   }
 
   // ===== 渲染首页新闻卡片列表（CMS 文章最新 3 条，点击进文章详情页）=====
