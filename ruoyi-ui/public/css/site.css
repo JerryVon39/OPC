@@ -526,7 +526,7 @@ textarea.form-input { resize: vertical; }
   .home-hero .banner h1 { font-size: 34px; letter-spacing: 5px; text-shadow: 0 4px 24px rgba(0,0,0,0.35); }
   .home-hero .banner p { font-size: 15px; opacity: 0.92; letter-spacing: 1px; }
   /* 简介区（独立浅色背景，与轮播区分开） */
-  .home-intro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px 30px; background: var(--bg); }
+  .home-intro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px 30px; background: #ffffff; }
   .home-intro-title { font-size: 34px; letter-spacing: 4px; margin-bottom: 12px; color: var(--primary); }
   .home-intro-sub { font-size: 18px; letter-spacing: 2px; color: var(--accent); margin-bottom: 18px; }
   .home-intro-text { max-width: 720px; font-size: 14px; line-height: 2; color: var(--text); opacity: 0.85; margin-bottom: 26px; }
