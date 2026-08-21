@@ -192,7 +192,7 @@ npm run dev
 ├── ruoyi-generator    # 代码生成器
 ├── ruoyi-quartz       # 定时任务框架
 ├── ruoyi-ui           # 前端（views/system/{book,reader,borrow,order}、public/shop.html）
-├── scripts            # 运维脚本（数据库备份 backup-db.bat）
+├── scripts            # 运维脚本（svc.bat 服务管理 / start-local 本地启动 / start-all Docker / backup-db 备份 / smoke_official 冒烟）
 ├── docs               # 文档（使用指南/代码生成器流程/部署指南）
 └── sql                # 数据库脚本（business_init.sql 业务初始化，幂等）
 ```
