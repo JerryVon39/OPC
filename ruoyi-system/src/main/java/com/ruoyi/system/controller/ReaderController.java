@@ -24,7 +24,7 @@ import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
- * 读者管理Controller
+ * 成员管理Controller
  * 
  * @author Jerry
  * @date 2026-08-12
@@ -40,7 +40,7 @@ public class ReaderController extends BaseController
     private ReaderSessionService readerSessionService;
 
     /**
-     * 查询读者管理列表
+     * 查询成员管理列表
      */
     @PreAuthorize("@ss.hasPermi('system:reader:list')")
     @GetMapping("/list")
@@ -52,7 +52,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 导出读者管理列表
+     * 导出成员管理列表
      */
     @PreAuthorize("@ss.hasPermi('system:reader:export')")
     @Log(title = "读者管理", businessType = BusinessType.EXPORT)
@@ -65,7 +65,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 批量导入读者（Excel）：逐行校验，证号判重/留空自动生成，返回成功/失败明细
+     * 批量导入成员（Excel）：逐行校验，证号判重/留空自动生成，返回成功/失败明细
      */
     @PreAuthorize("@ss.hasPermi('system:reader:add')")
     @Log(title = "读者管理", businessType = BusinessType.IMPORT)
@@ -78,7 +78,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 下载读者导入模板
+     * 下载成员导入模板
      */
     @PreAuthorize("@ss.hasPermi('system:reader:add')")
     @GetMapping("/importTemplate")
@@ -89,7 +89,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 获取读者管理详细信息
+     * 获取成员管理详细信息
      */
     @PreAuthorize("@ss.hasPermi('system:reader:query')")
     @GetMapping(value = "/{readerId}")
@@ -99,11 +99,11 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 新增读者管理
+     * 新增成员管理
      */
-    /** 前台读者登录（匿名）：姓名+借书证号验证
+    /** 前台成员登录（匿名）：姓名+成员编号验证
      * 注意：按证号精确查询后精确比对姓名——不能用 LIKE 模糊匹配姓名（知道证号即可猜登录）
-     * 证号即登录凭证：错误提示统一为"姓名或借书证号不正确"（不暴露证号是否存在，防枚举），
+     * 证号即登录凭证：错误提示统一为"姓名或成员编号不正确"（不暴露证号是否存在，防枚举），
      * 并按 IP+证号 维度频控（30 分钟窗口内失败 5 次拦截，防爆破） */
     @Anonymous
     @PostMapping("/login")
@@ -132,7 +132,7 @@ public class ReaderController extends BaseController
             readerSessionService.recordFail(failKey);
             return error("姓名或借书证号不正确");
         }
-        // 停用/挂失的证号不允许登录前台（借书、购书前就把问题拦下）
+        // 停用/挂失的证号不允许登录前台（报名、下单前就把问题拦下）
         if (!"0".equals(r.getStatus()))
         {
             return error("该借书证号已停用/挂失，请联系管理员");
@@ -166,7 +166,7 @@ public class ReaderController extends BaseController
         String em = trimEmail(email);
         if (em == null)
         {
-            return error("请填写有效的电子邮箱（用于接收借阅/预约通知）");
+            return error("请填写有效的电子邮箱（用于接收报名/候补通知）");
         }
         Reader r = readerService.register(readerName.trim(), phone.trim(), readerType.trim(), em, remark);
         java.util.Map<String, Object> result = new java.util.HashMap<>();
@@ -189,7 +189,7 @@ public class ReaderController extends BaseController
         return ajax;
     }
 
-    /** 前台补办借书证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
+    /** 前台补办报名证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
      * 频控：按 IP 维度（补办即换证号，防脚本批量作废他人证号） */
     @Anonymous
     @PostMapping("/applyReissue")
@@ -233,7 +233,7 @@ public class ReaderController extends BaseController
         return ajax;
     }
 
-    /** 前台修改个人信息：短期读者会话 + 姓名/证号校验后更新手机号 */
+    /** 前台修改个人信息：短期成员会话 + 姓名/证号校验后更新手机号 */
     @Anonymous
     @PostMapping("/updateMyInfo")
     public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone, String email)
@@ -268,7 +268,7 @@ public class ReaderController extends BaseController
         String em = email == null ? r.getEmail() : trimEmail(email);
         if (em == null)
         {
-            return error("请填写有效的电子邮箱（用于接收借阅/预约通知）");
+            return error("请填写有效的电子邮箱（用于接收报名/候补通知）");
         }
         r.setPhone(phone.trim());
         r.setEmail(em);
@@ -287,7 +287,7 @@ public class ReaderController extends BaseController
         return em;
     }
 
-    /** 后台添加读者（需要权限） */
+    /** 后台添加成员（需要权限） */
     @PreAuthorize("@ss.hasPermi('system:reader:add')")
     @Log(title = "读者管理", businessType = BusinessType.INSERT)
     @PostMapping
@@ -297,7 +297,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 修改读者管理
+     * 修改成员管理
      */
     @PreAuthorize("@ss.hasPermi('system:reader:edit')")
     @Log(title = "读者管理", businessType = BusinessType.UPDATE)
@@ -308,7 +308,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 删除读者管理
+     * 删除成员管理
      */
     @PreAuthorize("@ss.hasPermi('system:reader:remove')")
     @Log(title = "读者管理", businessType = BusinessType.DELETE)

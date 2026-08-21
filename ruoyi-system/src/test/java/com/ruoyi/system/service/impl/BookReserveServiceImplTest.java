@@ -123,7 +123,7 @@ public class BookReserveServiceImplTest
         when(bookMapper.selectBookByBookIdForUpdate(3L)).thenReturn(book);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
-        assertTrue(e.getMessage().contains("有库存"));
+        assertTrue(e.getMessage().contains("有名额"));
     }
 
     /** 已借未还 → 不可预约 */
@@ -140,7 +140,7 @@ public class BookReserveServiceImplTest
         when(borrowRecordMapper.selectBorrowRecordList(any())).thenReturn(list);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
-        assertTrue(e.getMessage().contains("已借阅本书"));
+        assertTrue(e.getMessage().contains("已报名本服务"));
     }
 
     /** 重复预约（预约中）→ 抛异常 */

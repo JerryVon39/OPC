@@ -24,7 +24,7 @@ import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
- * 图书信息Controller
+ * 服务信息Controller
  * 
  * @author ruoyi
  * @date 2026-08-12
@@ -37,14 +37,14 @@ public class BookController extends BaseController
     private IBookService bookService;
 
     /**
-     * 查询图书信息列表
-     * @Anonymous 匿名访问：面向大众的公开接口（前台书店/小程序无需登录即可浏览）
+     * 查询服务信息列表
+     * @Anonymous 匿名访问：面向大众的公开接口（前台官网前台/小程序无需登录即可浏览）
      */
     @Anonymous
     @GetMapping("/list")
     public TableDataInfo list(Book book, HttpServletRequest request)
     {
-        // 排序字段白名单：前台仅允许"借阅最多(borrowCount)/最新出版(publishDate)"等固定字段排序，防 ORDER BY 注入
+        // 排序字段白名单：前台仅允许"报名最多(borrowCount)/最新出版(publishDate)"等固定字段排序，防 ORDER BY 注入
         String orderByColumn = request.getParameter("orderByColumn");
         if (orderByColumn != null && !orderByColumn.trim().isEmpty())
         {
@@ -75,7 +75,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 同类图书推荐（匿名）：同分类在架书，排除自身
+     * 同类服务推荐（匿名）：同分类在架书，排除自身
      */
     @Anonymous
     @GetMapping("/related")
@@ -91,7 +91,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 搜索联想（匿名）：输入时按书名模糊匹配在架图书，最多 8 条
+     * 搜索联想（匿名）：输入时按书名模糊匹配在架服务，最多 8 条
      */
     @Anonymous
     @GetMapping("/suggest")
@@ -105,7 +105,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 导出图书信息列表
+     * 导出服务信息列表
      */
     @PreAuthorize("@ss.hasPermi('system:book:export')")
     @Log(title = "图书信息", businessType = BusinessType.EXPORT)
@@ -118,7 +118,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 批量导入图书（Excel）：逐行校验，同名跳过，返回成功/失败明细
+     * 批量导入服务（Excel）：逐行校验，同名跳过，返回成功/失败明细
      */
     @PreAuthorize("@ss.hasPermi('system:book:add')")
     @Log(title = "图书信息", businessType = BusinessType.IMPORT)
@@ -131,7 +131,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 下载图书导入模板
+     * 下载服务导入模板
      */
     @PreAuthorize("@ss.hasPermi('system:book:add')")
     @GetMapping("/importTemplate")
@@ -142,7 +142,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 获取图书信息详细信息
+     * 获取服务信息详细信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:query')")
     @GetMapping(value = "/{bookId}")
@@ -152,7 +152,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 新增图书信息
+     * 新增服务信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:add')")
     @Log(title = "图书信息", businessType = BusinessType.INSERT)
@@ -163,7 +163,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 修改图书信息
+     * 修改服务信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:edit')")
     @Log(title = "图书信息", businessType = BusinessType.UPDATE)
@@ -175,7 +175,7 @@ public class BookController extends BaseController
 
     /**
      * 上下架状态切换（后台列表开关）
-     * 有预约中/可借预约的图书禁止下架（Service 层联动校验）
+     * 有候补中/有名额候补的服务禁止下架（Service 层联动校验）
      */
     @PreAuthorize("@ss.hasPermi('system:book:edit')")
     @Log(title = "图书信息", businessType = BusinessType.UPDATE)
@@ -186,7 +186,7 @@ public class BookController extends BaseController
     }
 
     /**
-     * 删除图书信息
+     * 删除服务信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:remove')")
     @Log(title = "图书信息", businessType = BusinessType.DELETE)

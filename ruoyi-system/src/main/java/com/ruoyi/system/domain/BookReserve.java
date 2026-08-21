@@ -7,35 +7,35 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 图书预约对象 book_reserve
+ * 服务候补对象 book_reserve
  */
 public class BookReserve extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 预约ID */
+    /** 候补ID */
     private Long reserveId;
 
-    /** 图书ID */
+    /** 服务ID */
     private Long bookId;
 
-    /** 读者ID */
+    /** 成员ID */
     private Long readerId;
 
-    /** 读者姓名(快照) */
+    /** 成员姓名(快照) */
     private String readerName;
 
-    /** 借书证号(快照) */
+    /** 成员编号(快照) */
     private String cardNo;
 
-    /** 图书名称(快照) */
+    /** 服务名称(快照) */
     private String bookName;
 
-    /** 预约时间 */
+    /** 候补时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date reserveDate;
 
-    /** 状态(0预约中 1可借 2已完成 3已取消) */
+    /** 状态(0候补中 1有名额 2已完成 3已取消) */
     private String status;
 
     public void setReserveId(Long reserveId) { this.reserveId = reserveId; }

@@ -7,7 +7,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 购书订单对象 shop_order
+ * 报名订单对象 shop_order
  */
 public class ShopOrder extends BaseEntity
 {
@@ -15,20 +15,20 @@ public class ShopOrder extends BaseEntity
 
     private Long orderId;
 
-    @Excel(name = "订单号")
+    @Excel(name = "报名单号")
     private String orderNo;
 
     private Long readerId;
 
-    @Excel(name = "读者姓名")
+    @Excel(name = "成员姓名")
     private String readerName;
 
-    @Excel(name = "借书证号")
+    @Excel(name = "成员编号")
     private String cardNo;
 
     private Long bookId;
 
-    @Excel(name = "图书名称")
+    @Excel(name = "服务名称")
     private String bookName;
 
     @Excel(name = "数量")

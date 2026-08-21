@@ -1,14 +1,14 @@
 @echo off
 REM ============================================
-REM Book System - One-click stop (local dev)
+REM Digital Nomad Innovation Works - One-click stop (local dev)
 REM Kills the windows started by start-local.bat (backend/frontend/native
 REM MySQL/Redis), then cleans any leftovers on our ports.
 REM Docker containers are NOT touched - use scripts\stop-all.bat for those.
 REM ============================================
 cd /d "%~dp0.."
-title Stop Book System services
+title Stop Digital Nomad Innovation Works services
 
-echo Stopping Book System services ...
+echo Stopping Digital Nomad Innovation Works services ...
 REM stop windows started by start-local.bat (exact window titles)
 taskkill /FI "WINDOWTITLE eq wanshiwu-backend*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq wanshiwu-frontend*" /T /F >nul 2>&1

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================
-# Book System - One-click start (local dev, no Docker required)
+# Digital Nomad Innovation Works - One-click start (local dev, no Docker required)
 # Flow (same as the proven local start-all.bat):
 #   Redis -> MySQL -> backend -> frontend -> print URLs
 #

@@ -13,11 +13,11 @@ import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.util.ConfigUtil;
 
 /**
- * 统计查询服务：数据看板 + 热门图书/读者排行
+ * 统计查询服务：数据看板 + 热门服务/成员排行
  *
  * 结果缓存到 Redis 5 分钟：前台每次打开页面都请求统计接口，
  * 全表 GROUP BY 实时算属于"每次重复算同一个答案"。
- * 借书/还书/收款/下单/图书读者变动时，由各写路径调用 evictAll() 主动失效，
+ * 报名/完成/收款/下单/服务成员变动时，由各写路径调用 evictAll() 主动失效，
  * 因此缓存永远不会脏，TTL 只是兜底。
  */
 @Service
@@ -40,7 +40,7 @@ public class StatisticsService
     @Autowired
     private ConfigUtil configUtil;
 
-    /** 热门图书 Top10（缓存）：按借阅次数统计 */
+    /** 热门服务 Top10（缓存）：按报名次数统计 */
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> topBooks()
     {
@@ -54,7 +54,7 @@ public class StatisticsService
         return list;
     }
 
-    /** 读者借阅排行 Top10（缓存） */
+    /** 成员报名排行 Top10（缓存） */
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> topReaders()
     {
@@ -68,7 +68,7 @@ public class StatisticsService
         return list;
     }
 
-    /** 数据看板聚合统计（缓存）：图书/读者/借阅/订单/罚款 */
+    /** 数据看板聚合统计（缓存）：服务/成员/报名/订单/罚款 */
     @SuppressWarnings("unchecked")
     public Map<String, Object> dashboard()
     {

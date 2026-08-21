@@ -45,7 +45,7 @@ public class FineService
         return fine.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
-    /** 欠费检查（借书前）：有未缴罚款则抛异常 */
+    /** 欠费检查（报名前）：有未缴罚款则抛异常 */
     public void checkNoUnpaidFine(Long readerId)
     {
         BorrowRecord q = new BorrowRecord();
@@ -68,7 +68,7 @@ public class FineService
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowId);
         if (record == null)
         {
-            throw new ServiceException("借阅记录不存在");
+            throw new ServiceException("报名记录不存在");
         }
         if (record.getFineAmount() == null || record.getFineAmount().compareTo(BigDecimal.ZERO) <= 0
                 || BizStatus.FINE_PAID.equals(record.getFinePaid()))

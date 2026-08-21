@@ -157,7 +157,7 @@ public class ShopOrderServiceImpl implements IShopOrderService
         return rows;
     }
 
-    /** 前台购书：校验读者/图书/库存 → 创建订单 → 库存-1（事务：下单与扣库存同生共死） */
+    /** 前台报名：校验成员/服务/库存 → 创建订单 → 库存-1（事务：下单与扣库存同生共死） */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public int createOrder(String cardNo, Long bookId, Long quantity)
@@ -170,10 +170,10 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             quantity = 1L;
         }
-        // 锁读者行（FOR UPDATE）：与删除读者互斥，防止"删除检查通过后、下单插入订单"的竞态
+        // 锁成员行（FOR UPDATE）：与删除成员互斥，防止"删除检查通过后、下单插入订单"的竞态
         Reader queryReader = readerService.findActiveReader(cardNo);
         Reader reader = readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
-        // findActiveReader 与加锁之间读者可能被管理端删除：加锁查不到即视为不存在
+        // findActiveReader 与加锁之间成员可能被管理端删除：加锁查不到即视为不存在
         if (reader == null)
         {
             throw new ServiceException("读者不存在");
@@ -182,9 +182,9 @@ public class ShopOrderServiceImpl implements IShopOrderService
         {
             throw new ServiceException("该读者证号已停用/挂失，无法购买");
         }
-        // 锁图书行（FOR UPDATE，加锁顺序统一为 读者→图书，与借书/预约路径一致）：
-        // 与下架（changeBookStatus）/删除图书共享 book 行锁，下架完成后本事务读到的必是最新状态，
-        // 已下架的书在此被拦截（"该图书已下架，无法购买"），下架与新下单因此串行化
+        // 锁服务行（FOR UPDATE，加锁顺序统一为 成员→服务，与报名/候补路径一致）：
+        // 与下架（changeBookStatus）/删除服务共享 book 行锁，下架完成后本事务读到的必是最新状态，
+        // 已下架的书在此被拦截（"该服务已下架，无法购买"），下架与新下单因此串行化
         Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null)
         {

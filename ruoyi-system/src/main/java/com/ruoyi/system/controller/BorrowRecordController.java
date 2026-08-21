@@ -25,7 +25,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 
 /**
- * 借阅记录Controller
+ * 报名记录Controller
  */
 @RestController
 @RequestMapping("/system/borrow")
@@ -40,18 +40,18 @@ public class BorrowRecordController extends BaseController
     @Autowired
     private StatisticsService statisticsService;
 
-    /** 导出借阅记录 */
+    /** 导出报名记录 */
     @PreAuthorize("@ss.hasPermi('system:borrow:export')")
-    @Log(title = "借阅记录", businessType = BusinessType.EXPORT)
+    @Log(title = "报名记录", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, BorrowRecord borrowRecord)
     {
         List<BorrowRecord> list = borrowRecordService.selectBorrowRecordList(borrowRecord);
         ExcelUtil<BorrowRecord> util = new ExcelUtil<BorrowRecord>(BorrowRecord.class);
-        util.exportExcel(response, list, "借阅记录数据");
+        util.exportExcel(response, list, "报名记录数据");
     }
 
-    /** 查询借阅记录列表 */
+    /** 查询报名记录列表 */
     @PreAuthorize("@ss.hasPermi('system:borrow:list')")
     @GetMapping("/list")
     public TableDataInfo list(BorrowRecord borrowRecord)
@@ -61,7 +61,7 @@ public class BorrowRecordController extends BaseController
         return getDataTable(list);
     }
 
-    /** 获取借阅记录详细信息 */
+    /** 获取报名记录详细信息 */
     @PreAuthorize("@ss.hasPermi('system:borrow:query')")
     @GetMapping(value = "/{borrowId}")
     public AjaxResult getInfo(@PathVariable("borrowId") Long borrowId)
@@ -69,25 +69,25 @@ public class BorrowRecordController extends BaseController
         return success(borrowRecordService.selectBorrowRecordByBorrowId(borrowId));
     }
 
-    /** 新增借阅记录（借书：自动校验库存并减1） */
+    /** 新增报名记录（报名：自动校验库存并减1） */
     @PreAuthorize("@ss.hasPermi('system:borrow:add')")
-    @Log(title = "借阅记录", businessType = BusinessType.INSERT)
+    @Log(title = "报名记录", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody BorrowRecord borrowRecord)
     {
         return toAjax(borrowRecordService.insertBorrowRecord(borrowRecord));
     }
 
-    /** 修改借阅记录 */
+    /** 修改报名记录 */
     @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
-    @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
+    @Log(title = "报名记录", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody BorrowRecord borrowRecord)
     {
         return toAjax(borrowRecordService.updateBorrowRecord(borrowRecord));
     }
 
-    /** 前台借书：短期读者会话 + 证号兼容校验 */
+    /** 前台报名：短期成员会话 + 证号兼容校验 */
     @Anonymous
     @PostMapping("/borrowByCard")
     public AjaxResult borrowByCard(String cardNo, String sessionToken, Long bookId)
@@ -100,16 +100,16 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.borrowByCard(sessionCard, bookId));
     }
 
-    /** 续借：应还日期 +30 天 */
+    /** 续借：截止日期 +30 天 */
     @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
-    @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
+    @Log(title = "报名记录", businessType = BusinessType.UPDATE)
     @PutMapping("/renew/{borrowId}")
     public AjaxResult renew(@PathVariable("borrowId") Long borrowId)
     {
         return toAjax(borrowRecordService.renewBook(borrowId));
     }
 
-    /** 前台"我的借阅"：短期读者会话查询 */
+    /** 前台"我的报名"：短期成员会话查询 */
     @Anonymous
     @GetMapping("/queryByCard")
     public AjaxResult queryByCard(String cardNo, String sessionToken)
@@ -122,7 +122,7 @@ public class BorrowRecordController extends BaseController
         return success(borrowRecordService.selectBorrowListByCard(sessionCard));
     }
 
-    /** 前台续借：短期读者会话 + 记录归属校验 */
+    /** 前台续借：短期成员会话 + 记录归属校验 */
     @Anonymous
     @PostMapping("/renewByCard")
     public AjaxResult renewByCard(String cardNo, String sessionToken, Long borrowId)
@@ -135,9 +135,9 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.renewByCard(sessionCard, borrowId));
     }
 
-    /** 借阅统计·热门图书（匿名：前台热门推荐用，数据走 Redis 缓存）
-     * 注意：读者排行（含借书证号）不在此匿名接口下发——姓名+证号即前台登录凭证，
-     * 明文公开等同把读者账户挂在公网上；管理端走下方 /stats/readers 权限接口 */
+    /** 报名统计·热门服务（匿名：前台热门推荐用，数据走 Redis 缓存）
+     * 注意：成员排行（含成员编号）不在此匿名接口下发——姓名+证号即前台登录凭证，
+     * 明文公开等同把成员账户挂在公网上；管理端走下方 /stats/readers 权限接口 */
     @Anonymous
     @GetMapping("/stats")
     public AjaxResult stats()
@@ -147,7 +147,7 @@ public class BorrowRecordController extends BaseController
         return success(result);
     }
 
-    /** 借阅统计·读者排行 Top10（管理端：含证号，需借阅统计权限） */
+    /** 报名统计·成员排行 Top10（管理端：含证号，需报名统计权限） */
     @PreAuthorize("@ss.hasPermi('system:borrow:stats')")
     @GetMapping("/stats/readers")
     public AjaxResult statsReaders()
@@ -155,9 +155,9 @@ public class BorrowRecordController extends BaseController
         return success(statisticsService.topReaders());
     }
 
-    /** 还书：恢复库存 + 自动结算逾期罚款 */
+    /** 完成：恢复库存 + 自动结算逾期罚款 */
     @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
-    @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
+    @Log(title = "报名记录", businessType = BusinessType.UPDATE)
     @PutMapping("/return/{borrowId}")
     public AjaxResult returnBook(@PathVariable("borrowId") Long borrowId)
     {
@@ -166,16 +166,16 @@ public class BorrowRecordController extends BaseController
 
     /** 罚款收款：缴纳逾期罚款（收银台操作） */
     @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
-    @Log(title = "借阅记录", businessType = BusinessType.UPDATE)
+    @Log(title = "报名记录", businessType = BusinessType.UPDATE)
     @PutMapping("/payFine/{borrowId}")
     public AjaxResult payFine(@PathVariable("borrowId") Long borrowId)
     {
         return toAjax(borrowRecordService.payFine(borrowId));
     }
 
-    /** 删除借阅记录 */
+    /** 删除报名记录 */
     @PreAuthorize("@ss.hasPermi('system:borrow:remove')")
-    @Log(title = "借阅记录", businessType = BusinessType.DELETE)
+    @Log(title = "报名记录", businessType = BusinessType.DELETE)
     @DeleteMapping("/{borrowIds}")
     public AjaxResult remove(@PathVariable Long[] borrowIds)
     {

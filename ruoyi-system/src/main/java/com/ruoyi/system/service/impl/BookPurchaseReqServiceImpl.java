@@ -10,7 +10,7 @@ import com.ruoyi.system.service.IBookPurchaseReqService;
 import com.ruoyi.common.utils.MailUtil;
 
 /**
- * 图书荐购申请Service业务层处理
+ * 服务入驻申请申请Service业务层处理
  *
  * @author ruoyi
  * @date 2026-08-18
@@ -37,7 +37,7 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
     }
 
     /**
-     * 前台匿名提交荐购申请：
+     * 前台匿名提交入驻申请申请：
      * 书名必填；同一书名存在"待处理"申请时不重复提交（防刷屏）
      */
     @Override
@@ -47,7 +47,7 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
         {
             throw new com.ruoyi.common.exception.ServiceException("请填写书名");
         }
-        // 申请者邮箱必填且格式合法（荐购结果需邮件通知）
+        // 申请者邮箱必填且格式合法（入驻申请结果需邮件通知）
         if (req.getEmail() == null || !req.getEmail().trim().matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$") || req.getEmail().trim().length() > 50)
         {
             throw new com.ruoyi.common.exception.ServiceException("请填写有效的电子邮箱（处理结果将邮件通知）");
@@ -58,7 +58,7 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
         if (req.getRemark() != null) req.setRemark(req.getRemark().trim());
         if (bookPurchaseReqMapper.countPendingByName(req.getBookName()) > 0)
         {
-            throw new com.ruoyi.common.exception.ServiceException("《" + req.getBookName() + "》已在待处理荐购中，请勿重复提交");
+            throw new com.ruoyi.common.exception.ServiceException("《" + req.getBookName() + "》已有待审核的入驻申请，请勿重复提交");
         }
         req.setStatus("0");
         req.setCreateTime(DateUtils.getNowDate());
@@ -68,7 +68,7 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
     @Override
     public int updateBookPurchaseReq(BookPurchaseReq bookPurchaseReq)
     {
-        // 处理荐购（待处理→已处理/已拒绝）时，向后留的申请者邮箱发结果通知
+        // 处理入驻申请（待处理→已处理/已拒绝）时，向后留的申请者邮箱发结果通知
         BookPurchaseReq old = bookPurchaseReq.getReqId() == null ? null
                 : bookPurchaseReqMapper.selectBookPurchaseReqByReqId(bookPurchaseReq.getReqId());
         bookPurchaseReq.setUpdateTime(DateUtils.getNowDate());
@@ -79,13 +79,13 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
             String to = old.getEmail();
             if ("1".equals(bookPurchaseReq.getStatus()))
             {
-                mailUtil.sendHtml(to, "【荐购结果】您的荐购已通过",
-                        "<p>您好：</p><p>您荐购的《" + esc(old.getBookName()) + "》已通过审核，我们将尽快采购上架，欢迎届时到店借阅。感谢使用读书当铺！</p>");
+                mailUtil.sendHtml(to, "【入驻申请】您的入驻申请已通过",
+                        "<p>您好：</p><p>您的申请《" + esc(old.getBookName()) + "》已通过审核，运营团队将尽快与您联系办理入驻。欢迎加入数智游民创新工场！</p>");
             }
             else
             {
-                mailUtil.sendHtml(to, "【荐购结果】您的荐购未通过",
-                        "<p>您好：</p><p>很遗憾，您荐购的《" + esc(old.getBookName()) + "》暂未通过审核。我们会持续关注您的需求，感谢支持！</p>");
+                mailUtil.sendHtml(to, "【入驻申请】您的入驻申请未通过",
+                        "<p>您好：</p><p>很遗憾，您的申请《" + esc(old.getBookName()) + "》暂未通过审核。我们会持续关注您的需求，感谢支持！</p>");
             }
         }
         return rows;

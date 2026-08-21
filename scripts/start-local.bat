@@ -1,6 +1,6 @@
 @echo off
 REM ============================================
-REM Book System - One-click start (local dev, no Docker required)
+REM Digital Nomad Innovation Works - One-click start (local dev, no Docker required)
 REM Flow (same as the proven local start-all.bat):
 REM   clean ports -> Redis -> MySQL -> backend -> frontend -> print URLs
 REM

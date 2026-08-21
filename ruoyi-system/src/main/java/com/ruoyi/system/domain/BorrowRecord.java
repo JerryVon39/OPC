@@ -7,7 +7,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 借阅记录对象 borrow_record
+ * 报名记录对象 borrow_record
  * 
  * @author ruoyi
  */
@@ -15,49 +15,49 @@ public class BorrowRecord extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 借阅ID */
+    /** 报名ID */
     private Long borrowId;
 
-    /** 读者ID */
-    @Excel(name = "读者ID")
+    /** 成员ID */
+    @Excel(name = "成员ID")
     private Long readerId;
 
-    /** 图书ID */
-    @Excel(name = "图书ID")
+    /** 服务ID */
+    @Excel(name = "服务ID")
     private Long bookId;
 
-    /** 借出日期 */
+    /** 报名日期 */
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "借出日期", width = 30, dateFormat = "yyyy-MM-dd")
+    @Excel(name = "报名日期", width = 30, dateFormat = "yyyy-MM-dd")
     private Date borrowDate;
 
-    /** 应还日期 */
+    /** 截止日期 */
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "应还日期", width = 30, dateFormat = "yyyy-MM-dd")
+    @Excel(name = "截止日期", width = 30, dateFormat = "yyyy-MM-dd")
     private Date dueDate;
 
-    /** 归还日期 */
+    /** 完成日期 */
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "归还日期", width = 30, dateFormat = "yyyy-MM-dd")
+    @Excel(name = "完成日期", width = 30, dateFormat = "yyyy-MM-dd")
     private Date returnDate;
 
-    /** 状态(0借出中 1已归还 2已逾期) */
-    @Excel(name = "状态", readConverterExp = "0=借出中,1=已归还,2=已逾期")
+    /** 状态(0进行中 1已完成 2已逾期) */
+    @Excel(name = "状态", readConverterExp = "0=进行中,1=已完成,2=已逾期")
     private String status;
 
     /** 备注 */
     private String remark;
 
-    /** 联表查询：读者姓名 */
-    @Excel(name = "读者姓名")
+    /** 联表查询：成员姓名 */
+    @Excel(name = "成员姓名")
     private String readerName;
 
-    /** 联表查询：借书证号 */
-    @Excel(name = "借书证号")
+    /** 联表查询：成员编号 */
+    @Excel(name = "成员编号")
     private String cardNo;
 
-    /** 联表查询：图书名称 */
-    @Excel(name = "图书名称")
+    /** 联表查询：服务名称 */
+    @Excel(name = "服务名称")
     private String bookName;
 
     /** 逾期罚款金额(元) */

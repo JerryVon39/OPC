@@ -6,7 +6,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 图书荐购申请对象 book_purchase_req
+ * 服务入驻申请申请对象 book_purchase_req
  *
  * 前台搜索无结果时可提交"我想看的书"，后台处理（待处理/已处理/已拒绝）
  *
@@ -20,15 +20,15 @@ public class BookPurchaseReq extends BaseEntity
     /** 申请ID */
     private Long reqId;
 
-    /** 书名 */
-    @Excel(name = "书名")
+    /** 项目/组织名称 */
+    @Excel(name = "项目/组织名称")
     private String bookName;
 
-    /** 作者 */
-    @Excel(name = "作者")
+    /** 联系人 */
+    @Excel(name = "联系人")
     private String author;
 
-    /** 申请者邮箱（荐购结果通知用，前台提交时填写） */
+    /** 申请者邮箱（入驻申请结果通知用，前台提交时填写） */
     private String email;
 
     /** 状态(0待处理 1已处理 2已拒绝) */

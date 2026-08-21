@@ -70,7 +70,7 @@ public class RecycleServiceImpl implements IRecycleService
     }
 
     /**
-     * 还原图书：优先保原 book_id（历史关联更强）；若期间该 id 已被新书占用，自动分配新 id
+     * 还原服务：优先保原 book_id（历史关联更强）；若期间该 id 已被新书占用，自动分配新 id
      */
     @Override
     @Transactional
@@ -99,7 +99,7 @@ public class RecycleServiceImpl implements IRecycleService
     }
 
     /**
-     * 还原读者：优先保原 card_no（历史快照按证号关联）；若期间证号已被占用，自动换新证号
+     * 还原成员：优先保原 card_no（历史快照按证号关联）；若期间证号已被占用，自动换新证号
      */
     @Override
     @Transactional

@@ -29,7 +29,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, remark, cover, isbn, intro, create_by, create_time, update_by, update_time from book
     </sql>
 
-    <!-- 列表用：额外带借阅次数（借阅记录实时统计），支持"借阅最多"排序 -->
+    <!-- 列表用：额外带报名次数（报名记录实时统计），支持"报名最多"排序 -->
     <sql id="selectBookListVo">
         select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, remark, cover, isbn, intro, create_by, create_time, update_by, update_time,
         (select count(1) from borrow_record b where b.book_id = book.book_id) as borrow_count
@@ -141,19 +141,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where book_id = #{bookId} and stock >= #{quantity}
     </update>
 
-    <!-- 回补库存（归还/取消订单） -->
+    <!-- 回补库存（完成/取消订单） -->
     <update id="restoreStock">
         update book set stock = stock + #{quantity}
         where book_id = #{bookId}
     </update>
 
-    <!-- 上下架状态切换（后台列表开关）：仅改 status，字段由 Service 层做预约联动校验后调用 -->
+    <!-- 上下架状态切换（后台列表开关）：仅改 status，字段由 Service 层做候补联动校验后调用 -->
     <update id="updateBookStatus">
         update book set status = #{status}, update_time = sysdate()
         where book_id = #{bookId}
     </update>
 
-    <!-- 同类图书推荐：同分类在架书（排除自身，库存充足优先，最多4本） -->
+    <!-- 同类服务推荐：同分类在架书（排除自身，库存充足优先，最多4本） -->
     <select id="selectRelatedBooks" resultMap="BookResult">
         <include refid="selectBookVo"/>
         where book_id != #{bookId} and book_type = #{bookType} and status = '0'
@@ -177,7 +177,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit #{limit}
     </select>
 
-    <!-- 批量导入判重：同名图书是否存在 -->
+    <!-- 批量导入判重：同名服务是否存在 -->
     <select id="countByBookName" parameterType="String" resultType="int">
         select count(1) from book where book_name = #{bookName}
     </select>

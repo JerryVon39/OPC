@@ -121,7 +121,7 @@ public class BorrowRecordServiceImplTest
 
         ServiceException e = assertThrows(ServiceException.class,
                 () -> borrowRecordService.updateBorrowRecord(update));
-        assertTrue(e.getMessage().contains("还书"));
+        assertTrue(e.getMessage().contains("完成"));
     }
 
     /** 修改：状态未变（仅改备注）→ 正常更新 */

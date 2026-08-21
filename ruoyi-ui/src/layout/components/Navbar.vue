@@ -30,7 +30,7 @@
 
       </template>
 
-      <el-tooltip content="前台万事屋（新标签打开）" effect="dark" placement="bottom">
+      <el-tooltip content="前台官网（新标签打开）" effect="dark" placement="bottom">
         <span class="right-menu-item hover-effect" style="font-size:14px;cursor:pointer" @click="goShop">🏪 前台</span>
       </el-tooltip>
 
@@ -119,7 +119,7 @@ export default {
       })
     },
     goShop() {
-      // 前台万事屋（新标签打开，便于来回切换）
+      // 前台官网（新标签打开，便于来回切换）
       window.open('/shop.html')
     },
     logout() {

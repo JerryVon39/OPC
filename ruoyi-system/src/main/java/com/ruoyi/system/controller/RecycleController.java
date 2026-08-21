@@ -17,7 +17,7 @@ import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.service.IRecycleService;
 
 /**
- * 回收站Controller：误删图书/读者恢复（还原/彻底删除/清空）
+ * 回收站Controller：误删服务/成员恢复（还原/彻底删除/清空）
  */
 @RestController
 @RequestMapping("/system/recycle")
@@ -26,7 +26,7 @@ public class RecycleController extends BaseController
     @Autowired
     private IRecycleService recycleService;
 
-    // ================= 图书回收站 =================
+    // ================= 服务回收站 =================
 
     @PreAuthorize("@ss.hasPermi('system:recycle:book:list')")
     @GetMapping("/book/list")
@@ -65,7 +65,7 @@ public class RecycleController extends BaseController
         return toAjax(recycleService.clearBooks());
     }
 
-    // ================= 读者回收站 =================
+    // ================= 成员回收站 =================
 
     @PreAuthorize("@ss.hasPermi('system:recycle:reader:list')")
     @GetMapping("/reader/list")

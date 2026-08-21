@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================
-# 万事屋图书管理系统 · 一键启动（Docker 方式）
+# 数智游民创新工场官网 · 一键启动（Docker 方式）
 # 适合从 GitHub 克隆仓库的新用户：无需安装 MySQL/Redis/Java/Node，
 # 只需 Docker（https://docs.docker.com/get-docker/）
 # 用法：./scripts/start-all.sh       停止：./scripts/stop-all.sh

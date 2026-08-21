@@ -22,8 +22,8 @@ import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.StatisticsService;
 
 /**
- * 借阅记录Service业务层处理
- * 包含借书/还书的业务规则（库存联动、逾期判断）
+ * 报名记录Service业务层处理
+ * 包含报名/完成的业务规则（库存联动、逾期判断）
  */
 @Service
 public class BorrowRecordServiceImpl implements IBorrowRecordService
@@ -68,7 +68,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     public List<BorrowRecord> selectBorrowRecordList(BorrowRecord borrowRecord)
     {
         List<BorrowRecord> list = borrowRecordMapper.selectBorrowRecordList(borrowRecord);
-        // 逾期动态判断：借出中(status=0)且应还日期已过 → 标记逾期(2)
+        // 逾期动态判断：进行中(status=0)且截止日期已过 → 标记逾期(2)
         Date today = new Date();
         for (BorrowRecord br : list)
         {
@@ -80,7 +80,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return list;
     }
 
-    /** 借书前置校验：图书在架有库存 / 读者正常 / 无欠费 / 未重复借 / 未超上限 */
+    /** 报名前置校验：服务在架有库存 / 成员正常 / 无欠费 / 未重复借 / 未超上限 */
     private void validateBeforeBorrow(BorrowRecord borrowRecord, Book book, Reader reader)
     {
         if (book == null)
@@ -101,29 +101,29 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
-            throw new ServiceException("该读者证号已停用/挂失，无法借书");
+            throw new ServiceException("该成员编号已停用，无法报名");
         }
         fineService.checkNoUnpaidFine(borrowRecord.getReaderId());
         borrowRuleService.checkNotBorrowing(borrowRecord.getReaderId(), borrowRecord.getBookId());
         borrowRuleService.checkUnderLimit(borrowRecord.getReaderId(), borrowRuleService.maxCountFor(reader.getReaderType()));
     }
 
-    /** 借书：创建记录 + 图书库存-1（事务：库存与记录同生共死）
-     * READ_COMMITTED：FOR UPDATE 后的一致性读均读最新已提交数据，重复借阅/上限检查才能看到并发事务刚插入的记录 */
+    /** 报名：创建记录 + 服务库存-1（事务：库存与记录同生共死）
+     * READ_COMMITTED：FOR UPDATE 后的一致性读均读最新已提交数据，重复报名/上限检查才能看到并发事务刚插入的记录 */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public int insertBorrowRecord(BorrowRecord borrowRecord)
     {
-        // 锁读者行（FOR UPDATE）：同一读者的并发借书串行化，"重复借阅/借阅上限"检查与插入原子化
+        // 锁成员行（FOR UPDATE）：同一成员的并发报名串行化，"重复报名/报名上限"检查与插入原子化
         Reader reader = readerMapper.selectReaderByReaderIdForUpdate(borrowRecord.getReaderId());
-        // 再锁图书行（FOR UPDATE，加锁顺序统一为 读者→图书，避免与预约路径交叉死锁）：
-        // 与下架（changeBookStatus）/删除图书共享 book 行锁，下架完成后本事务读到的必是最新状态，
-        // 已下架的书在此被拦截（"该图书已下架，无法借出"），下架与新借书因此串行化
+        // 再锁服务行（FOR UPDATE，加锁顺序统一为 成员→服务，避免与候补路径交叉死锁）：
+        // 与下架（changeBookStatus）/删除服务共享 book 行锁，下架完成后本事务读到的必是最新状态，
+        // 已下架的书在此被拦截（"该服务已下架，无法报名"），下架与新报名因此串行化
         Book book = bookMapper.selectBookByBookIdForUpdate(borrowRecord.getBookId());
-        // 前置校验（图书/读者/欠费/重复/上限）
+        // 前置校验（服务/成员/欠费/重复/上限）
         validateBeforeBorrow(borrowRecord, book, reader);
-        // 该书存在"可借"预约（归还后已通知取书）时仅预约人可借：
-        // 防止预约读者赶来时书已被他人借走（预约白等、队列失真）。图书行锁已持有，检查与插入原子化
+        // 该书存在"有名额"候补（完成后已通知取书）时仅候补人有名额：
+        // 防止候补成员赶来时书已被他人借走（候补白等、队列失真）。服务行锁已持有，检查与插入原子化
         com.ruoyi.system.domain.BookReserve prq = new com.ruoyi.system.domain.BookReserve();
         prq.setBookId(book.getBookId());
         prq.setStatus("1");
@@ -141,11 +141,11 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             }
             if (!isPickupReader)
             {
-                throw new ServiceException("该书已有读者预约取书，请预约读者优先借阅");
+                throw new ServiceException("该服务已有候补成员获得名额，请候补成员优先报名");
             }
         }
         String readerType = reader.getReaderType();
-        // 借出日期默认今天，应还日期 = 借出 + 按类型的借期（学生/普通30天，教师60天，参数可配）
+        // 报名日期默认今天，截止日期 = 报名 + 按类型的借期（学生/普通30天，教师60天，参数可配）
         if (borrowRecord.getBorrowDate() == null)
         {
             borrowRecord.setBorrowDate(new Date());
@@ -154,7 +154,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         Date due = new Date(borrowRecord.getBorrowDate().getTime() + days * 24L * 3600 * 1000);
         borrowRecord.setDueDate(due);
         borrowRecord.setStatus(com.ruoyi.system.constant.BizStatus.BORROW_OUT);
-        // 快照冗余：读者姓名/证号/书名写入借阅记录（删除读者/图书后历史记录仍完整，与订单快照语义一致）
+        // 快照冗余：成员姓名/证号/书名写入报名记录（删除成员/服务后历史记录仍完整，与订单快照语义一致）
         borrowRecord.setReaderName(reader.getReaderName());
         borrowRecord.setCardNo(reader.getCardNo());
         borrowRecord.setBookName(book.getBookName());
@@ -164,7 +164,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             throw new ServiceException("图书库存不足，无法借出");
         }
         int rows = borrowRecordMapper.insertBorrowRecord(borrowRecord);
-        // 借出成功后：该读者对该书的预约（预约中/可借）置为已完成
+        // 报名成功后：该成员对该书的候补（候补中/有名额）置为已完成
         com.ruoyi.system.domain.BookReserve rq = new com.ruoyi.system.domain.BookReserve();
         rq.setReaderId(borrowRecord.getReaderId());
         rq.setBookId(book.getBookId());
@@ -178,21 +178,21 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 bookReserveMapper.updateBookReserve(rv);
             }
         }
-        // 借阅数据变了：失效统计缓存（热门排行/看板下次请求重新计算）
+        // 报名数据变了：失效统计缓存（热门排行/看板下次请求重新计算）
         statisticsService.evictAll();
-        // 借书成功邮件通知（异步、尽力而为，失败不影响业务）
-        mailUtil.sendHtml(reader.getEmail(), "【图书借阅】借书成功",
+        // 报名成功邮件通知（异步、尽力而为，失败不影响业务）
+        mailUtil.sendHtml(reader.getEmail(), "【服务报名】报名成功",
                 "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
-                + "<p>您已成功借阅《" + esc(book.getBookName()) + "》，应还日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", due) + "。</p>"
-                + "<p>请按时归还，逾期将产生罚款。感谢使用读书当铺！</p>");
+                + "<p>您已成功报名《" + esc(book.getBookName()) + "》，截止日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", due) + "。</p>"
+                + "<p>请按时完成，逾期将影响后续报名。感谢支持数智游民创新工场！</p>");
         return rows;
     }
 
     @Override
     public int updateBorrowRecord(BorrowRecord borrowRecord)
     {
-        // 生命周期字段守卫：状态/罚款/续借次数只能走还书/收款/续借专用流程，
-        // 普通编辑不允许直接改（防绕过还书流程：借出中直标已归还而库存不还原）
+        // 生命周期字段守卫：状态/罚款/续借次数只能走完成/收款/续借专用流程，
+        // 普通编辑不允许直接改（防绕过完成流程：进行中直标已完成而库存不还原）
         if (borrowRecord.getBorrowId() != null)
         {
             BorrowRecord old = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowRecord.getBorrowId());
@@ -204,12 +204,12 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 boolean dynamicOverdue = "2".equals(newStatus) && "0".equals(old.getStatus());
                 if (newStatus != null && !dynamicOverdue && !newStatus.equals(old.getStatus()))
                 {
-                    throw new ServiceException("借阅状态请通过还书/续借功能变更，不允许直接修改");
+                    throw new ServiceException("报名状态请通过完成/续期功能变更，不允许直接修改");
                 }
                 if (borrowRecord.getFineAmount() != null
                         && (old.getFineAmount() == null || borrowRecord.getFineAmount().compareTo(old.getFineAmount()) != 0))
                 {
-                    throw new ServiceException("罚款金额由系统在还书时自动结算，不允许直接修改");
+                    throw new ServiceException("逾期费用由系统在完成时自动结算，不允许直接修改");
                 }
                 if (borrowRecord.getFinePaid() != null && !borrowRecord.getFinePaid().equals(old.getFinePaid()))
                 {
@@ -218,11 +218,11 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 if (borrowRecord.getRenewCount() != null
                         && (old.getRenewCount() == null || !borrowRecord.getRenewCount().equals(old.getRenewCount())))
                 {
-                    throw new ServiceException("续借次数由系统在续借时累加，不允许直接修改");
+                    throw new ServiceException("续期次数由系统在续期时累加，不允许直接修改");
                 }
             }
         }
-        // 若读者/图书被修改，同步刷新快照（保持记录显示与实际一致）
+        // 若成员/服务被修改，同步刷新快照（保持记录显示与实际一致）
         if (borrowRecord.getReaderId() != null)
         {
             Reader reader = readerMapper.selectReaderByReaderId(borrowRecord.getReaderId());
@@ -243,14 +243,14 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.updateBorrowRecord(borrowRecord);
     }
 
-    /** 还书：置归还日期 + 状态已归还 + 图书库存+1（事务） */
+    /** 完成：置完成日期 + 状态已完成 + 服务库存+1（事务） */
     @Transactional
     public int returnBook(Long borrowId)
     {
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowId(borrowId);
         if (record == null)
         {
-            throw new ServiceException("借阅记录不存在");
+            throw new ServiceException("报名记录不存在");
         }
         if ("1".equals(record.getStatus()))
         {
@@ -275,10 +275,10 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             bookMapper.restoreStock(record.getBookId(), 1L);
         }
-        // 归还后同步逾期催还公告：还清了就删公告，还有逾期就重新汇总
+        // 完成后同步逾期催办公告：还清了就删公告，还有逾期就重新汇总
         syncOverdueNotice();
-        // 归还后检查预约：该书最早的"预约中"读者 → 状态置"可借"（CAS 推进：
-        // 同书多本并发归还时同一预约只被推进一次，推进失败取下一位，队列不卡死）
+        // 完成后检查候补：该书最早的"候补中"成员 → 状态置"有名额"（CAS 推进：
+        // 同书多本并发完成时同一候补只被推进一次，推进失败取下一位，队列不卡死）
         com.ruoyi.system.domain.BookReserve rq = new com.ruoyi.system.domain.BookReserve();
         rq.setBookId(record.getBookId());
         rq.setStatus("0");
@@ -287,24 +287,24 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             for (com.ruoyi.system.domain.BookReserve first : reserves)
             {
-                // 条件更新抢推进权：只有把该预约"预约中 → 可借"成功的请求负责通知（防双推进/双通知）
+                // 条件更新抢推进权：只有把该候补"候补中 → 有名额"成功的请求负责通知（防双推进/双通知）
                 if (bookReserveMapper.updateStatusIfCurrent(first.getReserveId(), "0", "1", new Date()) == 0)
                 {
                     continue; // 该预约已被并发推进/取消，取下一位
                 }
-                // 书已归还 → 通知排在最前的预约读者前来取书（异步、尽力而为）
+                // 书已完成 → 通知排在最前的候补成员前来取书（异步、尽力而为）
                 Reader rv = readerMapper.selectReaderByReaderId(first.getReaderId());
                 if (rv != null)
                 {
                     mailUtil.sendHtml(rv.getEmail(), "【图书预约】您预约的书到了",
                             "<p>您好，" + esc(rv.getReaderName()) + "：</p>"
                             + "<p>您预约的《" + esc(first.getBookName() == null ? "图书" : first.getBookName()) + "》已被读者归还，现可前来取书。</p>"
-                            + "<p>请尽早在" + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", new Date()) + "起的 3 天内到店办理借阅，逾期未取将视为放弃。感谢使用读书当铺！</p>");
+                            + "<p>请尽早在" + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", new Date()) + "起的 3 天内办理报名，逾期未办将视为放弃。感谢支持数智游民创新工场！</p>");
                 }
                 break;
             }
         }
-        // 借阅/罚款数据变了：失效统计缓存
+        // 报名/罚款数据变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
@@ -320,16 +320,16 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     }
 
     /**
-     * 归还后同步逾期催还公告：
-     * 1) 无剩余逾期记录 → 删除全部"逾期催还通知"公告
+     * 完成后同步逾期催办公告：
+     * 1) 无剩余逾期记录 → 删除全部"逾期催办通知"公告
      * 2) 仍有逾期记录 → 删除旧公告并重新汇总发布（内容与现状一致）
      */
     private void syncOverdueNotice()
     {
         // 逾期状态"2"仅每日定时任务落库，未跑前真实逾期记录仍是"0"：
-        // 必须按"借出中 + 应还日期已过"查询，否则会误删公告且不重建（与 BorrowTask.remindOverdue 口径一致）
+        // 必须按"进行中 + 截止日期已过"查询，否则会误删公告且不重建（与 BorrowTask.remindOverdue 口径一致）
         List<BorrowRecord> overdue = borrowRecordMapper.selectOverdueRecords();
-        // 删除旧的催还公告
+        // 删除旧的催办公告
         com.ruoyi.system.domain.SysNotice delQuery = new com.ruoyi.system.domain.SysNotice();
         delQuery.setNoticeTitle("逾期催还通知");
         List<com.ruoyi.system.domain.SysNotice> oldList = noticeMapper.selectNoticeList(delQuery);
@@ -341,7 +341,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             return;
         }
-        // 重新汇总发布（内容与当前逾期情况一致；公告前台匿名可见，不列读者姓名，保护隐私）
+        // 重新汇总发布（内容与当前逾期情况一致；公告前台匿名可见，不列成员姓名，保护隐私）
         String books = "";
         int max = Math.min(overdue.size(), 5);
         for (int i = 0; i < max; i++)
@@ -356,7 +356,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         com.ruoyi.system.domain.SysNotice notice = new com.ruoyi.system.domain.SysNotice();
         notice.setNoticeTitle("逾期催还通知");
         notice.setNoticeType("2");
-        notice.setNoticeContent("以下图书已逾期未归还，请相关读者尽快到服务台办理还书：" + books);
+        notice.setNoticeContent("以下服务已截止未完成，请相关成员尽快到服务台办理：" + books);
         notice.setStatus("0");
         notice.setCreateBy("system");
         notice.setCreateTime(new Date());
@@ -390,7 +390,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.selectTopReaders(new BorrowRecord());
     }
 
-    /** 续借：应还日期 +30 天（行锁：校验与写入原子化，并发双击/双端续借只有一次生效） */
+    /** 续借：截止日期 +30 天（行锁：校验与写入原子化，并发双击/双端续借只有一次生效） */
     @Override
     @Transactional
     public int renewBook(Long borrowId)
@@ -399,7 +399,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowIdForUpdate(borrowId);
         if (record == null)
         {
-            throw new ServiceException("借阅记录不存在");
+            throw new ServiceException("报名记录不存在");
         }
         if ("1".equals(record.getStatus()))
         {
@@ -421,7 +421,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         // 续借次数限制（委托 BorrowRuleService）
         long renewCount = borrowRuleService.checkRenewAllowed(record);
-        // 应还日期 +30 天
+        // 截止日期 +30 天
         Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);
         record.setDueDate(newDue);
         record.setRenewCount(renewCount + 1);
@@ -429,7 +429,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.updateBorrowRecord(record);
     }
 
-    /** 前台借书：按借书证号（匿名）
+    /** 前台报名：按成员编号（匿名）
      * 必须带事务：内部自调用 insertBorrowRecord，其 @Transactional 会被 Spring 代理绕过，
      * 无事务时 FOR UPDATE 锁立即释放、检查与插入不原子（并发重复借/超上限拦不住） */
     @Override
@@ -447,7 +447,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return insertBorrowRecord(borrow);
     }
 
-    /** 前台续借：证号归属校验 + 借出中 + 未逾期 → 应还日期 +30 天（行锁：并发续借只有一次生效） */
+    /** 前台续借：证号归属校验 + 进行中 + 未逾期 → 截止日期 +30 天（行锁：并发续借只有一次生效） */
     @Override
     @Transactional
     public int renewByCard(String cardNo, Long borrowId)
@@ -460,7 +460,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowIdForUpdate(borrowId);
         if (record == null)
         {
-            throw new ServiceException("借阅记录不存在");
+            throw new ServiceException("报名记录不存在");
         }
         // 证号归属校验：只能续借自己的书
         Reader reader = readerMapper.selectReaderByReaderId(record.getReaderId());
@@ -492,7 +492,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         mailUtil.sendHtml(reader.getEmail(), "【图书借阅】续借成功",
                 "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
                 + "<p>您已成功续借《" + esc(record.getBookName() == null ? "该书" : record.getBookName()) + "》，新的应还日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", newDue) + "。</p>"
-                + "<p>如再次需续借或有其他问题，请联系服务台。感谢使用读书当铺！</p>");
+                + "<p>如再次需续期或有其他问题，请联系服务台。感谢支持数智游民创新工场！</p>");
         return rows;
     }
 
@@ -503,7 +503,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    /** 删除借阅记录：未还记录（借出中/逾期）先还原库存再删，有未缴罚款则拒绝（删除会抹掉欠费） */
+    /** 删除报名记录：未还记录（进行中/逾期）先还原库存再删，有未缴罚款则拒绝（删除会抹掉欠费） */
     @Override
     @Transactional
     public int deleteBorrowRecordByBorrowIds(Long[] borrowIds)
@@ -525,14 +525,14 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 {
                     throw new ServiceException("该借阅记录有未缴罚款，请先到服务台收款后再删除");
                 }
-                // CAS 先置"已归还"再删：并发删除同一未还记录时只有一次回补库存（防库存双回补）
+                // CAS 先置"已完成"再删：并发删除同一未还记录时只有一次回补库存（防库存双回补）
                 java.util.Date now = new Date();
                 int locked = borrowRecordMapper.updateStatusIfCurrent(borrowId,
                         com.ruoyi.system.constant.BizStatus.BORROW_OUT,
                         com.ruoyi.system.constant.BizStatus.BORROW_RETURNED, now, null, null, now);
                 if (locked == 0)
                 {
-                    // 逾期状态"2"为定时任务落库：再试一次；仍 0 行说明已被并发还书/删除处理
+                    // 逾期状态"2"为定时任务落库：再试一次；仍 0 行说明已被并发完成/删除处理
                     locked = borrowRecordMapper.updateStatusIfCurrent(borrowId,
                             com.ruoyi.system.constant.BizStatus.BORROW_OVERDUE,
                             com.ruoyi.system.constant.BizStatus.BORROW_RETURNED, now, null, null, now);
@@ -541,7 +541,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 {
                     continue; // 已被并发处理（还书/删除），跳过不再回补
                 }
-                // 未还书删除 = 库存还原（书回到书架，记录作废）
+                // 未完成删除 = 库存还原（书回到书架，记录作废）
                 if (record.getBookId() != null)
                 {
                     bookMapper.restoreStock(record.getBookId(), 1L);
@@ -549,12 +549,12 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             }
         }
         int rows = borrowRecordMapper.deleteBorrowRecordByBorrowIds(borrowIds);
-        // 借阅数据变了：失效统计缓存
+        // 报名数据变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
 
-    /** 删除单条借阅记录：委托批量路径（未还记录还原库存、欠费拦截与批量删除一致） */
+    /** 删除单条报名记录：委托批量路径（未还记录还原库存、欠费拦截与批量删除一致） */
     @Override
     @Transactional
     public int deleteBorrowRecordByBorrowId(Long borrowId)

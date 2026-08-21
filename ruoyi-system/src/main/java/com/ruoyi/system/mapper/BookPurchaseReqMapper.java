@@ -4,7 +4,7 @@ import java.util.List;
 import com.ruoyi.system.domain.BookPurchaseReq;
 
 /**
- * 图书荐购申请Mapper接口
+ * 服务入驻申请申请Mapper接口
  *
  * @author ruoyi
  * @date 2026-08-18

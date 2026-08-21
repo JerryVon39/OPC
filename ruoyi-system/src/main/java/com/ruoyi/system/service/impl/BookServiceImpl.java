@@ -22,7 +22,7 @@ import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.system.service.ISysDictDataService;
 
 /**
- * 图书信息Service业务层处理
+ * 服务信息Service业务层处理
  * 
  * @author ruoyi
  * @date 2026-08-12
@@ -52,10 +52,10 @@ public class BookServiceImpl implements IBookService
     private IRecycleService recycleService;
 
     /**
-     * 查询图书信息
+     * 查询服务信息
      * 
-     * @param bookId 图书信息主键
-     * @return 图书信息
+     * @param bookId 服务信息主键
+     * @return 服务信息
      */
     @Override
     public Book selectBookByBookId(Long bookId)
@@ -63,7 +63,7 @@ public class BookServiceImpl implements IBookService
         return bookMapper.selectBookByBookId(bookId);
     }
 
-    /** 同类图书推荐：同分类在架书（最多4本） */
+    /** 同类服务推荐：同分类在架书（最多4本） */
     @Override
     public java.util.List<Book> selectRelatedBooks(Long bookId, String bookType)
     {
@@ -78,10 +78,10 @@ public class BookServiceImpl implements IBookService
     }
 
     /**
-     * 查询图书信息列表
+     * 查询服务信息列表
      * 
-     * @param book 图书信息
-     * @return 图书信息
+     * @param book 服务信息
+     * @return 服务信息
      */
     @Override
     public List<Book> selectBookList(Book book)
@@ -90,9 +90,9 @@ public class BookServiceImpl implements IBookService
     }
 
     /**
-     * 新增图书信息
+     * 新增服务信息
      * 
-     * @param book 图书信息
+     * @param book 服务信息
      * @return 结果
      */
     @Override
@@ -106,9 +106,9 @@ public class BookServiceImpl implements IBookService
     }
 
     /**
-     * 修改图书信息
+     * 修改服务信息
      * 
-     * @param book 图书信息
+     * @param book 服务信息
      * @return 结果
      */
     @Override
@@ -123,7 +123,7 @@ public class BookServiceImpl implements IBookService
 
     /**
      * 上下架状态切换（后台列表开关）
-     * 有预约中/可借预约的图书禁止下架（联动校验）
+     * 有候补中/有名额候补的服务禁止下架（联动校验）
      */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -137,7 +137,7 @@ public class BookServiceImpl implements IBookService
         {
             throw new com.ruoyi.common.exception.ServiceException("非法的上下架状态");
         }
-        // 锁图书行：防止检查通过后并发新增预约再下架（检查与更新同事务原子化）
+        // 锁服务行：防止检查通过后并发新增候补再下架（检查与更新同事务原子化）
         Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null)
         {
@@ -168,9 +168,9 @@ public class BookServiceImpl implements IBookService
     }
 
     /**
-     * 批量删除图书信息
+     * 批量删除服务信息
      * 
-     * @param bookIds 需要删除的图书信息主键
+     * @param bookIds 需要删除的服务信息主键
      * @return 结果
      */
     @Override
@@ -182,13 +182,13 @@ public class BookServiceImpl implements IBookService
         java.util.List<Book> toSnapshot = new java.util.ArrayList<>();
         for (Long bookId : bookIds)
         {
-            // 锁图书行（FOR UPDATE）：防止检查通过后、删除前并发插入新的借阅/订单（检查与删除同事务原子化）
+            // 锁服务行（FOR UPDATE）：防止检查通过后、删除前并发插入新的报名/订单（检查与删除同事务原子化）
             Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
             if (book == null)
             {
                 continue;
             }
-            // 有未归还借阅（借出中/逾期）的图书不可删
+            // 有未完成报名（进行中/逾期）的服务不可删
             BorrowRecord q = new BorrowRecord();
             q.setBookId(bookId);
             List<BorrowRecord> records = borrowRecordMapper.selectBorrowRecordList(q);
@@ -196,10 +196,10 @@ public class BookServiceImpl implements IBookService
             {
                 if ("0".equals(r.getStatus()) || "2".equals(r.getStatus()))
                 {
-                    throw new com.ruoyi.common.exception.ServiceException("《" + (r.getBookName() == null ? "该图书" : r.getBookName()) + "》存在未归还的借阅记录，无法删除");
+                    throw new com.ruoyi.common.exception.ServiceException("《" + (r.getBookName() == null ? "该图书" : r.getBookName()) + "》存在未完成的报名记录，无法删除");
                 }
             }
-            // 有待处理订单的图书不可删
+            // 有待处理订单的服务不可删
             ShopOrder oq = new ShopOrder();
             oq.setBookId(bookId);
             oq.setStatus("0");
@@ -208,7 +208,7 @@ public class BookServiceImpl implements IBookService
             {
                 throw new com.ruoyi.common.exception.ServiceException("该图书存在待处理订单，无法删除");
             }
-            // 有预约中/可借预约的图书不可删（否则前台"我的预约"出现幽灵记录）
+            // 有候补中/有名额候补的服务不可删（否则前台"我的候补"出现幽灵记录）
             BookReserve rq = new BookReserve();
             rq.setBookId(bookId);
             List<BookReserve> reserves = bookReserveMapper.selectBookReserveList(rq);
@@ -222,7 +222,7 @@ public class BookServiceImpl implements IBookService
             // 校验全部通过：记入待快照集合，供误删后回收站还原
             toSnapshot.add(book);
         }
-        // 物理删除前先把通过校验的图书快照进回收站（同事务，任一失败整体回滚）
+        // 物理删除前先把通过校验的服务快照进回收站（同事务，任一失败整体回滚）
         for (Book b : toSnapshot)
         {
             recycleService.snapshotBook(b, null);
@@ -234,9 +234,9 @@ public class BookServiceImpl implements IBookService
     }
 
     /**
-     * 删除图书信息信息
+     * 删除服务信息信息
      *
-     * @param bookId 图书信息主键
+     * @param bookId 服务信息主键
      * @return 结果
      */
     @Override
@@ -246,7 +246,7 @@ public class BookServiceImpl implements IBookService
     }
 
     /**
-     * 批量导入图书：逐行校验（书名必填/类型字典/同名判重跳过），
+     * 批量导入服务：逐行校验（书名必填/类型字典/同名判重跳过），
      * 错误不中断整批，收集行号明细返回前端展示
      */
     @Override

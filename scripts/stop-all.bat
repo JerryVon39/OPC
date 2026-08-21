@@ -1,6 +1,6 @@
 @echo off
 REM ============================================
-REM Book System - One-click stop (Docker)
+REM Digital Nomad Innovation Works - One-click stop (Docker)
 REM Stops containers but keeps data volumes.
 REM ============================================
 cd /d "%~dp0.."

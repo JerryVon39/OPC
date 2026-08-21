@@ -20,7 +20,7 @@ import com.ruoyi.system.service.IBookReserveService;
 import com.ruoyi.system.service.ReaderSessionService;
 
 /**
- * 图书预约Controller
+ * 服务候补Controller
  */
 @RestController
 @RequestMapping("/system/reserve")
@@ -32,7 +32,7 @@ public class BookReserveController extends BaseController
     @Autowired
     private ReaderSessionService readerSessionService;
 
-    /** 后台预约列表 */
+    /** 后台候补列表 */
     @PreAuthorize("@ss.hasPermi('system:borrow:list')")
     @GetMapping("/list")
     public TableDataInfo list(BookReserve bookReserve)
@@ -42,7 +42,7 @@ public class BookReserveController extends BaseController
         return getDataTable(list);
     }
 
-    /** 前台预约：短期读者会话 + 证号校验 */
+    /** 前台候补：短期成员会话 + 证号校验 */
     @Anonymous
     @PostMapping("/add")
     public AjaxResult add(String cardNo, String sessionToken, Long bookId)
@@ -55,7 +55,7 @@ public class BookReserveController extends BaseController
         return toAjax(bookReserveService.reserveByCard(sessionCard, bookId));
     }
 
-    /** 前台我的预约：短期读者会话查询 */
+    /** 前台我的候补：短期成员会话查询 */
     @Anonymous
     @GetMapping("/myList")
     public AjaxResult myList(String cardNo, String sessionToken)
@@ -68,7 +68,7 @@ public class BookReserveController extends BaseController
         return success(bookReserveService.selectReservesByCard(sessionCard));
     }
 
-    /** 前台取消预约：短期读者会话 + 证号归属校验 */
+    /** 前台取消候补：短期成员会话 + 证号归属校验 */
     @Anonymous
     @PostMapping("/cancel")
     public AjaxResult cancel(String cardNo, String sessionToken, Long reserveId)
@@ -81,7 +81,7 @@ public class BookReserveController extends BaseController
         return toAjax(bookReserveService.cancelByCard(sessionCard, reserveId));
     }
 
-    /** 后台删除预约记录 */
+    /** 后台删除候补记录 */
     @PreAuthorize("@ss.hasPermi('system:borrow:remove')")
     @Log(title = "图书预约", businessType = BusinessType.DELETE)
     @DeleteMapping("/{reserveIds}")

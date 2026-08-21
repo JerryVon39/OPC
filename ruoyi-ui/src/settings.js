@@ -62,5 +62,5 @@ module.exports = {
   /**
    * 底部版权文本内容
    */
-  footerContent: 'Copyright © 2026 图书管理系统 All Rights Reserved.'
+  footerContent: 'Copyright © 2026 数智游民创新工场 All Rights Reserved.'
 }

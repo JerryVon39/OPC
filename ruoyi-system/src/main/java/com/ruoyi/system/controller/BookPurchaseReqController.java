@@ -21,9 +21,9 @@ import com.ruoyi.system.service.IBookPurchaseReqService;
 import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
- * 图书荐购申请Controller
+ * 服务入驻申请申请Controller
  *
- * 前台搜索无结果时提交"申请荐购"，后台处理（待处理/已处理/已拒绝）
+ * 前台搜索无结果时提交"申请入驻申请"，后台处理（待处理/已处理/已拒绝）
  *
  * @author ruoyi
  * @date 2026-08-18
@@ -36,7 +36,7 @@ public class BookPurchaseReqController extends BaseController
     private IBookPurchaseReqService bookPurchaseReqService;
 
     /**
-     * 查询荐购申请列表
+     * 查询入驻申请申请列表
      */
     @PreAuthorize("@ss.hasPermi('system:purchase:list')")
     @GetMapping("/list")
@@ -48,7 +48,7 @@ public class BookPurchaseReqController extends BaseController
     }
 
     /**
-     * 获取荐购申请详细信息
+     * 获取入驻申请申请详细信息
      */
     @PreAuthorize("@ss.hasPermi('system:purchase:query')")
     @GetMapping(value = "/{reqId}")
@@ -58,7 +58,7 @@ public class BookPurchaseReqController extends BaseController
     }
 
     /**
-     * 前台匿名提交荐购申请（搜索无结果时的"申请荐购"按钮）
+     * 前台匿名提交入驻申请申请（搜索无结果时的"申请入驻申请"按钮）
      */
     @Anonymous
     @PostMapping("/apply")
@@ -68,10 +68,10 @@ public class BookPurchaseReqController extends BaseController
     }
 
     /**
-     * 处理荐购申请（标记已处理/已拒绝）
+     * 处理入驻申请申请（标记已处理/已拒绝）
      */
     @PreAuthorize("@ss.hasPermi('system:purchase:edit')")
-    @Log(title = "荐购申请", businessType = BusinessType.UPDATE)
+    @Log(title = "入驻申请", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody BookPurchaseReq bookPurchaseReq)
     {
@@ -79,10 +79,10 @@ public class BookPurchaseReqController extends BaseController
     }
 
     /**
-     * 删除荐购申请
+     * 删除入驻申请申请
      */
     @PreAuthorize("@ss.hasPermi('system:purchase:remove')")
-    @Log(title = "荐购申请", businessType = BusinessType.DELETE)
+    @Log(title = "入驻申请", businessType = BusinessType.DELETE)
     @DeleteMapping("/{reqIds}")
     public AjaxResult remove(@PathVariable Long[] reqIds)
     {

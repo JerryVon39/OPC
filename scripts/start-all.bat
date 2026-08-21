@@ -1,6 +1,6 @@
 @echo off
 REM ============================================
-REM Book System - One-click start (Docker)
+REM Digital Nomad Innovation Works - One-click start (Docker)
 REM For users who clone from GitHub: no need to
 REM install MySQL/Redis/Java/Node, Docker only.
 REM Usage: double-click or run scripts\start-all.bat

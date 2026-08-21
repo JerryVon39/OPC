@@ -109,7 +109,7 @@
         where borrow_id = #{borrowId}
     </update>
 
-    <!-- 定时任务标记逾期：仅"借出中"可置逾期，归还期间已还的记录不会被覆盖回逾期 -->
+    <!-- 定时任务标记逾期：仅"进行中"可置逾期，完成期间已还的记录不会被覆盖回逾期 -->
     <update id="markOverdue">
         update borrow_record set status = '2', update_time = #{updateTime}
         where borrow_id = #{borrowId} and status = '0'
@@ -126,26 +126,26 @@
         delete from borrow_record where borrow_id = #{borrowId}
     </delete>
 
-    <!-- 统计读者未归还数量 -->
+    <!-- 统计成员未完成数量 -->
     <select id="selectBorrowingCount" parameterType="Long" resultType="int">
         select count(1) from borrow_record
         where reader_id = #{readerId} and status in ('0','2')
     </select>
 
-    <!-- 查询读者某本书未还记录（防重复借阅） -->
+    <!-- 查询成员某本书未还记录（防重复报名） -->
     <select id="selectBorrowingByReaderAndBook" parameterType="Long" resultMap="BorrowRecordResult">
         <include refid="selectBorrowRecordVo"/>
         where b.reader_id = #{readerId} and b.book_id = #{bookId} and b.status in ('0','2')
     </select>
 
-    <!-- 按借书证号查询借阅记录（快照优先，读者删除后历史记录仍可查） -->
+    <!-- 按成员编号查询报名记录（快照优先，成员删除后历史记录仍可查） -->
     <select id="selectBorrowListByCard" parameterType="String" resultMap="BorrowRecordResult">
         <include refid="selectBorrowRecordVo"/>
         where COALESCE(b.card_no, r.card_no) = #{cardNo}
         order by b.borrow_id desc
     </select>
 
-    <!-- 热门图书 Top10：按借阅次数统计（书名快照优先，图书删除后历史借阅仍计入） -->
+    <!-- 热门服务 Top10：按报名次数统计（书名快照优先，服务删除后历史报名仍计入） -->
     <select id="selectTopBooks" parameterType="BorrowRecord" resultType="java.util.Map">
         SELECT k.book_id AS bookId, COALESCE(k.book_name, b.book_name) AS bookName, COUNT(b.borrow_id) AS borrowCount
         FROM borrow_record b
@@ -155,7 +155,7 @@
         LIMIT 10
     </select>
 
-    <!-- 读者借阅排行 Top10 -->
+    <!-- 成员报名排行 Top10 -->
     <select id="selectTopReaders" parameterType="BorrowRecord" resultType="java.util.Map">
         SELECT r.reader_id AS readerId, r.reader_name AS readerName, r.card_no AS cardNo, COUNT(b.borrow_id) AS borrowCount
         FROM borrow_record b
@@ -172,19 +172,19 @@
         </foreach>
     </delete>
 
-    <!-- 真实逾期记录：状态"2"仅定时任务落库，此处按"借出中 + 应还日期已过"兜底（与 dashboard 逾期口径一致） -->
+    <!-- 真实逾期记录：状态"2"仅定时任务落库，此处按"进行中 + 截止日期已过"兜底（与 dashboard 逾期口径一致） -->
     <select id="selectOverdueRecords" resultMap="BorrowRecordResult">
         <include refid="selectBorrowRecordVo"/>
         where b.status in ('0','2') and b.due_date &lt; now()
     </select>
 
-    <!-- 补办换证号：同步该读者历史借阅的快照证号（同一人换证号，"我的借阅"仍可查全） -->
+    <!-- 补办换证号：同步该成员历史报名的快照证号（同一人换证号，"我的报名"仍可查全） -->
     <update id="updateCardNoSnapshot">
         update borrow_record set card_no = #{newCardNo}
         where reader_id = #{readerId} and card_no is not null
     </update>
 
-    <!-- 首页数据看板：图书/读者/借阅/订单聚合统计 -->
+    <!-- 首页数据看板：服务/成员/报名/订单聚合统计 -->
     <select id="selectDashboard" resultType="java.util.Map">
         SELECT
           (SELECT COUNT(*) FROM book) AS bookTotal,

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================
-# Book System - One-click stop (local dev)
+# Digital Nomad Innovation Works - One-click stop (local dev)
 # Stops backend/frontend started by start-local.sh.
 # MySQL/Redis (native or containers) are left running -
 # use scripts/stop-all.sh to stop the Docker stack.

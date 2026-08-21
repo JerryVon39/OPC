@@ -20,7 +20,7 @@ import com.ruoyi.system.service.IReaderService;
 import com.ruoyi.common.utils.MailUtil;
 
 /**
- * 图书预约Service业务层处理
+ * 服务候补Service业务层处理
  */
 @Service
 public class BookReserveServiceImpl implements IBookReserveService
@@ -73,8 +73,8 @@ public class BookReserveServiceImpl implements IBookReserveService
         return bookReserveMapper.deleteBookReserveByReserveIds(reserveIds);
     }
 
-    /** 前台预约：校验读者/图书/库存/重复后创建（仅库存为0可预约，有库存提示直接借）
-     * READ_COMMITTED：加锁后的重复预约/已借检查读最新已提交数据，并发重复预约才能被拦下 */
+    /** 前台候补：校验成员/服务/库存/重复后创建（仅库存为0可候补，有库存提示直接借）
+     * READ_COMMITTED：加锁后的重复候补/已借检查读最新已提交数据，并发重复候补才能被拦下 */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public int reserveByCard(String cardNo, Long bookId)
@@ -83,10 +83,10 @@ public class BookReserveServiceImpl implements IBookReserveService
         {
             throw new ServiceException("参数不完整");
         }
-        // 先按证号定位读者，再锁读者行（FOR UPDATE）：同一读者的并发预约串行化，"重复预约"检查与插入原子化
+        // 先按证号定位成员，再锁成员行（FOR UPDATE）：同一成员的并发候补串行化，"重复候补"检查与插入原子化
         Reader queryReader = readerService.findActiveReader(cardNo);
         Reader reader = readerMapper.selectReaderByReaderIdForUpdate(queryReader.getReaderId());
-        // findActiveReader 与加锁之间读者可能被管理端删除：加锁查不到即视为不存在
+        // findActiveReader 与加锁之间成员可能被管理端删除：加锁查不到即视为不存在
         if (reader == null)
         {
             throw new ServiceException("读者不存在");
@@ -95,9 +95,9 @@ public class BookReserveServiceImpl implements IBookReserveService
         {
             throw new ServiceException("该读者证号已停用/挂失，无法预约");
         }
-        // 锁图书行（FOR UPDATE，加锁顺序统一为 读者→图书，避免与借书路径交叉死锁）：
-        // 与下架（changeBookStatus）/删除图书共享 book 行锁，下架完成后本事务读到的必是最新状态，
-        // 下架与新建预约因此串行化，消除"下架校验通过后并发插入预约"的竞态（幽灵预约）
+        // 锁服务行（FOR UPDATE，加锁顺序统一为 成员→服务，避免与报名路径交叉死锁）：
+        // 与下架（changeBookStatus）/删除服务共享 book 行锁，下架完成后本事务读到的必是最新状态，
+        // 下架与新建候补因此串行化，消除"下架校验通过后并发插入候补"的竞态（幽灵候补）
         Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null || !"0".equals(book.getStatus()))
         {
@@ -105,9 +105,9 @@ public class BookReserveServiceImpl implements IBookReserveService
         }
         if (book.getStock() != null && book.getStock() > 0)
         {
-            throw new ServiceException("该图书当前有库存，可直接借阅，无需预约");
+            throw new ServiceException("该服务当前有名额，可直接报名，无需候补");
         }
-        // 已借阅未归还不可预约（借走最后一本的人不能预约自己的书，归还后可直接再借）
+        // 已报名未完成不可候补（借走最后一本的人不能候补自己的书，完成后可直接再借）
         BorrowRecord bq = new BorrowRecord();
         bq.setReaderId(reader.getReaderId());
         bq.setBookId(bookId);
@@ -116,10 +116,10 @@ public class BookReserveServiceImpl implements IBookReserveService
         {
             if ("0".equals(br.getStatus()) || "2".equals(br.getStatus()))
             {
-                throw new ServiceException("您已借阅本书且未归还，归还后可直接再借，无需预约");
+                throw new ServiceException("您已报名本服务且未完成，完成后可直接再报名，无需候补");
             }
         }
-        // 重复预约校验（预约中/可借状态下不可重复预约）
+        // 重复候补校验（候补中/有名额状态下不可重复候补）
         BookReserve q = new BookReserve();
         q.setCardNo(cardNo.trim());
         q.setBookId(bookId);
@@ -142,11 +142,11 @@ public class BookReserveServiceImpl implements IBookReserveService
         reserve.setCreateBy(reader.getReaderName());
         reserve.setCreateTime(new Date());
         int rows = bookReserveMapper.insertBookReserve(reserve);
-        // 预约成功邮件（异步、尽力而为）
+        // 候补成功邮件（异步、尽力而为）
         mailUtil.sendHtml(reader.getEmail(), "【图书预约】预约成功",
                 "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
                 + "<p>您已成功预约《" + esc(book.getBookName()) + "》。该书当前无库存，将进入预约队列；</p>"
-                + "<p>一旦有读者归还，我们会通过邮件通知您前来取书。感谢使用读书当铺！</p>");
+                + "<p>一旦有名额释放，我们会通过邮件通知您。感谢支持数智游民创新工场！</p>");
         return rows;
     }
 
@@ -165,7 +165,7 @@ public class BookReserveServiceImpl implements IBookReserveService
         return bookReserveMapper.selectBookReserveList(query);
     }
 
-    /** 取消预约（仅预约中/可借可取消） */
+    /** 取消候补（仅候补中/有名额可取消） */
     @Override
     public int cancelByCard(String cardNo, Long reserveId)
     {

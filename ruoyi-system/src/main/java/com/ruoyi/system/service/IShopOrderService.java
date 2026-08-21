@@ -15,7 +15,7 @@ public interface IShopOrderService
 
     public int deleteShopOrderByOrderIds(Long[] orderIds);
 
-    /** 前台购书：按证号下单（校验+库存-1） */
+    /** 前台报名：按证号下单（校验+库存-1） */
     public int createOrder(String cardNo, Long bookId, Long quantity);
 
     /** 按证号查询订单（我的订单） */

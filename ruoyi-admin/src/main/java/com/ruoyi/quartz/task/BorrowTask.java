@@ -8,7 +8,7 @@ import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 
 /**
- * 借阅相关定时任务
+ * 报名相关定时任务
  * 
  * 使用方式（若依定时任务页面）：目标字符串填 borrowTask.updateOverdueStatus()
  */
@@ -34,7 +34,7 @@ public class BorrowTask
     private com.ruoyi.system.service.StatisticsService statisticsService;
 
     /**
-     * 逾期自动标记：将"借出中"且应还日期已过的记录持久化为"已逾期"(2)
+     * 逾期自动标记：将"进行中"且截止日期已过的记录持久化为"已逾期"(2)
      * 建议 cron：每天 0 点执行 0 0 0 * * ?
      */
     public void updateOverdueStatus()
@@ -48,7 +48,7 @@ public class BorrowTask
         {
             if (br.getDueDate() != null && br.getDueDate().before(now))
             {
-                // 条件更新（仅"借出中"可标记）：归还期间已还的记录（还书 CAS 0→1）不会被覆盖回逾期
+                // 条件更新（仅"进行中"可标记）：完成期间已还的记录（完成 CAS 0→1）不会被覆盖回逾期
                 if (borrowRecordMapper.markOverdue(br.getBorrowId(), now) > 0)
                 {
                     count++;
@@ -63,7 +63,7 @@ public class BorrowTask
     }
 
     /**
-     * 预约超时检查：'可借'状态超过 N 天未到馆借阅 → 自动取消并通知下一位预约人
+     * 候补超时检查：'有名额'状态超过 N 天未到馆报名 → 自动取消并通知下一位候补人
      * 建议 cron：每天 8 点执行 0 0 8 * * ?
      */
     public void reserveExpireCheck()
@@ -78,7 +78,7 @@ public class BorrowTask
             }
         }
         catch (Exception ignore) { }
-        // 配置下限：0/负数会全量取消"可借"预约，至少 1 天
+        // 配置下限：0/负数会全量取消"有名额"候补，至少 1 天
         if (expireDays < 1)
         {
             expireDays = 1;
@@ -105,7 +105,7 @@ public class BorrowTask
                 continue;
             }
             count++;
-            // 通知下一位预约人（该书最早的'预约中'，CAS 推进，失败取下一位）
+            // 通知下一位候补人（该书最早的'候补中'，CAS 推进，失败取下一位）
             com.ruoyi.system.domain.BookReserve nq = new com.ruoyi.system.domain.BookReserve();
             nq.setBookId(r.getBookId());
             nq.setStatus("0");
@@ -124,12 +124,12 @@ public class BorrowTask
     }
 
     /**
-     * 逾期催还公告：扫描逾期记录，若有则发布一条催还公告
+     * 逾期催办公告：扫描逾期记录，若有则发布一条催办公告
      * 建议 cron：每天 9 点执行 0 0 9 * * ?
      */
     public void remindOverdue()
     {
-        // 同时查"已逾期(2)"和"借出中(0)"，再按真实日期过滤：
+        // 同时查"已逾期(2)"和"进行中(0)"，再按真实日期过滤：
         // 即使 0 点的逾期标记任务因服务宕机没跑，9 点也能发现真正逾期的记录
         BorrowRecord query = new BorrowRecord();
         query.setStatus("2");
@@ -151,7 +151,7 @@ public class BorrowTask
         {
             return;
         }
-        // 去重：今天已发布过催还公告则跳过（避免同一条逾期记录每天重复催收）
+        // 去重：今天已发布过催办公告则跳过（避免同一条逾期记录每天重复催收）
         com.ruoyi.system.domain.SysNotice sentQuery = new com.ruoyi.system.domain.SysNotice();
         sentQuery.setNoticeTitle("逾期催还通知");
         java.util.List<com.ruoyi.system.domain.SysNotice> sentList = noticeMapper.selectNoticeList(sentQuery);
@@ -164,7 +164,7 @@ public class BorrowTask
                 return;
             }
         }
-        // 汇总逾期信息（公告前台匿名可见，不列读者姓名，保护隐私）
+        // 汇总逾期信息（公告前台匿名可见，不列成员姓名，保护隐私）
         String books = "";
         int max = Math.min(overdue.size(), 5);
         for (int i = 0; i < max; i++)

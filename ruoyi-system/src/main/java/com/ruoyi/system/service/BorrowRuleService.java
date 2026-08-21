@@ -10,7 +10,7 @@ import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.util.ConfigUtil;
 
 /**
- * 借阅规则服务：上限/借期/重复借阅/续借次数（按读者类型差异化，参数可配）
+ * 报名规则服务：上限/借期/重复报名/续借次数（按成员类型差异化，参数可配）
  */
 @Service
 public class BorrowRuleService
@@ -21,35 +21,35 @@ public class BorrowRuleService
     @Autowired
     private ConfigUtil configUtil;
 
-    /** 借阅上限（按读者类型，参数 book.borrow.maxCount.{student|teacher|normal}） */
+    /** 报名上限（按成员类型，参数 book.borrow.maxCount.{student|teacher|normal}） */
     public int maxCountFor(String readerType)
     {
         return configUtil.getTypeInt("book.borrow.maxCount", readerType, 5);
     }
 
-    /** 借期天数（按读者类型，参数 book.borrow.days.{student|teacher|normal}） */
+    /** 借期天数（按成员类型，参数 book.borrow.days.{student|teacher|normal}） */
     public int daysFor(String readerType)
     {
         return configUtil.getTypeInt("book.borrow.days", readerType, 30);
     }
 
-    /** 重复借阅校验：同一本书未还不可再借 */
+    /** 重复报名校验：同一本书未还不可再借 */
     public void checkNotBorrowing(Long readerId, Long bookId)
     {
         List<BorrowRecord> exists = borrowRecordMapper.selectBorrowingByReaderAndBook(readerId, bookId);
         if (exists != null && !exists.isEmpty())
         {
-            throw new ServiceException("该读者已借阅本书且未归还，请先还书");
+            throw new ServiceException("该成员已报名本服务且未完成，请先完成");
         }
     }
 
-    /** 借阅上限校验 */
+    /** 报名上限校验 */
     public void checkUnderLimit(Long readerId, int maxCount)
     {
         int borrowing = borrowRecordMapper.selectBorrowingCount(readerId);
         if (borrowing >= maxCount)
         {
-            throw new ServiceException("借阅数量已达上限（" + maxCount + " 本），请先归还部分图书");
+            throw new ServiceException("报名数量已达上限（" + maxCount + " 个），请先完成部分服务");
         }
     }
 
@@ -67,7 +67,7 @@ public class BorrowRuleService
         return renewCount;
     }
 
-    /** 借出中/逾期的记录属于"未还" */
+    /** 进行中/逾期的记录属于"未还" */
     public static boolean isBorrowing(BorrowRecord record)
     {
         return BizStatus.BORROW_OUT.equals(record.getStatus()) || BizStatus.BORROW_OVERDUE.equals(record.getStatus());

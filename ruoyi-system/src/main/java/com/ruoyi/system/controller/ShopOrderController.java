@@ -22,7 +22,7 @@ import com.ruoyi.system.service.ReaderSessionService;
 import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
- * 购书订单Controller
+ * 报名订单Controller
  */
 @RestController
 @RequestMapping("/system/order")
@@ -52,7 +52,7 @@ public class ShopOrderController extends BaseController
         return success(shopOrderService.selectShopOrderByOrderId(orderId));
     }
 
-    /** 前台购书：短期读者会话 + 证号兼容校验 */
+    /** 前台报名：短期成员会话 + 证号兼容校验 */
     @Anonymous
     @PostMapping("/create")
     public AjaxResult create(String cardNo, String sessionToken, Long bookId, Long quantity)
@@ -65,7 +65,7 @@ public class ShopOrderController extends BaseController
         return toAjax(shopOrderService.createOrder(sessionCard, bookId, quantity));
     }
 
-    /** 前台我的订单：短期读者会话查询 */
+    /** 前台我的订单：短期成员会话查询 */
     @Anonymous
     @GetMapping("/queryByCard")
     public AjaxResult queryByCard(String cardNo, String sessionToken)
@@ -78,7 +78,7 @@ public class ShopOrderController extends BaseController
         return success(shopOrderService.selectOrdersByCard(sessionCard));
     }
 
-    /** 前台取消订单：短期读者会话 + 证号归属校验 */
+    /** 前台取消订单：短期成员会话 + 证号归属校验 */
     @Anonymous
     @PostMapping("/cancelByCard")
     public AjaxResult cancelByCard(String cardNo, String sessionToken, Long orderId)
@@ -93,7 +93,7 @@ public class ShopOrderController extends BaseController
 
     /** 修改订单（状态流转） */
     @PreAuthorize("@ss.hasPermi('system:order:edit')")
-    @Log(title = "购书订单", businessType = BusinessType.UPDATE)
+    @Log(title = "报名订单", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody ShopOrder shopOrder)
     {
@@ -102,7 +102,7 @@ public class ShopOrderController extends BaseController
 
     /** 删除订单 */
     @PreAuthorize("@ss.hasPermi('system:order:remove')")
-    @Log(title = "购书订单", businessType = BusinessType.DELETE)
+    @Log(title = "报名订单", businessType = BusinessType.DELETE)
     @DeleteMapping("/{orderIds}")
     public AjaxResult remove(@PathVariable Long[] orderIds)
     {

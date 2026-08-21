@@ -4,7 +4,7 @@ import java.util.List;
 import com.ruoyi.system.domain.BookReserve;
 
 /**
- * 图书预约Service接口
+ * 服务候补Service接口
  */
 public interface IBookReserveService
 {
@@ -18,12 +18,12 @@ public interface IBookReserveService
 
     public int deleteBookReserveByReserveIds(Long[] reserveIds);
 
-    /** 前台预约：校验读者/图书/库存/重复后创建（库存为0才可预约） */
+    /** 前台候补：校验成员/服务/库存/重复后创建（库存为0才可候补） */
     public int reserveByCard(String cardNo, Long bookId);
 
-    /** 我的预约（按证号） */
+    /** 我的候补（按证号） */
     public List<BookReserve> selectReservesByCard(String cardNo);
 
-    /** 取消预约（仅预约中/可借可取消） */
+    /** 取消候补（仅候补中/有名额可取消） */
     public int cancelByCard(String cardNo, Long reserveId);
 }

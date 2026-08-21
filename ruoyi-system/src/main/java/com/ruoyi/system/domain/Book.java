@@ -9,7 +9,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 图书信息对象 book
+ * 服务信息对象 book
  * 
  * @author ruoyi
  * @date 2026-08-12
@@ -18,36 +18,36 @@ public class Book extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 图书ID */
+    /** 服务ID */
     private Long bookId;
 
-    /** 图书名称 */
-    @Excel(name = "图书名称")
+    /** 服务名称 */
+    @Excel(name = "服务名称")
     private String bookName;
 
-    /** 作者 */
-    @Excel(name = "作者")
+    /** 主办方 */
+    @Excel(name = "主办方")
     private String author;
 
-    /** 图书类型(字典:book_type) */
-    @Excel(name = "图书类型(字典:book_type)")
+    /** 服务分类(字典:book_type) */
+    @Excel(name = "服务分类(字典:book_type)")
     private String bookType;
 
-    /** 出版社 */
-    @Excel(name = "出版社")
+    /** 合作机构 */
+    @Excel(name = "合作机构")
     private String publisher;
 
-    /** 价格(元) */
-    @Excel(name = "价格(元)")
+    /** 费用(元) */
+    @Excel(name = "费用(元)")
     private BigDecimal price;
 
-    /** 出版日期 */
+    /** 上线时间 */
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "出版日期", width = 30, dateFormat = "yyyy-MM-dd")
+    @Excel(name = "上线时间", width = 30, dateFormat = "yyyy-MM-dd")
     private Date publishDate;
 
-    /** 库存数量 */
-    @Excel(name = "库存数量")
+    /** 剩余名额 */
+    @Excel(name = "剩余名额")
     private Long stock;
 
     /** 状态(0在架 1下架) */
@@ -62,13 +62,13 @@ public class Book extends BaseEntity
     /** ISBN */
     private String isbn;
 
-    /** 图书简介 */
+    /** 服务介绍 */
     private String intro;
 
-    /** 查询关键字（书名或作者） */
+    /** 查询关键字（服务名称或主办方） */
     private String keyword;
 
-    /** 借阅次数（列表查询派生：借阅记录统计字段，非数据库列） */
+    /** 报名次数（列表查询派生：报名记录统计字段，非数据库列） */
     private Long borrowCount;
 
     /** 回收站ID（回收站列表/还原用，非 book 表列） */

@@ -18,7 +18,7 @@ import com.ruoyi.system.service.IRecycleService;
 import com.ruoyi.system.service.StatisticsService;
 
 /**
- * 读者管理Service业务层处理
+ * 成员管理Service业务层处理
  * 
  * @author Jerry
  * @date 2026-08-12
@@ -45,10 +45,10 @@ public class ReaderServiceImpl implements IReaderService
     private IRecycleService recycleService;
 
     /**
-     * 查询读者管理
+     * 查询成员管理
      * 
-     * @param readerId 读者管理主键
-     * @return 读者管理
+     * @param readerId 成员管理主键
+     * @return 成员管理
      */
     @Override
     public Reader selectReaderByReaderId(Long readerId)
@@ -57,10 +57,10 @@ public class ReaderServiceImpl implements IReaderService
     }
 
     /**
-     * 查询读者管理列表
+     * 查询成员管理列表
      * 
-     * @param reader 读者管理
-     * @return 读者管理
+     * @param reader 成员管理
+     * @return 成员管理
      */
     @Override
     public List<Reader> selectReaderList(Reader reader)
@@ -69,9 +69,9 @@ public class ReaderServiceImpl implements IReaderService
     }
 
     /**
-     * 新增读者管理
+     * 新增成员管理
      *
-     * @param reader 读者管理
+     * @param reader 成员管理
      * @return 结果
      */
     @Override
@@ -127,20 +127,20 @@ public class ReaderServiceImpl implements IReaderService
         }
         else
         {
-            // 证号留空自动生成（后台添加读者零负担，与前台登记一致）
+            // 证号留空自动生成（后台添加成员零负担，与前台登记一致）
             reader.setCardNo(generateCardNo());
         }
         reader.setCreateTime(DateUtils.getNowDate());
         int rows = readerMapper.insertReader(reader);
-        // 读者总数变了：失效统计缓存
+        // 成员总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
 
     /**
-     * 修改读者管理
+     * 修改成员管理
      * 
-     * @param reader 读者管理
+     * @param reader 成员管理
      * @return 结果
      */
     @Override
@@ -170,7 +170,7 @@ public class ReaderServiceImpl implements IReaderService
     }
 
     /**
-     * 按证号查询读者（不存在抛异常），供前台各接口复用。
+     * 按证号查询成员（不存在抛异常），供前台各接口复用。
      * 注意：仅保证"存在"，不校验状态——停用/挂失由调用方按需拦截（见 createOrder/reserveByCard）。
      */
     @Override
@@ -187,7 +187,7 @@ public class ReaderServiceImpl implements IReaderService
     }
 
     /** 挂失补办：生成新证号 + 状态恢复正常（旧证号作废，历史记录快照保留）
-     * 两步写（换证号 + 同步历史快照）放同一事务：换号成功而快照失败会丢"我的借阅"关联 */
+     * 两步写（换证号 + 同步历史快照）放同一事务：换号成功而快照失败会丢"我的报名"关联 */
     @Override
     @Transactional
     public String reissueCard(Long readerId)
@@ -202,16 +202,16 @@ public class ReaderServiceImpl implements IReaderService
         reader.setStatus("0");
         reader.setUpdateTime(DateUtils.getNowDate());
         readerMapper.updateReader(reader);
-        // 同步历史借阅快照证号（同一人换证号，历史记录归到新证号下，"我的借阅"仍可查全）
+        // 同步历史报名快照证号（同一人换证号，历史记录归到新证号下，"我的报名"仍可查全）
         borrowRecordMapper.updateCardNoSnapshot(readerId, newCard);
         return newCard;
     }
 
-    /** 批量删除读者管理
-     * READ_COMMITTED：加锁后对借阅/订单的检查均读最新已提交数据（REPEATABLE READ 下批量第2个起
-     * 的检查会读第1个建立的旧快照，漏看并发提交的借阅/订单）
+    /** 批量删除成员管理
+     * READ_COMMITTED：加锁后对报名/订单的检查均读最新已提交数据（REPEATABLE READ 下批量第2个起
+     * 的检查会读第1个建立的旧快照，漏看并发提交的报名/订单）
      *
-     * @param readerIds 需要删除的读者管理主键
+     * @param readerIds 需要删除的成员管理主键
      * @return 结果
      */
     @Override
@@ -223,13 +223,13 @@ public class ReaderServiceImpl implements IReaderService
         java.util.List<Reader> toSnapshot = new java.util.ArrayList<>();
         for (Long readerId : readerIds)
         {
-            // 锁读者行（FOR UPDATE）：防止检查通过后、删除前并发借书/下单/预约（检查与删除同事务原子化）
+            // 锁成员行（FOR UPDATE）：防止检查通过后、删除前并发报名/下单/候补（检查与删除同事务原子化）
             Reader reader = readerMapper.selectReaderByReaderIdForUpdate(readerId);
             if (reader == null)
             {
                 continue;
             }
-            // 有未归还借阅（借出中/逾期）的读者不可删
+            // 有未完成报名（进行中/逾期）的成员不可删
             BorrowRecord q = new BorrowRecord();
             q.setReaderId(readerId);
             List<BorrowRecord> records = borrowRecordMapper.selectBorrowRecordList(q);
@@ -237,10 +237,10 @@ public class ReaderServiceImpl implements IReaderService
             {
                 if ("0".equals(r.getStatus()) || "2".equals(r.getStatus()))
                 {
-                    throw new com.ruoyi.common.exception.ServiceException("该读者存在未归还的借阅记录，无法删除");
+                    throw new com.ruoyi.common.exception.ServiceException("该成员存在未完成的报名记录，无法删除");
                 }
             }
-            // 有待处理订单的读者不可删
+            // 有待处理订单的成员不可删
             ShopOrder oq = new ShopOrder();
             oq.setReaderId(readerId);
             oq.setStatus("0");
@@ -252,21 +252,21 @@ public class ReaderServiceImpl implements IReaderService
             // 校验全部通过：记入待快照集合，供误删后回收站还原
             toSnapshot.add(reader);
         }
-        // 物理删除前先把通过校验的读者快照进回收站（同事务，任一失败整体回滚）
+        // 物理删除前先把通过校验的成员快照进回收站（同事务，任一失败整体回滚）
         for (Reader r : toSnapshot)
         {
             recycleService.snapshotReader(r, null);
         }
         int rows = readerMapper.deleteReaderByReaderIds(readerIds);
-        // 读者总数变了：失效统计缓存
+        // 成员总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
 
     /**
-     * 删除读者管理信息
+     * 删除成员管理信息
      * 
-     * @param readerId 读者管理主键
+     * @param readerId 成员管理主键
      * @return 结果
      */
     @Override
@@ -276,13 +276,13 @@ public class ReaderServiceImpl implements IReaderService
     }
 
     /**
-     * 批量导入读者：逐行校验（姓名必填/手机号格式/类型字典/证号判重），
+     * 批量导入成员：逐行校验（姓名必填/手机号格式/类型字典/证号判重），
      * 证号留空走 insertReader 自动生成；错误不中断整批，收集行号明细
      */
     @Override
     public java.util.Map<String, Object> importReaders(java.util.List<Reader> readers)
     {
-        // 读者类型字典值集合（一次查询复用整批）
+        // 成员类型字典值集合（一次查询复用整批）
         java.util.Set<String> typeSet = new java.util.HashSet<>();
         com.ruoyi.common.core.domain.entity.SysDictData typeQuery = new com.ruoyi.common.core.domain.entity.SysDictData();
         typeQuery.setDictType("reader_type");
@@ -312,7 +312,7 @@ public class ReaderServiceImpl implements IReaderService
                 continue;
             }
             r.setPhone(r.getPhone().trim());
-            // 新读者导入邮箱必填且格式合法（邮件通知前提）
+            // 新成员导入邮箱必填且格式合法（邮件通知前提）
             if (r.getEmail() == null || !r.getEmail().trim().matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$") || r.getEmail().trim().length() > 50)
             {
                 errors.add("第" + row + "行：读者" + r.getReaderName() + " 电子邮箱为空或格式不正确");

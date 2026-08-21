@@ -15,7 +15,7 @@ import com.ruoyi.system.service.StatisticsService;
 /**
  * 首页数据看板Controller
  *
- * 后台首页展示业务统计：图书/读者/借阅/订单 + 热门图书 Top
+ * 后台首页展示业务统计：服务/成员/报名/订单 + 热门服务 Top
  */
 @RestController
 @RequestMapping("/system/dashboard")
@@ -32,12 +32,12 @@ public class DashboardController extends BaseController
     public AjaxResult stats()
     {
         Map<String, Object> stats = statisticsService.dashboard();
-        // 热门图书 Top10（前端取前5展示）
+        // 热门服务 Top10（前端取前5展示）
         stats.put("topBooks", statisticsService.topBooks());
         return success(stats);
     }
 
-    /** 前台公开统计（匿名）：店铺数据条用（馆藏/读者/今日借出/今日订单，无敏感数据） */
+    /** 前台公开统计（匿名）：店铺数据条用（馆藏/成员/今日报名/今日订单，无敏感数据） */
     @Anonymous
     @GetMapping("/publicStats")
     public AjaxResult publicStats()

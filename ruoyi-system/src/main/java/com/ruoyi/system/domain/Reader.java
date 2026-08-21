@@ -8,7 +8,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 读者管理对象 reader
+ * 成员管理对象 reader
  * 
  * @author Jerry
  * @date 2026-08-12
@@ -17,27 +17,27 @@ public class Reader extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 读者ID */
+    /** 成员ID */
     private Long readerId;
 
-    /** 读者姓名 */
-    @Excel(name = "读者姓名")
+    /** 成员姓名 */
+    @Excel(name = "成员姓名")
     private String readerName;
 
     /** 手机号码 */
     @Excel(name = "手机号码")
     private String phone;
 
-    /** 电子邮箱（新读者登记必填，用于自动邮件通知） */
+    /** 电子邮箱（新成员登记必填，用于自动邮件通知） */
     @Excel(name = "电子邮箱")
     private String email;
 
-    /** 借书证号 */
-    @Excel(name = "借书证号")
+    /** 成员编号 */
+    @Excel(name = "成员编号")
     private String cardNo;
 
-    /** 读者类型 */
-    @Excel(name = "读者类型")
+    /** 成员类型 */
+    @Excel(name = "成员类型")
     private String readerType;
 
     /** 性别(0男 1女 2未知) */

@@ -10,7 +10,7 @@
 
     <name>ruoyi</name>
     <url>http://www.ruoyi.vip</url>
-    <description>若依管理系统</description>
+    <description>数智游民创新工场官网管理系统（基于 RuoYi-Vue）</description>
     
     <properties>
         <ruoyi.version>3.9.2</ruoyi.version>

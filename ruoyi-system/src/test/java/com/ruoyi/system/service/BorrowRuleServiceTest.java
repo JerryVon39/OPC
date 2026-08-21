@@ -65,7 +65,7 @@ public class BorrowRuleServiceTest
         list.add(record);
         when(borrowRecordMapper.selectBorrowingByReaderAndBook(2L, 3L)).thenReturn(list);
         ServiceException e = assertThrows(ServiceException.class, () -> borrowRuleService.checkNotBorrowing(2L, 3L));
-        assertTrue(e.getMessage().contains("已借阅本书"));
+        assertTrue(e.getMessage().contains("已报名本服务"));
     }
 
     /** 重复借校验：无记录 → 通过 */

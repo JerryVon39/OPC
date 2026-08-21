@@ -4,7 +4,7 @@ import java.util.List;
 import com.ruoyi.system.domain.BorrowRecord;
 
 /**
- * 借阅记录Service接口
+ * 报名记录Service接口
  */
 public interface IBorrowRecordService
 {
@@ -20,27 +20,27 @@ public interface IBorrowRecordService
 
     public int deleteBorrowRecordByBorrowId(Long borrowId);
 
-    /** 还书：置归还日期并恢复图书库存 */
+    /** 完成：置完成日期并恢复服务库存 */
     public int returnBook(Long borrowId);
 
     /** 罚款收款：标记已缴（收银台操作） */
     public int payFine(Long borrowId);
 
-    /** 续借：应还日期 +30 天（逾期不可续借） */
+    /** 续借：截止日期 +30 天（逾期不可续借） */
     public int renewBook(Long borrowId);
 
-    /** 前台借书：按借书证号（匿名接口） */
+    /** 前台报名：按成员编号（匿名接口） */
     public int borrowByCard(String cardNo, Long bookId);
 
-    /** 前台续借：证号归属校验 + 未逾期 + 应还日期 +30 天 */
+    /** 前台续借：证号归属校验 + 未逾期 + 截止日期 +30 天 */
     public int renewByCard(String cardNo, Long borrowId);
 
-    /** 按借书证号查询借阅记录 */
+    /** 按成员编号查询报名记录 */
     public List<BorrowRecord> selectBorrowListByCard(String cardNo);
 
-    /** 热门图书统计 */
+    /** 热门服务统计 */
     public java.util.List<java.util.Map<String, Object>> selectTopBooks();
 
-    /** 读者借阅排行 */
+    /** 成员报名排行 */
     public java.util.List<java.util.Map<String, Object>> selectTopReaders();
 }
