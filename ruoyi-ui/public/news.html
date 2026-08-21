@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新闻动态 · 数智游民创新工场｜清远市首个人工智能 OPC 生态社区</title>
+<meta name="description" content="数智游民创新工场新闻动态：社区要闻、政策解读、活动报道、入驻故事——清远市首个人工智能 OPC（一人公司）生态社区的一手资讯。入驻咨询：0763-3391888">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <!-- 顶部导航（吸顶，当前页高亮；与 about.html 等栏目页一致） -->
+  <div class="navbar">
+    <div class="logo" style="cursor:pointer" onclick="location.href='shop.html'">数智游民<span>创新工场</span></div>
+    <div class="nav-links">
+      <a href="shop.html">首页</a>
+      <a href="about.html">走进社区</a>
+      <a href="industry.html">产业生态</a>
+      <a href="policy.html">政策赋能</a>
+      <a href="join.html">入驻招商</a>
+      <a href="talent.html">人才培养</a>
+      <a href="news.html" class="active">新闻动态</a>
+      <a href="shop.html#contact">联系我们</a>
+    </div>
+  </div>
+
+  <!-- 栏目页头部 -->
+  <div class="page-hero">
+    <h1>新闻<span>动态</span></h1>
+    <p>社区要闻 · 政策解读 · 活动报道 · 入驻故事 —— 数智游民创新工场的一手动态</p>
+  </div>
+
+  <!-- 文章列表（栏目 Tab + 卡片列表 + 加载更多） -->
+  <div class="content-section">
+    <div class="sub-title">📰 全部动态</div>
+    <div class="type-tabs" id="catTabs">
+      <a class="active" data-id="" onclick="switchCat(this)">全部</a>
+    </div>
+    <div id="articleList" class="news-list">
+      <div class="loading">加载中…</div>
+    </div>
+    <div style="text-align:center;margin-top:22px">
+      <button class="btn-buy" id="loadMoreBtn" onclick="loadMore()" style="display:none">加载更多</button>
+      <div id="listEnd" class="no-result" style="display:none;padding:24px 0">
+        <div class="nr-title" style="font-size:14px">没有更多文章了</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 文章详情弹窗（正文 textContent 渲染，安全优先，与 shop.html 一致） -->
+  <div id="detailModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 id="detailTitle">📰 文章详情</h3>
+      <div class="detail-row"><span class="d-label">栏目</span><span class="d-value" id="detailCategory">—</span></div>
+      <div class="detail-row"><span class="d-label">发布时间</span><span class="d-value" id="detailTime">—</span></div>
+      <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor">—</span></div>
+      <div class="detail-row"><span class="d-label">浏览量</span><span class="d-value" id="detailViews">0</span></div>
+      <div class="detail-section-title">正文</div>
+      <div id="detailContent" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap">加载中…</div>
+      <div class="modal-btns">
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页脚（三栏） -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>🏭 关于我们</h4>
+        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>清远市首个人工智能 OPC 生态社区 ｜ 让"一个人 + AI"成为可能</p>
+      </div>
+      <div class="footer-col">
+        <h4>📮 联系我们</h4>
+        <p>地址：清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105<br>电话：0763-3391888<br>邮箱：contact@example.com（[待补]）</p>
+      </div>
+      <div class="footer-col">
+        <h4>🤝 入驻与合作</h4>
+        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>入驻咨询：0763-3391888</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
+  </footer>
+
+<script>
+  // ===== 接口地址（匿名公开接口，与 shop.html 同前缀）=====
+  const LIST_API = '/prod-api/system/cms/publicList';
+  const CAT_API = '/prod-api/system/cmsCategory/publicList';
+  const DETAIL_API = '/prod-api/system/cms/publicDetail/';
+  const PAGE_SIZE = 10;
+
+  // ===== 全局状态 =====
+  let currentCat = '';      // 当前栏目ID（'' 全部）
+  let pageNum = 1;
+  let total = 0;
+  let loading = false;      // 防重复请求（"加载更多"连点）
+  let articleList = [];     // 已加载文章（详情浏览量回写用）
+
+  // HTML 转义：标题/摘要/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // ===== 栏目 Tab 动态加载（后台栏目管理维护，前台自动出现）=====
+  async function loadCats() {
+    try {
+      const res = await fetch(CAT_API);
+      const d = await res.json();
+      const list = d.data || [];
+      const tabs = document.getElementById('catTabs');
+      let html = '<a class="active" data-id="" onclick="switchCat(this)">全部</a>';
+      list.forEach(c => {
+        html += '<a data-id="' + c.categoryId + '" onclick="switchCat(this)">' + esc(c.categoryName) + '</a>';
+      });
+      tabs.innerHTML = html;
+    } catch (e) { }
+  }
+
+  // ===== 栏目切换（重置分页后重新加载）=====
+  function switchCat(el) {
+    document.querySelectorAll('#catTabs a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    currentCat = el.dataset.id || '';
+    pageNum = 1;
+    loadList();
+  }
+
+  // ===== 文章列表（分页 pageNum/pageSize，"加载更多"追加）=====
+  async function loadList() {
+    if (loading) return;
+    loading = true;
+    const box = document.getElementById('articleList');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const listEnd = document.getElementById('listEnd');
+    if (pageNum === 1) {
+      box.innerHTML = '<div class="loading">加载中…</div>';
+      loadMoreBtn.style.display = 'none';
+      listEnd.style.display = 'none';
+    }
+    const params = new URLSearchParams({ pageNum: pageNum, pageSize: PAGE_SIZE });
+    if (currentCat) params.set('categoryId', currentCat);
+    try {
+      const res = await fetch(LIST_API + '?' + params.toString());
+      const d = await res.json();
+      const rows = d.rows || [];
+      total = d.total || 0;
+      if (pageNum === 1) {
+        articleList = rows;
+        if (!rows.length) {
+          box.innerHTML = '<div class="no-result"><div class="nr-icon">📰</div><div class="nr-title">暂无文章</div><div class="nr-desc">该栏目下还没有发布文章，敬请期待</div></div>';
+          listEnd.style.display = 'none';
+          loadMoreBtn.style.display = 'none';
+          return;
+        }
+        box.innerHTML = renderCards(rows);
+      } else {
+        articleList = articleList.concat(rows);
+        box.insertAdjacentHTML('beforeend', renderCards(rows));
+      }
+      // 已加载全部则隐藏"加载更多"，显示到底提示
+      if (articleList.length >= total) {
+        loadMoreBtn.style.display = 'none';
+        listEnd.style.display = 'block';
+      } else {
+        loadMoreBtn.style.display = 'inline-block';
+        listEnd.style.display = 'none';
+      }
+    } catch (e) {
+      if (pageNum === 1) {
+        const hint = /Unexpected token/.test(e.message) ? '（页面可能为缓存旧版，请按 Ctrl+F5 强制刷新重试）' : '';
+        box.innerHTML = '<div class="loading">加载失败：' + esc(e.message) + hint + '</div>';
+      }
+    } finally {
+      loading = false;
+    }
+  }
+
+  function loadMore() {
+    pageNum += 1;
+    loadList();
+  }
+
+  // 渲染文章卡片（标题 + 栏目 + 发布时间 + 浏览量 + 摘要；标题/摘要全部过 esc）
+  function renderCards(rows) {
+    return rows.map(a => {
+      const raw = String(a.summary || '').replace(/<[^>]+>/g, ''); // 去掉可能残留的 HTML 标签后再截取摘要
+      return '<div class="news-card" onclick="openDetail(' + a.articleId + ')">' +
+        '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">置顶</span> ' : '') +
+          esc(a.title || '未命名文章') +
+          ' <span class="tag tag-sale">' + esc(a.categoryName || '未分类') + '</span></div>' +
+        '<div class="news-date">🕐 ' + esc(a.publishTime || '') + ' ｜ 👁 ' + (a.views || 0) + ' 次阅读</div>' +
+        '<div class="news-summary">' + esc(raw.slice(0, 120)) + (raw.length > 120 ? '…' : '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ===== 文章详情（浏览量 +1 由后端完成；正文剥离标签后 textContent 渲染，防存储型 XSS）=====
+  async function openDetail(articleId) {
+    const modal = document.getElementById('detailModal');
+    const contentEl = document.getElementById('detailContent');
+    contentEl.textContent = '加载中…';
+    modal.style.display = 'flex';
+    try {
+      const res = await fetch(DETAIL_API + articleId);
+      const d = await res.json();
+      if (d.code !== 200 || !d.data) {
+        contentEl.textContent = '文章不存在或未发布';
+        return;
+      }
+      const a = d.data;
+      document.getElementById('detailTitle').textContent = '📰 ' + (a.title || '文章详情');
+      document.getElementById('detailCategory').textContent = a.categoryName || '未分类';
+      document.getElementById('detailTime').textContent = a.publishTime || '—';
+      document.getElementById('detailAuthor').textContent = a.author || '—';
+      document.getElementById('detailViews').textContent = a.views || 0;
+      // 正文可能为后台富文本（HTML/BBCODE 混合），先剥标签再按纯文本展示（安全优先）
+      const text = String(a.content || '').replace(/<[^>]+>/g, '');
+      contentEl.textContent = text || '（正文为空）';
+      // 本地列表浏览量回写 +1（与后端自增保持一致）
+      articleList.forEach(item => {
+        if (item.articleId === articleId) item.views = (item.views || 0) + 1;
+      });
+    } catch (e) {
+      contentEl.textContent = '加载失败：' + e.message;
+    }
+  }
+
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  // 弹窗点击空白处（遮罩）自动关闭
+  document.querySelectorAll('.modal').forEach(function (m) {
+    m.addEventListener('click', function (e) {
+      if (e.target === m) m.style.display = 'none';
+    });
+  });
+
+  // ===== 初始化 =====
+  (function () {
+    var el = document.getElementById('footerYear');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+  loadCats();
+  loadList();
+</script>
+</body>
+</html>

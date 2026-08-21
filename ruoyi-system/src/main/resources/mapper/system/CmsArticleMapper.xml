@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.CmsArticleMapper">
+
+    <resultMap type="CmsArticle" id="CmsArticleResult">
+        <result property="articleId"   column="article_id"   />
+        <result property="categoryId"  column="category_id"  />
+        <result property="title"       column="title"        />
+        <result property="summary"     column="summary"      />
+        <result property="content"     column="content"      />
+        <result property="cover"       column="cover"        />
+        <result property="author"      column="author"       />
+        <result property="isTop"       column="is_top"       />
+        <result property="status"      column="status"       />
+        <result property="views"       column="views"        />
+        <result property="publishTime" column="publish_time" />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"  column="create_time"  />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"  column="update_time"  />
+        <result property="categoryName" column="category_name" />
+    </resultMap>
+
+    <!-- 后台列表查询列（含正文之外的展示字段 + 栏目名；正文 content 单独走详情查询，避免列表传输过重） -->
+    <sql id="selectCmsArticleListVo">
+        select a.article_id, a.category_id, a.title, a.summary, a.cover, a.author, a.is_top, a.status,
+               a.views, a.publish_time, a.create_by, a.create_time, a.update_by, a.update_time,
+               c.category_name
+        from cms_article a
+        left join cms_category c on c.category_id = a.category_id
+    </sql>
+
+    <!-- 后台列表：标题模糊 + 栏目 + 状态筛选，置顶优先、发布时间倒序 -->
+    <select id="selectCmsArticleList" parameterType="CmsArticle" resultMap="CmsArticleResult">
+        <include refid="selectCmsArticleListVo"/>
+        <where>
+            <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
+            <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
+            <if test="status != null and status != ''"> and a.status = #{status}</if>
+        </where>
+        order by a.is_top desc, a.publish_time desc, a.article_id desc
+    </select>
+
+    <!-- 前台公开列表：仅已发布，置顶优先、发布时间倒序（与后台列表共用列，不含正文） -->
+    <select id="selectPublicArticleList" parameterType="CmsArticle" resultMap="CmsArticleResult">
+        <include refid="selectCmsArticleListVo"/>
+        <where>
+            a.status = '0'
+            <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
+            <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
+        </where>
+        order by a.is_top desc, a.publish_time desc, a.article_id desc
+    </select>
+
+    <!-- 详情（含正文与栏目名）：后台编辑回显 + 前台公开详情共用 -->
+    <select id="selectCmsArticleByArticleId" parameterType="Long" resultMap="CmsArticleResult">
+        select a.article_id, a.category_id, a.title, a.summary, a.content, a.cover, a.author, a.is_top,
+               a.status, a.views, a.publish_time, a.create_by, a.create_time, a.update_by, a.update_time,
+               c.category_name
+        from cms_article a
+        left join cms_category c on c.category_id = a.category_id
+        where a.article_id = #{articleId}
+    </select>
+
+    <!-- 浏览量 +1（前台详情阅读计数） -->
+    <update id="increaseArticleViews" parameterType="Long">
+        update cms_article set views = views + 1 where article_id = #{articleId}
+    </update>
+
+    <insert id="insertCmsArticle" parameterType="CmsArticle" useGeneratedKeys="true" keyProperty="articleId">
+        insert into cms_article
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="categoryId != null">category_id,</if>
+            <if test="title != null">title,</if>
+            <if test="summary != null">summary,</if>
+            <if test="content != null">content,</if>
+            <if test="cover != null">cover,</if>
+            <if test="author != null">author,</if>
+            <if test="isTop != null">is_top,</if>
+            <if test="status != null">status,</if>
+            <if test="views != null">views,</if>
+            <if test="publishTime != null">publish_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="title != null">#{title},</if>
+            <if test="summary != null">#{summary},</if>
+            <if test="content != null">#{content},</if>
+            <if test="cover != null">#{cover},</if>
+            <if test="author != null">#{author},</if>
+            <if test="isTop != null">#{isTop},</if>
+            <if test="status != null">#{status},</if>
+            <if test="views != null">#{views},</if>
+            <if test="publishTime != null">#{publishTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateCmsArticle" parameterType="CmsArticle">
+        update cms_article
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="cover != null">cover = #{cover},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="isTop != null">is_top = #{isTop},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="views != null">views = #{views},</if>
+            <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where article_id = #{articleId}
+    </update>
+
+    <!-- 状态切换：0已发布 1草稿 2已下线；置为已发布且尚无发布时间时自动补写当前时间 -->
+    <update id="updateCmsArticleStatus" parameterType="CmsArticle">
+        update cms_article
+        <set>
+            status = #{status},
+            <if test="status == '0'">publish_time = IFNULL(publish_time, sysdate()),</if>
+            update_time = sysdate()
+        </set>
+        where article_id = #{articleId}
+    </update>
+
+    <!-- 发布：草稿/已下线 → 已发布，首次发布写入发布时间（已发布过则保留原发布时间） -->
+    <update id="publishCmsArticle" parameterType="CmsArticle">
+        update cms_article
+        set status = '0', publish_time = IFNULL(publish_time, sysdate()), update_time = sysdate()
+        where article_id = #{articleId}
+    </update>
+
+    <delete id="deleteCmsArticleByArticleIds" parameterType="String">
+        delete from cms_article where article_id in
+        <foreach item="articleId" collection="array" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </delete>
+</mapper>
