@@ -67,7 +67,7 @@ if not exist "ruoyi-ui\node_modules" (
 ) else (
   call :check_port %FE_PORT%
   if errorlevel 1 (
-    echo [start] starting frontend (first compile 30-60s)...
+    echo [start] starting frontend, first compile 30-60s...
     start "wanshiwu-frontend" cmd /k "cd /d ruoyi-ui && npm run dev -- --no-open --port=%FE_PORT% > ..\logs\frontend.log 2>&1"
   ) else (
     echo [start] frontend already running
