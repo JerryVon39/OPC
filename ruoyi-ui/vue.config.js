@@ -33,6 +33,10 @@ module.exports = {
     host: '0.0.0.0',
     port: port,
     open: true,
+    // 根路径直达官网首页（后台管理改走 /index.html）
+    before(app) {
+      app.get('/', (req, res) => res.redirect('/home.html'));
+    },
     proxy: {
       // detail: https://cli.vuejs.org/config/#devserver-proxy
       [process.env.VUE_APP_BASE_API]: {

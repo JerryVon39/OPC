@@ -116,6 +116,6 @@ echo
 echo "============================================"
 echo "  All services started!"
 echo "  Admin:  http://localhost:$FE_PORT/              admin / admin123"
-echo "  Reader: http://localhost:$FE_PORT/shop.html"
+echo "  Reader: http://localhost:$FE_PORT/home.html"
 echo "  Stop:   scripts/stop-local.sh"
 echo "============================================"

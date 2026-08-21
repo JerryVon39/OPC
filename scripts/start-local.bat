@@ -225,7 +225,7 @@ echo.
 echo ============================================
 echo   All services started!
 echo   Admin:  %FE_URL%/              admin / admin123
-echo   Reader: %FE_URL%/shop.html
+echo   Reader: %FE_URL%/home.html
 echo   Stop:   scripts\stop-local.bat
 echo ============================================
 pause

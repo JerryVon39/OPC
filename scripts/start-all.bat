@@ -81,7 +81,7 @@ echo.
 echo ============================================
 echo   Startup complete!
 echo   Admin:  http://localhost/          admin / admin123 (change password on first login)
-echo   Reader: http://localhost/shop.html
+echo   Reader: http://localhost/home.html
 echo   Stop:   scripts\stop-all.bat
 echo ============================================
 pause

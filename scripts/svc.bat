@@ -77,7 +77,7 @@ if not exist "ruoyi-ui\node_modules" (
 echo.
 echo ============================================
 echo   All services starting - wait 30-60s
-echo   Frontend: http://localhost:%FE_PORT%/shop.html
+echo   Frontend: http://localhost:%FE_PORT%/home.html
 echo   Admin:    http://localhost:%FE_PORT%/  (admin / admin123)
 echo   Status:   scripts\svc.bat status
 echo   Stop:     scripts\svc.bat stop

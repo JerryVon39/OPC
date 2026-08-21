@@ -13,7 +13,7 @@
 
 | 页面 | 说明 |
 |---|---|
-| **首页**（`shop.html`） | **全屏翻页式长滚动单页**：① Hero（25vh 轮播 + 公司整体简介双 CTA）→ ② 品牌理念（含市场数据）→ ③ 三大赋能 → ④ 产业生态（三大赛道 + 6 家入驻企业）→ ⑤ 服务概览（三大分类卡入口）→ ⑥ 新闻动态 → ⑦ 发展历程 & 联系我们（深蓝渐变模块）→ ⑧ CTA + 页脚。滚轮累积 18% 屏高平滑翻页（移动端自由滚动），模块间协调色阶交替，章节编号水印 + 左上角标题 |
+| **首页**（`home.html`） | **全屏翻页式长滚动单页**：① Hero（25vh 轮播 + 公司整体简介双 CTA）→ ② 品牌理念（含市场数据）→ ③ 三大赋能 → ④ 产业生态（三大赛道 + 6 家入驻企业）→ ⑤ 服务概览（三大分类卡入口）→ ⑥ 新闻动态 → ⑦ 发展历程 & 联系我们（深蓝渐变模块）→ ⑧ CTA + 页脚。滚轮累积 18% 屏高平滑翻页（移动端自由滚动），模块间协调色阶交替，章节编号水印 + 左上角标题 |
 | **服务项目**（`services.html`） | 全部服务列表：**顶部吸顶分类标签页**（全部服务 + 3 大分类，支持 `?type=` 直达与标签切换）+ 关键词搜索 + 排序 + 服务卡片网格（报名/满员候补按钮） |
 | **服务详情**（`service.html?id=`） | 服务完整信息（主办方/合作机构/分类/费用/名额/介绍/报名须知）+ 报名/候补（乐观 UI）+ 相关服务 |
 | **走进社区**（`about.html`） | 社区定位/合作模式/区位/发展历程/运营主体/OPC 法律与税务 |
@@ -88,8 +88,8 @@ scripts\start-all.bat
 
 > 💡 **镜像说明**：本项目为私有项目，镜像不推 Docker Hub——`start-all.bat` 检测到本地无 v2.0 镜像时自动 `docker compose build` 构建（首次需几分钟）。
 
-- 管理后台：`http://localhost/`（默认账号 admin / admin123，首次登录请修改密码）
-- 官网前台：`http://localhost/shop.html`
+- 管理后台：`http://localhost/index.html`（默认账号 admin / admin123，首次登录请修改密码）
+- 官网前台：`http://localhost/home.html`
 - 停止：`scripts\stop-all.bat` / `./scripts/stop-all.sh`（数据保留，重跑 start 即恢复）
 
 > 💡 可选配置：编辑 `.env` 可设置数据库/Redis 口令、JWT 密钥（`TOKEN_SECRET`，生产务必设置）、邮件通知（`MAIL_USERNAME`/`MAIL_AUTH_CODE`，QQ 邮箱 SMTP 授权码）。全部口令默认值仅面向演示，**生产部署务必修改**。
@@ -112,8 +112,8 @@ scripts\start-local.bat
 
 脚本自动完成：生成 `.env`（默认配置可直接启动）→ 启动/复用 MySQL 与 Redis（本机原生优先，无则自动用 Docker 拉起容器）→ 首次自动建库导入 `sql/` 初始化脚本、已有库自动跑增量升级 → 构建并启动后端（8080）→ 启动前端（8081）→ 打印访问地址。
 
-- 管理后台：`http://localhost:8081/`（默认账号 admin / admin123，首次登录请修改密码）
-- 官网前台：`http://localhost:8081/shop.html`
+- 管理后台：`http://localhost:8081/index.html`（默认账号 admin / admin123，首次登录请修改密码）
+- 官网前台：`http://localhost:8081/home.html`
 - 前端端口可在 `.env` 用 `FE_PORT` 修改；本机原生 MySQL/Redis 不在 PATH 时可设 `TOOLS_HOME` 指向其安装目录
 - 停止：`scripts\stop-local.bat` / `./scripts/stop-local.sh`（数据保留，重跑 start 即恢复）
 - 统一管理：`scripts\svc.bat start|stop|status|restart`（一键启动/停止/查看四服务状态，端口检测自动跳过已在运行的服务）
@@ -149,7 +149,7 @@ npm run dev
 > `MAIL_AUTH_CODE=你的QQ邮箱授权码` 和 `MAIL_USERNAME=你的发件邮箱`（启动脚本自动读取注入）；不配则邮件不发送、业务不受影响。
 
 - 后台地址：`http://localhost:8081/`（默认账号 admin / admin123）
-- 官网前台：`http://localhost:8081/shop.html`（访客视角，无需登录）
+- 官网前台：`http://localhost:8081/`（根路径直达首页；旧链接 /home.html 仍可用）
 
 > 💡 前端端口在 `ruoyi-ui/vue.config.js` 中配置（默认 80，本机被占用时可改端口）。
 
@@ -173,7 +173,7 @@ npm run dev
 - 入驻申请业务（校验/去重/事务）：`ruoyi-system/.../service/impl/BookPurchaseReqServiceImpl.java`
 - 候补业务（队列/推进/通知）：`ruoyi-system/.../service/impl/BookReserveServiceImpl.java`
 - 定时任务：`ruoyi-admin/.../quartz/task/BorrowTask.java`
-- 官网前台：`ruoyi-ui/public/shop.html`（首页，全屏翻页单页）、`services.html`（服务列表）、`service.html`/`article.html`（详情页）、`about/industry/policy/join/talent/news.html`（栏目页）
+- 官网前台：`ruoyi-ui/public/home.html`（首页，全屏翻页单页）、`services.html`（服务列表）、`service.html`/`article.html`（详情页）、`about/industry/policy/join/talent/news.html`（栏目页）
 
 ## 🔐 前台成员登录会话（2026-08-17 加固）
 

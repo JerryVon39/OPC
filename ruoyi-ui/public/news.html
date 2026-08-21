@@ -10,9 +10,9 @@
 <body>
   <!-- 顶部导航（吸顶，当前页高亮；与 about.html 等栏目页一致） -->
   <div class="navbar">
-    <div class="logo" style="cursor:pointer" onclick="location.href='shop.html'">数智游民<span>创新工场</span></div>
+    <div class="logo" style="cursor:pointer" onclick="location.href='home.html'">数智游民<span>创新工场</span></div>
     <div class="nav-links">
-      <a href="shop.html">首页</a>
+      <a href="home.html">首页</a>
       <a href="services.html">服务项目</a>
       <a href="about.html">走进社区</a>
       <a href="industry.html">产业生态</a>
@@ -20,7 +20,7 @@
       <a href="join.html">入驻招商</a>
       <a href="talent.html">人才培养</a>
       <a href="news.html" class="active">新闻动态</a>
-      <a href="shop.html#contact">联系我们</a>
+      <a href="home.html#contact">联系我们</a>
     </div>
     <div class="nav-right">
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
@@ -78,7 +78,7 @@
   </footer>
 
 <script>
-  // ===== 接口地址（匿名公开接口，与 shop.html 同前缀）=====
+  // ===== 接口地址（匿名公开接口，与 home.html 同前缀）=====
   const LIST_API = '/prod-api/system/cms/publicList';
   const CAT_API = '/prod-api/system/cmsCategory/publicList';
   const PAGE_SIZE = 10;
@@ -198,7 +198,7 @@
   loadCats();
   loadList();
 
-  // ===== 共享：成员登录 / 注册 / 更多下拉（与 shop.html 同一套公开接口）=====
+  // ===== 共享：成员登录 / 注册 / 更多下拉（与 home.html 同一套公开接口）=====
   const REG_API = '/prod-api/system/reader/register';
   const LOGIN_API = '/prod-api/system/reader/login';
   let currentUser = null;
@@ -234,6 +234,8 @@
         currentUser = d.data;
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
         renderLoginState();
+  // 跳转后台管理（根路径已重定向到首页，后台改走 /index.html）
+  function goAdmin() { location.href = '/index.html'; }
         closeModal('loginModal');
         toast('欢迎回来，' + name);
       } else {
