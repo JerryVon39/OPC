@@ -20,14 +20,18 @@ if errorlevel 1 (
   echo [start-all] Docker is not running. Trying to start Docker Desktop automatically...
   powershell -NoProfile -Command "$p1='C:\Program Files\Docker\Docker\Docker Desktop.exe'; $p2=\"$env:LOCALAPPDATA\Programs\DockerDesktop\Docker Desktop.exe\"; if(Test-Path $p1){Start-Process $p1} elseif(Test-Path $p2){Start-Process $p2} else {Write-Host 'Docker Desktop not found at default paths'}"
   set /a ok=0
-  for /l %%i in (1,1,30) do (
+  for /l %%i in (1,1,20) do (
     docker info >nul 2>&1
     if not errorlevel 1 (set /a ok=1 & goto docker_ready)
+    if %%i EQU 1  echo [start-all] Waiting for Docker Desktop (up to 60s)...
+    if %%i EQU 5  echo [start-all]   ... still waiting (Docker Desktop is starting)...
+    if %%i EQU 10 echo [start-all]   ... still waiting, check the Docker Desktop window...
+    if %%i EQU 15 echo [start-all]   ... last attempts...
     ping -n 3 127.0.0.1 >nul
   )
   :docker_ready
   if not "%ok%"=="1" (
-    echo [start-all] Docker Desktop did not start within ~90s. Please start it manually and rerun.
+    echo [start-all] Docker Desktop did not start within ~60s. Please start it manually, then rerun this script.
     pause
     exit /b 1
   )
