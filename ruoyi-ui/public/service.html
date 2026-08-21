@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务详情 · 数智游民创新工场</title>
+<meta name="description" content="数智游民创新工场服务详情：服务介绍、名额、报名与满员候补。入驻咨询：0763-3391888">
+<link rel="stylesheet" href="css/site.css">
+<style>
+  /* 服务详情页专用布局 */
+  .svc-wrap { max-width: 960px; margin: 0 auto; }
+  .svc-crumb { font-size: 13px; color: var(--text-light); margin-bottom: 14px; }
+  .svc-crumb a { color: var(--accent); text-decoration: none; }
+  .svc-main { display: flex; gap: 24px; flex-wrap: wrap; }
+  .svc-cover { flex: 0 0 300px; height: 260px; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--card); box-shadow: 0 4px 18px rgba(18,41,74,0.10); }
+  .svc-cover img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .svc-info { flex: 1; min-width: 280px; }
+  .svc-name { font-size: 24px; font-weight: bold; line-height: 1.4; margin-bottom: 6px; }
+  .svc-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .svc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .svc-table td { padding: 9px 4px; border-bottom: 1px dashed var(--line); }
+  .svc-table td:first-child { width: 96px; color: var(--text-light); }
+  .svc-actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .svc-actions .btn-buy { padding: 11px 34px; font-size: 15px; }
+  .svc-intro { margin-top: 26px; }
+  .svc-intro h3 { font-size: 16px; margin-bottom: 10px; padding-left: 10px; border-left: 4px solid var(--accent); }
+  .svc-intro .intro-box { background: var(--card); border-radius: 12px; padding: 18px 20px; font-size: 14px; line-height: 2; color: var(--text); box-shadow: 0 1px 3px rgba(18,41,74,0.06); white-space: pre-wrap; }
+  .svc-related { margin-top: 30px; }
+  .svc-related .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 768px) { .svc-related .grid { grid-template-columns: repeat(2, 1fr); } }
+  .svc-back { margin-top: 30px; text-align: center; }
+</style>
+</head>
+<body>
+  <!-- 顶部导航（吸顶） -->
+  <div class="navbar">
+    <div class="logo" style="cursor:pointer" onclick="location.href='shop.html'">数智游民<span>创新工场</span></div>
+    <div class="nav-links">
+      <a href="shop.html">首页</a>
+      <a href="about.html">走进社区</a>
+      <a href="industry.html">产业生态</a>
+      <a href="policy.html">政策赋能</a>
+      <a href="join.html">入驻招商</a>
+      <a href="talent.html">人才培养</a>
+      <a href="news.html">新闻动态</a>
+      <a href="shop.html#contact">联系我们</a>
+    </div>
+    <div class="nav-right">
+      <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
+    </div>
+  </div>
+
+  <!-- 服务详情 -->
+  <div class="content-section">
+    <div class="svc-wrap">
+      <div class="svc-crumb"><a href="shop.html">首页</a> › <a href="services.html">服务项目</a> › <span id="crumbName">—</span></div>
+      <div class="svc-main">
+        <div class="svc-cover" id="svcCover">📕</div>
+        <div class="svc-info">
+          <div class="svc-name" id="svcName">加载中…</div>
+          <div class="svc-tags" id="svcTags"></div>
+          <table class="svc-table">
+            <tr><td>主办方</td><td id="svcAuthor">—</td></tr>
+            <tr><td>合作机构</td><td id="svcPublisher">—</td></tr>
+            <tr><td>服务分类</td><td id="svcType">—</td></tr>
+            <tr><td>上线时间</td><td id="svcDate">—</td></tr>
+            <tr><td>服务编号</td><td id="svcIsbn">—</td></tr>
+            <tr><td>费用</td><td id="svcPrice">—</td></tr>
+            <tr><td>剩余名额</td><td id="svcStock">—</td></tr>
+          </table>
+          <div class="svc-actions">
+            <button class="btn-buy btn-borrow" id="svcBorrowBtn" style="display:none" onclick="doBorrow()">报名参加</button>
+            <button class="btn-buy" id="svcReserveBtn" style="display:none;background:#b9832f" onclick="doReserve()">📌 提交候补</button>
+            <button class="btn-buy" id="svcDoneBtn" style="display:none;background:#cfc9bd;box-shadow:none;cursor:not-allowed" disabled>已报名</button>
+            <button class="btn-buy" id="svcEndBtn" style="display:none;background:#cfc9bd;box-shadow:none;cursor:not-allowed" disabled>已结束</button>
+          </div>
+          <div id="svcMsg" style="font-size:13px;color:var(--text-light);margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="svc-intro">
+        <h3>📄 服务介绍</h3>
+        <div class="intro-box" id="svcIntro">加载中…</div>
+      </div>
+      <div class="svc-intro" id="svcRemarkBox" style="display:none">
+        <h3>📌 报名须知</h3>
+        <div class="intro-box" id="svcRemark">—</div>
+      </div>
+      <div class="svc-related">
+        <h3 style="font-size:16px;margin-bottom:12px;padding-left:10px;border-left:4px solid var(--accent)">🤝 相关服务</h3>
+        <div class="grid" id="relatedGrid"><div class="loading">加载中…</div></div>
+      </div>
+      <div class="svc-back">
+        <a class="btn-buy" style="text-decoration:none" href="services.html">← 返回服务列表</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录弹窗 -->
+  <div id="loginModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 style="text-align:center;margin-bottom:16px">👤 成员登录</h3>
+      <input id="loginName" class="modal-input" placeholder="👤 成员姓名" />
+      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+      <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn-buy" style="width:100%;padding:11px" onclick="doLogin()">登 录</button>
+    </div>
+  </div>
+
+  <!-- 注册弹窗 -->
+  <div id="regModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 style="text-align:center;margin-bottom:16px">📝 成员注册</h3>
+      <input id="regName" class="modal-input" placeholder="👤 成员姓名" />
+      <input id="regPhone" class="modal-input" placeholder="📱 手机号码" />
+      <input id="regEmail" class="modal-input" placeholder="📧 电子邮箱（必填，用于接收报名/候补通知）" />
+      <select id="regType" class="modal-input">
+        <option value="1">个人主理人</option>
+        <option value="2">团队</option>
+        <option value="3">企业</option>
+      </select>
+      <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
+      <div id="regMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn-buy" style="width:100%;padding:11px" onclick="doRegister()">注 册</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- 页脚（三栏） -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>🏭 关于我们</h4>
+        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>清远市首个人工智能 OPC 生态社区 ｜ 让"一个人 + AI"成为可能</p>
+      </div>
+      <div class="footer-col">
+        <h4>📮 联系我们</h4>
+        <p>地址：清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105<br>电话：0763-3391888<br>邮箱：contact@example.com（[待补]）</p>
+      </div>
+      <div class="footer-col">
+        <h4>🤝 入驻与合作</h4>
+        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>入驻咨询：0763-3391888</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
+  </footer>
+
+<script>
+  // ===== 接口（与 shop.html/services.html 同前缀的公开接口）=====
+  const API = '/prod-api/system/book/list';
+  const BORROW_API = '/prod-api/system/borrow/borrowByCard';
+  const CARD_API = '/prod-api/system/borrow/queryByCard';
+  const RESERVE_API = '/prod-api/system/reserve/add';
+  const MY_RESERVE_API = '/prod-api/system/reserve/myList';
+  const REG_API = '/prod-api/system/reader/register';
+  const LOGIN_API = '/prod-api/system/reader/login';
+  const CONFIG_API = '/prod-api/system/config/configKey/book.stock.warn';
+  const RELATED_API = '/prod-api/system/book/related';
+
+  // ===== 状态 =====
+  let currentUser = null;
+  let detailBook = null;
+  let borrowed = false;    // 当前成员是否已报名该服务
+  let reserved = false;    // 当前成员是否已候补该服务
+  let warnThreshold = 3;   // 名额预警阈值（后台可改）
+  let busy = false;        // 报名/候补防重复
+  const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
+  const TYPE_MAP = { '1': 'AI 内容创作', '2': 'AI 技术应用', '3': 'AI 硬件与场景' };
+  const STATUS_MAP = { '0': '招募中', '1': '已结束' };
+  const COVER_COLORS = ['#e8f0e9', '#f6efe2', '#eef4ef', '#f4e9ea', '#e9eef6', '#f3efe4'];
+  const PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23eef1f6" rx="12"/><text x="100" y="108" font-size="52" text-anchor="middle">🤖</text></svg>';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function imgSrc(url) {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('/prod-api')) return url;
+    if (url.startsWith('/')) return '/prod-api' + url;
+    return url;
+  }
+  function toast(text) {
+    const t = document.getElementById('toast');
+    let icon = 'ℹ️';
+    if (/失败|错误|已取消|不可|无法|请先/.test(text)) icon = '❌';
+    else if (/成功|欢迎|已退出|已报名|已提交/.test(text)) icon = '✅';
+    const safe = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    t.innerHTML = '<span class="toast-icon">' + icon + '</span>' + safe;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  document.querySelectorAll('.modal').forEach(function (m) {
+    m.addEventListener('click', function (e) {
+      if (e.target === m) m.style.display = 'none';
+    });
+  });
+
+  // ===== 登录 / 注册（与 shop.html 一致）=====
+  function openLogin() {
+    document.getElementById('loginMsg').textContent = '';
+    document.getElementById('loginModal').style.display = 'flex';
+  }
+  async function doLogin() {
+    const name = document.getElementById('loginName').value.trim();
+    const card = document.getElementById('loginCard').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if (!name || !card) { msg.textContent = '请填写姓名与成员编号'; return; }
+    const body = new URLSearchParams({ name: name, cardNo: card });
+    try {
+      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
+        closeModal('loginModal');
+        toast('欢迎回来，' + name);
+        refreshBorrowState();
+      } else {
+        msg.textContent = d.msg || '登录失败：请确认姓名与编号正确';
+      }
+    } catch (e) { msg.textContent = '登录失败：' + e.message; }
+  }
+  function renderLoginState() {
+    const area = document.getElementById('loginArea');
+    if (currentUser) {
+      area.innerHTML = '<span style="cursor:pointer" onclick="openRegister()">👤 ' + esc(currentUser.name || '成员') + '</span>';
+    } else {
+      area.innerHTML = '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
+    }
+  }
+  function openRegister() {
+    document.getElementById('regMsg').textContent = '';
+    document.getElementById('regModal').style.display = 'flex';
+  }
+  async function doRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const type = document.getElementById('regType').value;
+    const remark = document.getElementById('regRemark').value.trim();
+    const msg = document.getElementById('regMsg');
+    if (!name) { msg.textContent = '请填写成员姓名'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
+    const body = new URLSearchParams({ name: name, phone: phone, email: email, readerType: type, remark: remark });
+    try {
+      const res = await fetch(REG_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        msg.style.color = '#12b886';
+        msg.textContent = '注册成功！成员编号：' + d.data.cardNo + '（请牢记，登录用）';
+        setTimeout(() => closeModal('regModal'), 2600);
+      } else {
+        msg.style.color = '#e2554b';
+        msg.textContent = d.msg || '注册失败';
+      }
+    } catch (e) { msg.style.color = '#e2554b'; msg.textContent = '注册失败：' + e.message; }
+  }
+
+  // ===== 数据加载 =====
+  async function loadConfig() {
+    try {
+      const res = await fetch(CONFIG_API);
+      const d = await res.json();
+      const raw = (d.code === 200 && d.msg != null) ? d.msg : d.data;
+      if (raw != null) {
+        const v = parseInt(raw, 10);
+        if (!isNaN(v)) warnThreshold = v;
+      }
+    } catch (e) { }
+  }
+  async function loadBorrowed() {
+    borrowed = false;
+    if (!currentUser || !detailBook) return;
+    try {
+      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const d = await res.json();
+      (d.data || []).forEach(b => {
+        if (b.bookId === detailBook.bookId && (b.status === '0' || b.status === '2')) borrowed = true;
+      });
+    } catch (e) { }
+  }
+  async function loadReserved() {
+    reserved = false;
+    if (!currentUser || !detailBook) return;
+    try {
+      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const d = await res.json();
+      (d.data || []).forEach(r => {
+        if (r.bookId === detailBook.bookId && (r.status === '0' || r.status === '1')) reserved = true;
+      });
+    } catch (e) { }
+  }
+  function refreshBorrowState() {
+    Promise.all([loadBorrowed(), loadReserved()]).then(renderActions);
+  }
+
+  // ===== 按钮状态渲染 =====
+  function renderActions() {
+    const bBtn = document.getElementById('svcBorrowBtn');
+    const rBtn = document.getElementById('svcReserveBtn');
+    const dBtn = document.getElementById('svcDoneBtn');
+    const eBtn = document.getElementById('svcEndBtn');
+    const msg = document.getElementById('svcMsg');
+    bBtn.style.display = 'none';
+    rBtn.style.display = 'none';
+    dBtn.style.display = 'none';
+    eBtn.style.display = 'none';
+    msg.textContent = '';
+    if (!detailBook) return;
+    const onSale = detailBook.status === '0';
+    if (!onSale) { eBtn.style.display = 'inline-block'; return; }
+    if (borrowed) { dBtn.style.display = 'inline-block'; return; }
+    if (detailBook.stock > 0) { bBtn.style.display = 'inline-block'; return; }
+    if (reserved) {
+      dBtn.style.display = 'inline-block';
+      dBtn.textContent = '已候补';
+      return;
+    }
+    rBtn.style.display = 'inline-block';
+    msg.textContent = '名额已满，可提交候补，有名额时自动通知';
+  }
+
+  // ===== 报名 / 候补（乐观 UI：先改状态，失败回滚）=====
+  async function doBorrow() {
+    if (!currentUser) { toast('请先登录后再报名'); openLogin(); return; }
+    if (busy) return;
+    busy = true;
+    borrowed = true;
+    renderActions();
+    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: detailBook.bookId });
+    try {
+      const res = await fetch(BORROW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) { toast('报名成功：' + detailBook.bookName); }
+      else throw new Error(d.msg || '报名失败');
+    } catch (e) {
+      borrowed = false;
+      toast(e.message || '报名失败');
+    } finally {
+      busy = false;
+      refreshBorrowState();
+    }
+  }
+  async function doReserve() {
+    if (!currentUser) { toast('请先登录后再提交候补'); openLogin(); return; }
+    if (busy) return;
+    busy = true;
+    reserved = true;
+    renderActions();
+    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: detailBook.bookId });
+    try {
+      const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) { toast('候补提交成功！有名额时会通知您'); }
+      else throw new Error(d.msg || '候补失败');
+    } catch (e) {
+      reserved = false;
+      toast(e.message || '候补失败');
+    } finally {
+      busy = false;
+      refreshBorrowState();
+    }
+  }
+
+  // ===== 详情渲染 =====
+  async function loadService() {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) {
+      document.getElementById('svcName').textContent = '服务不存在';
+      document.getElementById('svcIntro').textContent = '缺少服务 ID 参数（?id=xxx）';
+      return;
+    }
+    try {
+      const res = await fetch(API + '?pageNum=1&pageSize=100');
+      const d = await res.json();
+      const b = ((d.rows || []).filter(x => x.status === '0').find(x => x.bookId === Number(id)))
+        || (d.rows || []).find(x => x.bookId === Number(id));
+      if (!b) {
+        document.getElementById('svcName').textContent = '服务不存在或已下架';
+        document.getElementById('svcIntro').textContent = '该服务可能已下架，请返回列表查看其他服务。';
+        return;
+      }
+      detailBook = b;
+      const onSale = b.status === '0';
+      document.title = b.bookName + ' · 数智游民创新工场';
+      document.getElementById('svcName').textContent = b.bookName;
+      document.getElementById('crumbName').textContent = b.bookName;
+      document.getElementById('svcCover').style.background = COVER_COLORS[(b.bookId || 0) % COVER_COLORS.length];
+      document.getElementById('svcCover').innerHTML = b.cover
+        ? '<img src="' + esc(imgSrc(b.cover)) + '" alt="' + esc(b.bookName) + '" />'
+        : '<img src="' + PLACEHOLDER + '" alt="' + esc(b.bookName) + '" />';
+      document.getElementById('svcAuthor').textContent = b.author || '—';
+      document.getElementById('svcPublisher').textContent = b.publisher || '—';
+      document.getElementById('svcType').textContent = TYPE_MAP[b.bookType] || '其他';
+      document.getElementById('svcDate').textContent = b.publishDate || '—';
+      document.getElementById('svcIsbn').textContent = b.isbn || '—';
+      document.getElementById('svcPrice').textContent = (b.price == 0 ? '免费' : '¥' + (b.price ?? '—'));
+      document.getElementById('svcStock').textContent = onSale ? ((b.stock ?? 0) + ' 席') : '—';
+      document.getElementById('svcTags').innerHTML =
+        '<span class="tag ' + (onSale ? 'tag-sale' : 'tag-off') + '">' + (STATUS_MAP[b.status] || '未知') + '</span>' +
+        '<span class="tag tag-sale">' + (TYPE_MAP[b.bookType] || '其他') + '</span>' +
+        (onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">名额紧张</span>' : '');
+      document.getElementById('svcIntro').textContent = b.intro || '（暂无服务介绍）';
+      if (b.remark) {
+        document.getElementById('svcRemarkBox').style.display = 'block';
+        document.getElementById('svcRemark').textContent = b.remark;
+      }
+      loadRelated(b);
+      refreshBorrowState();
+    } catch (e) {
+      document.getElementById('svcName').textContent = '加载失败';
+      document.getElementById('svcIntro').textContent = '加载失败：' + e.message + '（若为缓存旧版请按 Ctrl+F5 强制刷新）';
+    }
+  }
+
+  // ===== 相关服务（同分类，最多 4 个，点击跳服务详情）=====
+  async function loadRelated(book) {
+    const box = document.getElementById('relatedGrid');
+    if (!book.bookType) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
+    try {
+      const res = await fetch(RELATED_API + '?bookId=' + book.bookId + '&bookType=' + encodeURIComponent(book.bookType));
+      const d = await res.json();
+      const list = (d.data || []).slice(0, 4);
+      if (!list.length) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
+      box.innerHTML = list.map(b =>
+        '<div class="book-card" style="cursor:pointer" onclick="location.href=\'service.html?id=' + b.bookId + '\'">' +
+          '<div class="book-cover" style="background: ' + COVER_COLORS[(b.bookId || 0) % COVER_COLORS.length] + '">' +
+            (b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />') +
+          '</div>' +
+          '<div class="book-name">' + esc(b.bookName) + '</div>' +
+          '<div class="book-meta"><span class="tag tag-sale">' + (TYPE_MAP[b.bookType] || '其他') + '</span>' +
+            '<span class="book-price" style="color:#12b886;font-size:14px">' + (b.price == 0 ? '免费' : '¥' + (b.price ?? '--')) + '</span></div>' +
+        '</div>'
+      ).join('');
+    } catch (e) {
+      box.innerHTML = '<div class="related-empty">暂无相关服务</div>';
+    }
+  }
+
+  // ===== 初始化 =====
+  (function () {
+    try {
+      const saved = localStorage.getItem('shopUser');
+      if (saved) currentUser = JSON.parse(saved);
+    } catch (e) { }
+    var el = document.getElementById('footerYear');
+    if (el) el.textContent = new Date().getFullYear();
+    renderLoginState();
+    loadConfig();
+    loadService();
+  })();
+</script>
+</body>
+</html>

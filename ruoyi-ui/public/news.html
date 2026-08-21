@@ -46,22 +46,6 @@
     </div>
   </div>
 
-  <!-- 文章详情弹窗（正文 textContent 渲染，安全优先，与 shop.html 一致） -->
-  <div id="detailModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3 id="detailTitle">📰 文章详情</h3>
-      <div class="detail-row"><span class="d-label">栏目</span><span class="d-value" id="detailCategory">—</span></div>
-      <div class="detail-row"><span class="d-label">发布时间</span><span class="d-value" id="detailTime">—</span></div>
-      <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor">—</span></div>
-      <div class="detail-row"><span class="d-label">浏览量</span><span class="d-value" id="detailViews">0</span></div>
-      <div class="detail-section-title">正文</div>
-      <div id="detailContent" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap">加载中…</div>
-      <div class="modal-btns">
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
@@ -85,7 +69,6 @@
   // ===== 接口地址（匿名公开接口，与 shop.html 同前缀）=====
   const LIST_API = '/prod-api/system/cms/publicList';
   const CAT_API = '/prod-api/system/cmsCategory/publicList';
-  const DETAIL_API = '/prod-api/system/cms/publicDetail/';
   const PAGE_SIZE = 10;
 
   // ===== 全局状态 =====
@@ -185,7 +168,7 @@
   function renderCards(rows) {
     return rows.map(a => {
       const raw = String(a.summary || '').replace(/<[^>]+>/g, ''); // 去掉可能残留的 HTML 标签后再截取摘要
-      return '<div class="news-card" onclick="openDetail(' + a.articleId + ')">' +
+      return '<div class="news-card" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
         '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">置顶</span> ' : '') +
           esc(a.title || '未命名文章') +
           ' <span class="tag tag-sale">' + esc(a.categoryName || '未分类') + '</span></div>' +
@@ -194,46 +177,6 @@
       '</div>';
     }).join('');
   }
-
-  // ===== 文章详情（浏览量 +1 由后端完成；正文剥离标签后 textContent 渲染，防存储型 XSS）=====
-  async function openDetail(articleId) {
-    const modal = document.getElementById('detailModal');
-    const contentEl = document.getElementById('detailContent');
-    contentEl.textContent = '加载中…';
-    modal.style.display = 'flex';
-    try {
-      const res = await fetch(DETAIL_API + articleId);
-      const d = await res.json();
-      if (d.code !== 200 || !d.data) {
-        contentEl.textContent = '文章不存在或未发布';
-        return;
-      }
-      const a = d.data;
-      document.getElementById('detailTitle').textContent = '📰 ' + (a.title || '文章详情');
-      document.getElementById('detailCategory').textContent = a.categoryName || '未分类';
-      document.getElementById('detailTime').textContent = a.publishTime || '—';
-      document.getElementById('detailAuthor').textContent = a.author || '—';
-      document.getElementById('detailViews').textContent = a.views || 0;
-      // 正文可能为后台富文本（HTML/BBCODE 混合），先剥标签再按纯文本展示（安全优先）
-      const text = String(a.content || '').replace(/<[^>]+>/g, '');
-      contentEl.textContent = text || '（正文为空）';
-      // 本地列表浏览量回写 +1（与后端自增保持一致）
-      articleList.forEach(item => {
-        if (item.articleId === articleId) item.views = (item.views || 0) + 1;
-      });
-    } catch (e) {
-      contentEl.textContent = '加载失败：' + e.message;
-    }
-  }
-
-  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-  // 弹窗点击空白处（遮罩）自动关闭
-  document.querySelectorAll('.modal').forEach(function (m) {
-    m.addEventListener('click', function (e) {
-      if (e.target === m) m.style.display = 'none';
-    });
-  });
 
   // ===== 初始化 =====
   (function () {

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文章详情 · 数智游民创新工场</title>
+<meta name="description" content="数智游民创新工场新闻动态与政策文件详情页。入驻咨询：0763-3391888">
+<link rel="stylesheet" href="css/site.css">
+<style>
+  /* 文章详情页专用布局 */
+  .article-wrap { max-width: 860px; margin: 0 auto; padding: 20px; }
+  .article-crumb { font-size: 13px; color: var(--text-light); margin-bottom: 14px; }
+  .article-crumb a { color: var(--accent); text-decoration: none; }
+  .article-title { font-size: 26px; font-weight: bold; line-height: 1.5; margin-bottom: 12px; }
+  .article-meta { font-size: 13px; color: var(--text-light); display: flex; gap: 16px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  .article-meta .tag-sale { padding: 2px 10px; }
+  .article-content { font-size: 15px; line-height: 2; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+  .article-content a { color: var(--accent); word-break: break-all; }
+  .article-back { margin-top: 30px; text-align: center; }
+</style>
+</head>
+<body>
+  <!-- 顶部导航（吸顶） -->
+  <div class="navbar">
+    <div class="logo" style="cursor:pointer" onclick="location.href='shop.html'">数智游民<span>创新工场</span></div>
+    <div class="nav-links">
+      <a href="shop.html">首页</a>
+      <a href="about.html">走进社区</a>
+      <a href="industry.html">产业生态</a>
+      <a href="policy.html">政策赋能</a>
+      <a href="join.html">入驻招商</a>
+      <a href="talent.html">人才培养</a>
+      <a href="news.html">新闻动态</a>
+      <a href="shop.html#contact">联系我们</a>
+    </div>
+  </div>
+
+  <!-- 文章详情 -->
+  <div class="content-section">
+    <div class="article-wrap">
+      <div class="article-crumb"><a href="shop.html">首页</a> › <a id="crumbList" href="news.html">新闻动态</a> › <span id="crumbCat">—</span></div>
+      <h1 class="article-title" id="artTitle">加载中…</h1>
+      <div class="article-meta" id="artMeta"></div>
+      <div class="article-content" id="artContent">加载中…</div>
+      <div class="article-back">
+        <a class="btn-buy" style="text-decoration:none" id="backBtn" href="news.html">← 返回列表</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页脚（三栏） -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>🏭 关于我们</h4>
+        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>清远市首个人工智能 OPC 生态社区 ｜ 让"一个人 + AI"成为可能</p>
+      </div>
+      <div class="footer-col">
+        <h4>📮 联系我们</h4>
+        <p>地址：清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105<br>电话：0763-3391888<br>邮箱：contact@example.com（[待补]）</p>
+      </div>
+      <div class="footer-col">
+        <h4>🤝 入驻与合作</h4>
+        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>入驻咨询：0763-3391888</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
+  </footer>
+
+<script>
+  // ===== 文章详情（新闻/政策共用，?id= 直达，URL 可分享刷新）=====
+  const DETAIL_API = '/prod-api/system/cms/publicDetail/';
+
+  // HTML 转义：标题/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // 正文安全渲染：整段 textContent 后，把其中的 http/https 链接单独转成可点击 <a>
+  // （白名单协议；其余内容一律纯文本，防存储型 XSS）
+  function renderContent(el, rawText) {
+    const text = String(rawText || '').replace(/<[^>]+>/g, '');
+    if (!text) { el.textContent = '（正文为空）'; return; }
+    const frag = document.createDocumentFragment();
+    const urlRe = /(https?:\/\/[^\s，。；、）】""''》]+)/g;
+    let last = 0, m;
+    while ((m = urlRe.exec(text)) !== null) {
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      const a = document.createElement('a');
+      a.href = m[1];
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = m[1];
+      frag.appendChild(a);
+      last = m.index + m[1].length;
+    }
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    el.appendChild(frag);
+  }
+
+  // 按栏目名决定返回列表与面包屑去向
+  function backTarget(catName) {
+    if (catName === '政策文件' || catName === '政策解读') return 'policy.html';
+    return 'news.html';
+  }
+
+  async function loadArticle() {
+    const id = new URLSearchParams(location.search).get('id');
+    const titleEl = document.getElementById('artTitle');
+    const metaEl = document.getElementById('artMeta');
+    const contentEl = document.getElementById('artContent');
+    if (!id) {
+      titleEl.textContent = '文章不存在';
+      contentEl.textContent = '缺少文章 ID 参数（?id=xxx）';
+      return;
+    }
+    try {
+      const res = await fetch(DETAIL_API + id);
+      const d = await res.json();
+      if (d.code !== 200 || !d.data) {
+        titleEl.textContent = '文章不存在或未发布';
+        contentEl.textContent = '该文章可能已被下线，请返回列表查看其他内容。';
+        return;
+      }
+      const a = d.data;
+      const isPolicy = (a.categoryName === '政策文件' || a.categoryName === '政策解读');
+      document.title = (a.title || '文章详情') + ' · 数智游民创新工场';
+      titleEl.textContent = a.title || '未命名文章';
+      const cat = document.getElementById('crumbCat');
+      cat.textContent = a.categoryName || '未分类';
+      cat.style.color = 'var(--text)';
+      const listHref = backTarget(a.categoryName);
+      document.getElementById('crumbList').href = listHref;
+      document.getElementById('backBtn').href = listHref;
+      metaEl.innerHTML =
+        '<span class="tag tag-sale">' + esc(a.categoryName || '未分类') + '</span>' +
+        '<span>🕐 ' + esc(a.publishTime || '—') + '</span>' +
+        '<span>✍️ ' + esc(a.author || '—') + '</span>' +
+        '<span>👁 ' + (a.views || 0) + ' 次阅读</span>';
+      contentEl.textContent = '';
+      renderContent(contentEl, a.content);
+      // 政策类文章：正文尾部追加原文链接提示（content 中已含【原文链接】，此处兜底提示）
+      if (isPolicy) {
+        const tip = document.createElement('div');
+        tip.style.cssText = 'margin-top:24px;padding:12px 16px;background:#eef3fb;border-radius:10px;font-size:13px;color:#3d5a80';
+        tip.textContent = '💡 政策内容以官方正式文件为准，原文链接见上方正文【原文链接】条目。';
+        contentEl.appendChild(tip);
+      }
+    } catch (e) {
+      titleEl.textContent = '加载失败';
+      contentEl.textContent = '加载失败：' + e.message + '（若为缓存旧版请按 Ctrl+F5 强制刷新）';
+    }
+  }
+
+  // ===== 初始化 =====
+  (function () {
+    var el = document.getElementById('footerYear');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+  loadArticle();
+</script>
+</body>
+</html>

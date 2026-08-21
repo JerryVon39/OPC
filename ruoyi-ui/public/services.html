@@ -66,33 +66,6 @@
     </div>
   </div>
 
-  <!-- 服务详情弹窗 -->
-  <div id="detailModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3 id="detailName">服务详情</h3>
-      <div class="detail-cover" id="detailCover">📕</div>
-      <div class="detail-section-title">基本信息</div>
-      <div class="detail-row"><span class="d-label">主办方</span><span class="d-value" id="detailAuthor"></span></div>
-      <div class="detail-row"><span class="d-label">分类</span><span class="d-value" id="detailType"></span></div>
-      <div class="detail-row"><span class="d-label">合作机构</span><span class="d-value" id="detailPublisher"></span></div>
-      <div class="detail-row"><span class="d-label">上线时间</span><span class="d-value" id="detailDate"></span></div>
-      <div class="detail-row"><span class="d-label">费用</span><span class="d-value" id="detailPrice"></span></div>
-      <div class="detail-row"><span class="d-label">剩余名额</span><span class="d-value" id="detailStock"></span></div>
-      <div class="detail-row"><span class="d-label">状态</span><span class="d-value" id="detailStatus"></span></div>
-      <div class="detail-row"><span class="d-label">服务编号</span><span class="d-value" id="detailIsbn"></span></div>
-      <div class="detail-row"><span class="d-label">备注</span><span class="d-value" id="detailRemark"></span></div>
-      <div class="detail-section-title">服务介绍</div>
-      <div class="detail-intro" id="detailIntro">—</div>
-      <div class="detail-section-title">相关服务</div>
-      <div id="relatedBooks" class="related-grid"><div class="related-empty">加载中…</div></div>
-      <div class="modal-btns">
-        <button class="btn-buy btn-borrow-detail" id="detailBorrowBtn" style="display:none">报名</button>
-        <button class="btn-buy" style="background:#8a6d3b;display:none" onclick="detailReserve()" id="detailReserveBtn">📌 候补</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 成员注册弹窗 -->
   <div id="regModal" class="modal" style="display:none">
     <div class="modal-box">
@@ -238,7 +211,6 @@
   // ===== 全局状态 =====
   let currentType = '';
   let currentUser = null;
-  let detailBook = null;
   let warnThreshold = 3;   // 名额预警阈值（从系统参数读取，后台可改）
   let noticeTexts = [];    // 新闻全文列表（跑马灯轮播）
   let noticeIdx = 0;       // 当前显示的新闻下标
@@ -413,6 +385,19 @@
   let bookRequestSeq = 0;  // 请求序号：只渲染最后一次请求的结果（防止快速搜索时旧结果覆盖新结果）
   let currentSort = '';    // 排序：'' 综合 | borrowCount 报名最多 | publishDate 最新上线
   let currentAsc = '';     // 排序方向（'' 默认 | desc 降序）
+  // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /prod-api 代理到后端才能加载
+  function imgSrc(url) {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('/prod-api')) return url;
+    if (url.startsWith('/')) return '/prod-api' + url;
+    return url;
+  }
+  // HTML 转义：服务名/主办方/成员名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
   async function loadBooks() {
     const mySeq = ++bookRequestSeq;
     // 加载前显示骨架屏
@@ -481,7 +466,7 @@
         btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticReserve(this.dataset.id, this.dataset.name)">📌 候补</button>';
       }
       return `
-        <div class="book-card" onclick="showDetail(${b.bookId}, ${i})">
+        <div class="book-card" onclick="location.href='service.html?id=${b.bookId}'">
           <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
             ${isNewBook(b) ? '<span class="new-badge">🆕 新服务</span>' : ''}
             ${b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />'}
@@ -513,7 +498,6 @@
     pendingBorrow.add(bookId);
     borrowedIds.push(bookId);            // 乐观置为已报名
     renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已报名"
-    syncDetailAfterBorrow(bookId, true);
     const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
     fetch(BORROW_API, {
       method: 'POST',
@@ -535,7 +519,6 @@
         pendingBorrow.delete(bookId);
         const i = borrowedIds.indexOf(bookId);
         if (i >= 0) borrowedIds.splice(i, 1);
-        syncDetailAfterBorrow(bookId, false);
         renderBooks(currentBooks);
         toast(err.message || '报名失败');
         await loadBorrowed();
@@ -577,22 +560,6 @@
       }
     });
   }
-  // 详情弹窗按钮与网格按钮同步：乐观报名成功/失败时刷新详情按钮区
-  function syncDetailAfterBorrow(bookId, borrowed) {
-    if (!detailBook || detailBook.bookId !== bookId) return;
-    const bBtn = document.getElementById('detailBorrowBtn');
-    const rBtn = document.getElementById('detailReserveBtn');
-    if (borrowed) {
-      bBtn.style.display = 'none';
-      rBtn.style.display = 'none';
-    } else {
-      const onSale = detailBook.status === '0';
-      if (onSale && detailBook.stock > 0) { bBtn.style.display = 'inline-block'; rBtn.style.display = 'none'; }
-      else if (onSale && detailBook.stock <= 0) { bBtn.style.display = 'none'; rBtn.style.display = 'inline-block'; }
-      else { bBtn.style.display = 'none'; rBtn.style.display = 'none'; }
-    }
-  }
-
   // ===== 返回全部服务（logo / "清除筛选"链接）=====
   // ===== 服务分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
   async function loadTypes() {
@@ -639,85 +606,6 @@
     document.querySelectorAll('#sortTabs a').forEach(a => a.classList.remove('active'));
     document.querySelector('#sortTabs a[data-sort=""]').classList.add('active');
     loadBooks();
-  }
-
-  // ===== 服务详情 =====
-  // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /prod-api 代理到后端才能加载
-  function imgSrc(url) {
-    if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('/prod-api')) return url;
-    if (url.startsWith('/')) return '/prod-api' + url;
-    return url;
-  }
-  // HTML 转义：服务名/主办方/成员名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
-  function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
-  async function showDetail(bookId, idx) {
-    let b = currentBooks.find(x => x.bookId === bookId);
-    if (!b) {
-      // 兜底：当前列表没有这个服务（分页/搜索场景），全量拉一次（仅看招募中）
-      const res = await fetch(API + '?pageNum=1&pageSize=100');
-      b = ((await res.json()).rows || []).filter(x => x.status === '0').find(x => x.bookId === bookId);
-      if (!b) return;
-    }
-    detailBook = b;
-    const onSale = b.status === '0';
-    document.getElementById('detailName').textContent = b.bookName;
-    document.getElementById('detailCover').style.background = COVER_COLORS[(b.bookId || 0) % COVER_COLORS.length];
-    document.getElementById('detailCover').innerHTML = b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15)" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%;border-radius:6px" />';
-    document.getElementById('detailAuthor').textContent = b.author || '未知';
-    document.getElementById('detailType').textContent = TYPE_MAP[b.bookType] || '其他';
-    document.getElementById('detailPublisher').textContent = b.publisher || '—';
-    document.getElementById('detailDate').textContent = b.publishDate || '—';
-    document.getElementById('detailPrice').textContent = (b.price == 0 ? '免费' : '¥' + (b.price ?? '—'));
-    document.getElementById('detailStock').textContent = (b.stock ?? 0) + ' 席';
-    document.getElementById('detailStatus').textContent = STATUS_MAP[b.status] || '未知';
-    document.getElementById('detailIsbn').textContent = b.isbn || '—';
-    // XSS 修复：服务介绍可能含后台写入的不可信 HTML，一律按纯文本展示
-    document.getElementById('detailIntro').textContent = b.intro || '—';
-    document.getElementById('detailRemark').textContent = b.remark || '—';
-    const bBtn = document.getElementById('detailBorrowBtn');
-    const rBtn = document.getElementById('detailReserveBtn');
-    if (onSale && b.stock > 0 && !borrowedIds.includes(b.bookId)) {
-      bBtn.style.display = 'inline-block';
-      bBtn.dataset.id = b.bookId;
-      bBtn.dataset.name = b.bookName;
-      rBtn.style.display = 'none';
-    } else if (onSale && b.stock <= 0 && !borrowedIds.includes(b.bookId)) {
-      // 名额为0且未报名：隐藏报名，显示候补
-      bBtn.style.display = 'none';
-      rBtn.style.display = 'inline-block';
-    } else {
-      // 已报名该服务（无论名额）：不显示报名/候补
-      bBtn.style.display = 'none';
-      rBtn.style.display = 'none';
-    }
-    document.getElementById('detailModal').style.display = 'flex';
-    loadRelated(b);
-  }
-  // ===== 相关服务（同分类招募中服务，最多4个）=====
-  async function loadRelated(book) {
-    const box = document.getElementById('relatedBooks');
-    if (!book.bookType) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
-    box.innerHTML = '<div class="related-empty">加载中…</div>';
-    try {
-      const res = await fetch(RELATED_API + '?bookId=' + book.bookId + '&bookType=' + encodeURIComponent(book.bookType));
-      const d = await res.json();
-      const list = (d.data || []).slice(0, 4);
-      if (!list.length) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
-      box.innerHTML = list.map(b =>
-        '<div class="related-item" onclick="showDetail(' + b.bookId + ',0)">' +
-          '<div class="related-cover">' + (b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />') + '</div>' +
-          '<div class="related-name">' + esc(b.bookName) + '</div>' +
-          '<div class="related-price">' + (b.price == 0 ? '免费' : '¥' + (b.price ?? '--')) + '</div>' +
-        '</div>'
-      ).join('');
-    } catch (e) {
-      box.innerHTML = '<div class="related-empty">暂无相关服务</div>';
-    }
   }
 
   // ===== 热门推荐 =====
@@ -894,9 +782,6 @@
       } else toast(d.msg || '候补失败');
     } catch (e) { toast('候补失败：' + e.message); }
   }
-  function detailReserve() {
-    if (detailBook) optimisticReserve(detailBook.bookId, detailBook.bookName);
-  }
   function openMyReserves() {
     document.getElementById('reserveModal').style.display = 'flex';
     if (currentUser) {
@@ -1065,14 +950,6 @@
     m.addEventListener('click', function (e) {
       if (e.target === m) m.style.display = 'none';
     });
-  });
-
-  // ===== 详情弹窗内报名按钮（委托）=====
-  document.addEventListener('click', function (e) {
-    const dbtn = e.target.closest('.btn-borrow-detail');
-    if (dbtn) {
-      optimisticBorrow(dbtn.dataset.id, dbtn.dataset.name);
-    }
   });
 
   // ===== "更多"下拉菜单（点击展开 / 点外部或选完收起）=====

@@ -145,21 +145,6 @@
     </div>
   </div>
 
-  <!-- 政策详情弹窗（正文 textContent 渲染，安全优先，与 news.html 一致） -->
-  <div id="detailModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3 id="detailTitle">📜 政策详情</h3>
-      <div class="detail-row"><span class="d-label">级别</span><span class="d-value" id="detailCategory">—</span></div>
-      <div class="detail-row"><span class="d-label">发布时间</span><span class="d-value" id="detailTime">—</span></div>
-      <div class="detail-row"><span class="d-label">作者</span><span class="d-value" id="detailAuthor">—</span></div>
-      <div class="detail-section-title">政策内容</div>
-      <div id="detailContent" style="font-size:14px;line-height:1.9;color:#555;white-space:pre-wrap">加载中…</div>
-      <div class="modal-btns">
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('detailModal')">关闭</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
@@ -183,7 +168,6 @@
   // ===== 政策文件库：CMS 动态加载（匿名公开接口，与 news.html 同前缀）=====
   const CAT_API = '/prod-api/system/cmsCategory/publicList';
   const LIST_API = '/prod-api/system/cms/publicList';
-  const DETAIL_API = '/prod-api/system/cms/publicDetail/';
 
   // HTML 转义：标题/摘要等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   function esc(s) {
@@ -214,7 +198,7 @@
       if (!rows.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
       grid.innerHTML = rows.map(p => {
         const raw = String(p.summary || '').replace(/<[^>]+>/g, '');
-        return '<div class="info-card" style="cursor:pointer" onclick="openPolicy(' + p.articleId + ')">' +
+        return '<div class="info-card" style="cursor:pointer" onclick="location.href=\'article.html?id=' + p.articleId + '\'">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
             '<h3 style="margin:0">' + esc(p.title) + '</h3>' +
             '<span class="tag tag-sale">' + levelOf(p.title) + '</span></div>' +
@@ -226,37 +210,6 @@
       grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
     }
   }
-
-  // 政策详情（正文剥离标签后 textContent 渲染，防存储型 XSS）
-  async function openPolicy(articleId) {
-    const modal = document.getElementById('detailModal');
-    const contentEl = document.getElementById('detailContent');
-    contentEl.textContent = '加载中…';
-    modal.style.display = 'flex';
-    try {
-      const res = await fetch(DETAIL_API + articleId);
-      const d = await res.json();
-      if (d.code !== 200 || !d.data) { contentEl.textContent = '政策不存在或未发布'; return; }
-      const a = d.data;
-      document.getElementById('detailTitle').textContent = '📜 ' + (a.title || '政策详情');
-      document.getElementById('detailCategory').textContent = levelOf(a.title || '');
-      document.getElementById('detailTime').textContent = a.publishTime || '—';
-      document.getElementById('detailAuthor').textContent = a.author || '—';
-      const text = String(a.content || '').replace(/<[^>]+>/g, '');
-      contentEl.textContent = text || '（内容为空）';
-    } catch (e) {
-      contentEl.textContent = '加载失败：' + e.message;
-    }
-  }
-
-  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-  // 弹窗点击空白处（遮罩）自动关闭
-  document.querySelectorAll('.modal').forEach(function (m) {
-    m.addEventListener('click', function (e) {
-      if (e.target === m) m.style.display = 'none';
-    });
-  });
 
   // ===== 初始化 =====
   (function () {
