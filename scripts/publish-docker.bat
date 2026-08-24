@@ -2,7 +2,7 @@
 REM ============================================
 REM 数智游民创新工场 · Docker 镜像发布脚本（一键构建 + 推送）
 REM
-REM 用法: scripts\publish-docker.bat [版本号]     默认版本号 v2.0
+REM 用法: scripts\publish-docker.bat [版本号]     默认版本号 v2.1
 REM 前置: 1) 已 docker login（需 Read&Write 权限的 token，只读 token 推送会被拒）
 REM       2) 可访问 Docker Hub（国内网络需在 Docker Desktop 配置代理）
 REM 效果: 重新构建 backend/frontend → 打 tag → 推送 Docker Hub → 同步 docker-compose.yml 版本号

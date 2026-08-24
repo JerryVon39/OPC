@@ -24,7 +24,15 @@ if [ ! -f .env ]; then
   echo "[start-all] 已生成 .env（默认配置可直接启动；如需邮件通知请编辑 .env 的 MAIL_* 后重跑）"
 fi
 
-# 3. 启动全部服务（首次自动拉取镜像并初始化数据库）
+# 3. 检查本地镜像；缺失（或代码更新后 tag 提升）则用源码构建
+#    注意：本项目镜像不推 Docker Hub，本地无对应 tag 镜像时 compose 拉取会失败，
+#    必须先 docker compose build（首次需几分钟，后续有层缓存较快）
+if ! docker image inspect jerryvon/opc-backend:v2.1 >/dev/null 2>&1; then
+  echo "[start-all] 未找到本地 v2.1 镜像，用源码构建（首次需几分钟）..."
+  docker compose build
+fi
+
+# 4. 启动全部服务（首次自动初始化数据库）
 echo "[start-all] 正在启动 MySQL / Redis / 后端 / 前端 ..."
 docker compose up -d
 

@@ -88,9 +88,9 @@ scripts\start-all.bat
 ./scripts/start-all.sh
 ```
 
-脚本会自动：检查/自动启动 Docker Desktop（未运行时自动拉起并等待就绪）→ 生成 `.env`（默认配置可直接启动）→ 检查本地 v2.0 镜像（缺失则自动用源码构建）→ 启动 MySQL/Redis/后端/前端四容器 → 等待后端就绪。
+脚本会自动：检查/自动启动 Docker Desktop（未运行时自动拉起并等待就绪）→ 生成 `.env`（默认配置可直接启动）→ 检查本地 v2.1 镜像（缺失则自动用源码构建）→ 启动 MySQL/Redis/后端/前端四容器 → 等待后端就绪。
 
-> 💡 **镜像说明**：本项目为私有项目，镜像不推 Docker Hub——`start-all.bat` 检测到本地无 v2.0 镜像时自动 `docker compose build` 构建（首次需几分钟）。
+> 💡 **镜像说明**：本项目为私有项目，镜像不推 Docker Hub——`start-all.bat` 检测到本地无 v2.1 镜像时自动 `docker compose build` 构建（首次需几分钟）。
 
 - 管理后台：`http://localhost/index.html`（默认账号 admin / admin123，首次登录请修改密码）
 - 官网前台：`http://localhost/home.html`
