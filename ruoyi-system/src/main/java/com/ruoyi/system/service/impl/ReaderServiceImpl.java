@@ -225,11 +225,11 @@ public class ReaderServiceImpl implements IReaderService
         return newCard;
     }
 
-    /** 按证号查认证信息（含密码哈希，登录/改密/重置专用） */
+    /** 按登录标识查认证信息（证号/手机号/邮箱，含密码哈希，登录/改密/重置专用） */
     @Override
-    public Reader findAuthByCardNo(String cardNo)
+    public Reader findAuthByAccount(String account)
     {
-        return readerMapper.selectAuthInfo(cardNo);
+        return readerMapper.selectAuthInfo(account);
     }
 
     /** 设置/重置密码（找回密码、pwd_set=0 引导设密共用）：BCrypt + pwd_set=1 */

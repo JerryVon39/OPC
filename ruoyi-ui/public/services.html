@@ -137,7 +137,7 @@
     <div class="modal-box">
       <h3>👤 成员登录</h3>
       <p class="modal-tip">使用成员编号 + 密码登录，登录后可一键报名、提交候补</p>
-      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
       <input id="loginPwd" class="modal-input" type="password" placeholder="🔑 登录密码" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitLogin()">登 录</button>
@@ -152,8 +152,8 @@
   <div id="forgotModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3>🔑 找回密码</h3>
-      <p class="modal-tip">输入成员编号，验证码将发送至登记邮箱</p>
-      <input id="fgCard" class="modal-input" placeholder="🎫 成员编号" />
+      <p class="modal-tip">输入成员编号/手机号/邮箱，验证码将发送至登记邮箱</p>
+      <input id="fgCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="sendForgotCode()">发送验证码</button>
       </div>
@@ -249,6 +249,9 @@
   const RELATED_API = '/prod-api/system/book/related';
   const DICT_API = '/prod-api/system/dict/data/type/book_type';
   const PURCHASE_API = '/prod-api/system/purchase/apply';
+  // 从其他页面跳转进入（?forgot=1）时自动打开找回密码弹窗
+  if (new URLSearchParams(location.search).get('forgot') === '1') { setTimeout(() => openForgot(), 400); }
+
   const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
 
   // ===== 统一请求包装：自动附带 X-Session-Token 请求头（凭证不落 URL/日志）=====

@@ -157,10 +157,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select count(1) from reader where email = #{email} and del_flag = '0'
     </select>
 
-    <!-- 认证专用查询：含 password_hash（登录/改密/重置；普通查询不含，防泄露） -->
+    <!-- 认证专用查询：含 password_hash（登录/改密/重置；普通查询不含，防泄露）
+         登录标识支持：证号 / 手机号 / 邮箱（email 与 card_no 唯一，phone 取第一条） -->
     <select id="selectAuthInfo" parameterType="String" resultMap="ReaderResult">
         select reader_id, reader_name, phone, email, password_hash, pwd_set, email_verified, card_no, reader_type, sex, birth_date, status, last_login_time, del_flag
-        from reader where card_no = #{cardNo} and del_flag = '0'
+        from reader
+        where del_flag = '0' and (card_no = #{account} or phone = #{account} or email = #{account})
+        limit 1
     </select>
 
     <!-- 更新认证字段（密码/邮箱验证状态/最后登录时间） -->

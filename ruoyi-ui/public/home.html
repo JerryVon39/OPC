@@ -316,10 +316,11 @@
     <div class="modal-box">
       <h3>👤 成员登录</h3>
       <p class="modal-tip">使用成员编号 + 密码登录</p>
-            <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+            <input id="loginCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
       <input id="loginPwd" class="modal-input" type="password" placeholder="🔑 登录密码" />
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitLogin()">登 录</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="location.href='services.html?forgot=1'">忘记密码</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('loginModal')">取消</button>
       </div>
       <div id="loginMsg" class="modal-msg"></div>

@@ -39,8 +39,8 @@ public interface IReaderService
      * 密码 BCrypt 加密落库（pwd_set=1、email_verified=0，随后需邮箱验证码完成注册） */
     public Reader register(String readerName, String phone, String readerType, String email, String remark, String password);
 
-    /** 按证号查认证信息（含密码哈希，登录/改密/重置专用） */
-    public Reader findAuthByCardNo(String cardNo);
+    /** 按登录标识查认证信息（证号/手机号/邮箱，含密码哈希，登录/改密/重置专用） */
+    public Reader findAuthByAccount(String account);
 
     /** 设置/重置密码（BCrypt；pwd_set 置 1） */
     public int setPassword(String cardNo, String newPassword);

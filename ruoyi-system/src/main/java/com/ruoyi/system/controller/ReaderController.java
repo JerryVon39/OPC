@@ -137,7 +137,7 @@ public class ReaderController extends BaseController
      * 未设置密码的存量成员（pwd_set=0）返回专用状态码 601，前端引导「邮箱验证 → 设置密码」 */
     @Anonymous
     @PostMapping("/login")
-    public AjaxResult login(String cardNo, String password, jakarta.servlet.http.HttpServletRequest request)
+    public AjaxResult login(String account, String password, jakarta.servlet.http.HttpServletRequest request)
     {
         String ip = ipOf(request);
         // 频控第 1 层：IP 全局限速
@@ -146,28 +146,28 @@ public class ReaderController extends BaseController
         {
             return error("请求过于频繁，请稍后再试");
         }
-        if (cardNo == null || cardNo.trim().isEmpty() || password == null || password.isEmpty())
+        if (account == null || account.trim().isEmpty() || password == null || password.isEmpty())
         {
-            return error("请输入成员编号和密码");
+            return error("请输入成员编号/手机号/邮箱和密码");
         }
-        String failKey = "login:" + ip + ":" + cardNo.trim();
+        String failKey = "login:" + ip + ":" + account.trim();
         // 频控第 2/3 层：账号 5 次锁定 + 递增退避
         if (readerSessionService.isBlocked(failKey))
         {
             return error("尝试次数过多，请稍后再试");
         }
-        Reader auth = readerService.findAuthByCardNo(cardNo.trim());
+        Reader auth = readerService.findAuthByAccount(account.trim());
         if (auth == null || auth.getPasswordHash() == null
                 || !com.ruoyi.common.utils.SecurityUtils.matchesPassword(password, auth.getPasswordHash()))
         {
             readerSessionService.recordFail(failKey);
-            loginLogService.log(cardNo, null, ip, "login_fail", false, "密码错误");
-            return error("成员编号或密码不正确");
+            loginLogService.log(account, null, ip, "login_fail", false, "密码错误");
+            return error("成员编号/手机号/邮箱或密码不正确");
         }
         // 停用/挂失的证号不允许登录前台（报名、下单前就把问题拦下）
         if (!"0".equals(auth.getStatus()))
         {
-            loginLogService.log(cardNo, auth.getReaderId(), ip, "login_fail", false, "账号停用/挂失");
+            loginLogService.log(account, auth.getReaderId(), ip, "login_fail", false, "账号停用/挂失");
             return error("该成员编号已停用/挂失，请联系管理员");
         }
         // 未设置密码（存量成员迁移）：返回专用状态码，前端引导设密流程
@@ -181,7 +181,7 @@ public class ReaderController extends BaseController
         }
         readerSessionService.clearFail(failKey);
         readerService.touchLogin(auth.getReaderId());
-        loginLogService.log(cardNo, auth.getReaderId(), ip, "login", true, "");
+        loginLogService.log(account, auth.getReaderId(), ip, "login", true, "");
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("readerId", auth.getReaderId());
         result.put("readerName", auth.getReaderName());
@@ -273,7 +273,7 @@ public class ReaderController extends BaseController
         {
             return error("参数不完整");
         }
-        Reader auth = readerService.findAuthByCardNo(cardNo.trim());
+        Reader auth = readerService.findAuthByAccount(cardNo.trim());
         if (auth == null || !email.trim().equalsIgnoreCase(auth.getEmail()))
         {
             return error("邮箱与注册信息不匹配");
@@ -336,13 +336,13 @@ public class ReaderController extends BaseController
      * 统一提示"验证码已发送至登记邮箱"（不暴露证号是否存在，防枚举） */
     @Anonymous
     @PostMapping("/forgot-password")
-    public AjaxResult forgotPassword(String cardNo, jakarta.servlet.http.HttpServletRequest request)
+    public AjaxResult forgotPassword(String account, jakarta.servlet.http.HttpServletRequest request)
     {
-        if (cardNo == null || cardNo.trim().isEmpty())
+        if (account == null || account.trim().isEmpty())
         {
-            return error("请输入成员编号");
+            return error("请输入成员编号/手机号/邮箱");
         }
-        Reader auth = readerService.findAuthByCardNo(cardNo.trim());
+        Reader auth = readerService.findAuthByAccount(account.trim());
         if (auth != null && "0".equals(auth.getStatus()) && auth.getEmail() != null && !auth.getEmail().isEmpty())
         {
             try
@@ -360,9 +360,9 @@ public class ReaderController extends BaseController
     /** 找回密码 · 第二步（匿名）：验证码 + 新密码 → 重置成功并强制登出全部会话 */
     @Anonymous
     @PostMapping("/reset-password")
-    public AjaxResult resetPassword(String cardNo, String code, String newPassword, jakarta.servlet.http.HttpServletRequest request)
+    public AjaxResult resetPassword(String account, String code, String newPassword, jakarta.servlet.http.HttpServletRequest request)
     {
-        if (cardNo == null || cardNo.trim().isEmpty() || code == null || code.trim().isEmpty())
+        if (account == null || account.trim().isEmpty() || code == null || code.trim().isEmpty())
         {
             return error("参数不完整");
         }
@@ -374,10 +374,10 @@ public class ReaderController extends BaseController
         {
             return error(e.getMessage());
         }
-        Reader auth = readerService.findAuthByCardNo(cardNo.trim());
+        Reader auth = readerService.findAuthByAccount(account.trim());
         if (auth == null || auth.getEmail() == null || auth.getEmail().isEmpty())
         {
-            return error("成员编号不存在或未登记邮箱");
+            return error("账号不存在或未登记邮箱");
         }
         if (!authCodeService.verify(auth.getEmail(), "resetPwd", code))
         {
@@ -386,7 +386,7 @@ public class ReaderController extends BaseController
         readerService.setPassword(auth.getCardNo(), newPassword);
         // 强制登出所有会话（含其他设备），防止旧会话在密码重置后仍可用
         readerSessionService.revokeOthers(auth.getCardNo(), null);
-        loginLogService.log(cardNo, auth.getReaderId(), ipOf(request), "reset_pwd", true, "");
+        loginLogService.log(account, auth.getReaderId(), ipOf(request), "reset_pwd", true, "");
         return success("密码已重置，请重新登录");
     }
 
