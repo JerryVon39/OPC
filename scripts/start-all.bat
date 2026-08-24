@@ -58,6 +58,16 @@ if errorlevel 1 (
   exit /b 1
 )
 
+REM 4. Old data volume incremental upgrades (idempotent):
+REM    existing mysql-data volume does NOT re-run init scripts, so upgrade
+REM    scripts are re-applied to align schema with new code (del_flag/reader_id
+REM    columns etc.), otherwise login/list fails with "Unknown column"
+echo [start-all] Running DB incremental upgrades for existing volume (idempotent)...
+for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql) do (
+  type "%%f" | docker exec -i opc-mysql sh -c "mysql --default-character-set=utf8mb4 -uroot -p\"$MYSQL_ROOT_PASSWORD\" ry-vue" >nul 2>&1
+)
+echo [start-all] DB incremental upgrades done
+
 REM 4. Wait for backend to be ready (first pull is slow, up to ~3 minutes)
 echo [start-all] Waiting for backend ...
 set /a ok=0

@@ -36,6 +36,11 @@ fi
 echo "[start-all] 正在启动 MySQL / Redis / 后端 / 前端 ..."
 docker compose up -d
 
+# 5. 旧数据卷增量升级（幂等）：已存在的数据卷不会重跑初始化脚本，
+#    补跑 upgrade 脚本使库结构与新代码一致（如 del_flag/reader_id 列），
+#    否则登录/列表报 Unknown column
+bash docker/mysql-upgrade.sh
+
 # 4. 等待后端就绪（首次拉镜像 + 初始化数据库较慢，最多约 3 分钟）
 echo "[start-all] 等待后端启动中 ..."
 READY=0
