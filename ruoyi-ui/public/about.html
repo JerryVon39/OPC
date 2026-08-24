@@ -213,6 +213,46 @@
   // ===== 共享：成员登录 / 注册 / 更多下拉（与 home.html 同一套公开接口）=====
   const REG_API = '/prod-api/system/reader/register';
   const LOGIN_API = '/prod-api/system/reader/login';
+  // ===== 找回密码（证号/手机号/邮箱 → 邮箱验证码 → 新密码）=====
+  function openForgot() {
+    closeModal('loginModal');
+    document.getElementById('forgotModal').style.display = 'flex';
+  }
+  async function sendForgotCode() {
+    const card = document.getElementById('fgCard').value.trim();
+    const msg = document.getElementById('forgotMsg');
+    if (!card) { msg.textContent = '请输入成员编号/手机号/邮箱'; msg.style.color = '#c65d43'; return; }
+    try {
+      const body = new URLSearchParams({ account: card });
+      const res = await apiFetch('/prod-api/system/reader/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      msg.textContent = d.msg || '验证码已发送';
+      msg.style.color = d.code === 200 ? '#4f8a62' : '#c65d43';
+    } catch (e) { msg.textContent = '发送失败：' + e.message; msg.style.color = '#c65d43'; }
+  }
+  async function submitReset() {
+    const card = document.getElementById('fgCard').value.trim();
+    const code = document.getElementById('fgCode').value.trim();
+    const pwd = document.getElementById('fgPwd').value;
+    const pwd2 = document.getElementById('fgPwd2').value;
+    const msg = document.getElementById('forgotMsg');
+    if (!card || !code) { msg.textContent = '请输入账号和验证码'; msg.style.color = '#c65d43'; return; }
+    if (!pwd || pwd !== pwd2) { msg.textContent = '两次输入的密码不一致'; msg.style.color = '#c65d43'; return; }
+    if (pwd.length < 10) { msg.textContent = '密码长度至少 10 位'; msg.style.color = '#c65d43'; return; }
+    try {
+      const body = new URLSearchParams({ account: card, code: code, newPassword: pwd });
+      const res = await apiFetch('/prod-api/system/reader/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) {
+        closeModal('forgotModal');
+        toast('密码已重置，请重新登录');
+        setTimeout(() => { location.href = 'services.html'; }, 1200);
+      } else {
+        msg.textContent = d.msg || '重置失败';
+        msg.style.color = '#c65d43';
+      }
+    } catch (e) { msg.textContent = '重置失败：' + e.message; msg.style.color = '#c65d43'; }
+  }
   let currentUser = null;
   try {
     const saved = localStorage.getItem('shopUser');
@@ -409,7 +449,26 @@
       <input id="loginPwd" class="modal-input" type="password" placeholder="🔑 登录密码" />
       <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
       <button class="btn-buy" style="width:100%;padding:11px" onclick="submitLogin()">登 录</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="location.href='services.html?forgot=1'">忘记密码</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="openForgot()">忘记密码</button>
+    </div>
+  </div>
+  <!-- 找回密码弹窗（证号/手机号/邮箱 → 邮箱验证码 → 设新密码） -->
+  <div id="forgotModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>🔑 找回密码</h3>
+      <p class="modal-tip">输入成员编号/手机号/邮箱，验证码将发送至登记邮箱</p>
+      <input id="fgCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="sendForgotCode()">发送验证码</button>
+      </div>
+      <input id="fgCode" class="modal-input" placeholder="📧 邮箱验证码（6 位）" />
+      <input id="fgPwd" class="modal-input" type="password" placeholder="🔑 新密码（≥10 位，含大小写/数字/符号至少 3 类）" />
+      <input id="fgPwd2" class="modal-input" type="password" placeholder="🔑 确认新密码" />
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="submitReset()">重置密码</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('forgotModal')">取消</button>
+      </div>
+      <div id="forgotMsg" class="modal-msg"></div>
     </div>
   </div>
 
