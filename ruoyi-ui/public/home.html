@@ -375,6 +375,11 @@
       <input id="pBookName" class="modal-input" placeholder="🏢 项目/组织名称（必填）" />
       <input id="pAuthor" class="modal-input" placeholder="✍️ 联系人（选填）" />
       <input id="pEmail" class="modal-input" placeholder="📧 电子邮箱（必填，处理结果将邮件通知）" />
+      <select id="pType" class="modal-input">
+        <option value="A">A 类合伙人（免费入驻，需面试）</option>
+        <option value="B">B 类普通成员（小额租金 + 分摊水电）</option>
+      </select>
+
       <textarea id="pRemark" class="modal-input" rows="2" placeholder="申请说明：项目简介 / 服务内容 / 合作需求（选填）" style="height:auto"></textarea>
       <div class="modal-btns">
         <button class="btn-buy" onclick="submitPurchase()">提交申请</button>
@@ -534,6 +539,7 @@
     document.getElementById('pBookName').value = '';
     document.getElementById('pAuthor').value = '';
     document.getElementById('pRemark').value = '';
+    document.getElementById('pType').value = 'A';
     document.getElementById('purchaseMsg').textContent = '';
     document.getElementById('purchaseModal').style.display = 'flex';
   }
@@ -551,7 +557,7 @@
         bookName: name,
         author: document.getElementById('pAuthor').value.trim(),
         email: email,
-        remark: document.getElementById('pRemark').value.trim()
+        remark: ("【" + document.getElementById('pType').value + " 类】" + document.getElementById('pRemark').value.trim())
       });
       const res = await apiFetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
