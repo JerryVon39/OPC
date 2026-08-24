@@ -44,8 +44,10 @@ def login(username, password='admin123'):
 
 SESSION = {}  # cardNo -> 前台登录 sessionToken（登录后提取，业务接口必须携带）
 
-def reader_login(name, card):
-    s, d = req('/system/reader/login', 'POST', urllib.parse.urlencode({'readerName': name, 'cardNo': card}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+TEST_PWD = 'Test@12345'  # 认证改造后：登录 = 证号 + 密码（存量测试账号由下方 admin 设密）
+
+def reader_login(card, pwd=TEST_PWD):
+    s, d = req('/system/reader/login', 'POST', urllib.parse.urlencode({'cardNo': card, 'password': pwd}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
     if d.get('code') == 200:
         SESSION[card] = (d.get('data') or {}).get('sessionToken')
     return d
@@ -61,11 +63,19 @@ for u in ['librarian', 'cashier', 'viewer']:
 d = login('viewer')
 s, d2 = req('/system/order/list?pageNum=1&pageSize=5', headers={'Authorization': 'Bearer ' + d['token']})
 tc('1.3', 'viewer无订单权限', '没有权限' in str(d2.get('msg')))
-for name, card, expect in [('学生测试','JS20260001',True), ('教师测试','JS20260002',True), ('普通测试','JS20260003',True), ('Jerry','DK',True), ('挂失测试','JS20260004',False)]:
-    d = reader_login(name, card)
-    tc('1.4', name + '前台登录', d.get('code') == 200 if expect else d.get('code') != 200, d.get('msg'))
-d = reader_login('证号', 'JS20260001')
-tc('1.5', '部分姓名登录被拒', d.get('code') != 200)
+# 认证改造：存量测试账号无密码（pwd_set=0），先由 admin 通过"管理员设密"接口设置测试密码，再走证号+密码登录
+_, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+ADMIN_AUTH = {'Authorization': 'Bearer ' + da['token']}
+for tcard, tname, expect in [('JS20260001','学生测试',True), ('JS20260002','教师测试',True), ('JS20260003','普通测试',True), ('DK','Jerry',True), ('JS20260004','挂失测试',False)]:
+    # 查 readerId（仅未设密账号需要设密；已设密账号幂等跳过——接口每次都会重置密码，可重复执行）
+    s, q = req('/system/reader/list?pageNum=1&pageSize=5&cardNo=' + tcard, headers=ADMIN_AUTH)
+    rows = q.get('rows') or []
+    if rows:
+        req('/system/reader/set-password', 'PUT', json.dumps({'readerId': rows[0]['readerId'], 'newPassword': TEST_PWD}).encode(), {'Content-Type': 'application/json', **ADMIN_AUTH})
+    d = reader_login(tcard)
+    tc('1.4', tname + '前台登录(证号+密码)', d.get('code') == 200 if expect else d.get('code') != 200, d.get('msg'))
+d = reader_login('JS20260001', 'WrongPass@123')
+tc('1.5', '错误密码登录被拒', d.get('code') != 200, d.get('msg'))
 
 # ============ 2. 图书 ============
 print('=== 2. 图书 ===')
@@ -85,26 +95,24 @@ tc('2.8', '库存预警参数', d.get('msg') == '3')
 
 # ============ 3. 读者 ============
 print('=== 3. 读者 ===')
-s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '整体测试', 'phone': '13800008888', 'readerType': '1', 'email': 'zhengti@qq.com', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '整体测试', 'phone': '13800008888', 'readerType': '1', 'email': 'zhengti@qq.com', 'remark': '', 'password': TEST_PWD}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 rid = (d.get('data') or {}).get('readerId')
 new_card = (d.get('data') or {}).get('cardNo')
 tc('3.1', '前台登记(证号后端生成)', d.get('code') == 200 and str(new_card).startswith('JS'), str(new_card))
-d = reader_login('整体测试', new_card)
-tc('3.2', '新登记可登录', d.get('code') == 200)
+d = reader_login(new_card)
+tc('3.2', '新登记可登录(证号+密码)', d.get('code') == 200)
 s, d = req('/system/reader/updateMyInfo', 'POST', (auth_params(new_card) + '&readerName=' + urllib.parse.quote('整体测试') + '&phone=13800009999').encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('3.3', '修改手机号', d.get('code') == 200)
 s, d = req('/system/reader/updateMyInfo', 'POST', (auth_params(new_card) + '&readerName=' + urllib.parse.quote('错名') + '&phone=13800000000').encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('3.4', '错误姓名改手机被拒', d.get('code') != 200)
 # 清理测试读者
-_, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
-auth = {'Authorization': 'Bearer ' + da['token']}
-s, d = req('/system/reader/' + str(rid), 'DELETE', headers=auth)
+s, d = req('/system/reader/' + str(rid), 'DELETE', headers=ADMIN_AUTH)
 tc('3.5', '删除无关联读者', d.get('code') == 200)
 
 # ============ 4. 借阅 ============
 print('=== 4. 借阅 ===')
 # 4.1 欠费冻结（普通测试欠费1.20）
-d = reader_login('普通测试', 'JS20260003')
+d = reader_login('JS20260003')
 s, d = req('/system/borrow/borrowByCard', 'POST', auth_params('JS20260003') + '&bookId=10', {'Content-Type': 'application/x-www-form-urlencoded'})
 tc('4.1', '欠费冻结借书被拒', '罚款' in str(d.get('msg')), d.get('msg'))
 # 4.2 正常借书（学生借西游记）
@@ -334,7 +342,7 @@ try:
     sql("DELETE FROM book_recycle WHERE book_name='回收站测试书';")
 
     # 11.3 读者：登记 → 删除 → 进回收站
-    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '回收站测试读者', 'phone': '13899998888', 'readerType': '1', 'email': 'huishou@qq.com', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '回收站测试读者', 'phone': '13899998888', 'readerType': '1', 'email': 'huishou@qq.com', 'remark': '', 'password': TEST_PWD}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
     nr = sql("SELECT reader_id FROM reader WHERE reader_name='回收站测试读者' LIMIT 1;")
     s, d = req('/system/reader/' + nr, 'DELETE', headers=auth)
     cnt = sql("SELECT COUNT(*) FROM reader_recycle WHERE reader_name='回收站测试读者';")
@@ -376,7 +384,7 @@ try:
     s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '邮件测试无邮', 'phone': '13877776666', 'readerType': '1', 'email': '', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
     tc('12.1', '登记缺邮箱被拒', d.get('code') != 200, str(d.get('msg')))
     # 12.2 新读者登记：带邮箱 → 成功
-    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '邮件测试', 'phone': '13877776666', 'readerType': '1', 'email': 'mailtest_' + str(int(time.time())) + '@qq.com', 'remark': ''}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
+    s, d = req('/system/reader/register', 'POST', urllib.parse.urlencode({'readerName': '邮件测试', 'phone': '13877776666', 'readerType': '1', 'email': 'mailtest_' + str(int(time.time())) + '@qq.com', 'remark': '', 'password': TEST_PWD}).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})
     tc('12.2', '登记带邮箱成功', d.get('code') == 200 and (d.get('data') or {}).get('email'), str((d.get('data') or {}).get('email'))[:40])
     mc = sql("SELECT card_no FROM reader WHERE reader_name='邮件测试' LIMIT 1;")
     # 12.3 借书（带邮箱读者）→ 业务成功（邮件异步尽力而为，不阻断）

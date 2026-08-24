@@ -553,6 +553,37 @@ public class ReaderController extends BaseController
         return success("重置验证码已发送至该成员邮箱，请转告其在「忘记密码」处使用");
     }
 
+    /** 管理员直接设置密码（代客设密/测试/忘记密码兜底）；权限：system:reader:resetPwd */
+    @PreAuthorize("@ss.hasPermi('system:reader:resetPwd')")
+    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/set-password")
+    public AjaxResult setPassword(@RequestBody com.ruoyi.system.domain.SetPasswordBody body,
+            jakarta.servlet.http.HttpServletRequest request)
+    {
+        if (body == null || body.getReaderId() == null || body.getNewPassword() == null)
+        {
+            return error("参数不完整");
+        }
+        try
+        {
+            PasswordStrength.check(body.getNewPassword());
+        }
+        catch (Exception e)
+        {
+            return error(e.getMessage());
+        }
+        Reader r = readerService.selectReaderByReaderId(body.getReaderId());
+        if (r == null)
+        {
+            return error("成员不存在");
+        }
+        readerService.setPasswordByReaderId(body.getReaderId(), body.getNewPassword());
+        // 强制登出该成员全部会话（密码已被接管，旧会话作废）
+        readerSessionService.revokeOthers(r.getCardNo(), null);
+        loginLogService.log(r.getCardNo(), body.getReaderId(), ipOf(request), "reset_pwd", true, "管理员直接设置密码");
+        return success("密码已设置，该成员需用新密码重新登录");
+    }
+
     /** 前台补办报名证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
      * 频控：按 IP 维度（补办即换证号，防脚本批量作废他人证号） */
     @Anonymous

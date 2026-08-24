@@ -248,6 +248,17 @@ public class ReaderServiceImpl implements IReaderService
         return readerMapper.updateAuth(upd);
     }
 
+    /** 管理员直接设置密码（按成员 ID；忘记密码/代客设密场景，BCrypt + pwd_set=1） */
+    @Override
+    public int setPasswordByReaderId(Long readerId, String newPassword)
+    {
+        Reader upd = new Reader();
+        upd.setReaderId(readerId);
+        upd.setPasswordHash(com.ruoyi.common.utils.SecurityUtils.encryptPassword(newPassword));
+        upd.setPwdSet("1");
+        return readerMapper.updateAuth(upd);
+    }
+
     /** 修改密码：旧密码校验通过后更新（防撞库/盗号改密） */
     @Override
     public int changePassword(String cardNo, String oldPassword, String newPassword)

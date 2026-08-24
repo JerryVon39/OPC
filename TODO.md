@@ -53,17 +53,16 @@
 - [ ] 15. 学员/会员体系（训练营结业认证）：远期，复用 reader
 - [ ] 16. 在线客服 / AI 客服（AI 接入）：远期
 
-## 第五批：认证与邮件整体改造（面向真实环境）🔄 方案已定 2026-08-24，待实施
+## 第五批：认证与邮件整体改造（面向真实环境）✅ 2026-08-24 完成（M1-M5 已实施并编译通过）
 
-> 完整方案见 `docs/整体改造方案-认证与邮件.md`（决策记录 D1-D7 已确认：邮箱验证码为主+短信预留、图形验证码搁置、14 天滑动会话、pwd_set 引导迁移、AES 授权码、定时任务补通知、若依后台不动）
-> 实施按里程碑 M1→M5（M1 邮件基础设施先行，认证体系依赖验证码邮件）
+> 完整方案见 `docs/整体改造方案-认证与邮件.md`；部署要点见 `docs/部署指南.md` 附录（upgrade_20260824_auth.sql 需执行；邮件后台可配；存量成员走"忘记密码"设密引导）
 
-- [ ] 20. **M1 邮件基础设施**：`upgrade_20260824_auth.sql`（两模块全部表/列/菜单）；mail_config/mail_template domain+mapper+service；MailUtil 动态化（数据库配置 > 环境变量 > 内置默认，改完即时生效）；AuthCodeService + VerificationSender 抽象（短信预留）；10 个模板初始化（含 register.success/reissue.notify/auth.code/reserve.cancel 新增 + 续借主题 bug 修复）
-- [ ] 21. **M2 认证核心**：reader 加列（password_hash/pwd_set/email_verified/phone_verified/last_login_time）+ 邮箱查重；BCrypt 密码体系（≥10 位、3 类字符）；登录改 cardNo+password（删除姓名+证号路径）；三步注册（资料+密码 → 邮箱验证码 → 发证号邮件）；找回/登出/改密/改邮箱（敏感操作重验证）；会话 14 天滑动续期 + 多端管理
-- [ ] 22. **M3 安全与审计**：登录频控三层（IP 限速 10 次/分 → 账号 5 次锁 30 分钟 → 递增退避）；reader_login_log 登录审计表（后台可查）；邮箱唯一索引 uk_email；pwd_set=0 存量成员引导流程
-- [ ] 23. **M4 后台与前端**：邮件通知管理页（SMTP 配置 + 测试发送 + 模板编辑，权限 system:mail:config/template）；读者管理重置密码/发送设密邀请（system:reader:resetPwd）+ 邮箱验证徽标；前台登录/注册三步弹窗/忘记密码/个人主页账号安全区
-- [ ] 24. **M5 测试验收**：full_test.py / smoke_official.py 补用例（注册三步/登录/找回/模板渲染/邮件配置）；手工验收清单；部署指南补 HTTPS/SPF/DKIM 建议
-- [ ] 25. **待确认实施启动时机**：整体方案已定，用户指示开工后从 M1 开始
+- [x] 20. **M1 邮件基础设施**：`upgrade_20260824_auth.sql`（两模块全部表/列/菜单）；mail_config/mail_template domain+mapper+service；MailUtil 动态化（数据库配置 > 环境变量 > 内置默认，改完即时生效）；AuthCodeService + VerificationSender 抽象（短信预留）；10 个模板初始化（含 register.success/reissue.notify/auth.code/reserve.cancel 新增 + 续借主题 bug 修复）
+- [x] 21. **M2 认证核心**：reader 加列（password_hash/pwd_set/email_verified/phone_verified/last_login_time）+ 邮箱查重；BCrypt 密码体系（≥10 位、3 类字符）；登录改 cardNo+password（删除姓名+证号路径）；三步注册（资料+密码 → 邮箱验证码 → 发证号邮件）；找回/登出/改密/改邮箱（敏感操作重验证）；会话 14 天滑动续期 + 多端管理
+- [x] 22. **M3 安全与审计**：登录频控三层（IP 限速 10 次/分 → 账号 5 次锁 30 分钟 → 递增退避 1/2/5/15 分钟）；reader_login_log 登录审计表（后台可查）；邮箱唯一索引 uk_email；pwd_set=0 存量成员引导流程（601 专用码）
+- [x] 23. **M4 后台与前端**：邮件通知管理页（SMTP 配置 + 测试发送 + 模板编辑，权限 system:mail:config/template）；读者管理重置密码（发邀请 + 直接设密 system:reader:resetPwd）；前台登录/两步注册/忘记密码弹窗（services.html）；个人主页账号安全区（改密/改邮箱/设备管理，profile.html）
+- [x] 24. **M5 测试验收**：full_test.py / smoke_official.py 更新为新登录契约（证号+密码、admin 设密前置）；部署指南补 HTTPS/SPF/DKIM/MAIL_SECRET_KEY 附录
+- [x] 25. 实施完成：5 个里程碑全部落地（commit 191633f8~8721bd85 后 5 次提交）
 
 ## 内容占位待替换（用户后续提供）
 

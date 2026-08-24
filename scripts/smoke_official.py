@@ -73,14 +73,31 @@ def main():
     check("品牌轮播 3 条", len(d.get("data", [])) == 3, str(d.get("data", []))[:100])
 
     print("== 2. 成员登录与报名链路 ==")
-    d = req("POST", "/system/reader/login", {"readerName": "周舟", "cardNo": "JS20260001"})
+    # 认证改造：登录 = 证号 + 密码；存量成员无密码（pwd_set=0），先由 admin 设测试密码
+    PWD = "Test@12345"
+    d = req("POST", "/login", {"username": "admin", "password": "admin123"})
+    admin_token = d.get("token", "")
+    if admin_token:
+        # 查 readerId 并设密（幂等：重复执行每次都重置为同一密码）；set-password 需 JSON body
+        q = req("GET", "/system/reader/list?pageNum=1&pageSize=10&cardNo=JS20260001", headers={"Authorization": "Bearer " + admin_token})
+        rows = q.get("rows", [])
+        if rows:
+            try:
+                sp = urllib.request.Request(BASE + "/system/reader/set-password",
+                    data=json.dumps({"readerId": rows[0]["readerId"], "newPassword": PWD}).encode("utf-8"),
+                    method="PUT", headers={"Authorization": "Bearer " + admin_token, "Content-Type": "application/json"})
+                with urllib.request.urlopen(sp, timeout=10) as resp:
+                    resp.read()
+            except Exception:
+                pass
+    d = req("POST", "/system/reader/login", {"cardNo": "JS20260001", "password": PWD})
     token = (d.get("data") or {}).get("sessionToken", "")
-    check("成员登录(周舟)", bool(token), d.get("msg", ""))
+    check("成员登录(周舟,证号+密码)", bool(token), d.get("msg", ""))
     if not token:
         print("  中止：登录失败，后续用例跳过")
         return
 
-    d = req("POST", "/system/reader/login", {"readerName": "吴挂", "cardNo": "JS20260004"})
+    d = req("POST", "/system/reader/login", {"cardNo": "JS20260004", "password": PWD})
     check("停用成员登录被拒", d.get("code") != 200, d.get("msg", ""))
 
     # 报名（先查周舟是否已报过该服务——重跑幂等：已报名则跳过实际报名）

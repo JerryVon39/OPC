@@ -45,6 +45,9 @@ public interface IReaderService
     /** 设置/重置密码（BCrypt；pwd_set 置 1） */
     public int setPassword(String cardNo, String newPassword);
 
+    /** 管理员直接设置密码（按成员 ID；忘记密码/代客设密场景） */
+    public int setPasswordByReaderId(Long readerId, String newPassword);
+
     /** 修改密码：校验旧密码正确后更新（失败抛异常） */
     public int changePassword(String cardNo, String oldPassword, String newPassword);
 
