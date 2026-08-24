@@ -51,3 +51,28 @@ export function delBook(bookId) {
     method: 'delete'
   })
 }
+
+// 查询已删除图书列表（后台回收站视图）
+export function listDeletedBook(query) {
+  return request({
+    url: '/system/book/deletedList',
+    method: 'get',
+    params: query
+  })
+}
+
+// 恢复已删除图书
+export function restoreBook(bookIds) {
+  return request({
+    url: '/system/book/restore/' + bookIds,
+    method: 'put'
+  })
+}
+
+// 永久删除图书
+export function purgeBook(bookIds) {
+  return request({
+    url: '/system/book/purge/' + bookIds,
+    method: 'delete'
+  })
+}

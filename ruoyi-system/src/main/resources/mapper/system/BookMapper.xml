@@ -23,22 +23,27 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateBy"    column="update_by"    />
         <result property="updateTime"    column="update_time"    />
         <result property="borrowCount"    column="borrow_count"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="deletedBy"  column="deleted_by"  />
+        <result property="deletedTime" column="deleted_time" />
     </resultMap>
 
     <sql id="selectBookVo">
-        select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, remark, cover, isbn, intro, create_by, create_time, update_by, update_time from book
+        select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, del_flag, deleted_by, deleted_time, remark, cover, isbn, intro, create_by, create_time, update_by, update_time from book
     </sql>
 
     <!-- 列表用：额外带报名次数（报名记录实时统计），支持"报名最多"排序 -->
     <sql id="selectBookListVo">
-        select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, remark, cover, isbn, intro, create_by, create_time, update_by, update_time,
+        select book_id, book_name, author, book_type, publisher, price, publish_date, stock, status, del_flag, deleted_by, deleted_time, remark, cover, isbn, intro, create_by, create_time, update_by, update_time,
         (select count(1) from borrow_record b where b.book_id = book.book_id) as borrow_count
         from book
     </sql>
 
     <select id="selectBookList" parameterType="Book" resultMap="BookResult">
         <include refid="selectBookListVo"/>
-        <where>  
+        <where>
+            <if test="delFlag == null or delFlag == ''"> and del_flag = '0'</if>
+            <if test="delFlag != null and delFlag != ''"> and del_flag = #{delFlag}</if>
             <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
             <if test="author != null  and author != ''"> and author = #{author}</if>
             <if test="bookType != null  and bookType != ''"> and book_type = #{bookType}</if>
@@ -53,12 +58,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <select id="selectBookByBookId" parameterType="Long" resultMap="BookResult">
         <include refid="selectBookVo"/>
-        where book_id = #{bookId}
+        where book_id = #{bookId} and del_flag = '0'
     </select>
 
     <select id="selectBookByBookIdForUpdate" parameterType="Long" resultMap="BookResult">
         <include refid="selectBookVo"/>
-        where book_id = #{bookId} for update
+        where book_id = #{bookId} and del_flag = '0' for update
     </select>
 
     <insert id="insertBook" parameterType="Book" useGeneratedKeys="true" keyProperty="bookId">
@@ -135,6 +140,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
+    <!-- 软删除（两态）：标记 del_flag='2'，仅对未删除行生效（幂等） -->
+    <update id="softDeleteBookByBookIds">
+        update book set del_flag = '2', deleted_by = #{deletedBy}, deleted_time = #{deletedTime}
+        where book_id in
+        <foreach item="bookId" collection="bookIds" open="(" separator="," close=")">#{bookId}</foreach>
+        and del_flag = '0'
+    </update>
+
+    <!-- 恢复（两态）：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） -->
+    <update id="restoreBookByBookIds">
+        update book set del_flag = '0', deleted_by = '', deleted_time = null
+        where book_id in
+        <foreach item="bookId" collection="bookIds" open="(" separator="," close=")">#{bookId}</foreach>
+        and del_flag = '2'
+    </update>
+
     <!-- 原子扣减库存：单条 UPDATE 条件判断，并发安全 -->
     <update id="updateStock">
         update book set stock = stock - #{quantity}
@@ -156,7 +177,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 同类服务推荐：同分类在架书（排除自身，库存充足优先，最多4本） -->
     <select id="selectRelatedBooks" resultMap="BookResult">
         <include refid="selectBookVo"/>
-        where book_id != #{bookId} and book_type = #{bookType} and status = '0'
+        where book_id != #{bookId} and book_type = #{bookType} and status = '0' and del_flag = '0'
         order by stock desc, book_id asc
         limit 4
     </select>
@@ -164,7 +185,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 搜索联想（匿名）：在架书按书名模糊匹配，最多 8 条 -->
     <select id="selectSuggestBooks" resultMap="BookResult">
         select book_id, book_name, author, book_type, price from book
-        where status = '0' and book_name like concat('%', #{keyword}, '%')
+        where status = '0' and book_name like concat('%', #{keyword}, '%') and del_flag = '0'
         order by book_id asc
         limit 8
     </select>
@@ -172,13 +193,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 库存预警（后台看板）：在架书且库存 <= 阈值，按库存升序取前 N 条 -->
     <select id="selectLowStockBooks" resultMap="BookResult">
         select book_id, book_name, stock, status from book
-        where status = '0' and stock &lt;= #{threshold}
+        where status = '0' and stock &lt;= #{threshold} and del_flag = '0'
         order by stock asc, book_id asc
         limit #{limit}
     </select>
 
-    <!-- 批量导入判重：同名服务是否存在 -->
+    <!-- 批量导入判重：同名服务是否存在（软删记录不占同名名额，可重新导入） -->
     <select id="countByBookName" parameterType="String" resultType="int">
-        select count(1) from book where book_name = #{bookName}
+        select count(1) from book where book_name = #{bookName} and del_flag = '0'
     </select>
 </mapper>

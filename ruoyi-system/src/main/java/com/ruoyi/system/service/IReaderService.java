@@ -62,11 +62,17 @@ public interface IReaderService
 
     /**
      * 删除读者管理信息
-     * 
+     *
      * @param readerId 读者管理主键
      * @return 结果
      */
     public int deleteReaderByReaderId(Long readerId);
+
+    /** 恢复已删除读者（两态）：del_flag 置 '0'，重新对前台/列表可见 */
+    public int restoreReaderByReaderIds(Long[] readerIds);
+
+    /** 永久删除读者（两态）：物理删除，不可恢复 */
+    public int purgeReaderByReaderIds(Long[] readerIds);
 
     /**
      * 批量导入读者（Excel 逐行校验：姓名必填/手机号格式/类型字典/证号判重，

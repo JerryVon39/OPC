@@ -57,11 +57,18 @@ public interface BookMapper
 
     /**
      * 批量删除服务信息
-     * 
+     *
      * @param bookIds 需要删除的数据主键集合
      * @return 结果
      */
     public int deleteBookByBookIds(Long[] bookIds);
+
+    /** 软删除（回收站两态）：del_flag 置 '2'，记录删除人/时间；仅对未删除行生效（幂等） */
+    public int softDeleteBookByBookIds(@Param("bookIds") Long[] bookIds,
+            @Param("deletedBy") String deletedBy, @Param("deletedTime") java.util.Date deletedTime);
+
+    /** 恢复已删除服务：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） */
+    public int restoreBookByBookIds(@Param("bookIds") Long[] bookIds);
 
     /** 原子扣减库存：仅当库存充足才扣（并发下不超卖），返回影响行数（0=库存不足） */
     public int updateStock(@Param("bookId") Long bookId, @Param("quantity") Long quantity);

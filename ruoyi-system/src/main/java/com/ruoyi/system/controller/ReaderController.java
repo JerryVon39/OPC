@@ -330,4 +330,39 @@ public class ReaderController extends BaseController
     {
         return toAjax(readerService.deleteReaderByReaderIds(readerIds));
     }
+
+    /**
+     * 已删除成员列表（后台回收站视图）：仅返回 del_flag='2' 的成员，供恢复/永久删除
+     */
+    @PreAuthorize("@ss.hasPermi('system:reader:remove')")
+    @GetMapping("/deletedList")
+    public TableDataInfo deletedList(Reader reader)
+    {
+        reader.setDelFlag("2");
+        startPage();
+        List<Reader> list = readerService.selectReaderList(reader);
+        return getDataTable(list);
+    }
+
+    /**
+     * 恢复已删除成员（两态软删除）
+     */
+    @PreAuthorize("@ss.hasPermi('system:reader:remove')")
+    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/restore/{readerIds}")
+    public AjaxResult restore(@PathVariable Long[] readerIds)
+    {
+        return toAjax(readerService.restoreReaderByReaderIds(readerIds));
+    }
+
+    /**
+     * 永久删除成员（两态软删除）：物理删除，不可恢复
+     */
+    @PreAuthorize("@ss.hasPermi('system:reader:remove')")
+    @Log(title = "读者管理", businessType = BusinessType.DELETE)
+    @DeleteMapping("/purge/{readerIds}")
+    public AjaxResult purge(@PathVariable Long[] readerIds)
+    {
+        return toAjax(readerService.purgeReaderByReaderIds(readerIds));
+    }
 }

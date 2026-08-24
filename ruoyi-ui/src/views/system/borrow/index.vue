@@ -22,9 +22,12 @@
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:borrow:add']">新增报名</el-button>
       </el-col>
+      <!-- 一期隐藏：Excel 批量导出按钮（二期再启用，代码与接口保留） -->
+      <!--
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['system:borrow:export']">导出</el-button>
       </el-col>
+      -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 

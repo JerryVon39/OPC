@@ -187,9 +187,9 @@
     <!-- 首页数据看板：服务/成员/报名/订单聚合统计 -->
     <select id="selectDashboard" resultType="java.util.Map">
         SELECT
-          (SELECT COUNT(*) FROM book) AS bookTotal,
-          (SELECT COUNT(*) FROM book WHERE status = '0') AS bookOnSale,
-          (SELECT COUNT(*) FROM reader) AS readerTotal,
+          (SELECT COUNT(*) FROM book WHERE del_flag = '0') AS bookTotal,
+          (SELECT COUNT(*) FROM book WHERE status = '0' AND del_flag = '0') AS bookOnSale,
+          (SELECT COUNT(*) FROM reader WHERE del_flag = '0') AS readerTotal,
           (SELECT COUNT(*) FROM borrow_record WHERE status IN ('0','2')) AS borrowingCount,
           (SELECT COUNT(*) FROM borrow_record WHERE status = '2' OR (status = '0' AND due_date &lt; CURDATE())) AS overdueCount,
           (SELECT COUNT(*) FROM borrow_record WHERE DATE(borrow_date) = CURDATE()) AS borrowToday,

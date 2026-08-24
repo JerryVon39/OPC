@@ -60,9 +60,16 @@ public interface ReaderMapper
 
     /**
      * 批量删除读者管理
-     * 
+     *
      * @param readerIds 需要删除的数据主键集合
      * @return 结果
      */
     public int deleteReaderByReaderIds(Long[] readerIds);
+
+    /** 软删除（回收站两态）：del_flag 置 '2'，记录删除人/时间；仅对未删除行生效（幂等） */
+    public int softDeleteReaderByReaderIds(@Param("readerIds") Long[] readerIds,
+            @Param("deletedBy") String deletedBy, @Param("deletedTime") java.util.Date deletedTime);
+
+    /** 恢复已删除读者：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） */
+    public int restoreReaderByReaderIds(@Param("readerIds") Long[] readerIds);
 }

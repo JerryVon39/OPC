@@ -68,6 +68,8 @@ public class BookController extends BaseController
             }
         }
         startPage();
+        // 前台/后台共用列表一律只暴露未删除服务（软删记录不可见，防匿名传参翻看回收站）
+        book.setDelFlag("0");
         List<Book> list = bookService.selectBookList(book);
         // 简介渲染 BBCODE（展示为富文本；后台编辑回显走 getInfo 不受影响）
         com.ruoyi.system.util.RenderUtil.renderBookIntro(list);
@@ -194,5 +196,40 @@ public class BookController extends BaseController
     public AjaxResult remove(@PathVariable Long[] bookIds)
     {
         return toAjax(bookService.deleteBookByBookIds(bookIds));
+    }
+
+    /**
+     * 已删除服务列表（后台回收站视图）：仅返回 del_flag='2' 的服务，供恢复/永久删除
+     */
+    @PreAuthorize("@ss.hasPermi('system:book:remove')")
+    @GetMapping("/deletedList")
+    public TableDataInfo deletedList(Book book)
+    {
+        book.setDelFlag("2");
+        startPage();
+        List<Book> list = bookService.selectBookList(book);
+        return getDataTable(list);
+    }
+
+    /**
+     * 恢复已删除服务（两态软删除）
+     */
+    @PreAuthorize("@ss.hasPermi('system:book:remove')")
+    @Log(title = "图书信息", businessType = BusinessType.UPDATE)
+    @PutMapping("/restore/{bookIds}")
+    public AjaxResult restore(@PathVariable Long[] bookIds)
+    {
+        return toAjax(bookService.restoreBookByBookIds(bookIds));
+    }
+
+    /**
+     * 永久删除服务（两态软删除）：物理删除，不可恢复
+     */
+    @PreAuthorize("@ss.hasPermi('system:book:remove')")
+    @Log(title = "图书信息", businessType = BusinessType.DELETE)
+    @DeleteMapping("/purge/{bookIds}")
+    public AjaxResult purge(@PathVariable Long[] bookIds)
+    {
+        return toAjax(bookService.purgeBookByBookIds(bookIds));
     }
 }

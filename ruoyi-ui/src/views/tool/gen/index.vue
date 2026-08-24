@@ -56,6 +56,8 @@
           v-hasRole="['admin']"
         >创建</el-button>
       </el-col>
+      <!-- 一期隐藏：导入数据表按钮（生成器导入，二期可再启用） -->
+      <!--
       <el-col :span="1.5">
         <el-button
           type="info"
@@ -66,6 +68,7 @@
           v-hasPermi="['tool:gen:import']"
         >导入</el-button>
       </el-col>
+      -->
       <el-col :span="1.5">
         <el-button
           type="success"

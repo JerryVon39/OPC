@@ -1,8 +1,10 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -16,7 +18,6 @@ import com.ruoyi.system.mapper.BookReserveMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.service.IBookService;
-import com.ruoyi.system.service.IRecycleService;
 import com.ruoyi.system.service.StatisticsService;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.system.service.ISysDictDataService;
@@ -48,8 +49,12 @@ public class BookServiceImpl implements IBookService
     @Autowired
     private ISysDictDataService sysDictDataService;
 
-    @Autowired
-    private IRecycleService recycleService;
+    /** 取当前操作人（未登录/定时任务场景返回空串，不抛异常） */
+    private String operator()
+    {
+        try { return SecurityUtils.getUsername(); }
+        catch (Exception e) { return ""; }
+    }
 
     /**
      * 查询服务信息
@@ -179,7 +184,6 @@ public class BookServiceImpl implements IBookService
     {
         // 排序：批量删除的加锁顺序一致，避免并发批量删除互相持锁等待（死锁）
         Arrays.sort(bookIds);
-        java.util.List<Book> toSnapshot = new java.util.ArrayList<>();
         for (Long bookId : bookIds)
         {
             // 锁服务行（FOR UPDATE）：防止检查通过后、删除前并发插入新的报名/订单（检查与删除同事务原子化）
@@ -219,15 +223,10 @@ public class BookServiceImpl implements IBookService
                     throw new com.ruoyi.common.exception.ServiceException("该图书存在预约中的读者，请先取消预约后再删除");
                 }
             }
-            // 校验全部通过：记入待快照集合，供误删后回收站还原
-            toSnapshot.add(book);
+            // 校验全部通过：进入软删除（数据保留在原表，标记 del_flag='2'）
         }
-        // 物理删除前先把通过校验的服务快照进回收站（同事务，任一失败整体回滚）
-        for (Book b : toSnapshot)
-        {
-            recycleService.snapshotBook(b, null);
-        }
-        int rows = bookMapper.deleteBookByBookIds(bookIds);
+        // 软删除（两态）：删除人对前台/列表不可见，后台提供「恢复」与「永久删除」；同事务，任一失败整体回滚
+        int rows = bookMapper.softDeleteBookByBookIds(bookIds, operator(), new Date());
         // 馆藏总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
@@ -242,7 +241,27 @@ public class BookServiceImpl implements IBookService
     @Override
     public int deleteBookByBookId(Long bookId)
     {
-        return bookMapper.deleteBookByBookId(bookId);
+        // 统一走批量软删除（保证两态一致性）
+        return deleteBookByBookIds(new Long[] { bookId });
+    }
+
+    /** 恢复已删除服务：del_flag 置 '0'，重新对前台/列表可见 */
+    @Override
+    @Transactional
+    public int restoreBookByBookIds(Long[] bookIds)
+    {
+        return bookMapper.restoreBookByBookIds(bookIds);
+    }
+
+    /** 永久删除服务：物理删除，不可恢复 */
+    @Override
+    @Transactional
+    public int purgeBookByBookIds(Long[] bookIds)
+    {
+        int rows = bookMapper.deleteBookByBookIds(bookIds);
+        // 馆藏总数变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**

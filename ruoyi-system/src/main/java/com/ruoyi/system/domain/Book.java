@@ -71,6 +71,9 @@ public class Book extends BaseEntity
     /** 报名次数（列表查询派生：报名记录统计字段，非数据库列） */
     private Long borrowCount;
 
+    /** 删除标志（0存在 2删除，软删除两态） */
+    private String delFlag;
+
     /** 回收站ID（回收站列表/还原用，非 book 表列） */
     private Long recycleId;
 
@@ -100,6 +103,8 @@ public class Book extends BaseEntity
 
     public Long getRecycleId() { return recycleId; }
     public void setRecycleId(Long recycleId) { this.recycleId = recycleId; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
     public Date getDeletedTime() { return deletedTime; }
     public void setDeletedTime(Date deletedTime) { this.deletedTime = deletedTime; }
     public String getDeletedBy() { return deletedBy; }

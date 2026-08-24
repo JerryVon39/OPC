@@ -19,15 +19,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"    column="update_by"    />
         <result property="updateTime"    column="update_time"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="deletedBy"  column="deleted_by"  />
+        <result property="deletedTime" column="deleted_time" />
     </resultMap>
 
     <sql id="selectReaderVo">
-        select reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date, status, remark, create_by, create_time, update_by, update_time from reader
+        select reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date, status, del_flag, deleted_by, deleted_time, remark, create_by, create_time, update_by, update_time from reader
     </sql>
 
     <select id="selectReaderList" parameterType="Reader" resultMap="ReaderResult">
         <include refid="selectReaderVo"/>
-        <where>  
+        <where>
+            <if test="delFlag == null or delFlag == ''"> and del_flag = '0'</if>
+            <if test="delFlag != null and delFlag != ''"> and del_flag = #{delFlag}</if>
             <if test="readerName != null  and readerName != ''"> and reader_name like concat('%', #{readerName}, '%')</if>
             <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
             <if test="cardNo != null  and cardNo != ''"> and card_no = #{cardNo}</if>
@@ -40,12 +45,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <select id="selectReaderByReaderId" parameterType="Long" resultMap="ReaderResult">
         <include refid="selectReaderVo"/>
-        where reader_id = #{readerId}
+        where reader_id = #{readerId} and del_flag = '0'
     </select>
 
     <select id="selectReaderByReaderIdForUpdate" parameterType="Long" resultMap="ReaderResult">
         <include refid="selectReaderVo"/>
-        where reader_id = #{readerId} for update
+        where reader_id = #{readerId} and del_flag = '0' for update
     </select>
 
     <insert id="insertReader" parameterType="Reader" useGeneratedKeys="true" keyProperty="readerId">
@@ -112,6 +117,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{readerId}
         </foreach>
     </delete>
+
+    <!-- 软删除（两态）：标记 del_flag='2'，仅对未删除行生效（幂等） -->
+    <update id="softDeleteReaderByReaderIds">
+        update reader set del_flag = '2', deleted_by = #{deletedBy}, deleted_time = #{deletedTime}
+        where reader_id in
+        <foreach item="readerId" collection="readerIds" open="(" separator="," close=")">#{readerId}</foreach>
+        and del_flag = '0'
+    </update>
+
+    <!-- 恢复（两态）：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） -->
+    <update id="restoreReaderByReaderIds">
+        update reader set del_flag = '0', deleted_by = '', deleted_time = null
+        where reader_id in
+        <foreach item="readerId" collection="readerIds" open="(" separator="," close=")">#{readerId}</foreach>
+        and del_flag = '2'
+    </update>
 
     <!-- 批量导入判重：借书证号是否已存在 -->
     <select id="countByCardNo" parameterType="String" resultType="int">

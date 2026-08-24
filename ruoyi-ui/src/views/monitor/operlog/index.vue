@@ -98,6 +98,8 @@
           v-hasPermi="['monitor:operlog:remove']"
         >清空</el-button>
       </el-col>
+      <!-- 一期隐藏：Excel 批量导出按钮（二期再启用，代码与接口保留） -->
+      <!--
       <el-col :span="1.5">
         <el-button
           type="warning"
@@ -108,6 +110,7 @@
           v-hasPermi="['monitor:operlog:export']"
         >导出</el-button>
       </el-col>
+      -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 

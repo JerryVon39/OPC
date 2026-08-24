@@ -53,6 +53,9 @@ public class Reader extends BaseEntity
     @Excel(name = "状态(0正常 1停用)")
     private String status;
 
+    /** 删除标志（0存在 2删除，软删除两态） */
+    private String delFlag;
+
     /** 回收站ID（回收站列表/还原用，非 reader 表列） */
     private Long recycleId;
 
@@ -154,6 +157,8 @@ public class Reader extends BaseEntity
 
     public Long getRecycleId() { return recycleId; }
     public void setRecycleId(Long recycleId) { this.recycleId = recycleId; }
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
     public java.util.Date getDeletedTime() { return deletedTime; }
     public void setDeletedTime(java.util.Date deletedTime) { this.deletedTime = deletedTime; }
     public String getDeletedBy() { return deletedBy; }

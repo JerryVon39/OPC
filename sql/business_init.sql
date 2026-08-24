@@ -296,8 +296,7 @@ SELECT '报名导出',(SELECT menu_id FROM sys_menu WHERE menu_name='报名管�
 
 -- ---------- 定时任务：报名截止检查 ----------
 UPDATE sys_job SET job_name='报名截止检查' WHERE job_name='逾期检查';
-INSERT INTO sys_job (job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, remark)
-SELECT '报名截止检查','SYSTEM','borrowTask.updateOverdueStatus()','0 0 0 * * ?','3','1','0','admin',NOW(),'每天0点自动标记报名截止' WHERE NOT EXISTS (SELECT 1 FROM sys_job WHERE job_name='报名截止检查');
+-- 已移除：公告类「报名截止检查」任务（borrowTask.updateOverdueStatus，逾期语义为图书系统遗留，社区官网不需要）
 
 -- ============================================
 -- 以下为后续版本补充（幂等）：服务封面/编号/介绍列、购书订单表

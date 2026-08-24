@@ -77,9 +77,15 @@ public interface IBookService
 
     /**
      * 删除服务信息信息
-     * 
+     *
      * @param bookId 服务信息主键
      * @return 结果
      */
     public int deleteBookByBookId(Long bookId);
+
+    /** 恢复已删除服务（两态）：del_flag 置 '0'，重新对前台/列表可见 */
+    public int restoreBookByBookIds(Long[] bookIds);
+
+    /** 永久删除服务（两态）：物理删除，不可恢复 */
+    public int purgeBookByBookIds(Long[] bookIds);
 }

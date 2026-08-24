@@ -149,10 +149,10 @@ DELETE FROM sys_role_menu WHERE menu_id IN
 DELETE FROM sys_menu WHERE menu_name IN ('文章管理查询','文章管理新增','文章管理修改','文章管理删除','文章管理发布') AND perms LIKE 'system:article:%';
 
 -- ============================================
--- 6. 角色关联补充：服务运营专员（librarian）授予 CMS 全套菜单（幂等：按 role_id+menu_id 判重）
+-- 6. 角色关联补充：内容编辑（editor）授予 CMS 全套菜单（幂等：按 role_id+menu_id 判重）
 -- ============================================
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
-WHERE r.role_key IN ('librarian') AND m.menu_name IN
+WHERE r.role_key IN ('editor') AND m.menu_name IN
 ('CMS 管理','文章管理','文章查询','文章新增','文章修改','文章删除','文章发布')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);

@@ -1,8 +1,10 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -15,7 +17,6 @@ import com.ruoyi.system.domain.Reader;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IReaderService;
-import com.ruoyi.system.service.IRecycleService;
 import com.ruoyi.system.service.StatisticsService;
 
 /**
@@ -45,8 +46,12 @@ public class ReaderServiceImpl implements IReaderService
     @Autowired
     private com.ruoyi.system.service.ISysDictDataService sysDictDataService;
 
-    @Autowired
-    private IRecycleService recycleService;
+    /** 取当前操作人（未登录/定时任务场景返回空串，不抛异常） */
+    private String operator()
+    {
+        try { return SecurityUtils.getUsername(); }
+        catch (Exception e) { return ""; }
+    }
 
     /**
      * 查询成员管理
@@ -104,10 +109,7 @@ public class ReaderServiceImpl implements IReaderService
         for (int i = 0; i < 10; i++)
         {
             String cardNo = "JS" + String.format("%08d", CARD_RANDOM.nextInt(100000000));
-            Reader query = new Reader();
-            query.setCardNo(cardNo);
-            List<Reader> exists = readerMapper.selectReaderList(query);
-            if (exists == null || exists.isEmpty())
+            if (readerMapper.countByCardNo(cardNo) == 0)
             {
                 return cardNo;
             }
@@ -117,17 +119,15 @@ public class ReaderServiceImpl implements IReaderService
 
     public int insertReader(Reader reader)
     {
-        // 证号唯一性校验：有证号的登记/添加必须先查重（防止同证号多条记录）
+        // 证号唯一性校验：有证号的登记/添加必须先查重（含已删除软删行——软删记录仍占用 uk_card_no，防止裸数据库异常）
         if (reader.getCardNo() != null && !reader.getCardNo().trim().isEmpty())
         {
-            Reader query = new Reader();
-            query.setCardNo(reader.getCardNo().trim());
-            List<Reader> exists = readerMapper.selectReaderList(query);
-            if (exists != null && !exists.isEmpty())
+            String cardNo = reader.getCardNo().trim();
+            if (readerMapper.countByCardNo(cardNo) > 0)
             {
                 throw new com.ruoyi.common.exception.ServiceException("该借书证号已被使用，请更换");
             }
-            reader.setCardNo(reader.getCardNo().trim());
+            reader.setCardNo(cardNo);
         }
         else
         {
@@ -226,7 +226,6 @@ public class ReaderServiceImpl implements IReaderService
     {
         // 排序：批量删除的加锁顺序一致，避免并发批量删除互相持锁等待（死锁）
         Arrays.sort(readerIds);
-        java.util.List<Reader> toSnapshot = new java.util.ArrayList<>();
         for (Long readerId : readerIds)
         {
             // 锁成员行（FOR UPDATE）：防止检查通过后、删除前并发报名/下单/候补（检查与删除同事务原子化）
@@ -255,15 +254,10 @@ public class ReaderServiceImpl implements IReaderService
             {
                 throw new com.ruoyi.common.exception.ServiceException("该读者存在待处理订单，无法删除");
             }
-            // 校验全部通过：记入待快照集合，供误删后回收站还原
-            toSnapshot.add(reader);
+            // 校验全部通过：进入软删除（数据保留在原表，标记 del_flag='2'）
         }
-        // 物理删除前先把通过校验的成员快照进回收站（同事务，任一失败整体回滚）
-        for (Reader r : toSnapshot)
-        {
-            recycleService.snapshotReader(r, null);
-        }
-        int rows = readerMapper.deleteReaderByReaderIds(readerIds);
+        // 软删除（两态）：成员对前台/列表不可见，后台提供「恢复」与「永久删除」；同事务，任一失败整体回滚
+        int rows = readerMapper.softDeleteReaderByReaderIds(readerIds, operator(), new Date());
         // 成员总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
@@ -271,14 +265,34 @@ public class ReaderServiceImpl implements IReaderService
 
     /**
      * 删除成员管理信息
-     * 
+     *
      * @param readerId 成员管理主键
      * @return 结果
      */
     @Override
     public int deleteReaderByReaderId(Long readerId)
     {
-        return readerMapper.deleteReaderByReaderId(readerId);
+        // 统一走批量软删除（保证两态一致性）
+        return deleteReaderByReaderIds(new Long[] { readerId });
+    }
+
+    /** 恢复已删除成员：del_flag 置 '0'，重新对前台/列表可见 */
+    @Override
+    @Transactional
+    public int restoreReaderByReaderIds(Long[] readerIds)
+    {
+        return readerMapper.restoreReaderByReaderIds(readerIds);
+    }
+
+    /** 永久删除成员：物理删除，不可恢复 */
+    @Override
+    @Transactional
+    public int purgeReaderByReaderIds(Long[] readerIds)
+    {
+        int rows = readerMapper.deleteReaderByReaderIds(readerIds);
+        // 成员总数变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**

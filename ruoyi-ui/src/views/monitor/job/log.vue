@@ -79,6 +79,8 @@
           v-hasPermi="['monitor:job:remove']"
         >清空</el-button>
       </el-col>
+      <!-- 一期隐藏：Excel 批量导出按钮（二期再启用，代码与接口保留） -->
+      <!--
       <el-col :span="1.5">
         <el-button
           type="warning"
@@ -89,6 +91,7 @@
           v-hasPermi="['monitor:job:export']"
         >导出</el-button>
       </el-col>
+      -->
       <el-col :span="1.5">
         <el-button
           type="warning"
