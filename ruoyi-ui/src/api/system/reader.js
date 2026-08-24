@@ -45,6 +45,20 @@ export function resetPwdInvite(readerId) {
   return request({ url: '/system/reader/reset-pwd-invite/' + readerId, method: 'post' })
 }
 
+// 管理员直接设置密码（代客设密）
+export function setPassword(data) {
+  return request({ url: '/system/reader/set-password', method: 'put', data: data })
+}
+
+// 成员登录日志（后台审计查询）
+export function listLoginLog(query) {
+  return request({
+    url: '/system/reader/loginLog',
+    method: 'get',
+    params: query
+  })
+}
+
 export function delReader(readerId) {
   return request({
     url: '/system/reader/' + readerId,

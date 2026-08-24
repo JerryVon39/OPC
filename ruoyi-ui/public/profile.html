@@ -334,6 +334,7 @@
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
         closeModal('loginModal');
         toast('欢迎回来，' + currentUser.readerName);
+        if (currentUser.emailVerified === false) { setTimeout(() => toast('提示：您的邮箱尚未验证，建议在「账号安全」中验证'), 2000); }
         initProfile();
       } else if (d.code === 601) {
         // 存量成员首次登录：引导去 services.html 走"忘记密码"设密流程
@@ -592,7 +593,7 @@
         return '<div class="profile-list-item">' +
           '<div><div class="pl-title">' + esc(s.device || '未知设备') + '</div>' +
           '<div class="pl-sub">' + esc(s.ip || '—') + ' ｜ 最近活跃：' + time + '</div></div>' +
-          '<span class="pl-status st-pending">' + (s.cardNo === currentUser.cardNo ? '当前' : '') + '</span>' +
+          '<span class="pl-status st-pending">' + (s.current ? '当前' : '') + '</span>' +
         '</div>';
       }).join('') +
       '<button class="btn-buy" style="width:100%;margin-top:12px" onclick="revokeOthers()">退出其他设备</button>';

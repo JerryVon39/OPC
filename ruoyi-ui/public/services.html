@@ -677,6 +677,7 @@
         closeModal('loginModal');
         msg.textContent = '';
         toast('登录成功，欢迎 ' + currentUser.readerName + '！');
+        if (currentUser.emailVerified === false) { setTimeout(() => toast('提示：您的邮箱尚未验证，建议在个人主页「账号安全」中验证'), 2000); }
         // 加载报名与候补状态（"已报名"/"已候补"标识）并刷新列表
         await loadBorrowed();
         await loadReserved();

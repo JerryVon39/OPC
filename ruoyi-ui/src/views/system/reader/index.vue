@@ -63,6 +63,16 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
+          type="info"
+          plain
+          icon="el-icon-time"
+          size="mini"
+          @click="openLoginLog"
+          v-hasPermi="['system:reader:list']"
+        >登录日志</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
           type="danger"
           plain
           icon="el-icon-delete"
@@ -141,7 +151,7 @@
             size="mini"
             type="text"
             icon="el-icon-key"
-            @click="handleResetPwdInvite(scope.row)"
+            @click="handleResetPwd(scope.row)"
             v-hasPermi="['system:reader:resetPwd']"
           >重置密码</el-button>
           <el-button
@@ -161,6 +171,74 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 登录日志对话框 -->
+    <el-dialog title="成员登录日志" :visible.sync="logOpen" width="860px" append-to-body>
+      <el-form :inline="true" size="small" style="margin-bottom:10px">
+        <el-form-item label="成员编号">
+          <el-input v-model="logQuery.cardNo" placeholder="证号/手机号/邮箱" clearable style="width:200px" @keyup.enter.native="loadLog" />
+        </el-form-item>
+        <el-form-item label="事件">
+          <el-select v-model="logQuery.event" placeholder="全部" clearable style="width:140px">
+            <el-option label="登录" value="login" />
+            <el-option label="登录失败" value="login_fail" />
+            <el-option label="登出" value="logout" />
+            <el-option label="改密" value="change_pwd" />
+            <el-option label="重置密码" value="reset_pwd" />
+            <el-option label="改邮箱" value="change_email" />
+            <el-option label="注册" value="register" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结果">
+          <el-select v-model="logQuery.result" placeholder="全部" clearable style="width:100px">
+            <el-option label="成功" value="1" />
+            <el-option label="失败" value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" size="mini" @click="loadLog">查询</el-button>
+        </el-form-item>
+      </el-form>
+      <el-table v-loading="logLoading" :data="logList" height="420">
+        <el-table-column label="时间" align="center" prop="createTime" width="170" />
+        <el-table-column label="成员编号" align="center" prop="cardNo" width="130" />
+        <el-table-column label="事件" align="center" width="100">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.event === 'login'" type="success" size="mini">登录</el-tag>
+            <el-tag v-else-if="scope.row.event === 'login_fail'" type="danger" size="mini">登录失败</el-tag>
+            <el-tag v-else-if="scope.row.event === 'logout'" type="info" size="mini">登出</el-tag>
+            <el-tag v-else-if="scope.row.event === 'change_pwd'" type="warning" size="mini">改密</el-tag>
+            <el-tag v-else-if="scope.row.event === 'reset_pwd'" type="warning" size="mini">重置密码</el-tag>
+            <el-tag v-else-if="scope.row.event === 'change_email'" type="warning" size="mini">改邮箱</el-tag>
+            <el-tag v-else size="mini">{{ scope.row.event }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="结果" align="center" width="80">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.result === '1'" type="success" size="mini">成功</el-tag>
+            <el-tag v-else type="danger" size="mini">失败</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="IP" align="center" prop="ip" width="140" />
+        <el-table-column label="备注" align="center" prop="msg" :show-overflow-tooltip="true" />
+      </el-table>
+      <pagination v-show="logTotal > 0" :total="logTotal" :page.sync="logQuery.pageNum" :limit.sync="logQuery.pageSize" @pagination="loadLog" />
+    </el-dialog>
+
+    <!-- 重置密码对话框：发邀请邮件 / 直接设密 -->
+    <el-dialog title="重置成员密码" :visible.sync="pwdOpen" width="480px" append-to-body>
+      <div style="margin-bottom:14px">成员：<b>{{ pwdRow.readerName }}</b>（{{ pwdRow.cardNo }}，邮箱：{{ pwdRow.email || '未登记' }}）</div>
+      <el-radio-group v-model="pwdMode">
+        <el-radio label="invite">发送重置邀请邮件（成员自行在「忘记密码」处设置）</el-radio>
+        <el-radio label="direct" style="margin-top:8px">直接设置新密码（管理员代设）</el-radio>
+      </el-radio-group>
+      <el-input v-if="pwdMode === 'direct'" v-model="pwdNew" type="password" show-password
+        placeholder="新密码（≥10 位，含大小写/数字/符号至少 3 类）" style="margin-top:12px" />
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" :loading="pwdSaving" @click="submitResetPwd">确认</el-button>
+        <el-button @click="pwdOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
     
     <pagination
       v-show="total>0"
@@ -279,7 +357,7 @@
 </template>
 
 <script>
-import { listReader, getReader, delReader, addReader, updateReader, reissueCard, resetPwdInvite } from "@/api/system/reader"
+import { listReader, getReader, delReader, addReader, updateReader, reissueCard, resetPwdInvite, setPassword, listLoginLog } from "@/api/system/reader"
 import { getDicts } from "@/api/system/dict/data"
 import { getToken } from "@/utils/auth"
 
@@ -349,6 +427,20 @@ export default {
     this.getList()
   },
   methods: {
+    /** 打开登录日志 */
+    openLoginLog() {
+      this.logOpen = true
+      this.logQuery = { pageNum: 1, pageSize: 10, cardNo: '', event: '', result: '' }
+      this.loadLog()
+    },
+    loadLog() {
+      this.logLoading = true
+      listLoginLog(this.logQuery).then(res => {
+        this.logList = res.rows || []
+        this.logTotal = res.total || 0
+        this.logLoading = false
+      }).catch(() => { this.logLoading = false })
+    },
     /** 查询成员管理列表 */
     getList() {
       this.loading = true
@@ -370,6 +462,16 @@ export default {
     reset() {
       this.form = {
         readerId: null,
+        logOpen: false,
+        logLoading: false,
+        logList: [],
+        logTotal: 0,
+        logQuery: { pageNum: 1, pageSize: 10, cardNo: '', event: '', result: '' },
+        pwdOpen: false,
+        pwdSaving: false,
+        pwdRow: {},
+        pwdMode: 'invite',
+        pwdNew: '',
         readerName: null,
         phone: null,
         email: null,
@@ -421,13 +523,32 @@ export default {
         this.getList()
       }).catch(() => {})
     },
-    /** 重置密码：向成员登记邮箱发送重置验证码（成员在"忘记密码"处自助设置） */
-    handleResetPwdInvite(row) {
-      this.$modal.confirm('确认向《' + row.readerName + '》的登记邮箱发送重置密码验证码吗？').then(() => {
-        return resetPwdInvite(row.readerId)
-      }).then(res => {
-        this.$modal.msgSuccess(res.msg || '验证码已发送')
-      }).catch(() => {})
+    /** 重置密码：弹窗选择"发邀请邮件"或"管理员直接设密" */
+    handleResetPwd(row) {
+      this.pwdRow = row
+      this.pwdMode = 'invite'
+      this.pwdNew = ''
+      this.pwdOpen = true
+    },
+    submitResetPwd() {
+      const row = this.pwdRow
+      if (this.pwdMode === 'invite') {
+        this.pwdSaving = true
+        resetPwdInvite(row.readerId).then(res => {
+          this.$modal.msgSuccess(res.msg || '验证码已发送至登记邮箱')
+          this.pwdOpen = false
+        }).finally(() => { this.pwdSaving = false })
+      } else {
+        if (!this.pwdNew || this.pwdNew.length < 10) {
+          this.$modal.msgError('新密码长度至少 10 位')
+          return
+        }
+        this.pwdSaving = true
+        setPassword({ readerId: row.readerId, newPassword: this.pwdNew }).then(() => {
+          this.$modal.msgSuccess('密码已设置，该成员需用新密码重新登录')
+          this.pwdOpen = false
+        }).finally(() => { this.pwdSaving = false })
+      }
     },
     handleUpdate(row) {
       this.reset()

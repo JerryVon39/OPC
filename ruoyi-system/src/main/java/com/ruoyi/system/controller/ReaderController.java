@@ -489,17 +489,29 @@ public class ReaderController extends BaseController
         return success("邮箱修改成功");
     }
 
-    /** 会话列表（会话鉴权）：多端管理展示（设备/IP/最近活跃，不含 token） */
+    /** 会话列表（会话鉴权）：多端管理展示（设备/IP/最近活跃，不含 token）；
+     * 当前请求对应的会话标记 isCurrent=true（前端"当前设备"标识） */
     @Anonymous
     @GetMapping("/sessions")
     public AjaxResult sessions(jakarta.servlet.http.HttpServletRequest request)
     {
-        String cardNo = readerSessionService.resolveFromRequest(request);
-        if (cardNo == null)
+        String token = request.getHeader("X-Session-Token");
+        if (token == null || token.trim().isEmpty())
+        {
+            token = request.getParameter("sessionToken");
+        }
+        ReaderSession current = readerSessionService.resolveInfo(token);
+        if (current == null)
         {
             return error("登录已失效，请重新登录");
         }
-        return success(readerSessionService.listSessions(cardNo));
+        List<ReaderSession> list = readerSessionService.listSessions(current.getCardNo());
+        for (ReaderSession s : list)
+        {
+            // 当前设备 = 最近活跃时间与本次会话一致的会话（同一会话解析时时间戳不变）
+            s.setCurrent(s.getLastActiveAt() == current.getLastActiveAt());
+        }
+        return success(list);
     }
 
     /** 退出其他设备（会话鉴权）：保留当前会话 */

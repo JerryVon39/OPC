@@ -17,6 +17,9 @@ public class ReaderSession
     /** 最近活跃时间（毫秒时间戳） */
     private long lastActiveAt;
 
+    /** 是否当前请求所在设备（sessions 接口标记，不落 Redis） */
+    private boolean current;
+
     public ReaderSession() { }
 
     public ReaderSession(String cardNo, String device, String ip, long lastActiveAt)
@@ -63,4 +66,6 @@ public class ReaderSession
     public void setIp(String ip) { this.ip = ip; }
     public long getLastActiveAt() { return lastActiveAt; }
     public void setLastActiveAt(long lastActiveAt) { this.lastActiveAt = lastActiveAt; }
+    public boolean isCurrent() { return current; }
+    public void setCurrent(boolean current) { this.current = current; }
 }
