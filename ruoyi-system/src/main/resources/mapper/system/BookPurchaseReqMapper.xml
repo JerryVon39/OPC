@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="email"       column="email"     />
         <result property="status"      column="status"    />
         <result property="remark"      column="remark"    />
+        <result property="readerId"    column="reader_id" />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"  column="create_time"  />
         <result property="updateBy"    column="update_by"    />
@@ -18,7 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectBookPurchaseReqVo">
-        select req_id, book_name, author, email, status, remark, create_by, create_time, update_by, update_time from book_purchase_req
+        select req_id, book_name, author, email, status, remark, reader_id, create_by, create_time, update_by, update_time from book_purchase_req
     </sql>
 
     <select id="selectBookPurchaseReqList" parameterType="BookPurchaseReq" resultMap="BookPurchaseReqResult">
@@ -27,6 +28,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
             <if test="author != null  and author != ''"> and author = #{author}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="readerId != null"> and reader_id = #{readerId}</if>
         </where>
         order by req_id desc
     </select>
@@ -49,6 +51,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="email != null">email,</if>
             <if test="status != null">status,</if>
             <if test="remark != null">remark,</if>
+            <if test="readerId != null">reader_id,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateBy != null">update_by,</if>
@@ -60,6 +63,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="email != null">#{email},</if>
             <if test="status != null">#{status},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="readerId != null">#{readerId},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateBy != null">#{updateBy},</if>

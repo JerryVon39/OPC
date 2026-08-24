@@ -35,6 +35,32 @@ public class BookPurchaseReq extends BaseEntity
     @Excel(name = "状态(0待处理 1已处理 2已拒绝)")
     private String status;
 
+    /** 申请成员ID（前台登录后提交时关联；匿名历史数据为空） */
+    private Long readerId;
+
+    /** 成员编号（我的入驻申请查询用，非表字段） */
+    private String cardNo;
+
+    public void setReaderId(Long readerId)
+    {
+        this.readerId = readerId;
+    }
+
+    public Long getReaderId()
+    {
+        return readerId;
+    }
+
+    public void setCardNo(String cardNo)
+    {
+        this.cardNo = cardNo;
+    }
+
+    public String getCardNo()
+    {
+        return cardNo;
+    }
+
     public void setReqId(Long reqId)
     {
         this.reqId = reqId;

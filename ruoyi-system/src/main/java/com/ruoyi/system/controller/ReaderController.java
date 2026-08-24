@@ -185,6 +185,8 @@ public class ReaderController extends BaseController
         result.put("readerName", r.getReaderName());
         result.put("cardNo", r.getCardNo());
         result.put("email", r.getEmail());
+        // 注册即登录：直接签发会话令牌，前端免二次登录（与 login 返回结构一致）
+        result.put("sessionToken", readerSessionService.create(r.getCardNo()));
         return success(result);
     }
 

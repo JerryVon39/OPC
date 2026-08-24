@@ -38,6 +38,9 @@ public class BookPurchaseReqController extends BaseController
     @Autowired
     private com.ruoyi.system.service.ReaderSessionService readerSessionService;
 
+    @Autowired
+    private com.ruoyi.system.service.IReaderService readerService;
+
     /**
      * 查询入驻申请申请列表
      */
@@ -63,6 +66,7 @@ public class BookPurchaseReqController extends BaseController
     /**
      * 前台匿名提交入驻申请申请（搜索无结果时的"申请入驻申请"按钮）
      * 频控：按 IP 维度（30 分钟窗口内失败 5 次拦截，防脚本刷表）
+     * 登录态：带合法会话则自动绑定到成员账号（个人主页「我的入驻申请」可见）
      */
     @Anonymous
     @PostMapping("/apply")
@@ -72,6 +76,18 @@ public class BookPurchaseReqController extends BaseController
         if (readerSessionService.isBlocked(failKey))
         {
             return error("操作过于频繁，请稍后再试");
+        }
+        // 登录态绑定：会话合法时把申请挂到该成员名下（不强制登录，匿名仍可提交）
+        String sessionCard = readerSessionService.resolveFromRequest(request);
+        if (sessionCard != null)
+        {
+            com.ruoyi.system.domain.Reader q = new com.ruoyi.system.domain.Reader();
+            q.setCardNo(sessionCard);
+            java.util.List<com.ruoyi.system.domain.Reader> readers = readerService.selectReaderList(q);
+            if (readers != null && !readers.isEmpty())
+            {
+                bookPurchaseReq.setReaderId(readers.get(0).getReaderId());
+            }
         }
         try
         {
@@ -83,6 +99,28 @@ public class BookPurchaseReqController extends BaseController
             readerSessionService.recordFail(failKey);
             throw e;
         }
+    }
+
+    /** 前台我的入驻申请（匿名）：短期成员会话 + 证号校验后返回本人申请列表 */
+    @Anonymous
+    @GetMapping("/myList")
+    public AjaxResult myList(String cardNo, jakarta.servlet.http.HttpServletRequest request)
+    {
+        String sessionCard = readerSessionService.resolveFromRequest(request);
+        if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
+        {
+            return error("登录已失效，请重新登录");
+        }
+        com.ruoyi.system.domain.Reader q = new com.ruoyi.system.domain.Reader();
+        q.setCardNo(cardNo.trim());
+        java.util.List<com.ruoyi.system.domain.Reader> readers = readerService.selectReaderList(q);
+        if (readers == null || readers.isEmpty())
+        {
+            return error("成员不存在");
+        }
+        BookPurchaseReq query = new BookPurchaseReq();
+        query.setReaderId(readers.get(0).getReaderId());
+        return success(bookPurchaseReqService.selectBookPurchaseReqList(query));
     }
 
     /**
