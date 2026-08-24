@@ -4,12 +4,14 @@
 # 访问：http://localhost/（后台 /index，前台 /home.html；后端 8080 不对外映射）
 # 首次启动自动初始化数据库（sql/ 按依赖顺序导入）
 # 配置：复制 .env.example 为 .env 并按需修改（口令/邮箱/密钥等均环境变量注入）
+# 注意：容器名 2026-08-24 起由 wanshiwu-* 改为 opc-*；升级旧部署时先
+#       docker compose down 释放旧容器名，再 docker compose up -d
 # ============================================
 services:
   # ---------- MySQL 8 ----------
   mysql:
     image: mysql:8.0
-    container_name: wanshiwu-mysql
+    container_name: opc-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
       MYSQL_DATABASE: ry-vue
@@ -38,7 +40,7 @@ services:
   # ---------- Redis ----------
   redis:
     image: redis:7-alpine
-    container_name: wanshiwu-redis
+    container_name: opc-redis
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     command:
@@ -66,7 +68,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: wanshiwu-backend
+    container_name: opc-backend
     environment:
       # 覆盖 application-druid.yml / application.yml 的默认 localhost
       DB_HOST: mysql
@@ -106,7 +108,7 @@ services:
     build:
       context: .
       dockerfile: ruoyi-ui/Dockerfile
-    container_name: wanshiwu-frontend
+    container_name: opc-frontend
     ports:
       - "80:80"
     depends_on:

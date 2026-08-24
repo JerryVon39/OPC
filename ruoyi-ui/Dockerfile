@@ -3,7 +3,7 @@
 # 构建上下文 = 项目根目录（共享 docker/nginx.conf）
 # 阶段1：Node 构建 dist；阶段2：Nginx 托管
 # ============================================
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 WORKDIR /build
 COPY ruoyi-ui/package*.json ./
 RUN npm install --registry=https://registry.npmmirror.com

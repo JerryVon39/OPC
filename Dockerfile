@@ -1,7 +1,7 @@
 # ============================================
-# 万事屋图书管理系统 · 后端镜像（多阶段构建）
+# 数智游民创新工场 · 后端镜像（多阶段构建）
 # 阶段1：Maven 构建 jar；阶段2：JRE 运行
-# 构建：docker build -t wanshiwu-backend .
+# 构建：docker build -t jerryvon/opc-backend:版本号 .
 # ============================================
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build

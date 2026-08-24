@@ -27,5 +27,15 @@
 .DS_Store
 Thumbs.db
 
+# Python 测试脚本缓存（非构建所需）
+**/__pycache__
+**/*.pyc
+
+# 运行时数据（Redis 持久化文件等）
+dump.rdb
+
+# Git 钩子（本机行为，不入镜像）
+.githooks/
+
 # 数据库备份
 backup/
