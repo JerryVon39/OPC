@@ -686,7 +686,10 @@
       });
       const d = await res.json();
       if (d.code === 200 && d.data) {
-        msg.textContent = '注册成功！您的成员编号：' + d.data.cardNo + '，请记住并登录';
+        msg.textContent = '注册成功！成员编号：' + d.data.cardNo + '（请牢记，登录用）';
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
         msg.style.color = '#4f8a62';
       } else {
         msg.textContent = '注册失败：' + (d.msg || '未知错误');

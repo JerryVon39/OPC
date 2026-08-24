@@ -290,6 +290,9 @@
       if (d.code === 200 && d.data) {
         msg.style.color = '#12b886';
         msg.textContent = '注册成功！成员编号：' + d.data.cardNo + '（请牢记，登录用）';
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
         setTimeout(() => closeModal('regModal'), 2600);
       } else {
         msg.style.color = '#e2554b';
