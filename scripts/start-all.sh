@@ -32,7 +32,9 @@ docker compose up -d
 echo "[start-all] 等待后端启动中 ..."
 READY=0
 for i in $(seq 1 90); do
-  if curl -s -o /dev/null http://localhost:8080/ 2>/dev/null; then
+  # 后端不再映射宿主机 8080（nginx 反代 /prod-api 到 backend），改经 80 端口探测后端是否已响应
+  code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/prod-api/ 2>/dev/null)
+  if [ "$code" != "000" ] && [ "$code" != "502" ] && [ "$code" != "503" ] && [ "$code" != "504" ]; then
     READY=1
     break
   fi

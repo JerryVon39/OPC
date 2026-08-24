@@ -236,8 +236,7 @@ INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, r
 SELECT 15, 3, '王梅', 'JS20260003', '社区共创空间预约', DATE_SUB(NOW(), INTERVAL 5 DAY), '2', '王梅', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book_reserve WHERE book_id=15 AND reader_id=3);
 INSERT INTO book_reserve (book_id, reader_id, reader_name, card_no, book_name, reserve_date, status, create_by, create_time)
 SELECT 15, 5, 'Jerry', 'DK', '社区共创空间预约', DATE_SUB(NOW(), INTERVAL 7 DAY), '3', 'Jerry', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM book_reserve WHERE book_id=15 AND reader_id=5);
--- 社区共创空间预约剩余名额置 0（满员可候补，与候补状态链自洽）
-UPDATE book SET stock=0 WHERE book_id=15;
+-- 社区共创空间预约初始剩余名额置 0（满员可候补）：下方种子 INSERT 已直接写 stock=0，此处无需重复 UPDATE
 
 -- 停用成员历史报名（已完成，演示资料保留；幂等按成员+服务+报名日期判重）
 INSERT INTO borrow_record (reader_id, book_id, borrow_date, due_date, return_date, status, reader_name, card_no, book_name, create_by, create_time)

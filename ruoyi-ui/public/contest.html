@@ -187,6 +187,7 @@
       if (d.code === 200 && d.data) {
         currentUser = d.data;
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
         closeModal('loginModal');
         toast('欢迎回来，' + name);
       } else {
@@ -206,6 +207,7 @@
     const remark = document.getElementById('regRemark').value.trim();
     const msg = document.getElementById('regMsg');
     if (!name) { msg.textContent = '请填写成员姓名'; return; }
+    if (!type) { msg.textContent = '请选择成员类型'; return; }
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
     const body = new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: remark });
     try {
@@ -270,8 +272,10 @@
     const msg = document.getElementById('contestMsg');
     if (!currentUser) { toast('请先登录后再报名'); openLogin(); return; }
     const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: CONTEST_BOOK_ID });
+    const h = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    if (currentUser && currentUser.sessionToken) h['X-Session-Token'] = currentUser.sessionToken;
     try {
-      const res = await fetch(BORROW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await fetch(BORROW_API, { method: 'POST', headers: h, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         msg.style.color = '#4f8a62';

@@ -256,16 +256,28 @@ public class IpUtils
         // 多级反向代理检测：取最后一个非 unknown 段——nginx 用 $proxy_add_x_forwarded_for
         // 把真实客户端 IP 追加到 XFF 末尾，客户端伪造的前置段一律忽略，防 XFF 伪造绕过 IP 频控；
         // 无代理直连时 XFF 为空，getIpAddr 直接回退 $remote_addr，行为不变
-        if (ip != null && ip.indexOf(",") > 0)
+        // 注意：必须用 >= 0（而非 > 0），否则攻击者发 "X-Forwarded-For: , 1.2.3.4"（首字符即逗号）
+        // 会整体跳过解析，把含逗号的垃圾串当 IP 返回，频控键随之每次变化、限流被绕过
+        if (ip != null && ip.indexOf(",") >= 0)
         {
             final String[] ips = ip.trim().split(",");
+            String last = null;
             for (int i = ips.length - 1; i >= 0; i--)
             {
                 if (!isUnknown(ips[i].trim()))
                 {
-                    ip = ips[i].trim();
+                    last = ips[i].trim();
                     break;
                 }
+            }
+            // 兜底：整串全是 unknown/空白段时，不返回含逗号的垃圾串（调用方视同不可信、可回退 $remote_addr）
+            if (last != null)
+            {
+                ip = last;
+            }
+            else
+            {
+                ip = "unknown";
             }
         }
         return StringUtils.substring(ip, 0, 255);

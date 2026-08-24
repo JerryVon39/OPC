@@ -331,6 +331,7 @@
         msg.textContent = '保存成功';
         toast('资料已保存');
       } else {
+        if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
         msg.style.color = '#c65d43';
         msg.textContent = d.msg || '保存失败';
       }
