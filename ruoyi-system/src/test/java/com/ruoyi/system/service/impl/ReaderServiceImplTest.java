@@ -56,7 +56,6 @@ public class ReaderServiceImplTest
     @Test
     void register_generatesCardNo()
     {
-        when(readerMapper.selectReaderList(any())).thenReturn(new ArrayList<>());
         when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
 
         Reader saved = readerService.register("测试读者", "13800000000", "1", "test@qq.com", "");
@@ -70,11 +69,7 @@ public class ReaderServiceImplTest
     @Test
     void insertReader_duplicateCardNo_throws()
     {
-        Reader exist = new Reader();
-        exist.setCardNo("JS12345678");
-        List<Reader> list = new ArrayList<>();
-        list.add(exist);
-        when(readerMapper.selectReaderList(any())).thenReturn(list);
+        when(readerMapper.countByCardNo("JS12345678")).thenReturn(1);
 
         reader.setCardNo("JS12345678");
         ServiceException e = assertThrows(ServiceException.class, () -> readerService.insertReader(reader));
@@ -85,7 +80,6 @@ public class ReaderServiceImplTest
     @Test
     void insertReader_emptyCardNo_generates()
     {
-        when(readerMapper.selectReaderList(any())).thenReturn(new ArrayList<>());
         when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
 
         assertEquals(1, readerService.insertReader(reader));
@@ -241,6 +235,7 @@ public class ReaderServiceImplTest
     void importReaders_mixed()
     {
         when(sysDictDataService.selectDictDataList(any())).thenReturn(readerTypeDict());
+        when(readerMapper.countByCardNo(anyString())).thenReturn(0);   // generateCardNo 随机证号
         when(readerMapper.countByCardNo("JS12345678")).thenReturn(1);
         when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
 

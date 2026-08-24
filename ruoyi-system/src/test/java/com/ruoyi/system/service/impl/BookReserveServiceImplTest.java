@@ -169,7 +169,7 @@ public class BookReserveServiceImplTest
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(null);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> bookReserveService.reserveByCard("JS12345678", 3L));
-        assertTrue(e.getMessage().contains("读者不存在"));
+        assertTrue(e.getMessage().contains("成员不存在"));
     }
 
     /** 成功预约：快照字段完整 + 状态预约中 */
