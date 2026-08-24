@@ -14,6 +14,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="sex"    column="sex"    />
         <result property="birthDate"    column="birth_date"    />
         <result property="status"    column="status"    />
+        <result property="lastLoginTime" column="last_login_time" />
+        <result property="pwdSet"    column="pwd_set"    />
+        <result property="emailVerified" column="email_verified" />
+        <result property="phoneVerified" column="phone_verified" />
         <result property="remark"    column="remark"    />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"    column="create_time"    />
@@ -24,8 +28,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="deletedTime" column="deleted_time" />
     </resultMap>
 
+    <!-- 注意：普通查询不含 password_hash（防密码哈希泄露到列表/前台接口），仅 selectAuthInfo 含 -->
     <sql id="selectReaderVo">
-        select reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date, status, del_flag, deleted_by, deleted_time, remark, create_by, create_time, update_by, update_time from reader
+        select reader_id, reader_name, phone, email, card_no, reader_type, sex, birth_date, status, last_login_time, pwd_set, email_verified, phone_verified, del_flag, deleted_by, deleted_time, remark, create_by, create_time, update_by, update_time from reader
     </sql>
 
     <select id="selectReaderList" parameterType="Reader" resultMap="ReaderResult">
@@ -59,6 +64,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="readerName != null and readerName != ''">reader_name,</if>
             <if test="phone != null">phone,</if>
             <if test="email != null">email,</if>
+            <if test="passwordHash != null">password_hash,</if>
+            <if test="pwdSet != null">pwd_set,</if>
+            <if test="emailVerified != null">email_verified,</if>
             <if test="cardNo != null">card_no,</if>
             <if test="readerType != null">reader_type,</if>
             <if test="sex != null">sex,</if>
@@ -74,6 +82,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="readerName != null and readerName != ''">#{readerName},</if>
             <if test="phone != null">#{phone},</if>
             <if test="email != null">#{email},</if>
+            <if test="passwordHash != null">#{passwordHash},</if>
+            <if test="pwdSet != null">#{pwdSet},</if>
+            <if test="emailVerified != null">#{emailVerified},</if>
             <if test="cardNo != null">#{cardNo},</if>
             <if test="readerType != null">#{readerType},</if>
             <if test="sex != null">#{sex},</if>
@@ -138,4 +149,34 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="countByCardNo" parameterType="String" resultType="int">
         select count(1) from reader where card_no = #{cardNo}
     </select>
+
+    <!-- 邮箱判重（改邮箱/注册前友好提示，uk_email 兜底） -->
+    <select id="countByEmail" parameterType="String" resultType="int">
+        select count(1) from reader where email = #{email} and del_flag = '0'
+    </select>
+
+    <!-- 认证专用查询：含 password_hash（登录/改密/重置；普通查询不含，防泄露） -->
+    <select id="selectAuthInfo" parameterType="String" resultMap="ReaderResult">
+        select reader_id, reader_name, phone, email, password_hash, pwd_set, email_verified, card_no, reader_type, sex, birth_date, status, last_login_time, del_flag
+        from reader where card_no = #{cardNo} and del_flag = '0'
+    </select>
+
+    <!-- 更新认证字段（密码/邮箱验证状态/最后登录时间） -->
+    <update id="updateAuth" parameterType="Reader">
+        update reader
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="passwordHash != null">password_hash = #{passwordHash},</if>
+            <if test="pwdSet != null">pwd_set = #{pwdSet},</if>
+            <if test="emailVerified != null">email_verified = #{emailVerified},</if>
+            <if test="phoneVerified != null">phone_verified = #{phoneVerified},</if>
+            <if test="lastLoginTime != null">last_login_time = #{lastLoginTime},</if>
+        </trim>
+        where reader_id = #{readerId}
+    </update>
+
+    <!-- 修改邮箱：同时重置验证状态（changeEmail 流程专用） -->
+    <update id="updateEmail" parameterType="Reader">
+        update reader set email = #{email}, email_verified = '0', update_time = NOW()
+        where reader_id = #{readerId}
+    </update>
 </mapper>

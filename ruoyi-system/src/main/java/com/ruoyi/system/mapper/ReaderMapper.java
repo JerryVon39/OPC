@@ -26,6 +26,9 @@ public interface ReaderMapper
     /** 批量导入判重：借书证号是否已存在（uk_card_no 冲突前先友好提示） */
     public int countByCardNo(@Param("cardNo") String cardNo);
 
+    /** 邮箱判重：改邮箱/注册前友好提示（uk_email 兜底） */
+    public int countByEmail(@Param("email") String email);
+
     /**
      * 查询读者管理列表
      * 
@@ -72,4 +75,14 @@ public interface ReaderMapper
 
     /** 恢复已删除读者：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） */
     public int restoreReaderByReaderIds(@Param("readerIds") Long[] readerIds);
+
+    /** 按证号查认证信息（含 password_hash/pwd_set/email_verified，登录/改密/重置专用；
+     * 普通查询不含密码哈希，防止密码列泄露到列表/前台接口） */
+    public Reader selectAuthInfo(@Param("cardNo") String cardNo);
+
+    /** 更新认证字段（password_hash/pwd_set/email_verified/phone_verified/last_login_time） */
+    public int updateAuth(Reader reader);
+
+    /** 修改邮箱（email + email_verified 重置为未验证） */
+    public int updateEmail(Reader reader);
 }

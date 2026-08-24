@@ -88,14 +88,17 @@ public class ReaderServiceImpl implements IReaderService
      * @return 结果
      */
     @Override
-    /** 前台自助登记：证号由后端生成（JS+8位随机数字），查重直到唯一，防止伪造/占坑
-     * email 由 Controller 层完成必填/格式校验后传入，此处仅落库 */
-    public Reader register(String readerName, String phone, String readerType, String email, String remark)
+    /** 前台自助登记（第一步：资料+密码）：证号由后端生成（JS+8位随机数字），查重直到唯一，防止伪造/占坑
+     * email 由 Controller 层完成必填/格式校验后传入；密码由 Controller 层完成强度校验后传入，此处 BCrypt 落库 */
+    public Reader register(String readerName, String phone, String readerType, String email, String remark, String password)
     {
         Reader reader = new Reader();
         reader.setReaderName(readerName);
         reader.setPhone(phone);
         reader.setEmail(email);
+        reader.setPasswordHash(com.ruoyi.common.utils.SecurityUtils.encryptPassword(password));
+        reader.setPwdSet("1");
+        reader.setEmailVerified("0");
         reader.setReaderType(readerType);
         reader.setRemark(remark);
         reader.setStatus("0");
@@ -220,6 +223,96 @@ public class ReaderServiceImpl implements IReaderService
         params.put("cardNo", newCard);
         mailTemplateService.send("reissue.notify", reader.getEmail(), params);
         return newCard;
+    }
+
+    /** 按证号查认证信息（含密码哈希，登录/改密/重置专用） */
+    @Override
+    public Reader findAuthByCardNo(String cardNo)
+    {
+        return readerMapper.selectAuthInfo(cardNo);
+    }
+
+    /** 设置/重置密码（找回密码、pwd_set=0 引导设密共用）：BCrypt + pwd_set=1 */
+    @Override
+    public int setPassword(String cardNo, String newPassword)
+    {
+        Reader auth = readerMapper.selectAuthInfo(cardNo);
+        if (auth == null)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("成员编号不存在");
+        }
+        Reader upd = new Reader();
+        upd.setReaderId(auth.getReaderId());
+        upd.setPasswordHash(com.ruoyi.common.utils.SecurityUtils.encryptPassword(newPassword));
+        upd.setPwdSet("1");
+        return readerMapper.updateAuth(upd);
+    }
+
+    /** 修改密码：旧密码校验通过后更新（防撞库/盗号改密） */
+    @Override
+    public int changePassword(String cardNo, String oldPassword, String newPassword)
+    {
+        Reader auth = readerMapper.selectAuthInfo(cardNo);
+        if (auth == null || auth.getPasswordHash() == null
+                || !com.ruoyi.common.utils.SecurityUtils.matchesPassword(oldPassword, auth.getPasswordHash()))
+        {
+            throw new com.ruoyi.common.exception.ServiceException("原密码不正确");
+        }
+        Reader upd = new Reader();
+        upd.setReaderId(auth.getReaderId());
+        upd.setPasswordHash(com.ruoyi.common.utils.SecurityUtils.encryptPassword(newPassword));
+        upd.setPwdSet("1");
+        return readerMapper.updateAuth(upd);
+    }
+
+    /** 邮箱验证通过：email_verified 置 1 */
+    @Override
+    public int verifyEmail(String cardNo)
+    {
+        Reader auth = readerMapper.selectAuthInfo(cardNo);
+        if (auth == null)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("成员编号不存在");
+        }
+        Reader upd = new Reader();
+        upd.setReaderId(auth.getReaderId());
+        upd.setEmailVerified("1");
+        return readerMapper.updateAuth(upd);
+    }
+
+    /** 修改邮箱：新邮箱唯一性校验（uk_email 兜底）后更新，验证状态重置为未验证 */
+    @Override
+    public int changeEmail(String cardNo, String newEmail)
+    {
+        Reader auth = readerMapper.selectAuthInfo(cardNo);
+        if (auth == null)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("成员编号不存在");
+        }
+        if (newEmail != null && newEmail.equalsIgnoreCase(auth.getEmail()))
+        {
+            return 0; // 邮箱未变化
+        }
+        if (readerMapper.countByEmail(newEmail) > 0)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("该邮箱已被其他成员使用");
+        }
+        Reader upd = new Reader();
+        upd.setReaderId(auth.getReaderId());
+        upd.setEmail(newEmail);
+        upd.setEmailVerified("0");
+        // 邮箱变更走独立 SQL（updateReader 的 email 更新同时会改快照相关字段，这里用 updateAuth 的变体）
+        return readerMapper.updateEmail(upd);
+    }
+
+    /** 记录登录时间 */
+    @Override
+    public int touchLogin(Long readerId)
+    {
+        Reader upd = new Reader();
+        upd.setReaderId(readerId);
+        upd.setLastLoginTime(DateUtils.getNowDate());
+        return readerMapper.updateAuth(upd);
     }
 
     /** 批量删除成员管理

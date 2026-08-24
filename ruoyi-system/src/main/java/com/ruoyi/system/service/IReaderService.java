@@ -35,8 +35,27 @@ public interface IReaderService
      */
     public int insertReader(Reader reader);
 
-    /** 前台自助登记：证号后端生成（防伪造/占坑） */
-    public Reader register(String readerName, String phone, String readerType, String email, String remark);
+    /** 前台自助登记（第一步：资料+密码）：证号后端生成（防伪造/占坑），
+     * 密码 BCrypt 加密落库（pwd_set=1、email_verified=0，随后需邮箱验证码完成注册） */
+    public Reader register(String readerName, String phone, String readerType, String email, String remark, String password);
+
+    /** 按证号查认证信息（含密码哈希，登录/改密/重置专用） */
+    public Reader findAuthByCardNo(String cardNo);
+
+    /** 设置/重置密码（BCrypt；pwd_set 置 1） */
+    public int setPassword(String cardNo, String newPassword);
+
+    /** 修改密码：校验旧密码正确后更新（失败抛异常） */
+    public int changePassword(String cardNo, String oldPassword, String newPassword);
+
+    /** 邮箱验证通过：email_verified 置 1 */
+    public int verifyEmail(String cardNo);
+
+    /** 修改邮箱（新邮箱唯一性校验；调用方需先完成新邮箱验证码校验） */
+    public int changeEmail(String cardNo, String newEmail);
+
+    /** 记录登录时间（登录成功后调用） */
+    public int touchLogin(Long readerId);
 
     /** 挂失补办：生成新证号并恢复状态，返回新证号 */
     public String reissueCard(Long readerId);

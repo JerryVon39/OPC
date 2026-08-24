@@ -1,17 +1,34 @@
 package com.ruoyi.system.service.impl;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import com.ruoyi.common.core.redis.RedisCache;
+import com.ruoyi.system.domain.ReaderSession;
+import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ReaderSessionService;
 
+/**
+ * 读者端会话实现：Redis 存储，14 天滑动续期（sys_config reader.session.minutes 可配），
+ * by-card 索引支持多端列表/退出其他设备；登录失败频控保留。
+ */
 @Service
 public class ReaderSessionServiceImpl implements ReaderSessionService
 {
     private static final String PREFIX = "reader:session:";
-    private static final int SESSION_MINUTES = 30;
+    /** 成员 → 会话集合索引（多端管理用） */
+    private static final String CARD_INDEX_PREFIX = "reader:session:by-card:";
+
+    /** 默认会话时长（分钟）＝ 14 天 */
+    private static final int DEFAULT_SESSION_MINUTES = 20160;
+
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /** 登录/补办失败频控：前缀 + key（如 login:IP:证号 / reissue:IP） */
@@ -22,8 +39,36 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
     @Autowired
     private RedisCache redisCache;
 
+    @Autowired
+    private ISysConfigService configService;
+
+    /** 会话时长（分钟）：sys_config reader.session.minutes，异常回退 14 天 */
+    private int sessionMinutes()
+    {
+        try
+        {
+            String v = configService.selectConfigByKey("reader.session.minutes");
+            if (v != null && !v.isEmpty())
+            {
+                int m = Integer.parseInt(v);
+                if (m >= 5)
+                {
+                    return m;
+                }
+            }
+        }
+        catch (Exception ignore) { }
+        return DEFAULT_SESSION_MINUTES;
+    }
+
     @Override
     public String create(String cardNo)
+    {
+        return create(cardNo, "", "");
+    }
+
+    @Override
+    public String create(String cardNo, String ip, String device)
     {
         String token;
         do
@@ -32,26 +77,114 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
                     + Long.toUnsignedString(RANDOM.nextLong(), 36);
         }
         while (redisCache.hasKey(PREFIX + token));
-        redisCache.setCacheObject(PREFIX + token, cardNo, SESSION_MINUTES, TimeUnit.MINUTES);
+        long now = System.currentTimeMillis();
+        ReaderSession s = new ReaderSession(cardNo, device == null ? "" : device, ip, now);
+        redisCache.setCacheObject(PREFIX + token, s.toStored(), sessionMinutes(), TimeUnit.MINUTES);
+        // 多端索引：成员 → 会话集合（RedisCache 无单元素 Set 操作，整体读写）
+        String idxKey = CARD_INDEX_PREFIX + cardNo;
+        java.util.Set<String> idx = redisCache.getCacheSet(idxKey);
+        if (idx == null)
+        {
+            idx = new java.util.HashSet<>();
+        }
+        idx.add(token);
+        redisCache.setCacheSet(idxKey, idx);
         return token;
     }
 
+    /** 解析（滑动续期）：每次成功解析都刷新 TTL */
     @Override
     public String resolve(String token)
+    {
+        ReaderSession s = resolveInfo(token);
+        return s == null ? null : s.getCardNo();
+    }
+
+    @Override
+    public ReaderSession resolveInfo(String token)
     {
         if (token == null || token.trim().isEmpty())
         {
             return null;
         }
-        return redisCache.getCacheObject(PREFIX + token.trim());
+        String key = PREFIX + token.trim();
+        String stored = redisCache.getCacheObject(key);
+        ReaderSession s = ReaderSession.fromStored(stored);
+        if (s == null)
+        {
+            return null;
+        }
+        // 滑动续期：刷新 TTL（值不变）
+        redisCache.setCacheObject(key, stored, sessionMinutes(), TimeUnit.MINUTES);
+        return s;
+    }
+
+    @Override
+    public List<ReaderSession> listSessions(String cardNo)
+    {
+        List<ReaderSession> result = new ArrayList<>();
+        Set<String> tokens = redisCache.getCacheSet(CARD_INDEX_PREFIX + cardNo);
+        if (tokens == null)
+        {
+            return result;
+        }
+        for (String token : tokens)
+        {
+            ReaderSession s = ReaderSession.fromStored(redisCache.getCacheObject(PREFIX + token));
+            if (s != null)
+            {
+                result.add(s);
+            }
+        }
+        // 最近活跃倒序（越新越靠前）
+        result.sort(Comparator.comparingLong(ReaderSession::getLastActiveAt).reversed());
+        return result;
+    }
+
+    @Override
+    public int revokeOthers(String cardNo, String currentToken)
+    {
+        int removed = 0;
+        String idxKey = CARD_INDEX_PREFIX + cardNo;
+        Set<String> tokens = redisCache.getCacheSet(idxKey);
+        if (tokens == null)
+        {
+            return 0;
+        }
+        java.util.Set<String> keep = new java.util.HashSet<>();
+        for (String token : tokens)
+        {
+            if (currentToken != null && token.equals(currentToken))
+            {
+                keep.add(token); // 保留当前设备；currentToken 为 null 时全部退出（重置密码场景）
+                continue;
+            }
+            redisCache.deleteObject(PREFIX + token);
+            removed++;
+        }
+        redisCache.setCacheSet(idxKey, keep);
+        return removed;
     }
 
     @Override
     public void remove(String token)
     {
-        if (token != null && !token.trim().isEmpty())
+        if (token == null || token.trim().isEmpty())
         {
-            redisCache.deleteObject(PREFIX + token.trim());
+            return;
+        }
+        String key = PREFIX + token.trim();
+        ReaderSession s = ReaderSession.fromStored(redisCache.getCacheObject(key));
+        redisCache.deleteObject(key);
+        if (s != null)
+        {
+            String idxKey = CARD_INDEX_PREFIX + s.getCardNo();
+            Set<String> idx = redisCache.getCacheSet(idxKey);
+            if (idx != null)
+            {
+                idx.remove(token.trim());
+                redisCache.setCacheSet(idxKey, idx);
+            }
         }
     }
 
