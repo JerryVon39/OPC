@@ -270,7 +270,7 @@ npm run dev
 
 **你的问题**：在后台增删的成员/服务/文章只存在本地数据库，如何让 GitHub 仓库也同步？
 
-**方案（已内置）**：仓库内置 `.githooks/pre-commit` 钩子——**每次 `git commit` 前自动把当前数据库的业务数据（13 张表：成员/服务/报名/候补/申请/文章/轮播/公告/字典）导出为 `sql/data_snapshot.sql` 并加入提交**。你正常 commit + push，数据就跟着走了；别人 clone 后导入该文件即可看到你的全部改动。
+**方案（已内置）**：仓库内置 `.githooks/pre-commit` 钩子——**每次 `git commit` 前自动把当前数据库的业务数据（11 张表：服务/报名/候补/文章/轮播/公告/字典等；成员与入驻申请因含手机邮箱等 PII 已从快照排除）导出为 `sql/data_snapshot.sql` 并加入提交**。你正常 commit + push，数据就跟着走了；别人 clone 后导入该文件即可看到你的全部改动。Docker 全新部署（`docker/mysql-init.sh`）也会自动导入该快照，部署方拉起即含最新业务数据。
 
 **使用**：
 1. 首次配置（仓库内执行一次）：`git config core.hooksPath .githooks`
