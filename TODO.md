@@ -53,15 +53,17 @@
 - [ ] 15. 学员/会员体系（训练营结业认证）：远期，复用 reader
 - [ ] 16. 在线客服 / AI 客服（AI 接入）：远期
 
-## 第五批：邮件自动发送模块改造（方案已定 2026-08-24，待实施）
+## 第五批：认证与邮件整体改造（面向真实环境）🔄 方案已定 2026-08-24，待实施
 
-> 方案细节见会话记录；实施前需用户确认 2 个取舍：① 授权码 AES 加密（推荐，密钥走 MAIL_SECRET_KEY 环境变量）vs 明文入库；② 定时任务超时取消候补时是否给被取消者发通知
+> 完整方案见 `docs/整体改造方案-认证与邮件.md`（决策记录 D1-D7 已确认：邮箱验证码为主+短信预留、图形验证码搁置、14 天滑动会话、pwd_set 引导迁移、AES 授权码、定时任务补通知、若依后台不动）
+> 实施按里程碑 M1→M5（M1 邮件基础设施先行，认证体系依赖验证码邮件）
 
-- [ ] 20. 注册成功邮件：前台自助登记成功 → 自动发送含证号（登录凭证）的邮件；补办证号（reissueCard）同步发新证号通知（新模板 `register.success` / `reissue.notify`）
-- [ ] 21. 错误内容删减：续借邮件主题复制粘贴 bug（"【服务报名】报名成功"→"续期成功"）；"3 天内办理"写死 vs 配置 2 天不一致（改 {days} 占位符）；MailUtil 提示指向不存在的 start-backend.bat 文案；定时任务 reserveExpireCheck 推进候补不发邮件（与 returnBook 行为不一致）
-- [ ] 22. 管理员后台可配置：新建 `mail_config`（SMTP 账号/授权码/开关/主机端口，AES 加密存储）+ `mail_template`（8 个场景模板，占位符 {readerName}/{cardNo}/{bookName}/{dueDate}/{days} 渲染，缺失时内置默认兜底）两表；MailUtil 改动态构建 JavaMailSenderImpl（数据库配置 > 环境变量 > 内置默认，改完即时生效不重启）
-- [ ] 23. 后台 UI：ruoyi-ui 新增「系统管理 → 邮件通知」页（SMTP 配置 + 测试发送按钮 + 模板编辑），权限 system:mail:config / system:mail:template，sys_menu 插入菜单数据
-- [ ] 24. 实施顺序：SQL 升级脚本 → domain/mapper/service → MailUtil 重构 → 各 Service 改造（删硬编码 HTML）→ Controller + 前端 → full_test.py / smoke_official.py 补冒烟断言
+- [ ] 20. **M1 邮件基础设施**：`upgrade_20260824_auth.sql`（两模块全部表/列/菜单）；mail_config/mail_template domain+mapper+service；MailUtil 动态化（数据库配置 > 环境变量 > 内置默认，改完即时生效）；AuthCodeService + VerificationSender 抽象（短信预留）；10 个模板初始化（含 register.success/reissue.notify/auth.code/reserve.cancel 新增 + 续借主题 bug 修复）
+- [ ] 21. **M2 认证核心**：reader 加列（password_hash/pwd_set/email_verified/phone_verified/last_login_time）+ 邮箱查重；BCrypt 密码体系（≥10 位、3 类字符）；登录改 cardNo+password（删除姓名+证号路径）；三步注册（资料+密码 → 邮箱验证码 → 发证号邮件）；找回/登出/改密/改邮箱（敏感操作重验证）；会话 14 天滑动续期 + 多端管理
+- [ ] 22. **M3 安全与审计**：登录频控三层（IP 限速 10 次/分 → 账号 5 次锁 30 分钟 → 递增退避）；reader_login_log 登录审计表（后台可查）；邮箱唯一索引 uk_email；pwd_set=0 存量成员引导流程
+- [ ] 23. **M4 后台与前端**：邮件通知管理页（SMTP 配置 + 测试发送 + 模板编辑，权限 system:mail:config/template）；读者管理重置密码/发送设密邀请（system:reader:resetPwd）+ 邮箱验证徽标；前台登录/注册三步弹窗/忘记密码/个人主页账号安全区
+- [ ] 24. **M5 测试验收**：full_test.py / smoke_official.py 补用例（注册三步/登录/找回/模板渲染/邮件配置）；手工验收清单；部署指南补 HTTPS/SPF/DKIM 建议
+- [ ] 25. **待确认实施启动时机**：整体方案已定，用户指示开工后从 M1 开始
 
 ## 内容占位待替换（用户后续提供）
 
