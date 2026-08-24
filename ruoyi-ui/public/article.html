@@ -229,7 +229,7 @@
     const area = document.getElementById('loginArea');
     if (area) {
       area.innerHTML = currentUser
-        ? '<span style="cursor:pointer" onclick="logout()" title="退出登录">👤 ' + esc(currentUser.readerName || '成员') + ' <a href="profile.html" style="color:#fff;text-decoration:underline;font-size:13px">个人主页</a>' + '</span>'
+        ? '<span style="cursor:pointer" onclick="logout()" title="退出登录">👤 ' + esc(currentUser.readerName || '成员') + '（退出）</span> <a href="profile.html" style="color:#fff;text-decoration:underline;font-size:13px">个人主页</a>' + '</span>'
         : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     }
   }
