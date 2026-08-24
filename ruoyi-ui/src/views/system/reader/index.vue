@@ -140,6 +140,13 @@
           <el-button
             size="mini"
             type="text"
+            icon="el-icon-key"
+            @click="handleResetPwdInvite(scope.row)"
+            v-hasPermi="['system:reader:resetPwd']"
+          >重置密码</el-button>
+          <el-button
+            size="mini"
+            type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:reader:edit']"
@@ -272,7 +279,7 @@
 </template>
 
 <script>
-import { listReader, getReader, delReader, addReader, updateReader, reissueCard } from "@/api/system/reader"
+import { listReader, getReader, delReader, addReader, updateReader, reissueCard, resetPwdInvite } from "@/api/system/reader"
 import { getDicts } from "@/api/system/dict/data"
 import { getToken } from "@/utils/auth"
 
@@ -412,6 +419,14 @@ export default {
       }).then(res => {
         this.$modal.msgSuccess('重发成功！新成员编号：' + res.data + '（旧编号已作废）')
         this.getList()
+      }).catch(() => {})
+    },
+    /** 重置密码：向成员登记邮箱发送重置验证码（成员在"忘记密码"处自助设置） */
+    handleResetPwdInvite(row) {
+      this.$modal.confirm('确认向《' + row.readerName + '》的登记邮箱发送重置密码验证码吗？').then(() => {
+        return resetPwdInvite(row.readerId)
+      }).then(res => {
+        this.$modal.msgSuccess(res.msg || '验证码已发送')
       }).catch(() => {})
     },
     handleUpdate(row) {

@@ -35,10 +35,14 @@ export function updateReader(data) {
   })
 }
 
-// 删除读者管理
 // 挂失补办（生成新证号）
 export function reissueCard(readerId) {
   return request({ url: '/system/reader/reissue/' + readerId, method: 'put' })
+}
+
+// 重置密码：向成员登记邮箱发送重置验证码
+export function resetPwdInvite(readerId) {
+  return request({ url: '/system/reader/reset-pwd-invite/' + readerId, method: 'post' })
 }
 
 export function delReader(readerId) {

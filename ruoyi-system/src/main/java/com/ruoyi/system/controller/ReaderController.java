@@ -529,6 +529,30 @@ public class ReaderController extends BaseController
         return ajax;
     }
 
+    /** 管理员发送"重置密码"邀请（向成员登记邮箱发验证码，成员用找回密码流程自助重置）
+     * 权限：system:reader:resetPwd */
+    @PreAuthorize("@ss.hasPermi('system:reader:resetPwd')")
+    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @PostMapping("/reset-pwd-invite/{readerId}")
+    public AjaxResult resetPwdInvite(@PathVariable("readerId") Long readerId, jakarta.servlet.http.HttpServletRequest request)
+    {
+        Reader r = readerService.selectReaderByReaderId(readerId);
+        if (r == null || r.getEmail() == null || r.getEmail().isEmpty())
+        {
+            return error("该成员未登记邮箱，无法发送重置邀请");
+        }
+        try
+        {
+            authCodeService.sendCode(r.getEmail(), "resetPwd", ipOf(request));
+        }
+        catch (Exception e)
+        {
+            return error(e.getMessage());
+        }
+        loginLogService.log(r.getCardNo(), readerId, ipOf(request), "reset_pwd", true, "管理员发送重置邀请");
+        return success("重置验证码已发送至该成员邮箱，请转告其在「忘记密码」处使用");
+    }
+
     /** 前台补办报名证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
      * 频控：按 IP 维度（补办即换证号，防脚本批量作废他人证号） */
     @Anonymous
