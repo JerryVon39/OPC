@@ -33,7 +33,8 @@ sql/upgrade_20260824_profile.sql
 sql/upgrade_20260824_two_state.sql
 sql/upgrade_20260824_contest.sql
 sql/upgrade_20260824_roles.sql
-sql/upgrade_20260826_policy.sql"
+sql/upgrade_20260826_policy.sql
+sql/upgrade_20260824_menu_cleanup.sql"
 
 for f in $UPGRADES; do
   if [ -f "$f" ]; then
