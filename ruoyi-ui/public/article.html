@@ -206,24 +206,34 @@
     document.getElementById('loginModal').style.display = 'flex';
   }
   async function submitLogin() {
-    const name = document.getElementById('loginName').value.trim();
     const card = document.getElementById('loginCard').value.trim();
+    const pwd = document.getElementById('loginPwd').value;
     const msg = document.getElementById('loginMsg');
-    if (!name || !card) { msg.textContent = '请填写姓名与成员编号'; return; }
-    const body = new URLSearchParams({ readerName: name, cardNo: card });
+    if (!card || !pwd) { msg.textContent = '请输入成员编号和密码'; msg.style.color = '#c65d43'; return; }
     try {
-      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: card, password: pwd });
+      const res = await apiFetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200 && d.data) {
         currentUser = d.data;
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
         renderLoginState();
         closeModal('loginModal');
-        toast('欢迎回来，' + name);
+        msg.textContent = '';
+        toast('登录成功，欢迎 ' + currentUser.readerName + '！');
+      } else if (d.code === 601) {
+        // 存量成员首次登录：引导设密流程（邮箱验证码 → 设置密码）
+        closeModal('loginModal');
+        toast('该账号需先验证邮箱并设置密码，请按提示操作');
+        setTimeout(() => { location.href = 'services.html'; }, 1500);
       } else {
-        msg.textContent = d.msg || '登录失败：请确认姓名与编号正确';
+        msg.textContent = d.msg || '登录失败';
+        msg.style.color = '#c65d43';
       }
-    } catch (e) { msg.textContent = '登录失败：' + e.message; }
+    } catch (e) {
+      msg.textContent = '登录失败：' + e.message;
+      msg.style.color = '#c65d43';
+    }
   }
   function renderLoginState() {
     const area = document.getElementById('loginArea');
@@ -234,15 +244,80 @@
     }
   }
   function logout() {
+    apiFetch('/prod-api/system/reader/logout', { method: 'POST' }).catch(() => {});
     currentUser = null;
     localStorage.removeItem('shopUser');
     renderLoginState();
     toast('已退出登录');
   }
-  function openRegister() {
-    document.getElementById('regMsg').textContent = '';
-    document.getElementById('regModal').style.display = 'flex';
+  let pendingReg = null; // { cardNo, email }
+  async function submitRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const type = document.getElementById('regType').value;
+    const pwd = document.getElementById('regPwd').value;
+    const pwd2 = document.getElementById('regPwd2').value;
+    const msg = document.getElementById('regMsg');
+    if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和成员类型'; msg.style.color = '#c65d43'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于验证与通知）'; msg.style.color = '#c65d43'; return; }
+    if (!pwd || pwd !== pwd2) { msg.textContent = '两次输入的密码不一致'; msg.style.color = '#c65d43'; return; }
+    if (pwd.length < 10) { msg.textContent = '密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; msg.style.color = '#c65d43'; return; }
+    try {
+      const res = await apiFetch(REG_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: document.getElementById('regRemark').value.trim(), password: pwd }).toString()
+      });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        pendingReg = { cardNo: d.data.cardNo, email: d.data.email };
+        document.getElementById('regNewCard').textContent = d.data.cardNo;
+        document.getElementById('regStep1').style.display = 'none';
+        document.getElementById('regStep2').style.display = '';
+        msg.textContent = '验证码已发送至 ' + d.data.email + '（如未收到可点重发）';
+        msg.style.color = '#4f8a62';
+      } else {
+        msg.textContent = d.msg || '注册失败';
+        msg.style.color = '#c65d43';
+      }
+    } catch (e) {
+      msg.textContent = '注册失败：' + e.message;
+      msg.style.color = '#c65d43';
+    }
   }
+  async function verifyRegister() {
+    const code = document.getElementById('regCode').value.trim();
+    const msg = document.getElementById('regMsg');
+    if (!pendingReg || !code) { msg.textContent = '请输入邮箱验证码'; msg.style.color = '#c65d43'; return; }
+    try {
+      const body = new URLSearchParams({ cardNo: pendingReg.cardNo, email: pendingReg.email, code: code });
+      const res = await apiFetch('/prod-api/system/reader/verify-email', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) {
+        closeModal('regModal');
+        pendingReg = null;
+        toast('注册成功！请用成员编号 + 密码登录');
+        setTimeout(() => { location.href = 'services.html'; }, 1200);
+      } else {
+        msg.textContent = d.msg || '验证失败';
+        msg.style.color = '#c65d43';
+      }
+    } catch (e) { msg.textContent = '验证失败：' + e.message; msg.style.color = '#c65d43'; }
+  }
+  async function resendRegCode() {
+    const msg = document.getElementById('regMsg');
+    if (!pendingReg) return;
+    try {
+      const body = new URLSearchParams({ target: pendingReg.email, purpose: 'register' });
+      const res = await apiFetch('/prod-api/system/reader/resend-code', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      msg.textContent = d.msg || '已重新发送';
+      msg.style.color = d.code === 200 ? '#4f8a62' : '#c65d43';
+    } catch (e) { msg.textContent = '发送失败：' + e.message; msg.style.color = '#c65d43'; }
+  }
+  function openRegister() { document.getElementById('regModal').style.display = 'flex'; }
+
   async function submitRegister() {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
@@ -300,8 +375,8 @@
   <div id="loginModal" class="modal" style="display:none">
     <div class="modal-box">
       <h3 style="text-align:center;margin-bottom:16px">👤 成员登录</h3>
-      <input id="loginName" class="modal-input" placeholder="👤 成员姓名" />
-      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+            <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+      <input id="loginPwd" class="modal-input" type="password" placeholder="🔑 登录密码" />
       <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
       <button class="btn-buy" style="width:100%;padding:11px" onclick="submitLogin()">登 录</button>
     </div>
@@ -320,6 +395,8 @@
         <option value="3">企业</option>
       </select>
       <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
+      <input id="regPwd" class="modal-input" type="password" placeholder="🔑 设置登录密码（≥10 位）" />
+      <input id="regPwd2" class="modal-input" type="password" placeholder="🔑 确认登录密码" />
       <div id="regMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
       <button class="btn-buy" style="width:100%;padding:11px" onclick="submitRegister()">注 册</button>
     </div>
