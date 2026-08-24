@@ -661,7 +661,7 @@
   }  function renderLoginState() {
     const area = document.getElementById('loginArea');
     area.innerHTML = currentUser
-      ? '<span style="cursor:pointer" onclick="logout()">你好，' + esc(currentUser.readerName) + '（退出）</span>'
+      ? '<span style="cursor:pointer" onclick="logout()">你好，' + esc(currentUser.readerName) + ' <a href="profile.html" style="color:#fff;text-decoration:underline;font-size:13px">个人主页</a>'
       : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     // 已登录用户不再需要"成员注册"（注册过的成员才能登录）
     document.getElementById('registerEntry').style.display = currentUser ? 'none' : '';

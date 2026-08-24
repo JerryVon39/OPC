@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人主页 · 数智游民创新工场</title>
+<meta property="og:title" content="个人主页 · 数智游民创新工场">
+<meta property="og:description" content="成员个人主页：我的资料、我的报名、我的候补、我的入驻申请。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://www.opc.example.com/profile.html">
+<link rel="icon" href="favicon.ico">
+<meta name="description" content="数智游民创新工场成员个人主页：查看与编辑资料、我的报名、我的候补、我的入驻申请。">
+<link rel="stylesheet" href="css/site.css">
+<style>
+  .profile-wrap { max-width: 980px; margin: 0 auto; }
+  .profile-head { display: flex; gap: 18px; align-items: center; background: var(--card); border-radius: 14px; padding: 22px 26px; box-shadow: 0 2px 10px rgba(18,41,74,0.06); margin-bottom: 18px; }
+  .profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; font-size: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .profile-id { margin-left: auto; text-align: right; }
+  .profile-id .pid-num { font-size: 20px; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+  .profile-id .pid-label { font-size: 12px; color: var(--text-light); }
+  .profile-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .profile-tabs a { padding: 9px 20px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; text-decoration: none; transition: all .2s; }
+  .profile-tabs a.active { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; border-color: transparent; }
+  .profile-panel { display: none; background: var(--card); border-radius: 14px; padding: 24px 26px; box-shadow: 0 2px 10px rgba(18,41,74,0.06); }
+  .profile-panel.active { display: block; }
+  .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .k { color: var(--text-light); }
+  .info-row .v { font-weight: bold; }
+  .profile-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--line); gap: 10px; flex-wrap: wrap; }
+  .profile-list-item:last-child { border-bottom: none; }
+  .pl-title { font-weight: bold; font-size: 15px; }
+  .pl-sub { font-size: 12px; color: var(--text-light); margin-top: 3px; }
+  .pl-status { font-size: 12px; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+  .st-pending { background: #fdf0ec; color: #c65d43; }
+  .st-done { background: #eef7ef; color: #4f8a62; }
+  .st-reject { background: #f1f1f1; color: #8a93a0; }
+  .login-prompt { text-align: center; padding: 60px 20px; }
+  .login-prompt .lp-icon { font-size: 48px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+  <!-- 顶部导航（吸顶，当前页高亮） -->
+  <div class="navbar">
+    <div class="logo" style="cursor:pointer" onclick="location.href='home.html'">数智游民<span>创新工场</span></div>
+    <div class="nav-links">
+      <a href="home.html">首页</a>
+      <a href="services.html">服务项目</a>
+      <a href="about.html">走进社区</a>
+      <a href="industry.html">产业生态</a>
+      <a href="policy.html">政策赋能</a>
+      <a href="join.html">入驻招商</a>
+      <a href="talent.html">人才培养</a>
+      <a href="contest.html">创客大赛</a>
+      <a href="news.html">新闻动态</a>
+      <a href="home.html#contact">联系我们</a>
+    </div>
+    <div class="nav-right">
+      <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
+    </div>
+  </div>
+
+  <!-- 栏目页头部 -->
+  <div class="page-hero">
+    <h1>个人<span>主页</span></h1>
+    <p>我的资料 · 我的报名 · 我的候补 · 我的入驻申请</p>
+  </div>
+
+  <div class="content-section">
+    <div class="profile-wrap" id="profileApp">
+      <!-- 未登录提示 -->
+      <div id="loginPrompt" class="profile-panel active login-prompt">
+        <div class="lp-icon">👤</div>
+        <h3>请先登录</h3>
+        <p style="color:var(--text-light);margin:10px 0 20px">登录后可查看我的报名、候补与入驻申请状态</p>
+        <button class="btn-buy" style="padding:10px 40px" onclick="openLogin()">立即登录</button>
+      </div>
+
+      <!-- 已登录主体 -->
+      <div id="profileBody" style="display:none">
+        <div class="profile-head">
+          <div class="profile-avatar" id="pfAvatar">👤</div>
+          <div>
+            <div style="font-size:20px;font-weight:bold" id="pfName">—</div>
+            <div style="font-size:13px;color:var(--text-light);margin-top:4px" id="pfType">—</div>
+          </div>
+          <div class="profile-id">
+            <div class="pid-num" id="pfCardNo">—</div>
+            <div class="pid-label">成员编号</div>
+          </div>
+        </div>
+        <div class="profile-tabs">
+          <a class="active" data-tab="info" onclick="switchTab(this)">📇 我的资料</a>
+          <a data-tab="borrow" onclick="switchTab(this)">📋 我的报名</a>
+          <a data-tab="reserve" onclick="switchTab(this)">📌 我的候补</a>
+          <a data-tab="purchase" onclick="switchTab(this)">🏢 我的入驻申请</a>
+        </div>
+
+        <!-- 我的资料 -->
+        <div class="profile-panel active" id="tab-info">
+          <div class="info-row"><span class="k">姓名/组织名</span><span class="v" id="fName">—</span></div>
+          <div class="info-row"><span class="k">成员类型</span><span class="v" id="fType">—</span></div>
+          <div class="info-row"><span class="k">成员编号</span><span class="v" id="fCard">—</span></div>
+          <div class="info-row"><span class="k">手机号码</span><span class="v" id="fPhone">—</span></div>
+          <div class="info-row"><span class="k">电子邮箱</span><span class="v" id="fEmail">—</span></div>
+          <div style="margin-top:16px;padding:14px;background:#f5f8fd;border-radius:10px">
+            <div style="font-size:13px;font-weight:bold;margin-bottom:8px">📱 修改联系方式</div>
+            <input id="editPhone" class="modal-input" placeholder="📱 新手机号码" />
+            <input id="editEmail" class="modal-input" placeholder="📧 新电子邮箱" style="margin-top:8px" />
+            <button class="btn-buy" style="width:100%;margin-top:10px" onclick="saveMyInfo()">保存修改</button>
+            <div id="infoMsg" style="font-size:13px;color:#c65d43;margin-top:8px"></div>
+          </div>
+        </div>
+
+        <!-- 我的报名 -->
+        <div class="profile-panel" id="tab-borrow">
+          <div id="borrowList"><div class="loading">加载中…</div></div>
+        </div>
+
+        <!-- 我的候补 -->
+        <div class="profile-panel" id="tab-reserve">
+          <div id="reserveList"><div class="loading">加载中…</div></div>
+        </div>
+
+        <!-- 我的入驻申请 -->
+        <div class="profile-panel" id="tab-purchase">
+          <div id="purchaseList"><div class="loading">加载中…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录弹窗 -->
+  <div id="loginModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 style="text-align:center;margin-bottom:16px">👤 成员登录</h3>
+      <input id="loginName" class="modal-input" placeholder="👤 姓名/组织名" />
+      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号" />
+      <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn-buy" style="width:100%;padding:11px" onclick="submitLogin()">登 录</button>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <!-- 页脚（三栏） -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>🏭 关于我们</h4>
+        <p>数智游民创新工场（清远 AI 一人公司生态社区）<br>清远市首个人工智能 OPC 生态社区 ｜ 让"一个人 + AI"成为可能</p>
+      </div>
+      <div class="footer-col">
+        <h4>📮 联系我们</h4>
+        <p>地址：清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105<br>电话：0763-3391888<br>公众号：互动世界 ｜ 视频号：互动AI世界</p>
+      </div>
+      <div class="footer-col">
+        <h4>🤝 入驻与合作</h4>
+        <p>欢迎 AI 数字服务 / 创意设计 / 本地生活创业者入驻<br>入驻咨询：0763-3391888</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
+  </footer>
+
+<script>
+  // ===== 接口 =====
+  const LOGIN_API = '/prod-api/system/reader/login';
+  const MYINFO_API = '/prod-api/system/reader/updateMyInfo';
+  const BORROW_API = '/prod-api/system/borrow/queryByCard';
+  const RESERVE_API = '/prod-api/system/reserve/myList';
+  const PURCHASE_MY_API = '/prod-api/system/purchase/myList';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  let currentUser = null;
+  try {
+    const saved = localStorage.getItem('shopUser');
+    if (saved) currentUser = JSON.parse(saved);
+  } catch (e) {}
+
+  const TYPE_MAP = { '1': '个人主理人', '2': '团队', '3': '企业' };
+  const BORROW_STATUS = { '0': '进行中', '1': '已完成', '2': '已截止' };
+  const RESERVE_STATUS = { '0': '候补中', '1': '有名额', '2': '已完成', '3': '已取消' };
+  const PURCHASE_STATUS = { '0': '待审核', '1': '已通过', '2': '已婉拒' };
+
+  function toast(text) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    let icon = 'ℹ️';
+    if (/失败|错误|已取消|不可|无法|请先/.test(text)) icon = '❌';
+    else if (/成功|欢迎|已退出|已保存/.test(text)) icon = '✅';
+    t.textContent = icon + ' ' + text;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  function openLogin() {
+    document.getElementById('loginMsg').textContent = '';
+    document.getElementById('loginModal').style.display = 'flex';
+  }
+  async function submitLogin() {
+    const name = document.getElementById('loginName').value.trim();
+    const card = document.getElementById('loginCard').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if (!name || !card) { msg.textContent = '请填写姓名/组织名与成员编号'; return; }
+    const body = new URLSearchParams({ readerName: name, cardNo: card });
+    try {
+      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200 && d.data) {
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        closeModal('loginModal');
+        toast('欢迎回来，' + currentUser.readerName);
+        initProfile();
+      } else {
+        msg.textContent = d.msg || '登录失败：请确认姓名与编号正确';
+      }
+    } catch (e) { msg.textContent = '登录失败：' + e.message; }
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.classList && e.target.classList.contains('modal')) e.target.style.display = 'none';
+  });
+
+  // ===== 会话包装（X-Session-Token 头）=====
+  const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
+  const apiFetch = (url, options) => {
+    options = options || {};
+    const headers = new Headers(options.headers || {});
+    const tok = sessionToken();
+    if (tok) headers.set('X-Session-Token', tok);
+    options.headers = headers;
+    return fetch(url, options);
+  };
+
+  // ===== Tab 切换 =====
+  function switchTab(el) {
+    document.querySelectorAll('.profile-tabs a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    const tab = el.getAttribute('data-tab');
+    document.querySelectorAll('.profile-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'borrow') loadBorrows();
+    else if (tab === 'reserve') loadReserves();
+    else if (tab === 'purchase') loadPurchases();
+  }
+
+  // ===== 我的资料 =====
+  function initProfile() {
+    if (!currentUser) {
+      document.getElementById('loginPrompt').style.display = 'block';
+      document.getElementById('loginPrompt').classList.add('active');
+      document.getElementById('profileBody').style.display = 'none';
+      return;
+    }
+    document.getElementById('loginPrompt').style.display = 'none';
+    document.getElementById('profileBody').style.display = 'block';
+    document.getElementById('pfName').textContent = currentUser.readerName || '—';
+    document.getElementById('pfType').textContent = TYPE_MAP[currentUser.readerType] || '成员';
+    document.getElementById('pfCardNo').textContent = currentUser.cardNo || '—';
+    document.getElementById('pfAvatar').textContent = (currentUser.readerName || '👤').slice(0, 1);
+    document.getElementById('fName').textContent = currentUser.readerName || '—';
+    document.getElementById('fType').textContent = TYPE_MAP[currentUser.readerType] || '—';
+    document.getElementById('fCard').textContent = currentUser.cardNo || '—';
+    document.getElementById('fPhone').textContent = currentUser.phone || '—';
+    document.getElementById('fEmail').textContent = currentUser.email || '—';
+    // 默认 Tab：我的资料
+    document.querySelectorAll('.profile-tabs a').forEach(a => a.classList.remove('active'));
+    document.querySelector('.profile-tabs a').classList.add('active');
+    document.querySelectorAll('.profile-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-info').classList.add('active');
+  }
+
+  async function saveMyInfo() {
+    const phone = document.getElementById('editPhone').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    const msg = document.getElementById('infoMsg');
+    if (!phone || !/^\d{11}$/.test(phone)) { msg.textContent = '请输入 11 位手机号码'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请输入有效的电子邮箱'; return; }
+    try {
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone, email: email });
+      const res = await apiFetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) {
+        currentUser.phone = phone;
+        currentUser.email = email;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        document.getElementById('fPhone').textContent = phone;
+        document.getElementById('fEmail').textContent = email;
+        msg.style.color = '#4f8a62';
+        msg.textContent = '保存成功';
+        toast('资料已保存');
+      } else {
+        msg.style.color = '#c65d43';
+        msg.textContent = d.msg || '保存失败';
+      }
+    } catch (e) {
+      msg.style.color = '#c65d43';
+      msg.textContent = '保存失败：' + e.message;
+    }
+  }
+
+  // ===== 我的报名 =====
+  async function loadBorrows() {
+    const box = document.getElementById('borrowList');
+    box.innerHTML = '<div class="loading">加载中…</div>';
+    try {
+      const res = await apiFetch(BORROW_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const d = await res.json();
+      const rows = d.data || [];
+      if (!rows.length) { box.innerHTML = '<div class="no-result">暂无报名记录</div>'; return; }
+      box.innerHTML = rows.map(b =>
+        '<div class="profile-list-item">' +
+          '<div><div class="pl-title">' + esc(b.bookName || '未知服务') + '</div>' +
+          '<div class="pl-sub">' + esc(b.borrowDate || '') + (b.dueDate ? ' ～ ' + esc(b.dueDate) : '') + '</div></div>' +
+          '<span class="pl-status ' + (b.status === '1' ? 'st-done' : b.status === '2' ? 'st-reject' : 'st-pending') + '">' + (BORROW_STATUS[b.status] || '未知') + '</span>' +
+        '</div>').join('');
+    } catch (e) { box.innerHTML = '<div class="no-result">加载失败：' + esc(e.message) + '</div>'; }
+  }
+
+  // ===== 我的候补 =====
+  async function loadReserves() {
+    const box = document.getElementById('reserveList');
+    box.innerHTML = '<div class="loading">加载中…</div>';
+    try {
+      const res = await apiFetch(RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const d = await res.json();
+      const rows = d.data || [];
+      if (!rows.length) { box.innerHTML = '<div class="no-result">暂无候补记录</div>'; return; }
+      box.innerHTML = rows.map(r =>
+        '<div class="profile-list-item">' +
+          '<div><div class="pl-title">' + esc(r.bookName || '未知服务') + '</div>' +
+          '<div class="pl-sub">提交时间：' + esc(r.createTime || '—') + '</div></div>' +
+          '<span class="pl-status ' + (r.status === '1' ? 'st-done' : r.status === '3' ? 'st-reject' : 'st-pending') + '">' + (RESERVE_STATUS[r.status] || '未知') + '</span>' +
+        '</div>').join('');
+    } catch (e) { box.innerHTML = '<div class="no-result">加载失败：' + esc(e.message) + '</div>'; }
+  }
+
+  // ===== 我的入驻申请 =====
+  async function loadPurchases() {
+    const box = document.getElementById('purchaseList');
+    box.innerHTML = '<div class="loading">加载中…</div>';
+    try {
+      const res = await apiFetch(PURCHASE_MY_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
+      const d = await res.json();
+      const rows = d.data || [];
+      if (!rows.length) { box.innerHTML = '<div class="no-result">暂无入驻申请，可在「入驻招商」页提交</div>'; return; }
+      box.innerHTML = rows.map(p =>
+        '<div class="profile-list-item">' +
+          '<div><div class="pl-title">' + esc(p.bookName || '未知申请') + '</div>' +
+          '<div class="pl-sub">提交时间：' + esc(p.createTime || '—') + (p.remark ? ' ｜ ' + esc(p.remark) : '') + '</div></div>' +
+          '<span class="pl-status ' + (p.status === '1' ? 'st-done' : p.status === '2' ? 'st-reject' : 'st-pending') + '">' + (PURCHASE_STATUS[p.status] || '未知') + '</span>' +
+        '</div>').join('');
+    } catch (e) { box.innerHTML = '<div class="no-result">加载失败：' + esc(e.message) + '</div>'; }
+  }
+
+  // ===== 初始化 =====
+  (function () {
+    var el = document.getElementById('footerYear');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+  initProfile();
+</script>
+</body>
+</html>

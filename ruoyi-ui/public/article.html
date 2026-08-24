@@ -198,6 +198,8 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  // 跳转后台管理（根路径已重定向到首页，后台改走 /index.html）
+  function goAdmin() { location.href = '/index'; }
   function openLogin() {
     document.getElementById('loginMsg').textContent = '';
     document.getElementById('loginModal').style.display = 'flex';
@@ -215,8 +217,6 @@
         currentUser = d.data;
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
         renderLoginState();
-  // 跳转后台管理（根路径已重定向到首页，后台改走 /index.html）
-  function goAdmin() { location.href = '/index'; }
         closeModal('loginModal');
         toast('欢迎回来，' + name);
       } else {
@@ -228,7 +228,7 @@
     const area = document.getElementById('loginArea');
     if (area) {
       area.innerHTML = currentUser
-        ? '<span style="cursor:pointer" onclick="logout()">👤 ' + esc(currentUser.readerName || '成员') + '</span>'
+        ? '<span style="cursor:pointer" onclick="logout()" title="退出登录">👤 ' + esc(currentUser.readerName || '成员') + ' <a href="profile.html" style="color:#fff;text-decoration:underline;font-size:13px">个人主页</a>' + '</span>'
         : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     }
   }

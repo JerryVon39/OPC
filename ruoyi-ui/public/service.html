@@ -209,6 +209,8 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  // 跳转后台管理（根路径已重定向到首页，后台改走 /index.html）
+  function goAdmin() { location.href = '/index'; }
   // 遮罩点击关闭（事件委托，无需等待弹窗 DOM 出现）
   document.addEventListener('click', function (e) {
     if (e.target.classList && e.target.classList.contains('modal')) e.target.style.display = 'none';
@@ -243,7 +245,7 @@
   function renderLoginState() {
     const area = document.getElementById('loginArea');
     if (currentUser) {
-      area.innerHTML = '<span style="cursor:pointer" onclick="logout()">👤 ' + esc(currentUser.readerName || '成员') + '</span>';
+      area.innerHTML = '<span style="cursor:pointer" onclick="logout()" title="退出登录">👤 ' + esc(currentUser.readerName || '成员') + ' <a href="profile.html" style="color:#fff;text-decoration:underline;font-size:13px">个人主页</a>' + '</span>';
     } else {
       area.innerHTML = '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     }
