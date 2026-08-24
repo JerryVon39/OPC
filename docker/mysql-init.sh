@@ -24,6 +24,9 @@ mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DA
 # 系统数据 OPC 化（幂等）：若依官网菜单/部门/岗位
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_opc_cleanup.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_profile.sql
+# 回收站三态→两态（幂等）：book/reader 加 del_flag/deleted_by/deleted_time 软删列。
+# 后端起 book/reader 查询普遍依赖 del_flag，全新库必须执行本脚本，否则报 Unknown column 'del_flag'
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_two_state.sql
 # 创客大赛报名服务条目（book_id=23，contest.html 报名入口固定引用，幂等）
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_contest.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260826_policy.sql

@@ -40,10 +40,10 @@
 - [x] 5. 新增 services.html 服务列表页：分类 Tab + 排序 + 筛选搜索，承接原首页服务网格（复用 renderBooks 逻辑）
 - [x] 6. 新增 article.html?id=xx 文章详情页：新闻/政策共用，正文 textContent 渲染 + 政策原文链接解析为可点击 <a>；替换 news.html/policy.html 的弹窗
 - [x] 7. 新增 service.html?id=xx 服务详情页：完整介绍 + 名额 + 报名按钮（复用报名逻辑），替换 shop.html 服务详情弹窗
-- [ ] 8. 新增 profile.html 个人主页：左侧资料卡 + Tab（我的资料查看/编辑手机邮箱 / 我的报名 / 我的候补 / 我的入驻申请）；导航右侧登录后显示姓名入口；未登录访问弹登录
-- [ ] 9. 后端 4 个 @Anonymous 公开接口：GET 按 cardNo 查报名 / 查候补 / 查申请 + PUT 更新本人资料（无表结构变更，SecurityConfig 不改）
-- [ ] 10. 移动端响应式导航（汉堡菜单）+ 8 页 SEO title/description 检查修正（部分：移动端有响应式断点，汉堡菜单未做）
-- [ ] 11. 收尾清理（部分完成：弹窗/suggest/死函数已删；「更多」下拉精简与 footer [待补] 占位待做）
+- [x] 8. 新增 profile.html 个人主页：左侧资料卡 + Tab（我的资料查看/编辑手机邮箱 / 我的报名 / 我的候补 / 我的入驻申请）；导航右侧登录后显示姓名入口；未登录访问弹登录（`8b1eeefb`，导航登录态+胶囊入口 `04fc2394`）
+- [x] 9. 后端 @Anonymous 公开接口：GET 按 cardNo 查报名 / 查候补 / 查申请 + PUT 更新本人资料（ReaderController/BookController/BookReserveController/BorrowRecordController/BookPurchaseReqController 均已落地；会话走 X-Session-Token 头）
+- [x] 10. 移动端响应式导航（汉堡菜单）+ 8 页 SEO title/description 检查修正（汉堡菜单 `c5d2cd83`）
+- [x] 11. 收尾清理：弹窗/suggest/死函数已删；「更多」下拉精简为统一两项（注册/后台管理，`e5c35445`）；footer [待补] 占位仍待用户提供（见下方 17-19）
 
 ## 远期功能需求（真实信息指向，暂不做，仅记录）
 

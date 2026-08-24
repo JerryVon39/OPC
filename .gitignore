@@ -53,3 +53,7 @@ backup/
 # 运行时日志与 PID 文件（start-local 生成）
 logs/
 dump.rdb
+
+# Python 测试脚本缓存
+__pycache__/
+*.pyc
