@@ -16,7 +16,8 @@
   <!-- 顶部导航（吸顶，当前页高亮） -->
   <div class="navbar">
     <div class="logo" style="cursor:pointer" onclick="location.href='home.html'">数智游民<span>创新工场</span></div>
-    <div class="nav-links">
+    <span class="nav-toggle" onclick="toggleNavMenu(event)" title="菜单">☰</span>
+    <div class="nav-links" id="navAnchors">
       <a href="home.html">首页</a>
       <a href="services.html">服务项目</a>
       <a href="about.html">走进社区</a>
@@ -220,6 +221,17 @@
       }
     } catch (e) { msg.style.color = '#e2554b'; msg.textContent = '注册失败：' + e.message; }
   }
+  // 汉堡菜单展开/收起（移动端导航）
+  function toggleNavMenu(e) {
+    e.stopPropagation();
+    document.getElementById('navAnchors').classList.toggle('open');
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.navbar')) {
+      const nl = document.getElementById('navAnchors');
+      if (nl) nl.classList.remove('open');
+    }
+  });
   function toggleMoreMenu(e) {
     e.stopPropagation();
     document.getElementById('navMore').classList.toggle('open');

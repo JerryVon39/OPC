@@ -16,6 +16,7 @@
   <!-- 顶部导航（锚点 + 搜索 + 我的报名 + 登录区 + "更多"下拉） -->
   <div class="navbar">
     <div class="logo" style="cursor:pointer" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="返回顶部">数智游民<span>创新工场</span></div>
+    <span class="nav-toggle" onclick="toggleNavMenu(event)" title="菜单">☰</span>
     <div class="nav-links" id="navAnchors">
       <a data-target="home" class="active">首页</a>
       <a href="services.html">服务项目</a>
@@ -882,6 +883,17 @@
   });
 
   // ===== "更多"下拉菜单（点击展开 / 点外部或选完收起）=====
+  // 汉堡菜单展开/收起（移动端导航）
+  function toggleNavMenu(e) {
+    e.stopPropagation();
+    document.getElementById('navAnchors').classList.toggle('open');
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.navbar')) {
+      const nl = document.getElementById('navAnchors');
+      if (nl) nl.classList.remove('open');
+    }
+  });
   function toggleMoreMenu(e) {
     e.stopPropagation();
     document.getElementById('navMore').classList.toggle('open');
