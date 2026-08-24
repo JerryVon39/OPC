@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.system.domain.BookPurchaseReq;
 import com.ruoyi.system.mapper.BookPurchaseReqMapper;
 import com.ruoyi.system.service.IBookPurchaseReqService;
-import com.ruoyi.common.utils.MailUtil;
+import com.ruoyi.system.service.IMailTemplateService;
 
 /**
  * 服务入驻申请申请Service业务层处理
@@ -22,7 +22,7 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
     private BookPurchaseReqMapper bookPurchaseReqMapper;
 
     @Autowired
-    private MailUtil mailUtil;
+    private IMailTemplateService mailTemplateService;
 
     @Override
     public BookPurchaseReq selectBookPurchaseReqByReqId(Long reqId)
@@ -77,26 +77,21 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
                 && ("1".equals(bookPurchaseReq.getStatus()) || "2".equals(bookPurchaseReq.getStatus())))
         {
             String to = old.getEmail();
+            java.util.Map<String, Object> params = new java.util.HashMap<>();
+            params.put("applyName", old.getBookName());
             if ("1".equals(bookPurchaseReq.getStatus()))
             {
-                mailUtil.sendHtml(to, "【入驻申请】您的入驻申请已通过",
-                        "<p>您好：</p><p>您的申请《" + esc(old.getBookName()) + "》已通过审核，运营团队将尽快与您联系办理入驻。欢迎加入数智游民创新工场！</p>");
+                mailTemplateService.send("purchase.pass", to, params);
             }
             else
             {
-                mailUtil.sendHtml(to, "【入驻申请】您的入驻申请未通过",
-                        "<p>您好：</p><p>很遗憾，您的申请《" + esc(old.getBookName()) + "》暂未通过审核。我们会持续关注您的需求，感谢支持！</p>");
+                mailTemplateService.send("purchase.reject", to, params);
             }
         }
         return rows;
     }
 
-    /** HTML 转义 */
-    private String esc(String s)
-    {
-        if (s == null) { return ""; }
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
+    // 邮件占位符转义由 MailTemplateServiceImpl 渲染时统一处理，此处不再需要 esc
 
     @Override
     public int deleteBookPurchaseReqByReqIds(Long[] reqIds)

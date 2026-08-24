@@ -17,7 +17,7 @@ import com.ruoyi.system.mapper.ReaderMapper;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.service.IBookReserveService;
 import com.ruoyi.system.service.IReaderService;
-import com.ruoyi.common.utils.MailUtil;
+import com.ruoyi.system.service.IMailTemplateService;
 
 /**
  * 服务候补Service业务层处理
@@ -41,7 +41,7 @@ public class BookReserveServiceImpl implements IBookReserveService
     private IReaderService readerService;
 
     @Autowired
-    private MailUtil mailUtil;
+    private IMailTemplateService mailTemplateService;
 
     @Override
     public BookReserve selectBookReserveByReserveId(Long reserveId)
@@ -142,20 +142,15 @@ public class BookReserveServiceImpl implements IBookReserveService
         reserve.setCreateBy(reader.getReaderName());
         reserve.setCreateTime(new Date());
         int rows = bookReserveMapper.insertBookReserve(reserve);
-        // 候补成功邮件（异步、尽力而为）
-        mailUtil.sendHtml(reader.getEmail(), "【服务候补】候补成功",
-                "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
-                + "<p>您已成功预约《" + esc(book.getBookName()) + "》。该书当前无库存，将进入预约队列；</p>"
-                + "<p>一旦有名额释放，我们会通过邮件通知您。感谢支持数智游民创新工场！</p>");
+        // 候补成功邮件（模板渲染、异步、尽力而为）
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("readerName", reader.getReaderName());
+        params.put("bookName", book.getBookName());
+        mailTemplateService.send("reserve.success", reader.getEmail(), params);
         return rows;
     }
 
-    /** HTML 转义 */
-    private String esc(String s)
-    {
-        if (s == null) { return ""; }
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
+    // 邮件占位符转义由 MailTemplateServiceImpl 渲染时统一处理，此处不再需要 esc
 
     @Override
     public List<BookReserve> selectReservesByCard(String cardNo)

@@ -17,7 +17,7 @@ import com.ruoyi.system.service.IBorrowRecordService;
 import com.ruoyi.system.service.IReaderService;
 import com.ruoyi.system.service.FineService;
 import com.ruoyi.system.service.BorrowRuleService;
-import com.ruoyi.common.utils.MailUtil;
+import com.ruoyi.system.service.IMailTemplateService;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.StatisticsService;
 
@@ -56,7 +56,10 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     private StatisticsService statisticsService;
 
     @Autowired
-    private MailUtil mailUtil;
+    private IMailTemplateService mailTemplateService;
+
+    @Autowired
+    private ISysConfigService configService;
 
     @Override
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId)
@@ -180,11 +183,12 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         // 报名数据变了：失效统计缓存（热门排行/看板下次请求重新计算）
         statisticsService.evictAll();
-        // 报名成功邮件通知（异步、尽力而为，失败不影响业务）
-        mailUtil.sendHtml(reader.getEmail(), "【服务报名】报名成功",
-                "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
-                + "<p>您已成功报名《" + esc(book.getBookName()) + "》，截止日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", due) + "。</p>"
-                + "<p>请按时完成，逾期将影响后续报名。感谢支持数智游民创新工场！</p>");
+        // 报名成功邮件通知（模板渲染、异步、尽力而为，失败不影响业务）
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("readerName", reader.getReaderName());
+        params.put("bookName", book.getBookName());
+        params.put("dueDate", com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", due));
+        mailTemplateService.send("borrow.success", reader.getEmail(), params);
         return rows;
     }
 
@@ -292,14 +296,15 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 {
                     continue; // 该预约已被并发推进/取消，取下一位
                 }
-                // 书已完成 → 通知排在最前的候补成员前来取书（异步、尽力而为）
+                // 书已完成 → 通知排在最前的候补成员前来取书（模板渲染、异步、尽力而为）
                 Reader rv = readerMapper.selectReaderByReaderId(first.getReaderId());
                 if (rv != null)
                 {
-                    mailUtil.sendHtml(rv.getEmail(), "【服务候补】您候补的服务有名额了",
-                            "<p>您好，" + esc(rv.getReaderName()) + "：</p>"
-                            + "<p>您候补的《" + esc(first.getBookName() == null ? "服务" : first.getBookName()) + "》已有名额，现可前来报名。</p>"
-                            + "<p>请尽早在" + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", new Date()) + "起的 3 天内办理报名，逾期未办将视为放弃。感谢支持数智游民创新工场！</p>");
+                    java.util.Map<String, Object> p2 = new java.util.HashMap<>();
+                    p2.put("readerName", rv.getReaderName());
+                    p2.put("bookName", first.getBookName() == null ? "服务" : first.getBookName());
+                    p2.put("days", reserveExpireDays());
+                    mailTemplateService.send("reserve.available", rv.getEmail(), p2);
                 }
                 break;
             }
@@ -488,19 +493,29 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         record.setRenewCount(renewCount + 1);
         record.setUpdateTime(new Date());
         int rows = borrowRecordMapper.updateBorrowRecord(record);
-        // 续借成功邮件（异步、尽力而为）
-        mailUtil.sendHtml(reader.getEmail(), "【服务报名】报名成功",
-                "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
-                + "<p>您已成功续借《" + esc(record.getBookName() == null ? "该书" : record.getBookName()) + "》，新的应还日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", newDue) + "。</p>"
-                + "<p>如再次需续期或有其他问题，请联系服务台。感谢支持数智游民创新工场！</p>");
+        // 续借成功邮件（模板渲染、异步、尽力而为；主题"续期成功"由模板控制，修复旧复制粘贴错误）
+        java.util.Map<String, Object> p3 = new java.util.HashMap<>();
+        p3.put("readerName", reader.getReaderName());
+        p3.put("bookName", record.getBookName() == null ? "该书" : record.getBookName());
+        p3.put("dueDate", com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", newDue));
+        mailTemplateService.send("renew.success", reader.getEmail(), p3);
         return rows;
     }
 
-    /** HTML 转义，避免书名/姓名含特殊字符破坏邮件模板 */
-    private String esc(String s)
+    /** 候补名额有效天数（邮件文案 {days} 与定时任务取消逻辑一致，默认 2 天） */
+    private int reserveExpireDays()
     {
-        if (s == null) { return ""; }
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        int days = 2;
+        try
+        {
+            String v = configService.selectConfigByKey("book.reserve.expireDays");
+            if (v != null && !v.isEmpty())
+            {
+                days = Integer.parseInt(v);
+            }
+        }
+        catch (Exception ignore) { }
+        return days < 1 ? 1 : days;
     }
 
     /** 删除报名记录：未还记录（进行中/逾期）先还原库存再删，有未缴罚款则拒绝（删除会抹掉欠费） */

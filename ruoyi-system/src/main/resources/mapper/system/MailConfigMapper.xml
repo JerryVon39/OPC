@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MailConfigMapper">
+
+    <resultMap type="MailConfig" id="MailConfigResult">
+        <result property="id"            column="id"         />
+        <result property="enabled"       column="enabled"    />
+        <result property="host"          column="host"       />
+        <result property="port"          column="port"       />
+        <result property="username"      column="username"   />
+        <result property="authCode"      column="auth_code"  />
+        <result property="fromName"      column="from_name"  />
+        <result property="updateBy"      column="update_by"  />
+        <result property="updateTime"    column="update_time"/>
+    </resultMap>
+
+    <select id="selectConfig" resultMap="MailConfigResult">
+        select id, enabled, host, port, username, auth_code, from_name, update_by, update_time
+        from mail_config where id = 1 limit 1
+    </select>
+
+    <update id="updateConfig" parameterType="MailConfig">
+        update mail_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="host != null and host != ''">host = #{host},</if>
+            <if test="port != null">port = #{port},</if>
+            <if test="username != null">username = #{username},</if>
+            <if test="authCode != null">auth_code = #{authCode},</if>
+            <if test="fromName != null">from_name = #{fromName},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = 1
+    </update>
+
+</mapper>

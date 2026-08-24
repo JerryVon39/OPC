@@ -18,6 +18,7 @@ import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.domain.ShopOrder;
 import com.ruoyi.system.service.IReaderService;
 import com.ruoyi.system.service.StatisticsService;
+import com.ruoyi.system.service.IMailTemplateService;
 
 /**
  * 成员管理Service业务层处理
@@ -45,6 +46,9 @@ public class ReaderServiceImpl implements IReaderService
 
     @Autowired
     private com.ruoyi.system.service.ISysDictDataService sysDictDataService;
+
+    @Autowired
+    private IMailTemplateService mailTemplateService;
 
     /** 取当前操作人（未登录/定时任务场景返回空串，不抛异常） */
     private String operator()
@@ -210,6 +214,11 @@ public class ReaderServiceImpl implements IReaderService
         borrowRecordMapper.updateCardNoSnapshot(readerId, newCard);
         // 同步历史候补快照证号（同上；否则"我的候补"查不到、reserveByCard 重复候补校验失效、cancelByCard 归属比对对不上）
         bookReserveMapper.updateCardNoSnapshot(readerId, newCard);
+        // 新证号邮件通知（模板渲染、异步、尽力而为）
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("readerName", reader.getReaderName());
+        params.put("cardNo", newCard);
+        mailTemplateService.send("reissue.notify", reader.getEmail(), params);
         return newCard;
     }
 
