@@ -6,6 +6,8 @@
 覆盖：公开接口（服务列表/数据条/字典/新闻）→ 成员登录 → 报名/重复拒绝/我的报名
       → 满员候补 → 入驻申请 → 后台登录与菜单树
 与新种子数据（upgrade_20260821_official.sql / business_init.sql）耦合，可重复执行。
+注意：登录/入驻申请有 IP 频控（10 次/分钟、失败递增退避），连续快速重跑可能触发
+      "请求过于频繁"——请间隔 60 秒以上重跑，或清理 Redis 的 reader:fail:/reader:backoff:/reader:ip-rate: key。
 """
 import json
 import sys
@@ -27,6 +29,18 @@ def check(name, cond, detail=""):
         print(f"  ❌ {name} {detail}")
 
 
+def admin_login():
+    """后台登录：若依 /login 接收 JSON body（req 的 urlencode 不适用）"""
+    try:
+        r = urllib.request.Request(BASE + "/login",
+            data=json.dumps({"username": "admin", "password": "admin123"}).encode("utf-8"),
+            method="POST", headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(r, timeout=10) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        return {"code": -1, "msg": str(e)}
+
+
 def req(method, path, params=None, headers=None):
     url = BASE + path
     data = None
@@ -44,17 +58,17 @@ def main():
     print("== 1. 公开接口 ==")
     d = req("GET", "/system/book/list?pageNum=1&pageSize=50")
     books = d.get("rows", [])
-    check("服务列表 21 条", d.get("total") == 21, f"total={d.get('total')}")
+    check("服务列表 22 条", d.get("total") == 22, f"total={d.get('total')}")
     names = [b["bookName"] for b in books]
     check("服务名已业务化", "AI 微短剧制作实战营" in names, str(names[:3]))
     on_sale = [b for b in books if b["status"] == "0"]
-    check("招募中服务 20 条", len(on_sale) == 20, f"{len(on_sale)}")
+    check("招募中服务 21 条", len(on_sale) == 21, f"{len(on_sale)}")
     check("满员服务可候补", any(b["stock"] == 0 for b in on_sale))
     check("名额紧张标签存在", any(0 < b["stock"] <= 3 for b in on_sale))
 
     d = req("GET", "/system/dashboard/publicStats")
     s = d.get("data", {})
-    check("数据条: 服务总数21/成员7", s.get("bookTotal") == 21 and s.get("readerTotal") == 7, str(s))
+    check("数据条: 服务总数22/成员7", s.get("bookTotal") == 22 and s.get("readerTotal") == 7, str(s))
 
     d = req("GET", "/system/dict/data/type/book_type")
     labels = [x["dictLabel"] for x in d.get("data", [])]
@@ -70,12 +84,12 @@ def main():
     check("新闻标题业务化", any("OPC" in t for t in titles), str(titles))
 
     d = req("GET", "/system/banner/publicList")
-    check("品牌轮播 3 条", len(d.get("data", [])) == 3, str(d.get("data", []))[:100])
+    check("品牌轮播 4 条", len(d.get("data", [])) == 4, str(d.get("data", []))[:100])
 
     print("== 2. 成员登录与报名链路 ==")
     # 认证改造：登录 = 证号 + 密码；存量成员无密码（pwd_set=0），先由 admin 设测试密码
     PWD = "Test@12345"
-    d = req("POST", "/login", {"username": "admin", "password": "admin123"})
+    d = admin_login()
     admin_token = d.get("token", "")
     if admin_token:
         # 查 readerId 并设密（幂等：重复执行每次都重置为同一密码）；set-password 需 JSON body

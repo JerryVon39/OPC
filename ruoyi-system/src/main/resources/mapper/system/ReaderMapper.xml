@@ -9,6 +9,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="readerName"    column="reader_name"    />
         <result property="phone"    column="phone"    />
         <result property="email"    column="email"    />
+        <!-- password_hash 仅 selectAuthInfo 查询包含该列；普通查询（selectReaderVo）不含，防泄露 -->
+        <result property="passwordHash" column="password_hash" />
         <result property="cardNo"    column="card_no"    />
         <result property="readerType"    column="reader_type"    />
         <result property="sex"    column="sex"    />

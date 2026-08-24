@@ -34,8 +34,11 @@ public class MailUtil
 {
     private static final Logger log = LoggerFactory.getLogger(MailUtil.class);
 
-    /** 数据库配置提供者（system 层实现，optional：未装配时回退环境变量） */
+    /** 数据库配置提供者（system 层实现，optional：未装配时回退环境变量）
+     * @Lazy 打破循环：MailConfigServiceImpl 也依赖 MailUtil（testSend），
+     * 提供者延迟解析后 bean 创建顺序无环（provider 仅在发送时真正触发） */
     @Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
     private MailConfigProvider configProvider;
 
     // ---- 环境变量兜底（无数据库配置时生效，保持改造前行为完全一致） ----
