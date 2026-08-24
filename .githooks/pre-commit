@@ -45,7 +45,9 @@ if ! mysqladmin -h"$DB_HOST" -P"$DB_PORT" -uroot -p"$DB_PASS" ping >/dev/null 2>
 fi
 
 # ---------- 导出业务数据（REPLACE 模式，可重复导入） ----------
-TABLES="book reader borrow_record shop_order book_reserve book_purchase_req sys_banner sys_notice sys_notice_read cms_category cms_article sys_dict_type sys_dict_data"
+# 注意：reader / book_purchase_req 含手机号/邮箱等个人隐私，快照一律排除，
+# 防止真实成员信息随 commit 自动推上（可能公开的）GitHub。
+TABLES="book borrow_record shop_order book_reserve sys_banner sys_notice sys_notice_read cms_category cms_article sys_dict_type sys_dict_data"
 OUT="sql/data_snapshot.sql"
 
 {
@@ -55,6 +57,7 @@ OUT="sql/data_snapshot.sql"
   echo "-- 导入（可重复执行，REPLACE 模式）："
   echo "--   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql"
   echo "-- 提示：本文件为自动生成，请勿手工编辑；运行 scripts/export-data.bat 可手动刷新"
+  echo "-- 隐私说明：reader（成员手机/邮箱）与 book_purchase_req（申请人信息）已从快照排除"
   echo "-- ============================================"
   echo ""
 } > "$OUT"

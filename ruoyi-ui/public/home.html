@@ -4,13 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>数智游民创新工场 · 清远市首个人工智能 OPC 生态社区</title>
-<meta name="description" content="清远市首个人工智能 OPC（一人公司）生态社区，清城区政府与星链科技共建，"国企引领、民企赋能"。一个人 + AI 即可创业：AI 微短剧、AI 应用开发、数字人创作，免费工位与政策赋能。入驻咨询：0763-3391888">
+<meta property="og:title" content="数智游民创新工场 · 清远市首个人工智能 OPC 生态社区">
+<meta property="og:description" content="清远市首个人工智能 OPC（一人公司）生态社区：一个人 + AI 即可创业，AI 微短剧、AI 应用开发、数字人创作，免费工位与政策赋能。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://www.opc.example.com/">
+<link rel="icon" href="favicon.ico">
+<meta name="description" content="清远市首个人工智能 OPC（一人公司）生态社区，清城区政府与星链科技共建，“国企引领、民企赋能“。一个人 + AI 即可创业：AI 微短剧、AI 应用开发、数字人创作，免费工位与政策赋能。入驻咨询：0763-3391888">
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body class="home-page">
   <!-- 顶部导航（锚点 + 搜索 + 我的报名 + 登录区 + "更多"下拉） -->
   <div class="navbar">
-    <div class="logo" style="cursor:pointer" onclick="resetAll()" title="返回全部服务">数智游民<span>创新工场</span></div>
+    <div class="logo" style="cursor:pointer" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="返回顶部">数智游民<span>创新工场</span></div>
     <div class="nav-links" id="navAnchors">
       <a data-target="home" class="active">首页</a>
       <a href="services.html">服务项目</a>
@@ -216,7 +221,7 @@
         <span class="home-mod-en">NEWS</span>
         <a class="btn-buy home-mod-more" style="text-decoration:none" href="news.html">查看全部动态 →</a>
       </div>
-      <a class="home-news-top" href="article.html?id=11">
+      <a id="newsTop" class="home-news-top" href="#" style="display:none">
         <span class="hnt-badge">📜 政策速览</span>
         <span class="hnt-text">广东省 2028 年将建成 100 个 AI OPC 生态社区，培育 1000 家标杆企业、集聚 10000 名创新创业人才</span>
         <span class="hnt-more">查看政策 →</span>
@@ -389,23 +394,24 @@
 <script>
   // ===== 接口地址（匿名公开接口）=====
   const API = '/prod-api/system/book/list';
-  const STATS_API = '/prod-api/system/borrow/stats';
   const REG_API = '/prod-api/system/reader/register';
   const LOGIN_API = '/prod-api/system/reader/login';
-  const BORROW_API = '/prod-api/system/borrow/borrowByCard';
   const CARD_API = '/prod-api/system/borrow/queryByCard';
   const CONFIG_API = '/prod-api/system/config/configKey/book.stock.warn';
   const MYINFO_API = '/prod-api/system/reader/updateMyInfo';
-  const RESERVE_API = '/prod-api/system/reserve/add';
-  const MY_RESERVE_API = '/prod-api/system/reserve/myList';
-  const RESERVE_CANCEL = '/prod-api/system/reserve/cancel';
-  const PUBLIC_STATS_API = '/prod-api/system/dashboard/publicStats';
   const BANNER_API = '/prod-api/system/banner/publicList';
-  const RELATED_API = '/prod-api/system/book/related';
   const PURCHASE_API = '/prod-api/system/purchase/apply';
   const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
-  const authParams = () => ({ cardNo: currentUser ? currentUser.cardNo : '', sessionToken: sessionToken() });
 
+  // ===== 统一请求包装：自动附带 X-Session-Token 请求头（凭证不落 URL/日志）=====
+  const apiFetch = (url, options) => {
+    options = options || {};
+    const headers = new Headers(options.headers || {});
+    const tok = sessionToken();
+    if (tok) headers.set('X-Session-Token', tok);
+    options.headers = headers;
+    return fetch(url, options);
+  };
   // ===== 字典翻译（分类由后台字典动态加载）=====
   // 服务分类映射（首页写死与后台字典 book_type 一致的 3 类；services.html 动态加载）
   const TYPE_MAP = { '1': 'AI 内容创作', '2': 'AI 技术应用', '3': 'AI 硬件与场景' };
@@ -415,13 +421,11 @@
   const COVER_COLORS = ['#e8f0e9', '#f6efe2', '#eef4ef', '#f4e9ea', '#e9eef6', '#f3efe4'];
 
   // ===== 全局状态 =====
-  let currentType = '';
   let currentUser = null;
   let warnThreshold = 3;   // 名额预警阈值（从系统参数读取，后台可改）
   let borrowedIds = [];    // 当前登录成员已报名的服务ID（"已报名"标识）
   let reservedIds = [];    // 当前登录成员候补中的服务ID（候补中/有名额，"已候补"标识）
   const PLACEHOLDER = 'img/book-placeholder.svg';
-  const SKELETON = '<div class="book-card skeleton-card"><div class="book-cover skeleton-block"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:55%"></div></div>';
 
   // ===== Banner 轮播（后台"轮播图管理"动态加载，无图渐变背景+文字，有图显示图片）=====
   const DEFAULT_BANNERS = [
@@ -454,7 +458,7 @@
   async function loadBanners() {
     let list = DEFAULT_BANNERS;
     try {
-      const res = await fetch(BANNER_API);
+      const res = await apiFetch(BANNER_API);
       const d = await res.json();
       if (d.code === 200 && d.data && d.data.length) list = d.data;
     } catch (e) { }
@@ -494,7 +498,7 @@
     reservedIds = [];
     if (!currentUser) return;
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
       (d.data || []).forEach(r => {
         if (r.status === '0' || r.status === '1') reservedIds.push(r.bookId);
@@ -507,7 +511,7 @@
     borrowedIds = [];
     if (!currentUser) return;
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
       (d.data || []).forEach(b => {
         if (b.status === '0' || b.status === '2') borrowedIds.push(b.bookId);
@@ -518,7 +522,7 @@
   // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
   async function loadConfig() {
     try {
-      const res = await fetch(CONFIG_API);
+      const res = await apiFetch(CONFIG_API);
       const d = await res.json();
       // 注意：RuoYi 该接口把参数值放在 msg 字段（success(字符串) 走 msg 重载）
       const raw = (d.code === 200 && d.msg != null) ? d.msg : d.data;
@@ -554,7 +558,7 @@
         email: email,
         remark: document.getElementById('pRemark').value.trim()
       });
-      const res = await fetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         msg.textContent = '入驻申请已提交！运营团队将尽快与您联系'; msg.style.color = '#4f8a62';
@@ -570,10 +574,6 @@
   }
 
   // ===== 服务列表（keyword 搜索 + 分类 + 排序 + 加载骨架屏）=====
-  let currentBooks = [];   // 当前渲染的服务列表（详情弹窗从这里取数，保证与搜索/分类同步）
-  let bookRequestSeq = 0;  // 请求序号：只渲染最后一次请求的结果（防止快速搜索时旧结果覆盖新结果）
-  let currentSort = '';    // 排序：'' 综合 | borrowCount 报名最多 | publishDate 最新上线
-  let currentAsc = '';     // 排序方向（'' 默认 | desc 降序）
   // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /prod-api 代理到后端才能加载
   function imgSrc(url) {
     if (!url) return '';
@@ -587,182 +587,24 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-  async function loadBooks() {
-    const mySeq = ++bookRequestSeq;
-    // 加载前显示骨架屏
-    document.getElementById('bookGrid').innerHTML = SKELETON.repeat(6);
-    // 首页精选 6 条（完整列表见 services.html，含分类/排序/搜索）
-    const params = new URLSearchParams({ pageNum: 1, pageSize: 6 });
-    if (currentType) params.set('bookType', currentType);
-    if (currentSort) { params.set('orderByColumn', currentSort); params.set('isAsc', currentAsc || 'desc'); }
-    try {
-      const res = await fetch(API + '?' + params.toString());
-      const data = await res.json();
-      if (mySeq !== bookRequestSeq) return; // 已有更新的搜索请求，丢弃本次结果
-      // 前台只展示招募中的服务（已结束服务不出现在列表）
-      const books = (data.rows || []).filter(b => b.status === '0');
-      currentBooks = books;
-      // 首页精选服务标题已静态化（04 精选服务），无需 JS 写入
-      if (!books.length) {
-        document.getElementById('bookGrid').innerHTML =
-          '<div class="no-result">' +
-            '<div class="nr-icon">🧭</div>' +
-            '<div class="nr-title">服务准备中</div>' +
-            '<div class="nr-desc">完整服务列表与筛选功能见服务列表页</div>' +
-            '<a class="btn-buy" style="text-decoration:none" href="services.html">前往服务列表 →</a>' +
-          '</div>';
-        return;
-      }
-      renderBooks(books);
-    } catch (e) {
-      if (mySeq !== bookRequestSeq) return; // 旧请求失败不覆盖新结果（与成功路径的防覆盖一致）
-      // "Unexpected token '<'" 通常是请求返回了 HTML（如代理前缀不对/页面为缓存旧版），
-      // 引导强制刷新换新页面
-      const hint = /Unexpected token/.test(e.message) ? '（页面可能为缓存旧版，请按 Ctrl+F5 强制刷新重试）' : '';
-      document.getElementById('bookGrid').innerHTML = '<div class="loading">加载失败：' + esc(e.message) + hint + '</div>';
-    }
-  }
-
-  // 渲染服务卡片网格（从 currentBooks 取数；乐观 UI 下报名/候补瞬间刷新按钮态复用）
-  function renderBooks(books) {
-    if (!books.length) {
-      document.getElementById('bookGrid').innerHTML =
-        '<div class="no-result">' +
-          '<div class="nr-icon">🧭</div>' +
-          '<div class="nr-title">服务准备中</div>' +
-          '<div class="nr-desc">完整服务列表与筛选功能见服务列表页</div>' +
-          '<a class="btn-buy" style="text-decoration:none" href="services.html">前往服务列表 →</a>' +
-        '</div>';
-      return;
-    }
-    document.getElementById('bookGrid').innerHTML = books.map((b, i) => {
-      const onSale = b.status === '0';
-      const borrowed = borrowedIds.includes(b.bookId);
-      // 按钮区：已报名→置灰 / 有名额→报名 / 满员且未候补→候补 / 已候补→置灰（避免模板内嵌套 ${}）
-      const reserved = reservedIds.includes(b.bookId);
-      let btns = '';
-      if (borrowed && onSale) {
-        btns = '<button class="btn-buy btn-borrow" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已报名该服务">已报名</button>';
-      } else if (onSale && b.stock > 0) {
-        btns = '<button class="btn-buy btn-borrow" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticBorrow(this.dataset.id, this.dataset.name)">报名</button>';
-      } else if (onSale && reserved) {
-        btns = '<button class="btn-buy" style="background:#cfc9bd!important;box-shadow:none!important;cursor:not-allowed" disabled title="您已提交候补，请关注候补状态">已候补</button>';
-      } else if (onSale) {
-        btns = '<button class="btn-buy" style="background:#8a6d3b" data-id="' + b.bookId + '" data-name="' + esc(b.bookName) + '" onclick="event.stopPropagation();optimisticReserve(this.dataset.id, this.dataset.name)">📌 候补</button>';
-      }
-      return `
-        <div class="book-card" onclick="location.href='service.html?id=${b.bookId}'">
-          <div class="book-cover" style="background: ${COVER_COLORS[i % COVER_COLORS.length]}">
-            ${isNewBook(b) ? '<span class="new-badge">🆕 新服务</span>' : ''}
-            ${b.cover ? '<img src="' + esc(imgSrc(b.cover)) + '" style="height:100%;width:auto;max-width:100%;object-fit:contain" />' : '<img src="' + PLACEHOLDER + '" style="height:100%;width:auto;max-width:100%" />'}
-          </div>
-          <div class="book-name">${esc(b.bookName)}</div>
-          <div class="book-author">主办方：${esc(b.author) || '未知'}</div>
-          <div class="book-meta">
-            <span class="tag ${onSale ? 'tag-sale' : 'tag-off'}">${STATUS_MAP[b.status] || '未知'}</span>
-            <span class="tag tag-sale">${TYPE_MAP[b.bookType] || '其他'}</span>
-            ${onSale && b.stock > 0 ? '<span class="tag tag-off" style="background:#eef7ef;color:#4f8a62">仅剩 ' + b.stock + ' 席</span>' : ''}
-            ${onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#c65d43">名额紧张</span>' : ''}
-            ${onSale && borrowed ? '<span class="tag tag-off" style="background:#eef1f6;color:#8a93a0">已报名</span>' : ''}
-          </div>
-          <div class="book-bottom">
-            <div class="book-price" style="${b.price == 0 ? 'color:#4f8a62;font-size:15px' : ''}">${b.price == 0 ? '免费' : '<small>¥</small>' + (b.price ?? '--')}</div>
-            <div style="display:flex;gap:8px">${btns}</div>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  // ===== 乐观 UI：点击瞬间改按钮态，失败再回滚（体验"系统反应真快"）=====
-  let pendingBorrow = new Set();  // 报名请求进行中的 bookId（按服务粒度防重复，不再用全局单锁）
-  let pendingReserve = new Set(); // 候补请求进行中的 bookId
-  function optimisticBorrow(bookId, name) {
-    bookId = Number(bookId);
-    if (!currentUser) { toast('请先登录后再报名'); openLogin(); return; }
-    if (pendingBorrow.has(bookId) || borrowedIds.includes(bookId)) return;
-    pendingBorrow.add(bookId);
-    borrowedIds.push(bookId);            // 乐观置为已报名
-    renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已报名"
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
-    fetch(BORROW_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    }).then(async res => {
-      const d = await res.json();
-      if (d.code === 200) {
-        pendingBorrow.delete(bookId);
-        toast('报名成功：' + name + '，可在"我的报名"查看');
-        await loadBorrowed();
-        loadBooks();
-      } else {
-        throw new Error(d.msg || '报名失败');
-      }
-    }).catch(async err => {
-      // 失败回滚：还原按钮态 + 移除已报名标识 + 刷新真实数据
-      if (pendingBorrow.has(bookId)) {
-        pendingBorrow.delete(bookId);
-        const i = borrowedIds.indexOf(bookId);
-        if (i >= 0) borrowedIds.splice(i, 1);
-        renderBooks(currentBooks);
-        toast(err.message || '报名失败');
-        await loadBorrowed();
-        loadBooks();
-      }
-    });
-  }
-  function optimisticReserve(bookId, name) {
-    bookId = Number(bookId);
-    if (!currentUser) { toast('请先登录后再提交候补'); openLogin(); return; }
-    if (pendingReserve.has(bookId) || reservedIds.includes(bookId)) return;
-    pendingReserve.add(bookId);
-    reservedIds.push(bookId);            // 乐观置为已候补
-    renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已候补"
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
-    fetch(RESERVE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    }).then(async res => {
-      const d = await res.json();
-      if (d.code === 200) {
-        pendingReserve.delete(bookId);
-        toast('候补提交成功！可在"📌 活动候补"查看状态');
-        await loadReserved();
-        loadBooks();
-      } else {
-        throw new Error(d.msg || '候补失败');
-      }
-    }).catch(async err => {
-      if (pendingReserve.has(bookId)) {
-        pendingReserve.delete(bookId);
-        const i = reservedIds.indexOf(bookId);
-        if (i >= 0) reservedIds.splice(i, 1);
-        renderBooks(currentBooks);
-        toast(err.message || '候补失败');
-        await loadReserved();
-        loadBooks();
-      }
-    });
-  }
-  // ===== 返回全部服务（logo / "清除筛选"链接）=====
-  function resetAll() {
-    // 首页无分类/排序 Tab：回到精选服务（logo 点击）
-    currentType = '';
-    currentSort = '';
-    currentAsc = '';
-    loadBooks();
-  }
-
   // ===== 渲染首页新闻卡片列表（CMS 文章最新 3 条，点击进文章详情页）=====
   async function renderCmsNews() {
     const box = document.getElementById('newsList');
+    // 置顶「政策速览」块：取最新文章中第一条政策类（分类名以"政策"开头），
+    // 找不到则隐藏该块（避免硬编码文章 ID，重建库/删文后不 404）
+    const topBox = document.getElementById('newsTop');
+    if (topBox) topBox.style.display = 'none';
     try {
-      const res = await fetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=3');
+      const res = await apiFetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=6');
       const d = await res.json();
       const rows = d.rows || [];
+      const policy = rows.find(a => (a.categoryName || '').indexOf('政策') === 0);
+      if (topBox && policy) {
+        topBox.href = 'article.html?id=' + policy.articleId;
+        topBox.style.display = '';
+      }
       if (!rows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
-      box.innerHTML = rows.map(a => {
+      box.innerHTML = rows.slice(0, 3).map(a => {
         const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
         return '<div class="news-card" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
           '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">置顶</span> ' : '') + esc(a.title || '') + '</div>' +
@@ -783,7 +625,7 @@
     if (!name || !card) { msg.textContent = '请输入姓名和成员编号'; msg.style.color = '#c65d43'; return; }
     try {
       const body = new URLSearchParams({ readerName: name, cardNo: card });
-      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200 && d.data) {
         currentUser = d.data;
@@ -795,7 +637,6 @@
         // 加载报名与候补状态（"已报名"/"已候补"标识）并刷新列表
         await loadBorrowed();
         await loadReserved();
-        loadBooks();
       } else {
         msg.textContent = d.msg || '登录失败';
         msg.style.color = '#c65d43';
@@ -812,7 +653,6 @@
     reservedIds = [];
     renderLoginState();
     toast('已退出登录');
-    loadBooks();
   }  function renderLoginState() {
     const area = document.getElementById('loginArea');
     area.innerHTML = currentUser
@@ -834,7 +674,7 @@
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收报名/候补通知）'; msg.style.color = '#c65d43'; return; }
     try {
       // 成员编号由后端生成（防伪造/占坑）
-      const res = await fetch(REG_API, {
+      const res = await apiFetch(REG_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: document.getElementById('regRemark').value.trim() }).toString()
@@ -858,13 +698,12 @@
     if (!currentUser) { toast('请先登录后再提交候补'); openLogin(); return; }
     if (!confirm('确认提交候补申请？有名额时将尽快通知您报名')) return;
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
-      const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
+      const res = await apiFetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         toast('候补提交成功！可在"📌 活动候补"查看状态');
         await loadReserved();
-        loadBooks();
       } else toast(d.msg || '候补失败');
     } catch (e) { toast('候补失败：' + e.message); }
   }
@@ -885,7 +724,7 @@
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无候补记录</span></div>';
@@ -911,13 +750,12 @@
     if (!cardNo) { toast('请先输入成员编号'); return; }
     if (!confirm('确认取消该候补吗？')) return;
     try {
-      const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), reserveId: reserveId });
-      const res = await fetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: cardNo, reserveId: reserveId });
+      const res = await apiFetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         toast('候补已取消');
         await loadReserved();
-        loadBooks();
         queryMyReserves();
       } else toast(d.msg || '取消失败');
     } catch (e) { toast('取消失败：' + e.message); }
@@ -944,7 +782,7 @@
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="loading" style="padding:10px">未查询到报名记录（请确认成员编号）</div>';
@@ -980,8 +818,8 @@
     if (!phone) { msg.textContent = '请输入新手机号'; msg.style.color = '#c65d43'; return; }
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收通知）'; msg.style.color = '#c65d43'; return; }
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), readerName: currentUser.readerName, phone: phone, email: email });
-      const res = await fetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone, email: email });
+      const res = await apiFetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { msg.textContent = '信息修改成功'; msg.style.color = '#4f8a62'; }
       else { msg.textContent = d.msg || '修改失败'; msg.style.color = '#c65d43'; }

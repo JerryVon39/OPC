@@ -1,2 +1,6 @@
+# 官网前台页允许抓取；仅排除后台管理（/index）与动态接口
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /index
+Disallow: /prod-api
+Disallow: /profile

@@ -89,11 +89,11 @@ public class BookReserveServiceImpl implements IBookReserveService
         // findActiveReader 与加锁之间成员可能被管理端删除：加锁查不到即视为不存在
         if (reader == null)
         {
-            throw new ServiceException("读者不存在");
+            throw new ServiceException("成员不存在");
         }
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
-            throw new ServiceException("该读者证号已停用/挂失，无法预约");
+            throw new ServiceException("该成员编号已停用/挂失，无法候补");
         }
         // 锁服务行（FOR UPDATE，加锁顺序统一为 成员→服务，避免与报名路径交叉死锁）：
         // 与下架（changeBookStatus）/删除服务共享 book 行锁，下架完成后本事务读到的必是最新状态，
@@ -101,7 +101,7 @@ public class BookReserveServiceImpl implements IBookReserveService
         Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null || !"0".equals(book.getStatus()))
         {
-            throw new ServiceException("该图书不存在或已下架");
+            throw new ServiceException("该服务不存在或已下架");
         }
         if (book.getStock() != null && book.getStock() > 0)
         {
@@ -143,7 +143,7 @@ public class BookReserveServiceImpl implements IBookReserveService
         reserve.setCreateTime(new Date());
         int rows = bookReserveMapper.insertBookReserve(reserve);
         // 候补成功邮件（异步、尽力而为）
-        mailUtil.sendHtml(reader.getEmail(), "【图书预约】预约成功",
+        mailUtil.sendHtml(reader.getEmail(), "【服务候补】候补成功",
                 "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
                 + "<p>您已成功预约《" + esc(book.getBookName()) + "》。该书当前无库存，将进入预约队列；</p>"
                 + "<p>一旦有名额释放，我们会通过邮件通知您。感谢支持数智游民创新工场！</p>");

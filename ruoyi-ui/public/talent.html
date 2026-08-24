@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>人才培养 · 数智游民创新工场｜高校合作 / 培训体系 / 人才生态</title>
-<meta name="description" content="数智游民创新工场人才培养：3 所高校共建校外实践教学基地，常态化 AI 短视频创作与智能内容生产培训、OPC 创客训练营、高校毕业生实训营、清远籍大学生免费创业训练营，依托"无限画布""AgentSkill"教学工具，联动省职教城超 14 万师生人才储备。">
+<meta property="og:title" content="人才培养 · 数智游民创新工场">
+<meta property="og:description" content="3 所高校共建实践基地：AI 短视频创作培训、OPC 创客训练营、高校毕业生实训营，联动省职教城 14 万师生。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://www.opc.example.com/talent.html">
+<link rel="icon" href="favicon.ico">
+<meta name="description" content="数智游民创新工场人才培养：3 所高校共建校外实践教学基地，常态化 AI 短视频创作与智能内容生产培训、OPC 创客训练营、高校毕业生实训营、清远籍大学生免费创业训练营，依托“无限画布““AgentSkill“教学工具，联动省职教城超 14 万师生人才储备。">
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
@@ -186,7 +191,7 @@
     const card = document.getElementById('loginCard').value.trim();
     const msg = document.getElementById('loginMsg');
     if (!name || !card) { msg.textContent = '请填写姓名与成员编号'; return; }
-    const body = new URLSearchParams({ name: name, cardNo: card });
+    const body = new URLSearchParams({ readerName: name, cardNo: card });
     try {
       const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
@@ -207,9 +212,15 @@
     const area = document.getElementById('loginArea');
     if (area) {
       area.innerHTML = currentUser
-        ? '<span style="cursor:pointer" onclick="openRegister()">👤 ' + String(currentUser.name || '成员').replace(/</g, '&lt;') + '</span>'
+        ? '<span style="cursor:pointer" onclick="logout()">👤 ' + esc(currentUser.readerName || '成员') + '</span>'
         : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     }
+  }
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('shopUser');
+    renderLoginState();
+    toast('已退出登录');
   }
   function openRegister() {
     document.getElementById('regMsg').textContent = '';
@@ -224,7 +235,7 @@
     const msg = document.getElementById('regMsg');
     if (!name) { msg.textContent = '请填写成员姓名'; return; }
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
-    const body = new URLSearchParams({ name: name, phone: phone, email: email, readerType: type, remark: remark });
+    const body = new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: remark });
     try {
       const res = await fetch(REG_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
@@ -248,10 +259,9 @@
       if (m) m.classList.remove('open');
     }
   });
-  document.querySelectorAll('.modal').forEach(function (m) {
-    m.addEventListener('click', function (e) {
-      if (e.target === m) m.style.display = 'none';
-    });
+  // 遮罩点击关闭（事件委托，无需等待弹窗 DOM 出现）
+  document.addEventListener('click', function (e) {
+    if (e.target.classList && e.target.classList.contains('modal')) e.target.style.display = 'none';
   });
   renderLoginState();
 </script>

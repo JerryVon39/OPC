@@ -52,6 +52,24 @@ public class TokenService
 
     private static final Long MILLIS_MINUTE_TWENTY = 20 * 60 * 1000L;
 
+    // 仓库内公开的默认密钥（application.yml 兜底值）：生产必须用 .env 覆盖，
+    // 否则任何能读到仓库的人都能伪造管理员 token。启动即拒绝，防止误用。
+    private static final String PUBLIC_DEFAULT_SECRET =
+            "25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c";
+
+    /**
+     * 启动自检：若 token.secret 仍为仓库公开的默认值，直接终止启动。
+     * 由 {@link com.ruoyi.RuoYiApplication} 或配置类在容器启动时调用。
+     */
+    public void checkSecretNotDefault()
+    {
+        if (PUBLIC_DEFAULT_SECRET.equals(secret) || secret == null || secret.trim().isEmpty())
+        {
+            throw new IllegalStateException(
+                    "token.secret 仍为仓库公开的默认值/空值，拒绝启动。请在 .env 设置强随机 TOKEN_SECRET（如 node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\"）后重启。");
+        }
+    }
+
     @Autowired
     private RedisCache redisCache;
 

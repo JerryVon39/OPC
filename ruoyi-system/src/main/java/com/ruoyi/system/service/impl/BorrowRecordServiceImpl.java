@@ -85,19 +85,19 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     {
         if (book == null)
         {
-            throw new ServiceException("图书不存在");
+            throw new ServiceException("服务不存在");
         }
         if (!com.ruoyi.system.constant.BizStatus.BOOK_ON_SALE.equals(book.getStatus()))
         {
-            throw new ServiceException("该图书已下架，无法借出");
+            throw new ServiceException("该服务已下架，无法报名");
         }
         if (book.getStock() == null || book.getStock() <= 0)
         {
-            throw new ServiceException("图书库存不足，无法借出");
+            throw new ServiceException("服务名额不足，无法报名");
         }
         if (reader == null)
         {
-            throw new ServiceException("读者不存在");
+            throw new ServiceException("成员不存在");
         }
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
@@ -161,7 +161,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         // 库存 -1：原子条件更新（上方校验负责友好提示，此处兜底并发抢书）
         if (bookMapper.updateStock(book.getBookId(), 1L) == 0)
         {
-            throw new ServiceException("图书库存不足，无法借出");
+            throw new ServiceException("服务名额不足，无法报名");
         }
         int rows = borrowRecordMapper.insertBorrowRecord(borrowRecord);
         // 报名成功后：该成员对该书的候补（候补中/有名额）置为已完成
@@ -254,7 +254,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         if ("1".equals(record.getStatus()))
         {
-            throw new ServiceException("该图书已归还，请勿重复操作");
+            throw new ServiceException("该服务已完成，请勿重复操作");
         }
         // 先原子完成状态转换，只有抢到转换权的请求才能回补库存，避免并发双回补
         String fromStatus = record.getStatus();
@@ -268,7 +268,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 com.ruoyi.system.constant.BizStatus.BORROW_RETURNED, new Date(), fine, finePaid, new Date());
         if (rows == 0)
         {
-            throw new ServiceException("该图书已归还，请勿重复操作");
+            throw new ServiceException("该服务已完成，请勿重复操作");
         }
         // 库存 +1（仅状态转换成功后回补）
         if (record.getBookId() != null)
@@ -296,9 +296,9 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 Reader rv = readerMapper.selectReaderByReaderId(first.getReaderId());
                 if (rv != null)
                 {
-                    mailUtil.sendHtml(rv.getEmail(), "【图书预约】您预约的书到了",
+                    mailUtil.sendHtml(rv.getEmail(), "【服务候补】您候补的服务有名额了",
                             "<p>您好，" + esc(rv.getReaderName()) + "：</p>"
-                            + "<p>您预约的《" + esc(first.getBookName() == null ? "图书" : first.getBookName()) + "》已被读者归还，现可前来取书。</p>"
+                            + "<p>您候补的《" + esc(first.getBookName() == null ? "服务" : first.getBookName()) + "》已有名额，现可前来报名。</p>"
                             + "<p>请尽早在" + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", new Date()) + "起的 3 天内办理报名，逾期未办将视为放弃。感谢支持数智游民创新工场！</p>");
                 }
                 break;
@@ -403,7 +403,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         if ("1".equals(record.getStatus()))
         {
-            throw new ServiceException("该图书已归还，无需续借");
+            throw new ServiceException("该服务已完成，无需续期");
         }
         if ("2".equals(record.getStatus()))
         {
@@ -438,7 +438,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     {
         if (cardNo == null || cardNo.trim().isEmpty())
         {
-            throw new ServiceException("请输入借书证号");
+            throw new ServiceException("请输入成员编号");
         }
         Reader reader = readerService.findActiveReader(cardNo);
         BorrowRecord borrow = new BorrowRecord();
@@ -470,7 +470,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         if ("1".equals(record.getStatus()))
         {
-            throw new ServiceException("该图书已归还，无需续借");
+            throw new ServiceException("该服务已完成，无需续期");
         }
         if (record.getDueDate() == null)
         {
@@ -489,7 +489,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         record.setUpdateTime(new Date());
         int rows = borrowRecordMapper.updateBorrowRecord(record);
         // 续借成功邮件（异步、尽力而为）
-        mailUtil.sendHtml(reader.getEmail(), "【图书借阅】续借成功",
+        mailUtil.sendHtml(reader.getEmail(), "【服务报名】报名成功",
                 "<p>您好，" + esc(reader.getReaderName()) + "：</p>"
                 + "<p>您已成功续借《" + esc(record.getBookName() == null ? "该书" : record.getBookName()) + "》，新的应还日期为 " + com.ruoyi.common.utils.DateUtils.parseDateToStr("yyyy-MM-dd", newDue) + "。</p>"
                 + "<p>如再次需续期或有其他问题，请联系服务台。感谢支持数智游民创新工场！</p>");

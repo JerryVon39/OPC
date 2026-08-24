@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>服务项目 · 数智游民创新工场｜AI 服务 / 培训课程 / 活动报名</title>
+<meta property="og:title" content="服务项目 · 数智游民创新工场">
+<meta property="og:description" content="AI 内容创作、AI 技术应用、AI 硬件与场景三大类服务与培训课程，支持分类筛选、报名与满员候补。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://www.opc.example.com/services.html">
+<link rel="icon" href="favicon.ico">
 <meta name="description" content="数智游民创新工场服务列表：AI 内容创作、AI 技术应用、AI 硬件与场景三大类服务与培训课程，支持按分类筛选、关键词搜索、报名与满员候补。入驻咨询：0763-3391888">
 <link rel="stylesheet" href="css/site.css">
 </head>
@@ -203,6 +208,16 @@
   const DICT_API = '/prod-api/system/dict/data/type/book_type';
   const PURCHASE_API = '/prod-api/system/purchase/apply';
   const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
+
+  // ===== 统一请求包装：自动附带 X-Session-Token 请求头（凭证不落 URL/日志）=====
+  const apiFetch = (url, options) => {
+    options = options || {};
+    const headers = new Headers(options.headers || {});
+    const tok = sessionToken();
+    if (tok) headers.set('X-Session-Token', tok);
+    options.headers = headers;
+    return fetch(url, options);
+  };
   const authParams = () => ({ cardNo: currentUser ? currentUser.cardNo : '', sessionToken: sessionToken() });
 
   // ===== 字典翻译（分类由后台字典动态加载）=====
@@ -256,7 +271,7 @@
   async function loadBanners() {
     let list = DEFAULT_BANNERS;
     try {
-      const res = await fetch(BANNER_API);
+      const res = await apiFetch(BANNER_API);
       const d = await res.json();
       if (d.code === 200 && d.data && d.data.length) list = d.data;
     } catch (e) { }
@@ -296,7 +311,7 @@
     reservedIds = [];
     if (!currentUser) return;
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
       (d.data || []).forEach(r => {
         if (r.status === '0' || r.status === '1') reservedIds.push(r.bookId);
@@ -309,7 +324,7 @@
     borrowedIds = [];
     if (!currentUser) return;
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
       (d.data || []).forEach(b => {
         if (b.status === '0' || b.status === '2') borrowedIds.push(b.bookId);
@@ -320,7 +335,7 @@
   // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
   async function loadConfig() {
     try {
-      const res = await fetch(CONFIG_API);
+      const res = await apiFetch(CONFIG_API);
       const d = await res.json();
       // 注意：RuoYi 该接口把参数值放在 msg 字段（success(字符串) 走 msg 重载）
       const raw = (d.code === 200 && d.msg != null) ? d.msg : d.data;
@@ -356,7 +371,7 @@
         email: email,
         remark: document.getElementById('pRemark').value.trim()
       });
-      const res = await fetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         msg.textContent = '入驻申请已提交！运营团队将尽快与您联系'; msg.style.color = '#4f8a62';
@@ -399,7 +414,7 @@
     if (currentType) params.set('bookType', currentType);
     if (currentSort) { params.set('orderByColumn', currentSort); params.set('isAsc', currentAsc || 'desc'); }
     try {
-      const res = await fetch(API + '?' + params.toString());
+      const res = await apiFetch(API + '?' + params.toString());
       const data = await res.json();
       if (mySeq !== bookRequestSeq) return; // 已有更新的搜索请求，丢弃本次结果
       // 前台只展示招募中的服务（已结束服务不出现在列表）
@@ -489,8 +504,8 @@
     pendingBorrow.add(bookId);
     borrowedIds.push(bookId);            // 乐观置为已报名
     renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已报名"
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
-    fetch(BORROW_API, {
+    const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
+    apiFetch(BORROW_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString()
@@ -524,8 +539,8 @@
     pendingReserve.add(bookId);
     reservedIds.push(bookId);            // 乐观置为已候补
     renderBooks(currentBooks);           // 立即重绘网格 → 按钮变"已候补"
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
-    fetch(RESERVE_API, {
+    const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
+    apiFetch(RESERVE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString()
@@ -555,7 +570,7 @@
   // ===== 服务分类动态加载（后台字典 book_type 维护，前台 Tab 自动出现）=====
   async function loadTypes() {
     try {
-      const res = await fetch(DICT_API);
+      const res = await apiFetch(DICT_API);
       const d = await res.json();
       const list = d.data || [];
       if (!list.length) return;
@@ -563,7 +578,7 @@
       let html = '<a class="active" data-type="" onclick="switchType(this)">全部服务</a>';
       list.forEach(v => {
         TYPE_MAP[v.dictValue] = v.dictLabel;
-        html += '<a data-type="' + v.dictValue + '" onclick="switchType(this)">' + v.dictLabel + '</a>';
+        html += '<a data-type="' + esc(v.dictValue) + '" onclick="switchType(this)">' + esc(v.dictLabel) + '</a>';
       });
       tabs.innerHTML = html;
     } catch (e) { }
@@ -608,7 +623,7 @@
     if (!name || !card) { msg.textContent = '请输入姓名和成员编号'; msg.style.color = '#c65d43'; return; }
     try {
       const body = new URLSearchParams({ readerName: name, cardNo: card });
-      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200 && d.data) {
         currentUser = d.data;
@@ -659,7 +674,7 @@
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收报名/候补通知）'; msg.style.color = '#c65d43'; return; }
     try {
       // 成员编号由后端生成（防伪造/占坑）
-      const res = await fetch(REG_API, {
+      const res = await apiFetch(REG_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: document.getElementById('regRemark').value.trim() }).toString()
@@ -683,8 +698,8 @@
     if (!currentUser) { toast('请先登录后再提交候补'); openLogin(); return; }
     if (!confirm('确认提交候补申请？有名额时将尽快通知您报名')) return;
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: bookId });
-      const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: bookId });
+      const res = await apiFetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         toast('候补提交成功！可在"📌 活动候补"查看状态');
@@ -710,7 +725,7 @@
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无候补记录</span></div>';
@@ -736,8 +751,8 @@
     if (!cardNo) { toast('请先输入成员编号'); return; }
     if (!confirm('确认取消该候补吗？')) return;
     try {
-      const body = new URLSearchParams({ cardNo: cardNo, sessionToken: sessionToken(), reserveId: reserveId });
-      const res = await fetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: cardNo, reserveId: reserveId });
+      const res = await apiFetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         toast('候补已取消');
@@ -769,7 +784,7 @@
     if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
     box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="loading" style="padding:10px">未查询到报名记录（请确认成员编号）</div>';
@@ -805,8 +820,8 @@
     if (!phone) { msg.textContent = '请输入新手机号'; msg.style.color = '#c65d43'; return; }
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于接收通知）'; msg.style.color = '#c65d43'; return; }
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), readerName: currentUser.readerName, phone: phone, email: email });
-      const res = await fetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone, email: email });
+      const res = await apiFetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { msg.textContent = '信息修改成功'; msg.style.color = '#4f8a62'; }
       else { msg.textContent = d.msg || '修改失败'; msg.style.color = '#c65d43'; }

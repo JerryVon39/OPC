@@ -148,26 +148,37 @@ public class ReaderController extends BaseController
         return success(result);
     }
 
-    /** 前台自助登记（匿名）：证号由后端生成，防止客户端伪造/占用证号 */
+    /** 前台自助登记（匿名）：证号由后端生成，防止客户端伪造/占用证号
+     * 频控：按 IP 维度（30 分钟窗口内失败 5 次拦截，防脚本刷库灌垃圾成员） */
     @Anonymous
     @PostMapping("/register")
-    public AjaxResult register(String readerName, String phone, String readerType, String email, String remark)
+    public AjaxResult register(String readerName, String phone, String readerType, String email, String remark,
+            jakarta.servlet.http.HttpServletRequest request)
     {
+        String failKey = "register:" + com.ruoyi.common.utils.ip.IpUtils.getIpAddr(request);
+        if (readerSessionService.isBlocked(failKey))
+        {
+            return error("尝试次数过多，请 30 分钟后再试");
+        }
         if (readerName == null || readerName.trim().isEmpty()
                 || phone == null || phone.trim().isEmpty()
                 || readerType == null || readerType.trim().isEmpty())
         {
+            readerSessionService.recordFail(failKey);
             return error("请填写姓名、手机号和读者类型");
         }
         if (!phone.trim().matches("\\d{11}"))
         {
+            readerSessionService.recordFail(failKey);
             return error("手机号格式不正确（需 11 位数字）");
         }
         String em = trimEmail(email);
         if (em == null)
         {
+            readerSessionService.recordFail(failKey);
             return error("请填写有效的电子邮箱（用于接收报名/候补通知）");
         }
+        readerSessionService.clearFail(failKey);
         Reader r = readerService.register(readerName.trim(), phone.trim(), readerType.trim(), em, remark);
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("readerId", r.getReaderId());
@@ -236,9 +247,9 @@ public class ReaderController extends BaseController
     /** 前台修改个人信息：短期成员会话 + 姓名/证号校验后更新手机号 */
     @Anonymous
     @PostMapping("/updateMyInfo")
-    public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone, String email)
+    public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone, String email, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");

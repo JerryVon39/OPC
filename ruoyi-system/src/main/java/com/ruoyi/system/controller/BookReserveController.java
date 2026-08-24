@@ -45,9 +45,9 @@ public class BookReserveController extends BaseController
     /** 前台候补：短期成员会话 + 证号校验 */
     @Anonymous
     @PostMapping("/add")
-    public AjaxResult add(String cardNo, String sessionToken, Long bookId)
+    public AjaxResult add(String cardNo, String sessionToken, Long bookId, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");
@@ -58,9 +58,9 @@ public class BookReserveController extends BaseController
     /** 前台我的候补：短期成员会话查询 */
     @Anonymous
     @GetMapping("/myList")
-    public AjaxResult myList(String cardNo, String sessionToken)
+    public AjaxResult myList(String cardNo, String sessionToken, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");
@@ -71,9 +71,9 @@ public class BookReserveController extends BaseController
     /** 前台取消候补：短期成员会话 + 证号归属校验 */
     @Anonymous
     @PostMapping("/cancel")
-    public AjaxResult cancel(String cardNo, String sessionToken, Long reserveId)
+    public AjaxResult cancel(String cardNo, String sessionToken, Long reserveId, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");

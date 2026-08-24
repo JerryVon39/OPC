@@ -45,7 +45,7 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
     {
         if (req.getBookName() == null || req.getBookName().trim().isEmpty())
         {
-            throw new com.ruoyi.common.exception.ServiceException("请填写书名");
+            throw new com.ruoyi.common.exception.ServiceException("请填写项目/组织名称");
         }
         // 申请者邮箱必填且格式合法（入驻申请结果需邮件通知）
         if (req.getEmail() == null || !req.getEmail().trim().matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$") || req.getEmail().trim().length() > 50)

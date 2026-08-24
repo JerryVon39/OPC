@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>服务详情 · 数智游民创新工场</title>
+<meta property="og:title" content="服务详情 · 数智游民创新工场">
+<meta property="og:description" content="数智游民创新工场服务详情：培训课程、活动报名、AI 工具体验。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://www.opc.example.com/service.html">
+<link rel="icon" href="favicon.ico">
 <meta name="description" content="数智游民创新工场服务详情：服务介绍、名额、报名与满员候补。入驻咨询：0763-3391888">
 <link rel="stylesheet" href="css/site.css">
 <style>
@@ -166,6 +171,16 @@
   let warnThreshold = 3;   // 名额预警阈值（后台可改）
   let busy = false;        // 报名/候补防重复
   const sessionToken = () => currentUser && currentUser.sessionToken ? currentUser.sessionToken : '';
+
+  // ===== 统一请求包装：自动附带 X-Session-Token 请求头（凭证不落 URL/日志）=====
+  const apiFetch = (url, options) => {
+    options = options || {};
+    const headers = new Headers(options.headers || {});
+    const tok = sessionToken();
+    if (tok) headers.set('X-Session-Token', tok);
+    options.headers = headers;
+    return fetch(url, options);
+  };
   const TYPE_MAP = { '1': 'AI 内容创作', '2': 'AI 技术应用', '3': 'AI 硬件与场景' };
   const STATUS_MAP = { '0': '招募中', '1': '已结束' };
   const COVER_COLORS = ['#e8f0e9', '#f6efe2', '#eef4ef', '#f4e9ea', '#e9eef6', '#f3efe4'];
@@ -193,10 +208,9 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-  document.querySelectorAll('.modal').forEach(function (m) {
-    m.addEventListener('click', function (e) {
-      if (e.target === m) m.style.display = 'none';
-    });
+  // 遮罩点击关闭（事件委托，无需等待弹窗 DOM 出现）
+  document.addEventListener('click', function (e) {
+    if (e.target.classList && e.target.classList.contains('modal')) e.target.style.display = 'none';
   });
 
   // ===== 登录 / 注册（与 home.html 一致）=====
@@ -209,9 +223,9 @@
     const card = document.getElementById('loginCard').value.trim();
     const msg = document.getElementById('loginMsg');
     if (!name || !card) { msg.textContent = '请填写姓名与成员编号'; return; }
-    const body = new URLSearchParams({ name: name, cardNo: card });
+    const body = new URLSearchParams({ readerName: name, cardNo: card });
     try {
-      const res = await fetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200 && d.data) {
         currentUser = d.data;
@@ -228,10 +242,16 @@
   function renderLoginState() {
     const area = document.getElementById('loginArea');
     if (currentUser) {
-      area.innerHTML = '<span style="cursor:pointer" onclick="openRegister()">👤 ' + esc(currentUser.name || '成员') + '</span>';
+      area.innerHTML = '<span style="cursor:pointer" onclick="logout()">👤 ' + esc(currentUser.readerName || '成员') + '</span>';
     } else {
       area.innerHTML = '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     }
+  }
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('shopUser');
+    renderLoginState();
+    toast('已退出登录');
   }
   function openRegister() {
     document.getElementById('regMsg').textContent = '';
@@ -246,9 +266,9 @@
     const msg = document.getElementById('regMsg');
     if (!name) { msg.textContent = '请填写成员姓名'; return; }
     if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
-    const body = new URLSearchParams({ name: name, phone: phone, email: email, readerType: type, remark: remark });
+    const body = new URLSearchParams({ readerName: name, phone: phone, email: email, readerType: type, remark: remark });
     try {
-      const res = await fetch(REG_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(REG_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200 && d.data) {
         msg.style.color = '#12b886';
@@ -264,7 +284,7 @@
   // ===== 数据加载 =====
   async function loadConfig() {
     try {
-      const res = await fetch(CONFIG_API);
+      const res = await apiFetch(CONFIG_API);
       const d = await res.json();
       const raw = (d.code === 200 && d.msg != null) ? d.msg : d.data;
       if (raw != null) {
@@ -277,7 +297,7 @@
     borrowed = false;
     if (!currentUser || !detailBook) return;
     try {
-      const res = await fetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
       (d.data || []).forEach(b => {
         if (b.bookId === detailBook.bookId && (b.status === '0' || b.status === '2')) borrowed = true;
@@ -288,7 +308,7 @@
     reserved = false;
     if (!currentUser || !detailBook) return;
     try {
-      const res = await fetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo) + '&sessionToken=' + encodeURIComponent(sessionToken()));
+      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
       (d.data || []).forEach(r => {
         if (r.bookId === detailBook.bookId && (r.status === '0' || r.status === '1')) reserved = true;
@@ -332,9 +352,9 @@
     busy = true;
     borrowed = true;
     renderActions();
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: detailBook.bookId });
+    const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: detailBook.bookId });
     try {
-      const res = await fetch(BORROW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(BORROW_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { toast('报名成功：' + detailBook.bookName); }
       else throw new Error(d.msg || '报名失败');
@@ -352,9 +372,9 @@
     busy = true;
     reserved = true;
     renderActions();
-    const body = new URLSearchParams({ cardNo: currentUser.cardNo, sessionToken: sessionToken(), bookId: detailBook.bookId });
+    const body = new URLSearchParams({ cardNo: currentUser.cardNo, bookId: detailBook.bookId });
     try {
-      const res = await fetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const res = await apiFetch(RESERVE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) { toast('候补提交成功！有名额时会通知您'); }
       else throw new Error(d.msg || '候补失败');
@@ -376,10 +396,16 @@
       return;
     }
     try {
-      const res = await fetch(API + '?pageNum=1&pageSize=100');
-      const d = await res.json();
-      const b = ((d.rows || []).filter(x => x.status === '0').find(x => x.bookId === Number(id)))
-        || (d.rows || []).find(x => x.bookId === Number(id));
+      // 分页逐页查找：避开单次 pageSize 上限，第 100+ 条服务也能正常打开详情
+      let b = null;
+      for (let page = 1; page <= 50 && !b; page++) {
+        const res = await apiFetch(API + '?pageNum=' + page + '&pageSize=100');
+        const d = await res.json();
+        const rows = d.rows || [];
+        b = rows.filter(x => x.status === '0').find(x => x.bookId === Number(id))
+          || rows.find(x => x.bookId === Number(id));
+        if (rows.length < 100) break;
+      }
       if (!b) {
         document.getElementById('svcName').textContent = '服务不存在或已下架';
         document.getElementById('svcIntro').textContent = '该服务可能已下架，请返回列表查看其他服务。';
@@ -423,7 +449,7 @@
     const box = document.getElementById('relatedGrid');
     if (!book.bookType) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }
     try {
-      const res = await fetch(RELATED_API + '?bookId=' + book.bookId + '&bookType=' + encodeURIComponent(book.bookType));
+      const res = await apiFetch(RELATED_API + '?bookId=' + book.bookId + '&bookType=' + encodeURIComponent(book.bookType));
       const d = await res.json();
       const list = (d.data || []).slice(0, 4);
       if (!list.length) { box.innerHTML = '<div class="related-empty">暂无相关服务</div>'; return; }

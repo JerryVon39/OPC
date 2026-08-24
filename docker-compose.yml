@@ -23,7 +23,10 @@ services:
       - ./sql:/docker-entrypoint-initdb.d/sql:ro
       - ./docker/mysql-init.sh:/docker-entrypoint-initdb.d/mysql-init.sh:ro
     ports:
-      - "3306:3306"
+    # 仅容器内网可达（后端经 DB_HOST=mysql 连接）；如本机调试需直连 mysql，
+    # 再临时加回 ports 映射（公网服务器务必保持不映射）
+    expose:
+      - "3306"
     healthcheck:
       # $$ 转义为容器内环境变量 MYSQL_ROOT_PASSWORD（与口令环境变量化联动）
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD"]
@@ -44,8 +47,10 @@ services:
       - ${REDIS_PASSWORD:-}
     volumes:
       - redis-data:/data
-    ports:
-      - "6379:6379"
+    # 仅容器内网可达（后端经 REDIS_HOST=redis 连接）；如本机调试需直连 redis-cli，
+    # 再临时加回 ports 映射（公网服务器务必保持不映射）
+    expose:
+      - "6379"
     healthcheck:
       # 有密码带 -a 验证，无密码直连（两种形态都覆盖）
       test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi"]

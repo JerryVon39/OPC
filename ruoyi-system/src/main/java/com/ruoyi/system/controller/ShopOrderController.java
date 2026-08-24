@@ -55,9 +55,9 @@ public class ShopOrderController extends BaseController
     /** 前台报名：短期成员会话 + 证号兼容校验 */
     @Anonymous
     @PostMapping("/create")
-    public AjaxResult create(String cardNo, String sessionToken, Long bookId, Long quantity)
+    public AjaxResult create(String cardNo, String sessionToken, Long bookId, Long quantity, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");
@@ -68,9 +68,9 @@ public class ShopOrderController extends BaseController
     /** 前台我的订单：短期成员会话查询 */
     @Anonymous
     @GetMapping("/queryByCard")
-    public AjaxResult queryByCard(String cardNo, String sessionToken)
+    public AjaxResult queryByCard(String cardNo, String sessionToken, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");
@@ -81,9 +81,9 @@ public class ShopOrderController extends BaseController
     /** 前台取消订单：短期成员会话 + 证号归属校验 */
     @Anonymous
     @PostMapping("/cancelByCard")
-    public AjaxResult cancelByCard(String cardNo, String sessionToken, Long orderId)
+    public AjaxResult cancelByCard(String cardNo, String sessionToken, Long orderId, jakarta.servlet.http.HttpServletRequest request)
     {
-        String sessionCard = readerSessionService.resolve(sessionToken);
+        String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard == null || cardNo == null || !sessionCard.equals(cardNo.trim()))
         {
             return error("登录已失效，请重新登录");

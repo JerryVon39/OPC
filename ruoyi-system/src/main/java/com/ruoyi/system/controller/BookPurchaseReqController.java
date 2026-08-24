@@ -35,6 +35,9 @@ public class BookPurchaseReqController extends BaseController
     @Autowired
     private IBookPurchaseReqService bookPurchaseReqService;
 
+    @Autowired
+    private com.ruoyi.system.service.ReaderSessionService readerSessionService;
+
     /**
      * 查询入驻申请申请列表
      */
@@ -59,12 +62,27 @@ public class BookPurchaseReqController extends BaseController
 
     /**
      * 前台匿名提交入驻申请申请（搜索无结果时的"申请入驻申请"按钮）
+     * 频控：按 IP 维度（30 分钟窗口内失败 5 次拦截，防脚本刷表）
      */
     @Anonymous
     @PostMapping("/apply")
-    public AjaxResult apply(BookPurchaseReq bookPurchaseReq)
+    public AjaxResult apply(BookPurchaseReq bookPurchaseReq, jakarta.servlet.http.HttpServletRequest request)
     {
-        return toAjax(bookPurchaseReqService.applyPurchase(bookPurchaseReq));
+        String failKey = "apply:" + com.ruoyi.common.utils.ip.IpUtils.getIpAddr(request);
+        if (readerSessionService.isBlocked(failKey))
+        {
+            return error("操作过于频繁，请稍后再试");
+        }
+        try
+        {
+            return toAjax(bookPurchaseReqService.applyPurchase(bookPurchaseReq));
+        }
+        catch (Exception e)
+        {
+            // 业务校验失败也计一次失败（防脚本反复探测），成功申请不计数
+            readerSessionService.recordFail(failKey);
+            throw e;
+        }
     }
 
     /**

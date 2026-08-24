@@ -131,7 +131,7 @@
 
   /* ================= 通用 ================= */
   .loading { text-align: center; padding: 60px; color: var(--text-light); }
-  .toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-10px); background: rgba(11,26,46,0.95); color: #fff; padding: 11px 26px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s, transform .3s; z-index: 999; box-shadow: 0 6px 22px rgba(0,0,0,0.25); backdrop-filter: blur(4px); }
+  .toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-10px); background: rgba(11,26,46,0.95); color: #fff; padding: 11px 26px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s, transform .3s; z-index: 1100; box-shadow: 0 6px 22px rgba(0,0,0,0.25); backdrop-filter: blur(4px); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast-icon { margin-right: 6px; }
   .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30,30,30,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; }
@@ -191,6 +191,10 @@
     .nav-right span { font-size: 13px; }
     .banner::before, .banner::after { display: none; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  }
+  /* 中等窗口导航多行变高：吸顶分类条同步下移避免被遮挡 */
+  @media (max-width: 1500px) and (min-width: 769px) {
+    .svc-top-tabs { top: 128px; }
   }
   /* 更窄的中等窗口（769~920px）：按钮更紧凑，保证一行放下不参差 */
   @media (max-width: 920px) and (min-width: 769px) {
