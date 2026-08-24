@@ -159,7 +159,8 @@
     <div class="cta-box">
       <h3>政策咨询，一步到位</h3>
       <p>咨询电话：0763-3391888 ｜ 入驻即可享受三大赋能体系</p>
-      <button class="btn-buy" onclick="location.href='join.html'">前往入驻招商</button>
+      <button class="btn-buy" style="margin-right:12px" onclick="openConsult()">💬 在线咨询留言</button>
+      <button class="btn-buy" style="background:#cfc9bd" onclick="location.href='join.html'">前往入驻招商</button>
     </div>
   </div>
 
@@ -227,6 +228,40 @@
     } catch (e) {
       grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
     }
+  }
+
+  // ===== 政策咨询留言（复用入驻申请接口，remark 前缀【政策咨询】）=====
+  const PURCHASE_API = '/prod-api/system/purchase/apply';
+  function openConsult() {
+    document.getElementById('cName').value = '';
+    document.getElementById('cContact').value = '';
+    document.getElementById('cRemark').value = '';
+    document.getElementById('consultMsg').textContent = '';
+    document.getElementById('consultModal').style.display = 'flex';
+  }
+  async function submitConsult() {
+    const name = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const msg = document.getElementById('consultMsg');
+    if (!name) { msg.textContent = '请填写项目/组织名称'; return; }
+    if (!email || !/^[w.+-]+@[w-]+(.[w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
+    const body = new URLSearchParams({
+      bookName: '【政策咨询】' + name,
+      author: document.getElementById('cContact').value.trim(),
+      email: email,
+      remark: document.getElementById('cRemark').value.trim()
+    });
+    try {
+      const res = await fetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const d = await res.json();
+      if (d.code === 200) {
+        msg.style.color = '#12b886';
+        msg.textContent = '留言已提交！政策专员将尽快与您联系';        setTimeout(() => closeModal('consultModal'), 2500);
+      } else {
+        msg.style.color = '#e2554b';
+        msg.textContent = d.msg || '提交失败';
+      }
+    } catch (e) { msg.style.color = '#e2554b'; msg.textContent = '提交失败：' + e.message; }
   }
 
   // ===== 初始化 =====
@@ -338,6 +373,20 @@
   });
   renderLoginState();
 </script>
+  <!-- 政策咨询留言弹窗（复用入驻申请接口，remark 前缀【政策咨询】） -->
+  <div id="consultModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3 style="text-align:center;margin-bottom:16px">💬 政策咨询留言</h3>
+      <p style="font-size:13px;color:#888;margin-bottom:12px;text-align:center">留下您的联系方式，政策专员将尽快与您对接（最高 2 万奖励 / 80 万担保贷款 / 300㎡ 三年免租等政策均可咨询）</p>
+      <input id="cName" class="modal-input" placeholder="🏢 项目/组织名称（必填）" />
+      <input id="cContact" class="modal-input" placeholder="✍️ 联系人（选填）" />
+      <input id="cEmail" class="modal-input" placeholder="📧 电子邮箱（必填，处理结果将邮件通知）" />
+      <textarea id="cRemark" class="modal-input" rows="2" placeholder="想咨询的政策内容（选填）" style="height:auto"></textarea>
+      <div id="consultMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
+      <button class="btn-buy" style="width:100%;padding:11px" onclick="submitConsult()">提交留言</button>
+    </div>
+  </div>
+
   <!-- 登录弹窗 -->
   <div id="loginModal" class="modal" style="display:none">
     <div class="modal-box">
