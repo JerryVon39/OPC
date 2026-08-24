@@ -1,5 +1,5 @@
 -- ============================================
--- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-24 15:00:51）
+-- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-24 16:41:58）
 -- 来源：数智游民创新工场官网数据库（ry-vue）业务数据
 -- 导入（可重复执行，REPLACE 模式）：
 --   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql

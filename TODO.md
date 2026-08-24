@@ -53,6 +53,16 @@
 - [ ] 15. 学员/会员体系（训练营结业认证）：远期，复用 reader
 - [ ] 16. 在线客服 / AI 客服（AI 接入）：远期
 
+## 第五批：邮件自动发送模块改造（方案已定 2026-08-24，待实施）
+
+> 方案细节见会话记录；实施前需用户确认 2 个取舍：① 授权码 AES 加密（推荐，密钥走 MAIL_SECRET_KEY 环境变量）vs 明文入库；② 定时任务超时取消候补时是否给被取消者发通知
+
+- [ ] 20. 注册成功邮件：前台自助登记成功 → 自动发送含证号（登录凭证）的邮件；补办证号（reissueCard）同步发新证号通知（新模板 `register.success` / `reissue.notify`）
+- [ ] 21. 错误内容删减：续借邮件主题复制粘贴 bug（"【服务报名】报名成功"→"续期成功"）；"3 天内办理"写死 vs 配置 2 天不一致（改 {days} 占位符）；MailUtil 提示指向不存在的 start-backend.bat 文案；定时任务 reserveExpireCheck 推进候补不发邮件（与 returnBook 行为不一致）
+- [ ] 22. 管理员后台可配置：新建 `mail_config`（SMTP 账号/授权码/开关/主机端口，AES 加密存储）+ `mail_template`（8 个场景模板，占位符 {readerName}/{cardNo}/{bookName}/{dueDate}/{days} 渲染，缺失时内置默认兜底）两表；MailUtil 改动态构建 JavaMailSenderImpl（数据库配置 > 环境变量 > 内置默认，改完即时生效不重启）
+- [ ] 23. 后台 UI：ruoyi-ui 新增「系统管理 → 邮件通知」页（SMTP 配置 + 测试发送按钮 + 模板编辑），权限 system:mail:config / system:mail:template，sys_menu 插入菜单数据
+- [ ] 24. 实施顺序：SQL 升级脚本 → domain/mapper/service → MailUtil 重构 → 各 Service 改造（删硬编码 HTML）→ Controller + 前端 → full_test.py / smoke_official.py 补冒烟断言
+
 ## 内容占位待替换（用户后续提供）
 
 - [ ] 17. [待补] 邮箱 / 公众号 / 抖音号
