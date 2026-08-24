@@ -245,7 +245,7 @@
     const email = document.getElementById('cEmail').value.trim();
     const msg = document.getElementById('consultMsg');
     if (!name) { msg.textContent = '请填写项目/组织名称'; return; }
-    if (!email || !/^[w.+-]+@[w-]+(.[w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
+    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱'; return; }
     const body = new URLSearchParams({
       bookName: '【政策咨询】' + name,
       author: document.getElementById('cContact').value.trim(),
@@ -253,7 +253,9 @@
       remark: document.getElementById('cRemark').value.trim()
     });
     try {
-      const res = await fetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
+      const h = { 'Content-Type': 'application/x-www-form-urlencoded' };
+      if (currentUser && currentUser.sessionToken) h['X-Session-Token'] = currentUser.sessionToken;
+      const res = await fetch(PURCHASE_API, { method: 'POST', headers: h, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         msg.style.color = '#12b886';
@@ -321,7 +323,7 @@
     const area = document.getElementById('loginArea');
     if (area) {
       area.innerHTML = currentUser
-        ? '<span style="cursor:pointer" onclick="logout()" title="退出登录">👤 ' + esc(currentUser.readerName || '成员') + '（退出）</span> <a href="profile.html" class="nav-profile-link"><span class="pf-icon">👤</span>个人主页</a>' + '</span>'
+        ? '<span style="cursor:pointer" onclick="logout()" title="退出登录">👤 ' + esc(currentUser.readerName || '成员') + '（退出）</span> <a href="profile.html" class="nav-profile-link"><span class="pf-icon">👤</span>个人主页</a>'
         : '<span style="cursor:pointer" onclick="openLogin()">👤 登录</span>';
     }
   }

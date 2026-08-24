@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.system.mapper.ReaderMapper;
+import com.ruoyi.system.mapper.BookReserveMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.mapper.ShopOrderMapper;
 import com.ruoyi.system.domain.Reader;
@@ -31,6 +32,9 @@ public class ReaderServiceImpl implements IReaderService
 
     @Autowired
     private BorrowRecordMapper borrowRecordMapper;
+
+    @Autowired
+    private BookReserveMapper bookReserveMapper;
 
     @Autowired
     private ShopOrderMapper shopOrderMapper;
@@ -204,6 +208,8 @@ public class ReaderServiceImpl implements IReaderService
         readerMapper.updateReader(reader);
         // 同步历史报名快照证号（同一人换证号，历史记录归到新证号下，"我的报名"仍可查全）
         borrowRecordMapper.updateCardNoSnapshot(readerId, newCard);
+        // 同步历史候补快照证号（同上；否则"我的候补"查不到、reserveByCard 重复候补校验失效、cancelByCard 归属比对对不上）
+        bookReserveMapper.updateCardNoSnapshot(readerId, newCard);
         return newCard;
     }
 

@@ -249,19 +249,21 @@ public class IpUtils
      * 从多级反向代理中获得第一个非unknown IP地址
      *
      * @param ip 获得的IP地址
-     * @return 第一个非unknown IP地址
+     * @return 最后一个非unknown IP地址（nginx 追加的真实客户端对端）
      */
     public static String getMultistageReverseProxyIp(String ip)
     {
-        // 多级反向代理检测
+        // 多级反向代理检测：取最后一个非 unknown 段——nginx 用 $proxy_add_x_forwarded_for
+        // 把真实客户端 IP 追加到 XFF 末尾，客户端伪造的前置段一律忽略，防 XFF 伪造绕过 IP 频控；
+        // 无代理直连时 XFF 为空，getIpAddr 直接回退 $remote_addr，行为不变
         if (ip != null && ip.indexOf(",") > 0)
         {
             final String[] ips = ip.trim().split(",");
-            for (String subIp : ips)
+            for (int i = ips.length - 1; i >= 0; i--)
             {
-                if (false == isUnknown(subIp))
+                if (!isUnknown(ips[i].trim()))
                 {
-                    ip = subIp;
+                    ip = ips[i].trim();
                     break;
                 }
             }

@@ -38,6 +38,12 @@
         where reserve_id = #{reserveId}
     </select>
 
+    <!-- 补办换证号：同步该成员历史候补的快照证号（同一人换证号，"我的候补"仍可查全） -->
+    <update id="updateCardNoSnapshot">
+        update book_reserve set card_no = #{newCardNo}
+        where reader_id = #{readerId} and card_no is not null
+    </update>
+
     <insert id="insertBookReserve" parameterType="BookReserve" useGeneratedKeys="true" keyProperty="reserveId">
         insert into book_reserve
         <trim prefix="(" suffix=")" suffixOverrides=",">

@@ -263,6 +263,16 @@
     return fetch(url, options);
   };
 
+  // ===== 会话过期统一处理（区别于"暂无记录"：引导重新登录而非误以为数据丢失）=====
+  function handleSessionExpired() {
+    currentUser = null;
+    localStorage.removeItem('shopUser');
+    renderLoginState();
+    initProfile();
+    toast('登录已失效，请重新登录');
+    setTimeout(() => openLogin(), 400);
+  }
+
   // ===== Tab 切换 =====
   function switchTab(el) {
     document.querySelectorAll('.profile-tabs a').forEach(a => a.classList.remove('active'));
@@ -337,6 +347,11 @@
     try {
       const res = await apiFetch(BORROW_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
+      if (d.code !== 200) {
+        if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
+        box.innerHTML = '<div class="no-result">' + esc(d.msg || '加载失败') + '</div>';
+        return;
+      }
       const rows = d.data || [];
       if (!rows.length) { box.innerHTML = '<div class="no-result">暂无报名记录</div>'; return; }
       box.innerHTML = rows.map(b =>
@@ -355,6 +370,11 @@
     try {
       const res = await apiFetch(RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
+      if (d.code !== 200) {
+        if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
+        box.innerHTML = '<div class="no-result">' + esc(d.msg || '加载失败') + '</div>';
+        return;
+      }
       const rows = d.data || [];
       if (!rows.length) { box.innerHTML = '<div class="no-result">暂无候补记录</div>'; return; }
       box.innerHTML = rows.map(r =>
@@ -373,6 +393,11 @@
     try {
       const res = await apiFetch(PURCHASE_MY_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
       const d = await res.json();
+      if (d.code !== 200) {
+        if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
+        box.innerHTML = '<div class="no-result">' + esc(d.msg || '加载失败') + '</div>';
+        return;
+      }
       const rows = d.data || [];
       if (!rows.length) { box.innerHTML = '<div class="no-result">暂无入驻申请，可在「入驻招商」页提交</div>'; return; }
       box.innerHTML = rows.map(p =>

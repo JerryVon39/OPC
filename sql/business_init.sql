@@ -445,6 +445,7 @@ CREATE TABLE IF NOT EXISTS `book_purchase_req` (
   `email` varchar(50) DEFAULT NULL COMMENT '申请者邮箱（审核结果通知用）',
   `status` char(1) DEFAULT '0' COMMENT '状态(0待审核 1已通过 2已婉拒)',
   `remark` varchar(255) DEFAULT NULL COMMENT '申请人附言（合作意向说明等）',
+  `reader_id` bigint DEFAULT NULL COMMENT '申请成员ID（前台登录后提交时关联；匿名历史数据为空）',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',

@@ -89,8 +89,9 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - upload:/home/ruoyi/uploadPath
-    ports:
-      - "8080:8080"
+    # 仅容器内网可达（nginx 反代经 backend:8080 访问）；公网入口统一走前端 80，后端不直接暴露防接口泄露
+    expose:
+      - "8080"
     depends_on:
       mysql:
         condition: service_healthy

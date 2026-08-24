@@ -16,6 +16,10 @@ public interface BookReserveMapper
 
     public int updateBookReserve(BookReserve bookReserve);
 
+    /** 补办换证号：同步该成员历史候补的快照证号（同一人换证号，"我的候补"仍可查全） */
+    public int updateCardNoSnapshot(@org.apache.ibatis.annotations.Param("readerId") Long readerId,
+            @org.apache.ibatis.annotations.Param("newCardNo") String newCardNo);
+
     /** 仅当预约仍为指定状态时流转（"可借"推进/超时取消用 CAS，防并发推进同一预约） */
     public int updateStatusIfCurrent(@org.apache.ibatis.annotations.Param("reserveId") Long reserveId,
             @org.apache.ibatis.annotations.Param("fromStatus") String fromStatus,

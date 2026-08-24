@@ -212,6 +212,9 @@
       const res = await fetch(REG_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200 && d.data) {
+        currentUser = d.data;
+        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        renderLoginState();
         msg.style.color = '#12b886';
         msg.textContent = '注册成功！成员编号：' + d.data.cardNo + '（请牢记，登录用）';
         setTimeout(() => closeModal('regModal'), 2600);

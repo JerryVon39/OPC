@@ -659,7 +659,18 @@
     renderLoginState();
     toast('已退出登录');
     loadBooks();
-  }  function renderLoginState() {
+  }
+  // 会话过期统一处理（区别于"暂无记录"：引导重新登录而非误以为数据丢失）
+  function handleSessionExpired() {
+    currentUser = null;
+    localStorage.removeItem('shopUser');
+    borrowedIds = [];
+    reservedIds = [];
+    renderLoginState();
+    toast('登录已失效，请重新登录');
+    setTimeout(() => openLogin(), 400);
+  }
+  function renderLoginState() {
     const area = document.getElementById('loginArea');
     area.innerHTML = currentUser
       ? '<span style="cursor:pointer" onclick="logout()">你好，' + esc(currentUser.readerName) + '（退出）</span> <a href="profile.html" class="nav-profile-link"><span class="pf-icon">👤</span>个人主页</a>'
@@ -736,7 +747,12 @@
     try {
       const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
-      if (d.code !== 200 || !d.data || !d.data.length) {
+      if (d.code !== 200) {
+        if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
+        box.innerHTML = '<div class="loading" style="padding:10px">' + esc(d.msg || '查询失败') + '</div>';
+        return;
+      }
+      if (!d.data || !d.data.length) {
         box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无候补记录</span></div>';
         return;
       }
@@ -795,7 +811,12 @@
     try {
       const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
-      if (d.code !== 200 || !d.data || !d.data.length) {
+      if (d.code !== 200) {
+        if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
+        box.innerHTML = '<div class="loading" style="padding:10px">' + esc(d.msg || '查询失败') + '</div>';
+        return;
+      }
+      if (!d.data || !d.data.length) {
         box.innerHTML = '<div class="loading" style="padding:10px">未查询到报名记录（请确认成员编号）</div>';
         return;
       }
