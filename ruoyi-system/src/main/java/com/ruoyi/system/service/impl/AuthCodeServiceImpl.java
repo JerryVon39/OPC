@@ -23,6 +23,9 @@ public class AuthCodeServiceImpl implements AuthCodeService
     private static final String THROTTLE_PREFIX = "auth:code:throttle:";
     /** IP 每日计数：auth:code:ip:{purpose}:{ip} */
     private static final String IP_PREFIX = "auth:code:ip:";
+    /** 校验失败计数：auth:code:try:{purpose}:{target}（连续失败 5 次作废验证码，防暴力枚举） */
+    private static final String TRY_PREFIX = "auth:code:try:";
+    private static final int TRY_LIMIT = 5;
 
     private static final int TTL_MINUTES = 15;
     private static final int SEND_INTERVAL_SECONDS = 60;
@@ -66,7 +69,16 @@ public class AuthCodeServiceImpl implements AuthCodeService
         }
         else
         {
-            redisCache.setCacheObject(ipKey, sent + 1);
+            // 叠加必须带剩余 TTL 重设（Redis SET 不带过期参数会清除原 TTL，导致每日计数永不过期）
+            Long ttl = redisCache.getExpire(ipKey);
+            if (ttl != null && ttl > 0)
+            {
+                redisCache.setCacheObject(ipKey, sent + 1, ttl.intValue(), TimeUnit.SECONDS);
+            }
+            else
+            {
+                redisCache.setCacheObject(ipKey, sent + 1, 24, TimeUnit.HOURS);
+            }
         }
         verificationSender.send(t, code, TTL_MINUTES);
     }
@@ -81,12 +93,32 @@ public class AuthCodeServiceImpl implements AuthCodeService
         String t = target.trim().toLowerCase();
         String key = PREFIX + purpose + ":" + t;
         String stored = redisCache.getCacheObject(key);
-        if (stored == null || !stored.equals(code.trim()))
+        if (stored == null)
         {
+            return false; // 无验证码/已作废
+        }
+        if (!stored.equals(code.trim()))
+        {
+            // 失败计数：连续失败 5 次作废（防暴力枚举 6 位验证码）；计数窗口与验证码有效期一致
+            String tryKey = TRY_PREFIX + purpose + ":" + t;
+            Integer tries = redisCache.getCacheObject(tryKey);
+            int n = tries == null ? 1 : tries + 1;
+            Long ttl = redisCache.getExpire(key);
+            int remain = (ttl != null && ttl > 0) ? ttl.intValue() : TTL_MINUTES * 60;
+            if (n >= TRY_LIMIT)
+            {
+                redisCache.deleteObject(key);
+                redisCache.deleteObject(tryKey);
+            }
+            else
+            {
+                redisCache.setCacheObject(tryKey, n, remain, TimeUnit.SECONDS);
+            }
             return false;
         }
         // 一次性：验证通过立即作废
         redisCache.deleteObject(key);
+        redisCache.deleteObject(TRY_PREFIX + purpose + ":" + t);
         return true;
     }
 }

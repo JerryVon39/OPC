@@ -92,6 +92,11 @@ public class ReaderServiceImpl implements IReaderService
      * email 由 Controller 层完成必填/格式校验后传入；密码由 Controller 层完成强度校验后传入，此处 BCrypt 落库 */
     public Reader register(String readerName, String phone, String readerType, String email, String remark, String password)
     {
+        // 邮箱判重（uk_email 唯一索引兜底；先查避免 500 级异常，给友好提示）
+        if (readerMapper.countByEmail(email) > 0)
+        {
+            throw new com.ruoyi.common.exception.ServiceException("该邮箱已被注册，请直接登录；忘记密码可点登录框「忘记密码」");
+        }
         Reader reader = new Reader();
         reader.setReaderName(readerName);
         reader.setPhone(phone);

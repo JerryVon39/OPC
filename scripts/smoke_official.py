@@ -104,14 +104,14 @@ def main():
                     resp.read()
             except Exception:
                 pass
-    d = req("POST", "/system/reader/login", {"cardNo": "JS20260001", "password": PWD})
+    d = req("POST", "/system/reader/login", {"account": "JS20260001", "password": PWD})
     token = (d.get("data") or {}).get("sessionToken", "")
     check("成员登录(周舟,证号+密码)", bool(token), d.get("msg", ""))
     if not token:
         print("  中止：登录失败，后续用例跳过")
         return
 
-    d = req("POST", "/system/reader/login", {"cardNo": "JS20260004", "password": PWD})
+    d = req("POST", "/system/reader/login", {"account": "JS20260004", "password": PWD})
     check("停用成员登录被拒", d.get("code") != 200, d.get("msg", ""))
 
     # 报名（先查周舟是否已报过该服务——重跑幂等：已报名则跳过实际报名）

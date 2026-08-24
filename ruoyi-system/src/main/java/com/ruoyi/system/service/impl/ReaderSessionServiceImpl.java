@@ -220,9 +220,17 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
         }
         else
         {
-            // 窗口内叠加（setCacheObject 不带过期参数不会重置已有 TTL）+ 按档位升阶退避
+            // 窗口内叠加：必须带剩余 TTL 重设（Redis SET 不带过期参数会清除原 TTL，导致计数永不过期）
             int count = n + 1;
-            redisCache.setCacheObject(k, count);
+            Long ttl = redisCache.getExpire(k);
+            if (ttl != null && ttl > 0)
+            {
+                redisCache.setCacheObject(k, count, ttl.intValue(), TimeUnit.SECONDS);
+            }
+            else
+            {
+                redisCache.setCacheObject(k, count, FAIL_WINDOW_MINUTES, TimeUnit.MINUTES);
+            }
             int backoffSeconds = count < 2 ? 60 : count < 4 ? 120 : count < 6 ? 300 : 900;
             redisCache.setCacheObject(BACKOFF_PREFIX + key, 1, backoffSeconds, TimeUnit.SECONDS);
         }

@@ -108,8 +108,8 @@
           <div style="margin-top:16px;padding:14px;background:#f5f8fd;border-radius:10px">
             <div style="font-size:13px;font-weight:bold;margin-bottom:8px">📱 修改联系方式</div>
             <input id="editPhone" class="modal-input" placeholder="📱 新手机号码" />
-            <input id="editEmail" class="modal-input" placeholder="📧 新电子邮箱" style="margin-top:8px" />
             <button class="btn-buy" style="width:100%;margin-top:10px" onclick="saveMyInfo()">保存修改</button>
+            <div style="font-size:12px;color:var(--text-light);margin-top:8px">修改邮箱请在下方「账号安全」中操作（需新邮箱验证码）</div>
             <div id="infoMsg" style="font-size:13px;color:#c65d43;margin-top:8px"></div>
           </div>
         </div>
@@ -162,7 +162,7 @@
       <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
       <button class="btn-buy" style="width:100%;padding:11px" onclick="submitLogin()">登 录</button>
       <div style="text-align:center;margin-top:10px;font-size:13px">
-        <a style="color:var(--accent);cursor:pointer" onclick="location.href='services.html'">忘记密码？去登录页找回</a>
+        <a style="color:var(--accent);cursor:pointer" onclick="openForgot()">忘记密码？</a>
       </div>
     </div>
   </div>
@@ -409,20 +409,16 @@
 
   async function saveMyInfo() {
     const phone = document.getElementById('editPhone').value.trim();
-    const email = document.getElementById('editEmail').value.trim();
     const msg = document.getElementById('infoMsg');
     if (!phone || !/^\d{11}$/.test(phone)) { msg.textContent = '请输入 11 位手机号码'; return; }
-    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请输入有效的电子邮箱'; return; }
     try {
-      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone, email: email });
+      const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone });
       const res = await apiFetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       const d = await res.json();
       if (d.code === 200) {
         currentUser.phone = phone;
-        currentUser.email = email;
         localStorage.setItem('shopUser', JSON.stringify(currentUser));
         document.getElementById('fPhone').textContent = phone;
-        document.getElementById('fEmail').textContent = email;
         msg.style.color = '#4f8a62';
         msg.textContent = '保存成功';
         toast('资料已保存');
