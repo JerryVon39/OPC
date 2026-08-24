@@ -24,7 +24,6 @@ services:
       # SQL 脚本目录（mysql-init.sh 按依赖顺序导入）
       - ./sql:/docker-entrypoint-initdb.d/sql:ro
       - ./docker/mysql-init.sh:/docker-entrypoint-initdb.d/mysql-init.sh:ro
-    ports:
     # 仅容器内网可达（后端经 DB_HOST=mysql 连接）；如本机调试需直连 mysql，
     # 再临时加回 ports 映射（公网服务器务必保持不映射）
     expose:
