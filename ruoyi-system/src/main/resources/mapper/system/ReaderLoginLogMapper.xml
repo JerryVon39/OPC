@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ReaderLoginLogMapper">
+
+    <resultMap type="ReaderLoginLog" id="ReaderLoginLogResult">
+        <result property="id"          column="id"          />
+        <result property="readerId"    column="reader_id"   />
+        <result property="cardNo"      column="card_no"     />
+        <result property="ip"          column="ip"          />
+        <result property="event"       column="event"       />
+        <result property="result"      column="result"      />
+        <result property="msg"         column="msg"         />
+        <result property="createTime"  column="create_time" />
+    </resultMap>
+
+    <insert id="insertReaderLoginLog" parameterType="ReaderLoginLog">
+        insert into reader_login_log (reader_id, card_no, ip, event, result, msg, create_time)
+        values (#{readerId}, #{cardNo}, #{ip}, #{event}, #{result}, #{msg}, NOW())
+    </insert>
+
+    <select id="selectReaderLoginLogList" parameterType="ReaderLoginLog" resultMap="ReaderLoginLogResult">
+        select id, reader_id, card_no, ip, event, result, msg, create_time
+        from reader_login_log
+        <where>
+            <if test="cardNo != null and cardNo != ''">and card_no like concat('%', #{cardNo}, '%')</if>
+            <if test="event != null and event != ''">and event = #{event}</if>
+            <if test="result != null and result != ''">and result = #{result}</if>
+        </where>
+        order by id desc
+    </select>
+
+</mapper>

@@ -49,6 +49,9 @@ public class ReaderController extends BaseController
     @Autowired
     private com.ruoyi.system.service.IMailTemplateService mailTemplateService;
 
+    @Autowired
+    private com.ruoyi.system.service.IReaderLoginLogService loginLogService;
+
     /** 客户端设备标识（User-Agent 摘要，多端管理展示用；不存在返回空串） */
     private String deviceOf(jakarta.servlet.http.HttpServletRequest request)
     {
@@ -129,32 +132,42 @@ public class ReaderController extends BaseController
      * 新增成员管理
      */
     /** 前台成员登录（匿名）：成员编号 + 密码
-     * 错误提示统一"成员编号或密码不正确"（不暴露证号是否存在，防枚举），
-     * 并按 IP+证号 维度频控（30 分钟窗口内失败 5 次拦截，防爆破）；
+     * 频控三层：IP 全局限速（10 次/分钟）→ 账号失败 5 次/30 分钟锁定 → 失败递增退避（1/2/5/15 分钟）；
+     * 错误提示统一"成员编号或密码不正确"（不暴露证号是否存在，防枚举）；
      * 未设置密码的存量成员（pwd_set=0）返回专用状态码 601，前端引导「邮箱验证 → 设置密码」 */
     @Anonymous
     @PostMapping("/login")
     public AjaxResult login(String cardNo, String password, jakarta.servlet.http.HttpServletRequest request)
     {
+        String ip = ipOf(request);
+        // 频控第 1 层：IP 全局限速
+        readerSessionService.recordIpRequest(ip);
+        if (readerSessionService.isIpRateLimited(ip))
+        {
+            return error("请求过于频繁，请稍后再试");
+        }
         if (cardNo == null || cardNo.trim().isEmpty() || password == null || password.isEmpty())
         {
             return error("请输入成员编号和密码");
         }
-        String failKey = "login:" + ipOf(request) + ":" + cardNo.trim();
+        String failKey = "login:" + ip + ":" + cardNo.trim();
+        // 频控第 2/3 层：账号 5 次锁定 + 递增退避
         if (readerSessionService.isBlocked(failKey))
         {
-            return error("尝试次数过多，请 30 分钟后再试");
+            return error("尝试次数过多，请稍后再试");
         }
         Reader auth = readerService.findAuthByCardNo(cardNo.trim());
         if (auth == null || auth.getPasswordHash() == null
                 || !com.ruoyi.common.utils.SecurityUtils.matchesPassword(password, auth.getPasswordHash()))
         {
             readerSessionService.recordFail(failKey);
+            loginLogService.log(cardNo, null, ip, "login_fail", false, "密码错误");
             return error("成员编号或密码不正确");
         }
         // 停用/挂失的证号不允许登录前台（报名、下单前就把问题拦下）
         if (!"0".equals(auth.getStatus()))
         {
+            loginLogService.log(cardNo, auth.getReaderId(), ip, "login_fail", false, "账号停用/挂失");
             return error("该成员编号已停用/挂失，请联系管理员");
         }
         // 未设置密码（存量成员迁移）：返回专用状态码，前端引导设密流程
@@ -168,6 +181,7 @@ public class ReaderController extends BaseController
         }
         readerSessionService.clearFail(failKey);
         readerService.touchLogin(auth.getReaderId());
+        loginLogService.log(cardNo, auth.getReaderId(), ip, "login", true, "");
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("readerId", auth.getReaderId());
         result.put("readerName", auth.getReaderName());
@@ -175,7 +189,7 @@ public class ReaderController extends BaseController
         result.put("readerType", auth.getReaderType());
         result.put("status", auth.getStatus());
         result.put("emailVerified", "1".equals(auth.getEmailVerified()));
-        result.put("sessionToken", readerSessionService.create(auth.getCardNo(), ipOf(request), deviceOf(request)));
+        result.put("sessionToken", readerSessionService.create(auth.getCardNo(), ip, deviceOf(request)));
         return success(result);
     }
 
@@ -188,10 +202,16 @@ public class ReaderController extends BaseController
     public AjaxResult register(String readerName, String phone, String readerType, String email, String remark,
             String password, jakarta.servlet.http.HttpServletRequest request)
     {
-        String failKey = "register:" + ipOf(request);
+        String ip = ipOf(request);
+        readerSessionService.recordIpRequest(ip);
+        if (readerSessionService.isIpRateLimited(ip))
+        {
+            return error("请求过于频繁，请稍后再试");
+        }
+        String failKey = "register:" + ip;
         if (readerSessionService.isBlocked(failKey))
         {
-            return error("尝试次数过多，请 30 分钟后再试");
+            return error("尝试次数过多，请稍后再试");
         }
         if (readerName == null || readerName.trim().isEmpty()
                 || phone == null || phone.trim().isEmpty()
@@ -223,6 +243,7 @@ public class ReaderController extends BaseController
         }
         readerSessionService.clearFail(failKey);
         Reader r = readerService.register(readerName.trim(), phone.trim(), readerType.trim(), em, remark, password);
+        loginLogService.log(r.getCardNo(), r.getReaderId(), ip, "register", true, "");
         // 发验证码邮件（注册第二步用；频控 60s/条，失败不阻塞注册，可稍后重发）
         try
         {
@@ -305,7 +326,9 @@ public class ReaderController extends BaseController
         {
             token = request.getParameter("sessionToken");
         }
+        String cardNo = readerSessionService.resolve(token);
         readerSessionService.remove(token);
+        loginLogService.log(cardNo, null, ipOf(request), "logout", true, "");
         return success("已退出登录");
     }
 
@@ -363,6 +386,7 @@ public class ReaderController extends BaseController
         readerService.setPassword(auth.getCardNo(), newPassword);
         // 强制登出所有会话（含其他设备），防止旧会话在密码重置后仍可用
         readerSessionService.revokeOthers(auth.getCardNo(), null);
+        loginLogService.log(cardNo, auth.getReaderId(), ipOf(request), "reset_pwd", true, "");
         return success("密码已重置，请重新登录");
     }
 
@@ -398,10 +422,12 @@ public class ReaderController extends BaseController
         }
         catch (Exception e)
         {
+            loginLogService.log(cardNo, null, ipOf(request), "change_pwd", false, e.getMessage());
             return error(e.getMessage());
         }
         // 改密后退出其他设备（防已泄露会话继续使用），当前设备保留
         readerSessionService.revokeOthers(cardNo, request.getHeader("X-Session-Token"));
+        loginLogService.log(cardNo, null, ipOf(request), "change_pwd", true, "");
         return success("密码修改成功");
     }
 
@@ -456,8 +482,10 @@ public class ReaderController extends BaseController
         }
         catch (Exception e)
         {
+            loginLogService.log(cardNo, null, ipOf(request), "change_email", false, e.getMessage());
             return error(e.getMessage());
         }
+        loginLogService.log(cardNo, null, ipOf(request), "change_email", true, "");
         return success("邮箱修改成功");
     }
 
@@ -661,5 +689,17 @@ public class ReaderController extends BaseController
     public AjaxResult purge(@PathVariable Long[] readerIds)
     {
         return toAjax(readerService.purgeReaderByReaderIds(readerIds));
+    }
+
+    /**
+     * 读者端登录审计列表（后台查询）：按证号/事件/结果筛选
+     */
+    @PreAuthorize("@ss.hasPermi('system:reader:list')")
+    @GetMapping("/loginLog")
+    public TableDataInfo loginLog(com.ruoyi.system.domain.ReaderLoginLog query)
+    {
+        startPage();
+        List<com.ruoyi.system.domain.ReaderLoginLog> list = loginLogService.list(query);
+        return getDataTable(list);
     }
 }

@@ -36,6 +36,14 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
     private static final int FAIL_LIMIT = 5;
     private static final int FAIL_WINDOW_MINUTES = 30;
 
+    /** 失败递增退避：reader:backoff:{key}，档位 1/2/5/15 分钟（按累计失败次数升档） */
+    private static final String BACKOFF_PREFIX = "reader:backoff:";
+
+    /** IP 全局限速：reader:ip-rate:{ip}，60 秒窗口 10 次 */
+    private static final String IP_RATE_PREFIX = "reader:ip-rate:";
+    private static final int IP_RATE_LIMIT = 10;
+    private static final int IP_RATE_WINDOW_SECONDS = 60;
+
     @Autowired
     private RedisCache redisCache;
 
@@ -192,7 +200,11 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
     public boolean isBlocked(String key)
     {
         Integer n = redisCache.getCacheObject(FAIL_PREFIX + key);
-        return n != null && n >= FAIL_LIMIT;
+        if (n != null && n >= FAIL_LIMIT)
+        {
+            return true; // 5 次/30 分钟锁定
+        }
+        return redisCache.hasKey(BACKOFF_PREFIX + key); // 递增退避期内同样拦截
     }
 
     @Override
@@ -202,13 +214,17 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
         Integer n = redisCache.getCacheObject(k);
         if (n == null)
         {
-            // 首次失败：开启 30 分钟窗口
+            // 首次失败：开启 30 分钟窗口 + 1 分钟退避
             redisCache.setCacheObject(k, 1, FAIL_WINDOW_MINUTES, TimeUnit.MINUTES);
+            redisCache.setCacheObject(BACKOFF_PREFIX + key, 1, 1, TimeUnit.MINUTES);
         }
         else
         {
-            // 窗口内叠加（setCacheObject 不带过期参数不会重置已有 TTL）
-            redisCache.setCacheObject(k, n + 1);
+            // 窗口内叠加（setCacheObject 不带过期参数不会重置已有 TTL）+ 按档位升阶退避
+            int count = n + 1;
+            redisCache.setCacheObject(k, count);
+            int backoffSeconds = count < 2 ? 60 : count < 4 ? 120 : count < 6 ? 300 : 900;
+            redisCache.setCacheObject(BACKOFF_PREFIX + key, 1, backoffSeconds, TimeUnit.SECONDS);
         }
     }
 
@@ -216,5 +232,36 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
     public void clearFail(String key)
     {
         redisCache.deleteObject(FAIL_PREFIX + key);
+        redisCache.deleteObject(BACKOFF_PREFIX + key);
+    }
+
+    @Override
+    public boolean isIpRateLimited(String ip)
+    {
+        if (ip == null || ip.isEmpty())
+        {
+            return false;
+        }
+        Integer n = redisCache.getCacheObject(IP_RATE_PREFIX + ip);
+        return n != null && n >= IP_RATE_LIMIT;
+    }
+
+    @Override
+    public void recordIpRequest(String ip)
+    {
+        if (ip == null || ip.isEmpty())
+        {
+            return;
+        }
+        String k = IP_RATE_PREFIX + ip;
+        Integer n = redisCache.getCacheObject(k);
+        if (n == null)
+        {
+            redisCache.setCacheObject(k, 1, IP_RATE_WINDOW_SECONDS, TimeUnit.SECONDS);
+        }
+        else
+        {
+            redisCache.setCacheObject(k, n + 1);
+        }
     }
 }

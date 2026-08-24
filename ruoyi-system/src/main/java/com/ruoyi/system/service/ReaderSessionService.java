@@ -46,12 +46,18 @@ public interface ReaderSessionService
     /** 删除会话（登出） */
     void remove(String token);
 
-    /** 登录/补办频控：该 key（IP/证号维度）失败次数是否已达上限（拦截） */
+    /** 登录/补办频控：该 key（IP/证号维度）失败次数已达上限（5 次/30 分钟）或处于递增退避期 → true */
     boolean isBlocked(String key);
 
-    /** 记录一次失败（首次失败起 30 分钟窗口，窗口内叠加计数） */
+    /** 记录一次失败（30 分钟窗口叠加计数 + 递增退避 1/2/5/15 分钟档位） */
     void recordFail(String key);
 
-    /** 成功后清除失败计数 */
+    /** 成功后清除失败计数与退避 */
     void clearFail(String key);
+
+    /** IP 全局限速：该 IP 60 秒窗口内请求次数是否已达上限（10 次/分钟） */
+    boolean isIpRateLimited(String ip);
+
+    /** 记录一次该 IP 的请求（60 秒窗口计数） */
+    void recordIpRequest(String ip);
 }
