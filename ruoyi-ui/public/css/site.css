@@ -29,6 +29,10 @@
   .nav-links a.active { background: var(--accent); color: #fff; font-weight: bold; }
   /* 汉堡菜单按钮（桌面端隐藏，≤768px 显示） */
   .nav-toggle { display: none; }
+  /* 个人主页入口（登录态显示，胶囊高亮） */
+  .nav-profile-link { display: inline-block; margin-left: 10px; padding: 5px 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.12); color: #fff !important; font-size: 13px; text-decoration: none; cursor: pointer; transition: all .2s; }
+  .nav-profile-link:hover { background: var(--accent); border-color: var(--accent); }
+  .nav-profile-link .pf-icon { margin-right: 4px; }
   .nav-right { margin-left: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; row-gap: 4px; }
   .nav-right span { color: var(--accent); font-size: 14px; cursor: pointer; white-space: nowrap; transition: color .2s; }
   .nav-right span:hover { color: var(--accent-light); }
