@@ -519,15 +519,19 @@
     </div>
   </div>
 
-  <!-- 登录弹窗 -->
+  <!-- 登录弹窗（统一版：成员编号/手机号/邮箱 + 密码） -->
   <div id="loginModal" class="modal" style="display:none">
     <div class="modal-box">
-      <h3 style="text-align:center;margin-bottom:16px">👤 成员登录</h3>
-            <input id="loginCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
+      <h3>👤 成员登录</h3>
+      <p class="modal-tip">使用成员编号 / 手机号 / 邮箱 + 密码登录，登录后可一键报名、提交候补</p>
+      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
       <input id="loginPwd" class="modal-input" type="password" placeholder="🔑 登录密码" />
-      <div id="loginMsg" style="font-size:13px;color:#e2554b;margin-bottom:10px;min-height:18px"></div>
-      <button class="btn-buy" style="width:100%;padding:11px" onclick="submitLogin()">登 录</button>
+      <div class="modal-btns">
+        <button class="btn-buy" onclick="submitLogin()">登 录</button>
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="openForgot()">忘记密码</button>
+        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('loginModal')">取消</button>
+      </div>
+      <div id="loginMsg" class="modal-msg"></div>
     </div>
   </div>
   <!-- 找回密码弹窗（证号/手机号/邮箱 → 邮箱验证码 → 设新密码） -->
