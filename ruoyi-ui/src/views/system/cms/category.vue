@@ -31,8 +31,9 @@
           <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)" v-hasPermi="['system:cmsCategory:edit']" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" min-width="220">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" min-width="280">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-document-add" @click="goAddArticle(scope.row)" v-hasPermi="['system:cms:add']">发文章</el-button>
           <el-button size="mini" type="text" icon="el-icon-plus" @click="handleAdd(scope.row)" v-hasPermi="['system:cmsCategory:add']">添加子栏目</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:cmsCategory:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:cmsCategory:remove']">删除</el-button>
@@ -176,6 +177,10 @@ export default {
         this.getList()
         this.$modal.msgSuccess("删除成功")
       }).catch(() => {})
+    },
+    /** 快捷入口：跳到文章管理页并预选该栏目（操作路径最短化） */
+    goAddArticle(row) {
+      this.$router.push('/content/article?categoryId=' + row.categoryId)
     },
     cancel() { this.open = false; this.reset() },
     reset() {

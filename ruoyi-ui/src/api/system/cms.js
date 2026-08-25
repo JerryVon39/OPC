@@ -95,6 +95,67 @@ export function batchSort(list) {
   })
 }
 
+// ===== 区块管理（cms_block）=====
+
+// 查询区块列表
+export function listBlock(query) {
+  return request({
+    url: '/system/cmsBlock/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 查询区块详情
+export function getBlock(blockId) {
+  return request({
+    url: '/system/cmsBlock/' + blockId,
+    method: 'get'
+  })
+}
+
+// 新增区块
+export function addBlock(data) {
+  return request({
+    url: '/system/cmsBlock',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改区块（自动写历史 + version+1）
+export function updateBlock(data) {
+  return request({
+    url: '/system/cmsBlock',
+    method: 'put',
+    data: data
+  })
+}
+
+// 删除区块
+export function delBlock(blockIds) {
+  return request({
+    url: '/system/cmsBlock/' + blockIds,
+    method: 'delete'
+  })
+}
+
+// 区块历史列表
+export function listBlockHistory(blockId) {
+  return request({
+    url: '/system/cmsBlock/history/' + blockId,
+    method: 'get'
+  })
+}
+
+// 回滚到指定历史版本
+export function rollbackBlock(blockId, version) {
+  return request({
+    url: '/system/cmsBlock/rollback/' + blockId + '/' + version,
+    method: 'put'
+  })
+}
+
 // 状态切换（0已发布 1草稿 2已下线）
 export function changeArticleStatus(articleId, status) {
   return request({

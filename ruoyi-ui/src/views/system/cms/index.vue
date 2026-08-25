@@ -115,7 +115,7 @@
     <el-dialog :title="title" :visible.sync="open" width="760px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入文章标题（必填）" />
+          <el-input v-model="form.title" placeholder="请输入文章标题（必填，最长 200 字）" maxlength="200" />
         </el-form-item>
         <el-form-item label="栏目" prop="categoryId">
           <el-select v-model="form.categoryId" placeholder="请选择栏目（必填）" style="width:100%">
@@ -218,6 +218,11 @@ export default {
     }
   },
   created() {
+    // 支持从栏目管理页"发文章"跳转预选栏目（?categoryId=x），并联动列表过滤
+    const preset = this.$route.query.categoryId
+    if (preset) {
+      this.queryParams.categoryId = Number(preset)
+    }
     this.loadCategoryOptions()
     this.getList()
   },
@@ -287,6 +292,11 @@ export default {
     },
     handleAdd() {
       this.reset()
+      // 预选栏目（来自栏目管理页"发文章"跳转或左侧树选择）
+      const preset = this.$route.query.categoryId
+      if (preset) {
+        this.form.categoryId = Number(preset)
+      }
       this.open = true
       this.title = "新增文章"
     },

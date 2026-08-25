@@ -356,3 +356,69 @@ if (document.readyState === 'loading') {
 } else {
   initPage();
 }
+
+// ===== CMS 区块：前台文本槽渐进增强加载（第二批）=====
+// 用法：页面声明 window.CMS_BLOCK_SLOTS = { blockKey: [ {field, sel, mode} ] }，
+//       再调用 loadCmsBlocks(pageKey)。
+//       field: title/subtitle/content；sel: CSS 选择器；mode: content 字段 'text'|'html'。
+//       区块内容为空 / 接口失败 / 3s 超时 → 保留静态内容（前台永不白屏）。
+const CMS_BLOCK_API = '/prod-api/system/cmsBlock/publicList?pageKey=';
+
+// 白名单 HTML 净化（html 槽用；白名单外标签剥壳只留文本，防存储型 XSS）
+const CMS_ALLOWED_TAGS = new Set(['P','BR','STRONG','B','EM','I','U','H1','H2','H3','H4','UL','OL','LI','A','IMG','BLOCKQUOTE','PRE','CODE','SPAN','TABLE','THEAD','TBODY','TR','TH','TD','DIV','HR']);
+
+function cmsSanitizeHtml(html) {
+  const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+  const out = document.createDocumentFragment();
+  (function walk(node, frag) {
+    Array.from(node.childNodes).forEach(child => {
+      if (child.nodeType === 3) { frag.appendChild(document.createTextNode(child.nodeValue)); return; }
+      if (child.nodeType !== 1) return;
+      const tag = child.tagName;
+      if (!CMS_ALLOWED_TAGS.has(tag)) { walk(child, frag); return; }
+      const el = document.createElement(tag.toLowerCase());
+      if (tag === 'A') {
+        const href = child.getAttribute('href') || '';
+        if (/^https?:\/\//i.test(href)) { el.href = href; el.target = '_blank'; el.rel = 'noopener'; }
+      } else if (tag === 'IMG') {
+        const src = child.getAttribute('src') || '';
+        if (/^(https?:\/\/|\/)/i.test(src)) el.src = src;
+        el.style.maxWidth = '100%';
+      }
+      walk(child, el);
+      frag.appendChild(el);
+    });
+  })(doc.body, out);
+  const tmp = document.createElement('div');
+  tmp.appendChild(out);
+  return tmp.innerHTML;
+}
+
+async function loadCmsBlocks(pageKey) {
+  const slotMap = window.CMS_BLOCK_SLOTS || {};
+  if (!Object.keys(slotMap).length) return;
+  let data = [];
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(CMS_BLOCK_API + pageKey, { signal: ctrl.signal });
+    clearTimeout(timer);
+    const d = await res.json();
+    if (d.code === 200) data = d.data || [];
+  } catch (e) { return; } // 失败/超时：保留静态内容
+  data.forEach(b => {
+    const slots = slotMap[b.blockKey];
+    if (!slots) return;
+    slots.forEach(s => {
+      const el = document.querySelector(s.sel);
+      if (!el) return;
+      const val = b[s.field == null ? 'content' : s.field];
+      if (val == null || String(val).trim() === '') return; // 留空 = 不覆盖静态内容
+      if (s.field === 'content' && s.mode === 'html') {
+        el.innerHTML = cmsSanitizeHtml(val);
+      } else {
+        el.textContent = val;
+      }
+    });
+  });
+}

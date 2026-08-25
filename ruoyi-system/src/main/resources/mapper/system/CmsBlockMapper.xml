@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.CmsBlockMapper">
+
+    <resultMap type="CmsBlock" id="CmsBlockResult">
+        <result property="blockId"   column="block_id"   />
+        <result property="blockKey"  column="block_key"  />
+        <result property="pageKey"   column="page_key"   />
+        <result property="title"     column="title"      />
+        <result property="subtitle"  column="subtitle"   />
+        <result property="content"   column="content"    />
+        <result property="image"     column="image"      />
+        <result property="link"      column="link"       />
+        <result property="sort"      column="sort"       />
+        <result property="visible"   column="visible"    />
+        <result property="version"   column="version"    />
+        <result property="updateBy"  column="update_by"  />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <resultMap type="CmsBlockHistory" id="CmsBlockHistoryResult">
+        <result property="historyId"  column="history_id"  />
+        <result property="blockId"    column="block_id"    />
+        <result property="version"    column="version"     />
+        <result property="title"      column="title"       />
+        <result property="subtitle"   column="subtitle"    />
+        <result property="content"    column="content"     />
+        <result property="image"      column="image"       />
+        <result property="link"       column="link"        />
+        <result property="updateBy"   column="update_by"   />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectCmsBlockVo">
+        select block_id, block_key, page_key, title, subtitle, content, image, link,
+               sort, visible, version, update_by, update_time
+        from cms_block
+    </sql>
+
+    <select id="selectCmsBlockList" parameterType="CmsBlock" resultMap="CmsBlockResult">
+        <include refid="selectCmsBlockVo"/>
+        <where>
+            <if test="pageKey != null and pageKey != ''"> and page_key = #{pageKey}</if>
+            <if test="blockKey != null and blockKey != ''"> and block_key = #{blockKey}</if>
+        </where>
+        order by page_key asc, sort asc, block_id asc
+    </select>
+
+    <select id="selectPublicBlockList" parameterType="String" resultMap="CmsBlockResult">
+        <include refid="selectCmsBlockVo"/>
+        where visible = '0' and page_key = #{pageKey}
+        order by sort asc, block_id asc
+    </select>
+
+    <select id="selectCmsBlockByBlockId" parameterType="Long" resultMap="CmsBlockResult">
+        <include refid="selectCmsBlockVo"/>
+        where block_id = #{blockId}
+    </select>
+
+    <select id="selectCmsBlockByBlockKey" parameterType="String" resultMap="CmsBlockResult">
+        <include refid="selectCmsBlockVo"/>
+        where block_key = #{blockKey}
+    </select>
+
+    <insert id="insertCmsBlock" parameterType="CmsBlock" useGeneratedKeys="true" keyProperty="blockId">
+        insert into cms_block
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="blockKey != null">block_key,</if>
+            <if test="pageKey != null">page_key,</if>
+            <if test="title != null">title,</if>
+            <if test="subtitle != null">subtitle,</if>
+            <if test="content != null">content,</if>
+            <if test="image != null">image,</if>
+            <if test="link != null">link,</if>
+            <if test="sort != null">sort,</if>
+            <if test="visible != null">visible,</if>
+            <if test="version != null">version,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="blockKey != null">#{blockKey},</if>
+            <if test="pageKey != null">#{pageKey},</if>
+            <if test="title != null">#{title},</if>
+            <if test="subtitle != null">#{subtitle},</if>
+            <if test="content != null">#{content},</if>
+            <if test="image != null">#{image},</if>
+            <if test="link != null">#{link},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="visible != null">#{visible},</if>
+            <if test="version != null">#{version},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateCmsBlock" parameterType="CmsBlock">
+        update cms_block
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="blockKey != null">block_key = #{blockKey},</if>
+            <if test="pageKey != null">page_key = #{pageKey},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="subtitle != null">subtitle = #{subtitle},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="link != null">link = #{link},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="visible != null">visible = #{visible},</if>
+            <if test="version != null">version = #{version},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where block_id = #{blockId}
+    </update>
+
+    <delete id="deleteCmsBlockByBlockIds" parameterType="String">
+        delete from cms_block where block_id in
+        <foreach item="blockId" collection="array" open="(" separator="," close=")">
+            #{blockId}
+        </foreach>
+    </delete>
+
+    <select id="selectHistoryByBlockId" parameterType="Long" resultMap="CmsBlockHistoryResult">
+        select history_id, block_id, version, title, subtitle, content, image, link, update_by, update_time
+        from cms_block_history
+        where block_id = #{blockId}
+        order by version desc
+        limit 20
+    </select>
+
+    <select id="selectHistoryByVersion" resultMap="CmsBlockHistoryResult">
+        select history_id, block_id, version, title, subtitle, content, image, link, update_by, update_time
+        from cms_block_history
+        where block_id = #{blockId} and version = #{version}
+    </select>
+
+    <insert id="insertHistory" parameterType="CmsBlockHistory">
+        insert into cms_block_history (block_id, version, title, subtitle, content, image, link, update_by, update_time)
+        values (#{blockId}, #{version}, #{title}, #{subtitle}, #{content}, #{image}, #{link}, #{updateBy}, #{updateTime})
+    </insert>
+
+    <delete id="trimHistory">
+        delete from cms_block_history
+        where block_id = #{blockId}
+          and history_id not in (
+            select hid from (
+              select history_id as hid from cms_block_history
+              where block_id = #{blockId}
+              order by version desc
+              limit #{keep}
+            ) t
+          )
+    </delete>
+</mapper>

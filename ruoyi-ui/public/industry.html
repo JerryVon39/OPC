@@ -199,6 +199,14 @@
 
 <script src="js/site.js"></script>
 <script>
+  // CMS 区块槽位声明（第二批）：后台「区块管理」可改；内容留空则保持静态原样
+  window.CMS_BLOCK_SLOTS = {
+    'industry-hero-sub': [{ field: 'content', sel: '.page-hero p' }],
+    'industry-cta': [{ field: 'content', sel: '.cta-box p' }]
+  };
+  loadCmsBlocks('industry');
+</script>
+<script>
   // ===== 共享：页脚年份 =====
   (function () {
     var el = document.getElementById('footerYear');
