@@ -159,7 +159,7 @@ REM 幂等升级全清单（与 docker/mysql-upgrade.sh 一致，另含 auth）�
 REM   - purchase/recycle 旧脚本含旧名父菜单 INSERT，在业务化库上重跑会产生孤儿菜单，
 REM     由清单末尾的 menu_cleanup 统一清理（getRouters NPE 防御）
 REM   - auth 依赖 two_state 的 del_flag，必须排在 two_state 之后
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_recycle.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql) do (
+for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_recycle.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql) do (
   if exist "%%f" (
     echo   executing %%f
     "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul
@@ -179,7 +179,7 @@ for %%f in (sql\ry_20260417.sql sql\quartz.sql sql\business_init.sql sql\role_in
 )
 REM 全新库与 Docker 首次初始化对齐：补跑全部幂等升级（del_flag/password_hash/CMS/菜单等）+ 业务数据快照
 echo   applying idempotent upgrades...
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_recycle.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql) do (
+for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_recycle.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql) do (
   if exist "%%f" (
     echo   applying %%f
     "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul

@@ -36,7 +36,8 @@ sql/upgrade_20260824_contest.sql
 sql/upgrade_20260824_roles.sql
 sql/upgrade_20260826_policy.sql
 sql/upgrade_20260824_menu_cleanup.sql
-sql/upgrade_20260825_recycle_menu.sql"
+sql/upgrade_20260825_recycle_menu.sql
+sql/upgrade_20260825_menu_reorg.sql"
 
 for f in $UPGRADES; do
   if [ -f "$f" ]; then
