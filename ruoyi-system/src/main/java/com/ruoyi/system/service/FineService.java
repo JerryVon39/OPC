@@ -59,7 +59,7 @@ public class FineService
         {
             if (fr.getFineAmount() != null && fr.getFineAmount().compareTo(BigDecimal.ZERO) > 0)
             {
-                throw new ServiceException("该读者有未缴罚款（" + fr.getFineAmount() + " 元），请先到服务台缴费");
+                throw new ServiceException("该成员有未缴罚款（" + fr.getFineAmount() + " 元），请先到服务台缴费");
             }
         }
     }

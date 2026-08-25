@@ -176,11 +176,11 @@ public class ShopOrderServiceImpl implements IShopOrderService
         // findActiveReader 与加锁之间成员可能被管理端删除：加锁查不到即视为不存在
         if (reader == null)
         {
-            throw new ServiceException("读者不存在");
+            throw new ServiceException("成员不存在");
         }
         if (!com.ruoyi.system.constant.BizStatus.READER_NORMAL.equals(reader.getStatus()))
         {
-            throw new ServiceException("该读者证号已停用/挂失，无法购买");
+            throw new ServiceException("该成员编号已停用/挂失，无法购买");
         }
         // 锁服务行（FOR UPDATE，加锁顺序统一为 成员→服务，与报名/候补路径一致）：
         // 与下架（changeBookStatus）/删除服务共享 book 行锁，下架完成后本事务读到的必是最新状态，
@@ -188,11 +188,11 @@ public class ShopOrderServiceImpl implements IShopOrderService
         Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null)
         {
-            throw new ServiceException("图书不存在");
+            throw new ServiceException("服务不存在");
         }
         if (!"0".equals(book.getStatus()))
         {
-            throw new ServiceException("该图书已下架，无法购买");
+            throw new ServiceException("该服务已结束，无法购买");
         }
         if (book.getStock() == null || book.getStock() < quantity)
         {

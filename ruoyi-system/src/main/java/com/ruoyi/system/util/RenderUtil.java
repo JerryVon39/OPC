@@ -12,7 +12,7 @@ public class RenderUtil
 {
     private RenderUtil() { }
 
-    /** 图书简介渲染 BBCODE（展示为富文本；后台编辑回显走 getInfo 不受影响） */
+    /** 服务简介渲染 BBCODE（展示为富文本；后台编辑回显走 getInfo 不受影响） */
     public static void renderBookIntro(List<Book> books)
     {
         if (books == null)

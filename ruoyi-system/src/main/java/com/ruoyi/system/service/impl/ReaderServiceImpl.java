@@ -137,7 +137,7 @@ public class ReaderServiceImpl implements IReaderService
             String cardNo = reader.getCardNo().trim();
             if (readerMapper.countByCardNo(cardNo) > 0)
             {
-                throw new com.ruoyi.common.exception.ServiceException("该借书证号已被使用，请更换");
+                throw new com.ruoyi.common.exception.ServiceException("该成员编号已被使用，请更换");
             }
             reader.setCardNo(cardNo);
         }
@@ -175,7 +175,7 @@ public class ReaderServiceImpl implements IReaderService
                 {
                     if (r.getReaderId() == null || !r.getReaderId().equals(reader.getReaderId()))
                     {
-                        throw new com.ruoyi.common.exception.ServiceException("该借书证号已被使用，请更换");
+                        throw new com.ruoyi.common.exception.ServiceException("该成员编号已被使用，请更换");
                     }
                 }
             }
@@ -197,7 +197,7 @@ public class ReaderServiceImpl implements IReaderService
         List<Reader> readers = readerMapper.selectReaderList(query);
         if (readers == null || readers.isEmpty())
         {
-            throw new com.ruoyi.common.exception.ServiceException("借书证号不存在，请先登记");
+            throw new com.ruoyi.common.exception.ServiceException("成员编号不存在，请先登记");
         }
         return readers.get(0);
     }
@@ -211,7 +211,7 @@ public class ReaderServiceImpl implements IReaderService
         Reader reader = readerMapper.selectReaderByReaderId(readerId);
         if (reader == null)
         {
-            throw new com.ruoyi.common.exception.ServiceException("读者不存在");
+            throw new com.ruoyi.common.exception.ServiceException("成员不存在");
         }
         String newCard = generateCardNo();
         reader.setCardNo(newCard);
@@ -372,7 +372,7 @@ public class ReaderServiceImpl implements IReaderService
             List<ShopOrder> orders = shopOrderMapper.selectShopOrderList(oq);
             if (orders != null && !orders.isEmpty())
             {
-                throw new com.ruoyi.common.exception.ServiceException("该读者存在待处理订单，无法删除");
+                throw new com.ruoyi.common.exception.ServiceException("该成员存在待处理订单，无法删除");
             }
             // 校验全部通过：进入软删除（数据保留在原表，标记 del_flag='2'）
         }
@@ -442,26 +442,26 @@ public class ReaderServiceImpl implements IReaderService
             int row = i + 2; // 模板第 1 行为大标题、第 2 行为列名，数据从第 3 行起
             if (r.getReaderName() == null || r.getReaderName().trim().isEmpty())
             {
-                errors.add("第" + row + "行：读者姓名不能为空");
+                errors.add("第" + row + "行：成员姓名不能为空");
                 continue;
             }
             r.setReaderName(r.getReaderName().trim());
             if (r.getPhone() == null || !r.getPhone().trim().matches("\\d{11}"))
             {
-                errors.add("第" + row + "行：读者" + r.getReaderName() + " 手机号格式不正确（需 11 位数字）");
+                errors.add("第" + row + "行：成员" + r.getReaderName() + " 手机号格式不正确（需 11 位数字）");
                 continue;
             }
             r.setPhone(r.getPhone().trim());
             // 新成员导入邮箱必填且格式合法（邮件通知前提）
             if (r.getEmail() == null || !r.getEmail().trim().matches("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$") || r.getEmail().trim().length() > 50)
             {
-                errors.add("第" + row + "行：读者" + r.getReaderName() + " 电子邮箱为空或格式不正确");
+                errors.add("第" + row + "行：成员" + r.getReaderName() + " 电子邮箱为空或格式不正确");
                 continue;
             }
             r.setEmail(r.getEmail().trim());
             if (r.getReaderType() != null && !r.getReaderType().trim().isEmpty() && !typeSet.contains(r.getReaderType().trim()))
             {
-                errors.add("第" + row + "行：读者" + r.getReaderName() + " 类型不在字典内");
+                errors.add("第" + row + "行：成员" + r.getReaderName() + " 类型不在字典内");
                 continue;
             }
             if (r.getCardNo() != null && !r.getCardNo().trim().isEmpty())
@@ -469,7 +469,7 @@ public class ReaderServiceImpl implements IReaderService
                 r.setCardNo(r.getCardNo().trim());
                 if (readerMapper.countByCardNo(r.getCardNo()) > 0)
                 {
-                    errors.add("第" + row + "行：读者" + r.getReaderName() + " 证号 " + r.getCardNo() + " 已存在，已跳过");
+                    errors.add("第" + row + "行：成员" + r.getReaderName() + " 证号 " + r.getCardNo() + " 已存在，已跳过");
                     continue;
                 }
             }
@@ -482,7 +482,7 @@ public class ReaderServiceImpl implements IReaderService
             catch (Exception ex)
             {
                 // 行级异常（如超长字段等数据库约束）：不中断整批，收集行号明细（此前行保持已导入）
-                errors.add("第" + row + "行：读者" + r.getReaderName() + " 保存失败，请检查数据后重试");
+                errors.add("第" + row + "行：成员" + r.getReaderName() + " 保存失败，请检查数据后重试");
             }
         }
         java.util.Map<String, Object> result = new java.util.HashMap<>();

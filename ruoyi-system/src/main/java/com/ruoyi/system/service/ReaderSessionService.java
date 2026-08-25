@@ -7,7 +7,7 @@ import com.ruoyi.system.domain.ReaderSession;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * 读者端会话服务：Redis 存储，14 天滑动续期（时长 sys_config reader.session.minutes 可配），
+ * 成员端会话服务：Redis 存储，14 天滑动续期（时长 sys_config reader.session.minutes 可配），
  * 支持登出/多端列表/退出其他设备；登录失败频控保留。
  */
 public interface ReaderSessionService

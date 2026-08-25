@@ -26,13 +26,13 @@ public interface IBorrowRecordService
     /** 罚款收款：标记已缴（收银台操作） */
     public int payFine(Long borrowId);
 
-    /** 续借：截止日期 +30 天（逾期不可续借） */
+    /** 续期：截止日期 +30 天（逾期不可续期） */
     public int renewBook(Long borrowId);
 
     /** 前台报名：按成员编号（匿名接口） */
     public int borrowByCard(String cardNo, Long bookId);
 
-    /** 前台续借：证号归属校验 + 未逾期 + 截止日期 +30 天 */
+    /** 前台续期：证号归属校验 + 未逾期 + 截止日期 +30 天 */
     public int renewByCard(String cardNo, Long borrowId);
 
     /** 按成员编号查询报名记录 */

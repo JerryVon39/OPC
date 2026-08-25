@@ -195,7 +195,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
     @Override
     public int updateBorrowRecord(BorrowRecord borrowRecord)
     {
-        // 生命周期字段守卫：状态/罚款/续借次数只能走完成/收款/续借专用流程，
+        // 生命周期字段守卫：状态/罚款/续期次数只能走完成/收款/续期专用流程，
         // 普通编辑不允许直接改（防绕过完成流程：进行中直标已完成而库存不还原）
         if (borrowRecord.getBorrowId() != null)
         {
@@ -395,12 +395,12 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return borrowRecordMapper.selectTopReaders(new BorrowRecord());
     }
 
-    /** 续借：截止日期 +30 天（行锁：校验与写入原子化，并发双击/双端续借只有一次生效） */
+    /** 续期：截止日期 +30 天（行锁：校验与写入原子化，并发双击/双端续期只有一次生效） */
     @Override
     @Transactional
     public int renewBook(Long borrowId)
     {
-        // FOR UPDATE 锁记录行：上限/未逾期校验与写入原子化，并发续借不丢次数
+        // FOR UPDATE 锁记录行：上限/未逾期校验与写入原子化，并发续期不丢次数
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowIdForUpdate(borrowId);
         if (record == null)
         {
@@ -416,7 +416,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         if (record.getDueDate() == null)
         {
-            throw new ServiceException("应还日期缺失，无法续借");
+            throw new ServiceException("应还日期缺失，无法续期");
         }
         // 已逾期（真实日期判断）：逾期状态"2"是查询时动态算的、不落库，
         // 这里必须直接比较日期，否则逾期记录会漏过上面的 status 检查
@@ -424,7 +424,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("该记录已逾期，请先归还后再借");
         }
-        // 续借次数限制（委托 BorrowRuleService）
+        // 续期次数限制（委托 BorrowRuleService）
         long renewCount = borrowRuleService.checkRenewAllowed(record);
         // 截止日期 +30 天
         Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);
@@ -452,7 +452,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         return insertBorrowRecord(borrow);
     }
 
-    /** 前台续借：证号归属校验 + 进行中 + 未逾期 → 截止日期 +30 天（行锁：并发续借只有一次生效） */
+    /** 前台续期：证号归属校验 + 进行中 + 未逾期 → 截止日期 +30 天（行锁：并发续期只有一次生效） */
     @Override
     @Transactional
     public int renewByCard(String cardNo, Long borrowId)
@@ -461,17 +461,17 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         {
             throw new ServiceException("参数不完整");
         }
-        // FOR UPDATE 锁记录行：上限/未逾期校验与写入原子化，并发续借不丢次数
+        // FOR UPDATE 锁记录行：上限/未逾期校验与写入原子化，并发续期不丢次数
         BorrowRecord record = borrowRecordMapper.selectBorrowRecordByBorrowIdForUpdate(borrowId);
         if (record == null)
         {
             throw new ServiceException("报名记录不存在");
         }
-        // 证号归属校验：只能续借自己的书
+        // 证号归属校验：只能续期自己的书
         Reader reader = readerMapper.selectReaderByReaderId(record.getReaderId());
         if (reader == null || !cardNo.trim().equals(reader.getCardNo()))
         {
-            throw new ServiceException("该借阅记录不属于此证号");
+            throw new ServiceException("该报名记录不属于此证号");
         }
         if ("1".equals(record.getStatus()))
         {
@@ -479,21 +479,21 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
         }
         if (record.getDueDate() == null)
         {
-            throw new ServiceException("应还日期缺失，无法续借");
+            throw new ServiceException("应还日期缺失，无法续期");
         }
         // 逾期判断（真实日期，逾期状态"2"不落库）
         if (record.getDueDate().before(new Date()))
         {
             throw new ServiceException("该记录已逾期，请先归还后再借");
         }
-        // 续借次数限制（与后台 renewBook 一致，委托 BorrowRuleService）
+        // 续期次数限制（与后台 renewBook 一致，委托 BorrowRuleService）
         long renewCount = borrowRuleService.checkRenewAllowed(record);
         Date newDue = new Date(record.getDueDate().getTime() + 30L * 24 * 3600 * 1000);
         record.setDueDate(newDue);
         record.setRenewCount(renewCount + 1);
         record.setUpdateTime(new Date());
         int rows = borrowRecordMapper.updateBorrowRecord(record);
-        // 续借成功邮件（模板渲染、异步、尽力而为；主题"续期成功"由模板控制，修复旧复制粘贴错误）
+        // 续期成功邮件（模板渲染、异步、尽力而为；主题"续期成功"由模板控制，修复旧复制粘贴错误）
         java.util.Map<String, Object> p3 = new java.util.HashMap<>();
         p3.put("readerName", reader.getReaderName());
         p3.put("bookName", record.getBookName() == null ? "该书" : record.getBookName());
@@ -533,7 +533,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             if (com.ruoyi.system.constant.BizStatus.BORROW_OUT.equals(record.getStatus())
                     || com.ruoyi.system.constant.BizStatus.BORROW_OVERDUE.equals(record.getStatus()))
             {
-                // 动态逾期（status='0' 但已过应还日）的罚款尚未落库（仅在还书时结算）：
+                // 动态逾期（status='0' 但已过应还日）的罚款尚未落库（仅在核销时结算）：
                 // 先结算入账，否则下面的欠费拦截必然放行，删除会把逾期产生的欠费一并抹掉
                 java.math.BigDecimal fineNow = fineService.calcFine(record);
                 if (fineNow != null && record.getFineAmount() == null)
@@ -547,7 +547,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                         && record.getFineAmount().compareTo(java.math.BigDecimal.ZERO) > 0
                         && com.ruoyi.system.constant.BizStatus.FINE_UNPAID.equals(record.getFinePaid()))
                 {
-                    throw new ServiceException("该借阅记录有未缴罚款，请先到服务台收款后再删除");
+                    throw new ServiceException("该报名记录有未缴罚款，请先到服务台收款后再删除");
                 }
                 // CAS 先置"已完成"再删：并发删除同一未还记录时只有一次回补库存（防库存双回补）
                 java.util.Date now = new Date();
@@ -563,7 +563,7 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                 }
                 if (locked == 0)
                 {
-                    continue; // 已被并发处理（还书/删除），跳过不再回补
+                    continue; // 已被并发处理（核销/删除），跳过不再回补
                 }
                 // 未完成删除 = 库存还原（书回到书架，记录作废）
                 if (record.getBookId() != null)

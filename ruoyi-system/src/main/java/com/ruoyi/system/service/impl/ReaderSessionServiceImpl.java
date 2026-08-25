@@ -16,7 +16,7 @@ import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ReaderSessionService;
 
 /**
- * 读者端会话实现：Redis 存储，14 天滑动续期（sys_config reader.session.minutes 可配），
+ * 成员端会话实现：Redis 存储，14 天滑动续期（sys_config reader.session.minutes 可配），
  * by-card 索引支持多端列表/退出其他设备；登录失败频控保留。
  */
 @Service

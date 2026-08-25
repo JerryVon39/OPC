@@ -105,7 +105,7 @@ public class BookServiceImpl implements IBookService
     {
         book.setCreateTime(DateUtils.getNowDate());
         int rows = bookMapper.insertBook(book);
-        // 馆藏总数变了：失效统计缓存
+        // 服务总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
@@ -146,7 +146,7 @@ public class BookServiceImpl implements IBookService
         Book book = bookMapper.selectBookByBookIdForUpdate(bookId);
         if (book == null)
         {
-            throw new com.ruoyi.common.exception.ServiceException("图书不存在");
+            throw new com.ruoyi.common.exception.ServiceException("服务不存在");
         }
         // 仅"在架 → 下架"需要联动校验；上架永远允许
         boolean goingOff = "1".equals(status) && "0".equals(book.getStatus());
@@ -159,7 +159,7 @@ public class BookServiceImpl implements IBookService
             {
                 if ("0".equals(rv.getStatus()) || "1".equals(rv.getStatus()))
                 {
-                    throw new com.ruoyi.common.exception.ServiceException("该图书存在预约中的读者，请先取消预约后再下架");
+                    throw new com.ruoyi.common.exception.ServiceException("该服务存在预约中的成员，请先取消预约后再下架");
                 }
             }
         }
@@ -210,7 +210,7 @@ public class BookServiceImpl implements IBookService
             List<ShopOrder> orders = shopOrderMapper.selectShopOrderList(oq);
             if (orders != null && !orders.isEmpty())
             {
-                throw new com.ruoyi.common.exception.ServiceException("该图书存在待处理订单，无法删除");
+                throw new com.ruoyi.common.exception.ServiceException("该服务存在待处理订单，无法删除");
             }
             // 有候补中/有名额候补的服务不可删（否则前台"我的候补"出现幽灵记录）
             BookReserve rq = new BookReserve();
@@ -220,14 +220,14 @@ public class BookServiceImpl implements IBookService
             {
                 if ("0".equals(rv.getStatus()) || "1".equals(rv.getStatus()))
                 {
-                    throw new com.ruoyi.common.exception.ServiceException("该图书存在预约中的读者，请先取消预约后再删除");
+                    throw new com.ruoyi.common.exception.ServiceException("该服务存在预约中的成员，请先取消预约后再删除");
                 }
             }
             // 校验全部通过：进入软删除（数据保留在原表，标记 del_flag='2'）
         }
         // 软删除（两态）：删除人对前台/列表不可见，后台提供「恢复」与「永久删除」；同事务，任一失败整体回滚
         int rows = bookMapper.softDeleteBookByBookIds(bookIds, operator(), new Date());
-        // 馆藏总数变了：失效统计缓存
+        // 服务总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
@@ -259,7 +259,7 @@ public class BookServiceImpl implements IBookService
     public int purgeBookByBookIds(Long[] bookIds)
     {
         int rows = bookMapper.deleteBookByBookIds(bookIds);
-        // 馆藏总数变了：失效统计缓存
+        // 服务总数变了：失效统计缓存
         statisticsService.evictAll();
         return rows;
     }
@@ -297,7 +297,7 @@ public class BookServiceImpl implements IBookService
             b.setBookName(b.getBookName().trim());
             if (b.getBookType() != null && !b.getBookType().trim().isEmpty() && !typeSet.contains(b.getBookType().trim()))
             {
-                errors.add("第" + row + "行：《" + b.getBookName() + "》图书类型不在字典内");
+                errors.add("第" + row + "行：《" + b.getBookName() + "》服务分类不在字典内");
                 continue;
             }
             if (bookMapper.countByBookName(b.getBookName()) > 0)

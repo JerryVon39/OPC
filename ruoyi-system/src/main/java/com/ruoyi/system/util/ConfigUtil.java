@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import com.ruoyi.system.service.ISysConfigService;
 
 /**
- * 系统参数读取工具（带默认值 + 按读者类型取键）
+ * 系统参数读取工具（带默认值 + 按成员类型取键）
  */
 @Component
 public class ConfigUtil
@@ -44,7 +44,7 @@ public class ConfigUtil
     }
 
     /**
-     * 按读者类型取参数整数：book.borrow.maxCount.student（字典值1学生/2教师/3普通→语义后缀），
+     * 按成员类型取参数整数：book.borrow.maxCount.student（字典值1学生/2教师/3普通→语义后缀），
      * 无类型参数时回退通用键
      */
     public int getTypeInt(String prefix, String readerType, int def)

@@ -5,7 +5,7 @@ import java.util.List;
 import com.ruoyi.system.domain.ReaderLoginLog;
 
 /**
- * 读者端登录/安全事件审计服务（尽力而为：写库失败不抛异常，不影响主业务）
+ * 成员端登录/安全事件审计服务（尽力而为：写库失败不抛异常，不影响主业务）
  */
 public interface IReaderLoginLogService
 {

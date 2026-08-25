@@ -20,7 +20,7 @@ public interface ReaderMapper
      */
     public Reader selectReaderByReaderId(Long readerId);
 
-    /** 行锁查询（FOR UPDATE）：并发写路径（报名/预约/下单/删除成员）串行化同一读者的操作 */
+    /** 行锁查询（FOR UPDATE）：并发写路径（报名/预约/下单/删除成员）串行化同一成员的操作 */
     public Reader selectReaderByReaderIdForUpdate(Long readerId);
 
     /** 批量导入判重：成员编号是否已存在（uk_card_no 冲突前先友好提示） */
@@ -48,7 +48,7 @@ public interface ReaderMapper
     public int insertReader(Reader reader);
 
     /**
-     * 修改读者管理
+     * 修改成员管理
      * 
      * @param reader 成员管理
      * @return 结果
@@ -75,7 +75,7 @@ public interface ReaderMapper
     public int softDeleteReaderByReaderIds(@Param("readerIds") Long[] readerIds,
             @Param("deletedBy") String deletedBy, @Param("deletedTime") java.util.Date deletedTime);
 
-    /** 恢复已删除读者：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） */
+    /** 恢复已删除成员：del_flag 置 '0'，清空删除人/时间；仅对已删除行生效（幂等） */
     public int restoreReaderByReaderIds(@Param("readerIds") Long[] readerIds);
 
     /** 按登录标识查认证信息（证号/手机号/邮箱，含 password_hash/pwd_set/email_verified，

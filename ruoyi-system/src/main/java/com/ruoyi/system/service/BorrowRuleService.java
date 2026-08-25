@@ -10,7 +10,7 @@ import com.ruoyi.system.mapper.BorrowRecordMapper;
 import com.ruoyi.system.util.ConfigUtil;
 
 /**
- * 报名规则服务：上限/借期/重复报名/续借次数（按成员类型差异化，参数可配）
+ * 报名规则服务：上限/借期/重复报名/续期次数（按成员类型差异化，参数可配）
  */
 @Service
 public class BorrowRuleService
@@ -54,7 +54,7 @@ public class BorrowRuleService
     }
 
     /**
-     * 续借次数校验：超限抛异常，返回当前已续借次数
+     * 续期次数校验：超限抛异常，返回当前已续期次数
      */
     public long checkRenewAllowed(BorrowRecord record)
     {
@@ -62,7 +62,7 @@ public class BorrowRuleService
         long renewCount = record.getRenewCount() == null ? 0 : record.getRenewCount();
         if (renewCount >= renewLimit)
         {
-            throw new ServiceException("该图书已续借过 " + renewCount + " 次，不可再次续借");
+            throw new ServiceException("该服务已续期过 " + renewCount + " 次，不可再次续期");
         }
         return renewCount;
     }
