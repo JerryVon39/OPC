@@ -240,7 +240,8 @@ export default {
       listCategory({ pageNum: 1, pageSize: 100 }).then(response => {
         const rows = response.rows || []
         this.categoryOptions = rows
-        this.treeOptions = this.buildTree(rows, 0)
+        // 树顶部固定「全部文章」节点（categoryId=0 视为全部，防点栏目后无法回到全部）
+        this.treeOptions = [{ categoryId: 0, categoryName: "全部文章", children: this.buildTree(rows, 0) }]
       })
     },
     /** 平铺栏目组装树（与栏目管理页同一逻辑，深度限制 3 级） */
@@ -252,7 +253,7 @@ export default {
         .map(r => ({ ...r, children: this.buildTree(rows, r.categoryId, depth + 1) }))
     },
     handleNodeClick(node) {
-      this.queryParams.categoryId = node.categoryId
+      this.queryParams.categoryId = node.categoryId ? node.categoryId : null
       this.handleQuery()
     },
     /** 跳到栏目管理页（路由 = 内容运营目录路径 content + 菜单路径 category） */

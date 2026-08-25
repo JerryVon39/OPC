@@ -70,6 +70,13 @@ public class CmsBlockServiceImpl implements ICmsBlockService
         {
             throw new ServiceException("区块不存在");
         }
+        // 防御：全字段为 null 时动态 SET 为空会生成非法 SQL，拒绝空更新
+        if (cmsBlock.getTitle() == null && cmsBlock.getSubtitle() == null && cmsBlock.getContent() == null
+            && cmsBlock.getImage() == null && cmsBlock.getLink() == null
+            && cmsBlock.getSort() == null && cmsBlock.getVisible() == null)
+        {
+            throw new ServiceException("没有要更新的内容");
+        }
         // 保存前先写当前版本进历史（回滚基线），再更新主表 version+1
         CmsBlockHistory history = new CmsBlockHistory();
         history.setBlockId(existing.getBlockId());
