@@ -12,13 +12,15 @@ INSERT INTO sys_role (role_name, role_key, role_sort, data_scope, menu_check_str
 SELECT '内容编辑','editor',2,'1','1','1','0','admin',NOW(),'官网内容编辑：文章管理/服务信息/成员/报名维护（无订单/无系统管理）' WHERE NOT EXISTS (SELECT 1 FROM sys_role WHERE role_key='editor');
 
 -- ---------- 角色菜单分配（按菜单名动态关联；幂等） ----------
--- 内容编辑：官网运营目录 + 服务管理/成员服务全套 + 活动预约 + 报名管理全套 + 报名导出
+-- 内容编辑：内容运营/成员与报名（新目录结构）下的文章/服务/成员/报名维护。
+-- 注意：新顶层目录（内容运营/成员与报名）与缺失的按钮权限菜单由
+--       upgrade_20260825_editor_fix.sql 补建并授予——该脚本必须在 menu_reorg 之后执行
+--       （全新库 mysql-init.sh / 旧卷 mysql-upgrade.sh / start-all.bat 均已挂载），
+--       此处仅授此时已存在的菜单（角色定义语义在此文件完整声明）。
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
 WHERE r.role_key='editor' AND m.menu_name IN
-('官网运营','服务管理','服务信息','服务信息查询','服务信息新增','服务信息修改','服务信息删除','服务信息导出',
- '成员服务','成员管理','成员管理查询','成员管理新增','成员管理修改','成员管理删除','成员管理导出','活动预约',
- '报名管理','报名管理查询','报名管理新增','报名管理修改','报名管理删除','报名导出')
+('服务信息','成员管理','活动预约','报名管理','报名导出')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
 
 -- ---------- 测试账号（内容编辑；密码与 admin 相同 admin123，复用其 BCrypt 哈希） ----------

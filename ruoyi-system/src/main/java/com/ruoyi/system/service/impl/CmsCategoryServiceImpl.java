@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.CmsCategory;
+import com.ruoyi.system.mapper.CmsArticleMapper;
 import com.ruoyi.system.mapper.CmsCategoryMapper;
 import com.ruoyi.system.service.ICmsCategoryService;
 
@@ -16,6 +17,9 @@ public class CmsCategoryServiceImpl implements ICmsCategoryService
 {
     @Autowired
     private CmsCategoryMapper cmsCategoryMapper;
+
+    @Autowired
+    private CmsArticleMapper cmsArticleMapper;
 
     @Override
     public CmsCategory selectCmsCategoryByCategoryId(Long categoryId)
@@ -73,6 +77,11 @@ public class CmsCategoryServiceImpl implements ICmsCategoryService
             if (categoryId == null || cmsCategoryMapper.selectCmsCategoryByCategoryId(categoryId) == null)
             {
                 throw new ServiceException("部分栏目不存在或已删除");
+            }
+            // M3 守卫：栏目下还有文章时禁止删除（否则文章变孤儿，前台所有 Tab 消失且后台无法找回）
+            if (cmsArticleMapper.countCmsArticleByCategoryId(categoryId) > 0)
+            {
+                throw new ServiceException("该栏目下仍有文章，请先移走或删除栏目内文章后再删除栏目");
             }
         }
         return cmsCategoryMapper.deleteCmsCategoryByCategoryIds(categoryIds);

@@ -530,6 +530,14 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             {
                 continue;
             }
+            // 未缴罚款守卫（M2 修复）：对全部状态统一生效——「已完成但罚款未缴」的记录
+            // 同样禁止删除（此前只拦截进行中/逾期，已完成记录可绕过守卫把欠费凭据抹掉）
+            if (record.getFineAmount() != null
+                    && record.getFineAmount().compareTo(java.math.BigDecimal.ZERO) > 0
+                    && com.ruoyi.system.constant.BizStatus.FINE_UNPAID.equals(record.getFinePaid()))
+            {
+                throw new ServiceException("该报名记录有未缴罚款，请先到服务台收款后再删除");
+            }
             if (com.ruoyi.system.constant.BizStatus.BORROW_OUT.equals(record.getStatus())
                     || com.ruoyi.system.constant.BizStatus.BORROW_OVERDUE.equals(record.getStatus()))
             {
@@ -541,13 +549,6 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                     record.setFineAmount(fineNow);
                     record.setFinePaid(com.ruoyi.system.constant.BizStatus.FINE_UNPAID);
                     borrowRecordMapper.updateBorrowRecord(record);
-                }
-                // 有未缴罚款的逾期记录不可删：先到服务台收款，否则欠费随记录一起消失
-                if (record.getFineAmount() != null
-                        && record.getFineAmount().compareTo(java.math.BigDecimal.ZERO) > 0
-                        && com.ruoyi.system.constant.BizStatus.FINE_UNPAID.equals(record.getFinePaid()))
-                {
-                    throw new ServiceException("该报名记录有未缴罚款，请先到服务台收款后再删除");
                 }
                 // CAS 先置"已完成"再删：并发删除同一未还记录时只有一次回补库存（防库存双回补）
                 java.util.Date now = new Date();

@@ -151,7 +151,8 @@ async function submitRegister() {
   const pwd = document.getElementById('regPwd').value;
   const pwd2 = document.getElementById('regPwd2').value;
   const msg = document.getElementById('regMsg');
-  if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和成员类型'; msg.style.color = '#c65d43'; return; }
+  if (!name || !type) { msg.textContent = '请填写姓名和成员类型'; msg.style.color = '#c65d43'; return; }
+  if (!phone || !/^\d{11}$/.test(phone)) { msg.textContent = '请填写 11 位手机号'; msg.style.color = '#c65d43'; return; }
   if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于验证与通知）'; msg.style.color = '#c65d43'; return; }
   if (!pwd || pwd !== pwd2) { msg.textContent = '两次输入的密码不一致'; msg.style.color = '#c65d43'; return; }
   if (!passwordStrengthOk(pwd)) { msg.textContent = '密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; msg.style.color = '#c65d43'; return; }
@@ -256,7 +257,7 @@ async function updateMyInfo() {
   const phone = document.getElementById('myPhone').value.trim();
   const msg = document.getElementById('myInfoMsg');
   if (!currentUser) { msg.textContent = '请先登录'; msg.style.color = '#c65d43'; return; }
-  if (!phone) { msg.textContent = '请输入新手机号'; msg.style.color = '#c65d43'; return; }
+  if (!phone || !/^\d{11}$/.test(phone)) { msg.textContent = '请输入 11 位手机号'; msg.style.color = '#c65d43'; return; }
   try {
     const body = new URLSearchParams({ cardNo: currentUser.cardNo, readerName: currentUser.readerName, phone: phone });
     const res = await apiFetch(MYINFO_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });

@@ -399,7 +399,8 @@
         '<span class="tag ' + (onSale ? 'tag-sale' : 'tag-off') + '">' + (STATUS_MAP[b.status] || '未知') + '</span>' +
         '<span class="tag tag-sale">' + (TYPE_MAP[b.bookType] || '其他') + '</span>' +
         (onSale && b.stock <= warnThreshold ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">名额紧张</span>' : '');
-      document.getElementById('svcIntro').textContent = b.intro || '（暂无服务介绍）';
+      // M12：种子数据简介含 BBCode（[b]/[url] 等），纯文本渲染会露出标记，先剥离
+      document.getElementById('svcIntro').textContent = (b.intro || '（暂无服务介绍）').replace(/\[[^\]]*\]/g, '');
       if (b.remark) {
         document.getElementById('svcRemarkBox').style.display = 'block';
         document.getElementById('svcRemark').textContent = b.remark;

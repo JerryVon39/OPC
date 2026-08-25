@@ -246,7 +246,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="费用(元)" prop="price">
-              <el-input v-model="form.price" placeholder="请输入费用(元)" />
+              <el-input-number v-model="form.price" :min="0" :precision="2" :step="10" controls-position="right" style="width:100%" placeholder="请输入费用(元)" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -262,7 +262,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="剩余名额" prop="stock">
-              <el-input v-model="form.stock" placeholder="请输入剩余名额" />
+              <el-input-number v-model="form.stock" :min="0" :precision="0" :step="1" controls-position="right" style="width:100%" placeholder="请输入剩余名额" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -286,6 +286,9 @@
                 :headers="uploadHeaders"
                 :show-file-list="false"
                 :on-success="handleCoverSuccess"
+                accept="image/*"
+                :before-upload="beforeImageUpload"
+                :on-error="handleUploadError"
               >
                 <img v-if="form.cover" :src="coverFullUrl" class="cover-preview" />
                 <i v-else class="el-icon-plus avatar-uploader-icon"></i>
@@ -513,6 +516,15 @@ export default {
         this.$modal.msgError("上传失败：" + (res.msg || ""))
       }
     },
+    /** M4：封面上传前校验——仅图片、≤5MB（nginx 上限 20MB、后端 10MB） */
+    beforeImageUpload(file) {
+      if (file.type.indexOf('image/') !== 0) { this.$modal.msgError("仅支持图片文件"); return false }
+      if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
+      return true
+    },
+    handleUploadError() {
+      this.$modal.msgError("上传失败，请检查网络或文件大小")
+    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1
@@ -537,7 +549,7 @@ export default {
     },
     /** 跳转报名记录（带服务ID过滤；路由由菜单生成：服务业务目录business下） */
     handleBorrow(row) {
-      this.$router.push({ path: '/business/book-mgmt/borrow', query: { bookId: row.bookId } })
+      this.$router.push({ path: '/member/borrow', query: { bookId: row.bookId } })
     },
     /** 修改按钮操作 */
     handleUpdate(row) {

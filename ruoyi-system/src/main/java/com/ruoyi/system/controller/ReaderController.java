@@ -37,6 +37,8 @@ import com.ruoyi.common.utils.ip.IpUtils;
 @RequestMapping("/system/reader")
 public class ReaderController extends BaseController
 {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReaderController.class);
+
     @Autowired
     private IReaderService readerService;
 
@@ -380,7 +382,9 @@ public class ReaderController extends BaseController
             }
             catch (Exception e)
             {
-                return error(e.getMessage());
+                // 频控/发送失败细节不回传客户端：仅真实存在且有邮箱的账号才会走到 try 分支，
+                // 若把节流异常原文返回，攻击者可借此枚举有效账号（M1 修复）。统一回成功文案。
+                log.warn("忘记密码验证码发送失败: {}", e.getMessage());
             }
         }
         return success("验证码已发送至登记邮箱，请查收");

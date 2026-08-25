@@ -52,6 +52,11 @@
         order by a.is_top desc, a.publish_time desc, a.article_id desc
     </select>
 
+    <!-- 栏目下文章数（M3 守卫：删除栏目前调用，>0 则拒绝） -->
+    <select id="countCmsArticleByCategoryId" resultType="int">
+        select count(*) from cms_article where category_id = #{categoryId}
+    </select>
+
     <!-- 详情（含正文与栏目名）：后台编辑回显 + 前台公开详情共用 -->
     <select id="selectCmsArticleByArticleId" parameterType="Long" resultMap="CmsArticleResult">
         select a.article_id, a.category_id, a.title, a.summary, a.content, a.cover, a.author, a.is_top,

@@ -39,6 +39,8 @@ mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DA
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_menu_reorg.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_recycle_cleanup.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_recycle_restore.sql
+# editor 角色修复（幂等）：补建缺失按钮权限菜单 + 按新目录结构重新授予（依赖 menu_reorg，必须在其后）
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_editor_fix.sql
 # 业务数据快照（幂等 REPLACE）：最新一次 commit 时的前台服务/文章/轮播/公告/字典等业务数据，
 # 随部署打包进库——本地改后台数据后 commit，部署方拉起即有最新内容（与 .githooks/pre-commit 联动）
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/data_snapshot.sql

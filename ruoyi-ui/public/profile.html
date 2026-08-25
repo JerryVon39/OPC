@@ -439,7 +439,7 @@
     const msg = document.getElementById('secPwdMsg');
     if (!oldPwd || !pwd) { msg.textContent = '请填写原密码和新密码'; return; }
     if (pwd !== pwd2) { msg.textContent = '两次输入的新密码不一致'; return; }
-    if (pwd.length < 10) { msg.textContent = '新密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; return; }
+    if (!passwordStrengthOk(pwd)) { msg.textContent = '新密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; return; }
     try {
       const body = new URLSearchParams({ oldPassword: oldPwd, newPassword: pwd });
       const res = await apiFetch(CHANGE_PWD_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });

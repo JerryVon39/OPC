@@ -134,8 +134,7 @@ export default {
       listDeletedBook(this.queryParams).then(response => {
         this.bookList = response.rows
         this.total = response.total
-        this.loading = false
-      })
+      }).finally(() => { this.loading = false })
     },
     /** 搜索按钮操作 */
     handleQuery() {

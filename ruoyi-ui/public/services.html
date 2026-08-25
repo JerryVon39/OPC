@@ -835,10 +835,13 @@
   loadTypes().then(async () => {
     await loadBorrowed();
     await loadReserved();
-    // ?type= 直达：激活对应分类标签并筛选
+    // ?type= 直达：激活对应分类标签并筛选（CSS.escape 防非法字符注入选择器；
+    // 未命中或参数非法时回退到默认列表，避免整页空白）
     if (urlType) {
-      const tab = document.querySelector('#typeTabs a[data-type="' + urlType + '"]');
-      if (tab) { switchType(tab); return; }
+      try {
+        const tab = document.querySelector('#typeTabs a[data-type="' + CSS.escape(urlType) + '"]');
+        if (tab) { switchType(tab); return; }
+      } catch (e) { /* 非法类型参数：忽略并走默认列表 */ }
     }
     loadBooks();
   });

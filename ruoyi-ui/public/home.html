@@ -685,6 +685,8 @@
     try {
       const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
       const d = await res.json();
+      // M7：会话过期要引导重新登录，不能当作「暂无记录」静默吞掉
+      if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
       if (d.code !== 200 || !d.data || !d.data.length) {
         box.innerHTML = '<div class="loading" style="padding:10px">未查询到报名记录（请确认成员编号）</div>';
         return;

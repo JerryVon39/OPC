@@ -514,7 +514,7 @@ export default {
     },
     /** 修改按钮操作 */
     handleBorrow(row) {
-      this.$router.push({ path: '/business/book-mgmt/borrow', query: { readerId: row.readerId } })
+      this.$router.push({ path: '/member/borrow', query: { readerId: row.readerId } })
     },
     /** 重发编号：生成新编号并恢复状态 */
     handleReissue(row) {

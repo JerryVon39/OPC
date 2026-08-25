@@ -11,6 +11,9 @@ public interface CmsArticleMapper
     /** 后台文章列表（LEFT JOIN 栏目，支持标题/栏目/状态筛选，置顶优先、发布时间倒序） */
     public List<CmsArticle> selectCmsArticleList(CmsArticle cmsArticle);
 
+    /** 统计栏目下的文章数（M3 守卫：删栏目前检查） */
+    public int countCmsArticleByCategoryId(Long categoryId);
+
     /** 前台公开文章列表（仅已发布，置顶优先、发布时间倒序；不含正文正文体，防列表传输过大） */
     public List<CmsArticle> selectPublicArticleList(CmsArticle cmsArticle);
 

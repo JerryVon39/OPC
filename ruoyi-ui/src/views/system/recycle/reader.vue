@@ -122,8 +122,7 @@ export default {
       listDeletedReader(this.queryParams).then(response => {
         this.readerList = response.rows
         this.total = response.total
-        this.loading = false
-      })
+      }).finally(() => { this.loading = false })
     },
     /** 搜索按钮操作 */
     handleQuery() {

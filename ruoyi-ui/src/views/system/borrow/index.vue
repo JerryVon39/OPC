@@ -51,7 +51,7 @@
         <template slot-scope="scope">
           <el-tag v-if="scope.row.status === '0'" type="primary">进行中</el-tag>
           <el-tag v-else-if="scope.row.status === '1'" type="success">已完成</el-tag>
-          <el-tag v-else type="danger">已截止</el-tag>
+          <el-tag v-else type="danger">已逾期</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="逾期罚款" align="center" width="110">
@@ -124,7 +124,7 @@ export default {
       statusOptions: [
         { dictValue: '0', dictLabel: '进行中' },
         { dictValue: '1', dictLabel: '已完成' },
-        { dictValue: '2', dictLabel: '已截止' }
+        { dictValue: '2', dictLabel: '已逾期' }
       ],
       queryParams: { pageNum: 1, pageSize: 10, readerName: null, bookName: null, status: null },
       title: "",
@@ -148,7 +148,7 @@ export default {
     // 从服务/成员管理再次跳转（路径相同、仅 query 变化）时组件会被复用、created 不再触发，
     // 这里监听路由变化同步筛选条件并刷新列表
     '$route'(to) {
-      if (to.path === '/business/book-mgmt/borrow') {
+      if (to.path === '/member/borrow') {
         const q = to.query || {}
         this.queryParams.readerId = q.readerId || null
         this.queryParams.bookId = q.bookId || null

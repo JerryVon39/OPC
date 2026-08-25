@@ -34,10 +34,10 @@
             <span>⚡ 快捷入口</span>
           </div>
           <div class="quick-links">
-            <el-button type="primary" size="medium" icon="el-icon-notebook-2" @click="go('/business/book-mgmt/book')">服务信息</el-button>
-            <el-button type="warning" size="medium" icon="el-icon-reading" @click="go('/business/book-mgmt/borrow')">报名管理</el-button>
-            <el-button type="success" size="medium" icon="el-icon-shopping-cart-full" @click="go('/business/ops/order')">入驻申请</el-button>
-            <el-button type="info" size="medium" icon="el-icon-user" @click="go('/business/reader-mgmt/reader')">成员管理</el-button>
+            <el-button type="primary" size="medium" icon="el-icon-notebook-2" @click="go('/content/book')">服务信息</el-button>
+            <el-button type="warning" size="medium" icon="el-icon-reading" @click="go('/member/borrow')">报名管理</el-button>
+            <el-button type="success" size="medium" icon="el-icon-shopping-cart-full" @click="go('/member/purchase')">入驻申请</el-button>
+            <el-button type="info" size="medium" icon="el-icon-user" @click="go('/member/reader')">成员管理</el-button>
           </div>
           <div class="card-header sub-header">🏷️ 服务分类</div>
           <div class="type-list">
@@ -82,7 +82,7 @@ export default {
         { label: '社区成员', value: 0, color: '#E6A23C' },
         { label: '进行中报名', value: 0, color: '#F56C6C' },
         { label: '今日报名', value: 0, color: '#409EFF' },
-        { label: '已截止报名', value: 0, color: '#F56C6C' }
+        { label: '已逾期报名', value: 0, color: '#F56C6C' }
       ],
       topBooks: [],
       lowStockBooks: [], // 名额预警：招募中服务剩余名额 ≤ 阈值（book.stock.warn）
@@ -99,6 +99,11 @@ export default {
   },
   mounted() {
     this.initChart()
+    window.addEventListener('resize', this.handleResize)
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize)
+    if (this.chart) { this.chart.dispose(); this.chart = null }
   },
   methods: {
     /** 当前日期 */
@@ -124,13 +129,15 @@ export default {
     },
     /** 跳服务信息页（lowStock=1：列表按 book.stock.warn 阈值过滤名额紧张的服务） */
     goLowStock() {
-      this.$router.push({ path: '/business/book-mgmt/book', query: { lowStock: 1 } })
+      this.$router.push({ path: '/content/book', query: { lowStock: 1 } })
     },
-    /** 热门服务柱状图 */
+    /** 窗口缩放重绘图表 */
+    handleResize() { if (this.chart) this.chart.resize() },
+    /** 热门服务柱状图（M14：单实例复用——重复 init 同一 dom 会泄漏 chart 实例，destroyed 时 dispose） */
     initChart() {
       if (!this.$refs.topChart) return
-      const chart = echarts.init(this.$refs.topChart)
-      chart.setOption({
+      if (!this.chart) this.chart = echarts.init(this.$refs.topChart)
+      this.chart.setOption({
         tooltip: { trigger: 'axis' },
         grid: { left: 40, right: 20, top: 20, bottom: 40 },
         xAxis: { type: 'category', data: this.topBooks.map(b => b.bookName || '未知'), axisLabel: { interval: 0, rotate: 25, fontSize: 11 } },

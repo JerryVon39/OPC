@@ -93,6 +93,9 @@
             :headers="uploadHeaders"
             :show-file-list="false"
             :on-success="handleCoverSuccess"
+            accept="image/*"
+            :before-upload="beforeImageUpload"
+            :on-error="handleUploadError"
           >
             <img v-if="form.cover" :src="coverFullUrl" style="width:100%;max-height:140px;object-fit:cover;border-radius:6px" />
             <i v-else class="el-icon-plus avatar-uploader-icon" style="width:100%"></i>
@@ -107,7 +110,7 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="0">已发布</el-radio>
+            <el-radio v-if="$auth.hasPermi('system:cms:publish')" label="0">已发布</el-radio>
             <el-radio label="1">草稿</el-radio>
             <el-radio label="2">已下线</el-radio>
           </el-radio-group>
@@ -174,6 +177,15 @@ export default {
       } else {
         this.$modal.msgError("上传失败：" + (res.msg || ""))
       }
+    },
+    /** M4：封面上传前校验——仅图片、≤5MB（nginx 上限 20MB、后端 10MB） */
+    beforeImageUpload(file) {
+      if (file.type.indexOf('image/') !== 0) { this.$modal.msgError("仅支持图片文件"); return false }
+      if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
+      return true
+    },
+    handleUploadError() {
+      this.$modal.msgError("上传失败，请检查网络或文件大小")
     },
     getList() {
       this.loading = true

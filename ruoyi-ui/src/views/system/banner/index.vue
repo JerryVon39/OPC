@@ -71,6 +71,9 @@
             :headers="uploadHeaders"
             :show-file-list="false"
             :on-success="handleImageSuccess"
+            accept="image/*"
+            :before-upload="beforeImageUpload"
+            :on-error="handleUploadError"
           >
             <img v-if="form.image" :src="imgUrl(form.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
             <i v-else class="el-icon-plus avatar-uploader-icon" style="width:100%"></i>
@@ -139,6 +142,15 @@ export default {
       } else {
         this.$modal.msgError("上传失败：" + (res.msg || ""))
       }
+    },
+    /** M4：图片上传前校验——仅图片、≤5MB（nginx 上限 20MB、后端 10MB） */
+    beforeImageUpload(file) {
+      if (file.type.indexOf('image/') !== 0) { this.$modal.msgError("仅支持图片文件"); return false }
+      if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
+      return true
+    },
+    handleUploadError() {
+      this.$modal.msgError("上传失败，请检查网络或文件大小")
     },
     getList() {
       this.loading = true
