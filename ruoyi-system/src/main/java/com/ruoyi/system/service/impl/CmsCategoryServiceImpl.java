@@ -83,6 +83,14 @@ public class CmsCategoryServiceImpl implements ICmsCategoryService
             {
                 throw new ServiceException("该栏目下仍有文章，请先移走或删除栏目内文章后再删除栏目");
             }
+            // M3.1 守卫：栏目下还有子栏目时禁止删除（否则子栏目变孤儿，分类树悬空）
+            CmsCategory childQuery = new CmsCategory();
+            childQuery.setParentId(categoryId);
+            List<CmsCategory> children = cmsCategoryMapper.selectCmsCategoryList(childQuery);
+            if (children != null && !children.isEmpty())
+            {
+                throw new ServiceException("该栏目下存在子栏目，请先删除或移动子栏目后再删除栏目");
+            }
         }
         return cmsCategoryMapper.deleteCmsCategoryByCategoryIds(categoryIds);
     }

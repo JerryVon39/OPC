@@ -102,12 +102,67 @@ public class CmsArticleController extends BaseController
         return toAjax(cmsArticleService.publishArticle(articleId));
     }
 
-    /** 删除文章 */
+    /** 删除文章（软删除：移入回收站） */
     @PreAuthorize("@ss.hasPermi('system:cms:remove')")
     @Log(title = "CMS文章", businessType = BusinessType.DELETE)
     @DeleteMapping("/{articleIds}")
     public AjaxResult remove(@PathVariable Long[] articleIds)
     {
         return toAjax(cmsArticleService.deleteCmsArticleByArticleIds(articleIds));
+    }
+
+    /** 回收站列表（仅 del_flag='2'，供恢复/永久删除） */
+    @PreAuthorize("@ss.hasPermi('system:cms:remove')")
+    @GetMapping("/deletedList")
+    public TableDataInfo deletedList(CmsArticle cmsArticle)
+    {
+        startPage();
+        List<CmsArticle> list = cmsArticleService.selectRecycleArticleList(cmsArticle);
+        return getDataTable(list);
+    }
+
+    /** 恢复回收站文章（两态软删除） */
+    @PreAuthorize("@ss.hasPermi('system:cms:remove')")
+    @Log(title = "CMS文章", businessType = BusinessType.UPDATE)
+    @PutMapping("/restore/{articleIds}")
+    public AjaxResult restore(@PathVariable Long[] articleIds)
+    {
+        return toAjax(cmsArticleService.restoreCmsArticleByArticleIds(articleIds));
+    }
+
+    /** 永久删除回收站文章（物理删除，不可恢复） */
+    @PreAuthorize("@ss.hasPermi('system:cms:remove')")
+    @Log(title = "CMS文章", businessType = BusinessType.DELETE)
+    @DeleteMapping("/purge/{articleIds}")
+    public AjaxResult purge(@PathVariable Long[] articleIds)
+    {
+        return toAjax(cmsArticleService.purgeCmsArticleByArticleIds(articleIds));
+    }
+
+    /** 批量置顶/取消置顶 */
+    @PreAuthorize("@ss.hasPermi('system:cms:edit')")
+    @Log(title = "CMS文章", businessType = BusinessType.UPDATE)
+    @PutMapping("/batchTop")
+    public AjaxResult batchTop(Long[] articleIds, String isTop)
+    {
+        return toAjax(cmsArticleService.batchTop(articleIds, isTop));
+    }
+
+    /** 批量状态切换（0已发布 1草稿 2已下线；置为已发布需要发布权限） */
+    @PreAuthorize("@ss.hasPermi('system:cms:edit')")
+    @Log(title = "CMS文章", businessType = BusinessType.UPDATE)
+    @PutMapping("/batchStatus")
+    public AjaxResult batchStatus(Long[] articleIds, String status)
+    {
+        return toAjax(cmsArticleService.batchChangeStatus(articleIds, status));
+    }
+
+    /** 批量排序（逐条更新 sort） */
+    @PreAuthorize("@ss.hasPermi('system:cms:edit')")
+    @Log(title = "CMS文章", businessType = BusinessType.UPDATE)
+    @PutMapping("/batchSort")
+    public AjaxResult batchSort(@RequestBody java.util.List<CmsArticle> list)
+    {
+        return toAjax(cmsArticleService.batchSort(list));
     }
 }

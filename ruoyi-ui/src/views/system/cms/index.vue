@@ -4,11 +4,6 @@
       <el-form-item label="标题" prop="title">
         <el-input v-model="queryParams.title" placeholder="请输入文章标题" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="栏目" prop="categoryId">
-        <el-select v-model="queryParams.categoryId" placeholder="请选择栏目" clearable>
-          <el-option v-for="c in categoryOptions" :key="c.categoryId" :label="c.categoryName" :value="c.categoryId" />
-        </el-select>
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option label="已发布" value="0" />
@@ -22,55 +17,102 @@
       </el-form-item>
     </el-form>
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:cms:add']">新增</el-button>
+    <el-row :gutter="10">
+      <!-- 左：栏目树 -->
+      <el-col :span="4">
+        <div class="category-tree">
+          <div class="tree-head">
+            <span class="tree-title">栏目</span>
+            <el-button type="text" size="mini" icon="el-icon-plus" @click="goCategory" v-hasPermi="['system:cmsCategory:list']">管理栏目</el-button>
+          </div>
+          <el-tree
+            :data="treeOptions"
+            :props="{ label: 'categoryName', children: 'children' }"
+            node-key="categoryId"
+            highlight-current
+            :expand-on-click-node="false"
+            default-expand-all
+            @node-click="handleNodeClick"
+          >
+            <span slot-scope="{ data }" class="tree-node">
+              <span class="tree-label">{{ data.categoryName }}</span>
+            </span>
+          </el-tree>
+        </div>
       </el-col>
-      <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['system:cms:remove']">删除</el-button>
+
+      <!-- 右：文章列表 -->
+      <el-col :span="20">
+        <el-row :gutter="10" class="mb8">
+          <el-col :span="1.5">
+            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['system:cms:add']">新增</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="warning" plain icon="el-icon-top" size="mini" :disabled="multiple" @click="handleBatchTop('1')" v-hasPermi="['system:cms:edit']">批量置顶</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="info" plain icon="el-icon-bottom" size="mini" :disabled="multiple" @click="handleBatchTop('0')" v-hasPermi="['system:cms:edit']">取消置顶</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="danger" plain icon="el-icon-download" size="mini" :disabled="multiple" @click="handleBatchOffline" v-hasPermi="['system:cms:edit']">批量下线</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['system:cms:remove']">删除</el-button>
+          </el-col>
+          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+        </el-row>
+
+        <el-table v-loading="loading" :data="articleList" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column label="封面" align="center" width="70">
+            <template slot-scope="scope">
+              <el-image v-if="scope.row.cover" :src="imgUrl(scope.row.cover)" style="width:52px;height:36px" fit="cover" :preview-src-list="[imgUrl(scope.row.cover)]" />
+              <span v-else style="color:#999">无</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="标题" align="left" prop="title" min-width="200" show-overflow-tooltip />
+          <el-table-column label="栏目" align="center" prop="categoryName" width="100">
+            <template slot-scope="scope">
+              {{ scope.row.categoryName || '未分类' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="排序" align="center" width="110">
+            <template slot-scope="scope">
+              <el-input-number v-model="scope.row.sort" :min="0" :max="999" size="mini" controls-position="right" @change="handleSortChange(scope.row)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="浏览量" align="center" prop="views" width="70" />
+          <el-table-column label="置顶" align="center" width="70">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.isTop === '1'" type="danger" size="mini">置顶</el-tag>
+              <span v-else style="color:#999">普通</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" align="center" width="85">
+            <template slot-scope="scope">
+              <el-tag v-if="scope.row.status === '0'" type="success" size="mini">已发布</el-tag>
+              <el-tag v-else-if="scope.row.status === '1'" type="warning" size="mini">草稿</el-tag>
+              <el-tag v-else type="info" size="mini">已下线</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="发布时间" align="center" prop="publishTime" width="150" />
+          <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="230">
+            <template slot-scope="scope">
+              <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:cms:edit']">修改</el-button>
+              <el-button size="mini" type="text" icon="el-icon-top" @click="handleTop(scope.row)" v-hasPermi="['system:cms:edit']">{{ scope.row.isTop === '1' ? '取消置顶' : '置顶' }}</el-button>
+              <el-button v-if="scope.row.status !== '0'" size="mini" type="text" icon="el-icon-upload2" @click="handlePublish(scope.row)" v-hasPermi="['system:cms:publish']">发布</el-button>
+              <el-button v-if="scope.row.status === '0'" size="mini" type="text" icon="el-icon-download" @click="handleOffline(scope.row)" v-hasPermi="['system:cms:edit']">下线</el-button>
+              <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:cms:remove']">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="articleList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="标题" align="left" prop="title" min-width="220" show-overflow-tooltip />
-      <el-table-column label="栏目" align="center" prop="categoryName" width="100">
-        <template slot-scope="scope">
-          {{ scope.row.categoryName || '未分类' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="作者" align="center" prop="author" width="120" show-overflow-tooltip />
-      <el-table-column label="浏览量" align="center" prop="views" width="80" />
-      <el-table-column label="置顶" align="center" width="70">
-        <template slot-scope="scope">
-          <el-tag v-if="scope.row.isTop === '1'" type="danger" size="mini">置顶</el-tag>
-          <span v-else style="color:#999">普通</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" align="center" width="90">
-        <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">已发布</el-tag>
-          <el-tag v-else-if="scope.row.status === '1'" type="warning" size="mini">草稿</el-tag>
-          <el-tag v-else type="info" size="mini">已下线</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="发布时间" align="center" prop="publishTime" width="150" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="230">
-        <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:cms:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-top" @click="handleTop(scope.row)" v-hasPermi="['system:cms:edit']">{{ scope.row.isTop === '1' ? '取消置顶' : '置顶' }}</el-button>
-          <el-button v-if="scope.row.status !== '0'" size="mini" type="text" icon="el-icon-upload2" @click="handlePublish(scope.row)" v-hasPermi="['system:cms:publish']">发布</el-button>
-          <el-button v-if="scope.row.status === '0'" size="mini" type="text" icon="el-icon-download" @click="handleOffline(scope.row)" v-hasPermi="['system:cms:edit']">下线</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:cms:remove']">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
-
     <!-- 新增/编辑弹窗 -->
-    <el-dialog :title="title" :visible.sync="open" width="720px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="760px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入文章标题（必填）" />
@@ -102,11 +144,19 @@
           </el-upload>
           <div style="color:#999;font-size:12px">可不上传封面图</div>
         </el-form-item>
+        <el-form-item label="附件" prop="attachment">
+          <file-upload v-model="form.attachment" :limit="1" accept=".pdf,.doc,.docx,.zip" />
+          <div style="color:#999;font-size:12px">政策原文 PDF 等文件上传（≤20MB），前台详情页显示"下载"按钮</div>
+        </el-form-item>
         <el-form-item label="正文" prop="content">
           <Editor v-model="form.content" :min-height="200" />
         </el-form-item>
         <el-form-item label="置顶" prop="isTop">
           <el-switch v-model="form.isTop" active-value="1" inactive-value="0" active-text="置顶" inactive-text="普通" />
+        </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input-number v-model="form.sort" :min="0" :max="999" controls-position="right" />
+          <span style="color:#999;font-size:12px;margin-left:8px">越小越靠前（置顶文章之后生效）</span>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -115,6 +165,12 @@
             <el-radio label="2">已下线</el-radio>
           </el-radio-group>
           <div style="color:#999;font-size:12px">发布后将同步展示到前台新闻动态页</div>
+        </el-form-item>
+        <el-form-item label="SEO 关键词" prop="keywords">
+          <el-input v-model="form.keywords" placeholder="选填，多个关键词用英文逗号分隔" />
+        </el-form-item>
+        <el-form-item label="SEO 描述" prop="description">
+          <el-input v-model="form.description" type="textarea" :rows="2" placeholder="选填，前台详情页 meta description" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -126,7 +182,7 @@
 </template>
 
 <script>
-import { listArticle, getArticle, delArticle, addArticle, updateArticle, changeArticleStatus, publishArticle, listCategory } from "@/api/system/cms"
+import { listArticle, getArticle, delArticle, addArticle, updateArticle, changeArticleStatus, publishArticle, listCategory, batchTop, batchStatus, batchSort } from "@/api/system/cms"
 import { getToken } from "@/utils/auth"
 
 export default {
@@ -140,6 +196,7 @@ export default {
       total: 0,
       articleList: [],
       categoryOptions: [],
+      treeOptions: [],
       title: "",
       open: false,
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
@@ -165,10 +222,34 @@ export default {
     this.getList()
   },
   methods: {
+    /** 封面相对路径转完整地址（列表展示） */
+    imgUrl(url) {
+      if (!url) return ''
+      if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
+      return process.env.VUE_APP_BASE_API + url
+    },
     loadCategoryOptions() {
       listCategory({ pageNum: 1, pageSize: 100 }).then(response => {
-        this.categoryOptions = response.rows || []
+        const rows = response.rows || []
+        this.categoryOptions = rows
+        this.treeOptions = this.buildTree(rows, 0)
       })
+    },
+    /** 平铺栏目组装树（与栏目管理页同一逻辑，深度限制 3 级） */
+    buildTree(rows, rootId, depth) {
+      depth = depth || 1
+      if (depth > 3) return []
+      return rows
+        .filter(r => r.parentId === rootId)
+        .map(r => ({ ...r, children: this.buildTree(rows, r.categoryId, depth + 1) }))
+    },
+    handleNodeClick(node) {
+      this.queryParams.categoryId = node.categoryId
+      this.handleQuery()
+    },
+    /** 跳到栏目管理页（路由 = 内容运营目录路径 content + 菜单路径 category） */
+    goCategory() {
+      this.$router.push('/content/category')
     },
     handleCoverSuccess(res) {
       if (res.code === 200) {
@@ -178,7 +259,7 @@ export default {
         this.$modal.msgError("上传失败：" + (res.msg || ""))
       }
     },
-    /** M4：封面上传前校验——仅图片、≤5MB（nginx 上限 20MB、后端 10MB） */
+    /** 封面上传前校验——仅图片、≤5MB（nginx 上限 20MB、后端 10MB） */
     beforeImageUpload(file) {
       if (file.type.indexOf('image/') !== 0) { this.$modal.msgError("仅支持图片文件"); return false }
       if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
@@ -244,6 +325,32 @@ export default {
         this.getList()
       })
     },
+    // 批量置顶/取消置顶
+    handleBatchTop(isTop) {
+      if (!this.ids.length) { this.$modal.msgWarning("请先勾选文章"); return }
+      this.$modal.confirm('确认将选中的 ' + this.ids.length + ' 篇文章' + (isTop === '1' ? '置顶' : '取消置顶') + '？').then(() => {
+        return batchTop(this.ids, isTop)
+      }).then(() => {
+        this.$modal.msgSuccess("操作成功")
+        this.getList()
+      }).catch(() => {})
+    },
+    // 批量下线（已发布 → 已下线）
+    handleBatchOffline() {
+      if (!this.ids.length) { this.$modal.msgWarning("请先勾选文章"); return }
+      this.$modal.confirm('确认将选中的 ' + this.ids.length + ' 篇文章下线？下线后前台不再展示。').then(() => {
+        return batchStatus(this.ids, '2')
+      }).then(() => {
+        this.$modal.msgSuccess("已下线")
+        this.getList()
+      }).catch(() => {})
+    },
+    // 列表内改排序：即时保存
+    handleSortChange(row) {
+      batchSort([{ articleId: row.articleId, sort: row.sort }]).then(() => {
+        this.$modal.msgSuccess("排序已保存")
+      })
+    },
     // 发布：草稿/已下线 → 已发布（首次发布自动写入发布时间）
     handlePublish(row) {
       this.$modal.confirm('确认发布该文章吗？发布后前台新闻动态页可见。').then(() => {
@@ -264,18 +371,38 @@ export default {
     },
     handleDelete(row) {
       const articleIds = row.articleId || this.ids
-      this.$modal.confirm('确认删除该文章吗？').then(() => {
+      this.$modal.confirm('确认删除该文章吗？删除后进入回收站，可在「运营辅助 → 文章回收站」恢复。').then(() => {
         return delArticle(articleIds)
       }).then(() => {
         this.getList()
-        this.$modal.msgSuccess("删除成功")
+        this.$modal.msgSuccess("已移入回收站")
       }).catch(() => {})
     },
     cancel() { this.open = false; this.reset() },
     reset() {
-      this.form = { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '0' }
+      this.form = { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '0', sort: 0, attachment: null, keywords: null, description: null }
       this.resetForm("form")
     }
   }
 }
 </script>
+
+<style scoped>
+.category-tree {
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 8px;
+  min-height: 400px;
+}
+.tree-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 8px;
+}
+.tree-title { font-weight: 600; font-size: 14px; }
+.tree-node { display: flex; justify-content: space-between; align-items: center; flex: 1; padding-right: 6px; }
+.tree-count { color: #999; font-size: 12px; }
+</style>

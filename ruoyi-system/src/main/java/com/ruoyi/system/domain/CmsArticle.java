@@ -55,6 +55,28 @@ public class CmsArticle extends BaseEntity
     @Excel(name = "发布时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date publishTime;
 
+    /** 排序(越小越靠前，置顶之后生效) */
+    private Long sort;
+
+    /** 附件(政策原文PDF等) */
+    private String attachment;
+
+    /** SEO关键词 */
+    private String keywords;
+
+    /** SEO描述 */
+    private String description;
+
+    /** 删除标志(0存在 2已删除，对齐 book 两态软删) */
+    private String delFlag;
+
+    /** 删除时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date deletedTime;
+
+    /** 删除人 */
+    private String deletedBy;
+
     /** 栏目名称（列表 LEFT JOIN 派生展示，非 cms_article 表字段） */
     private String categoryName;
 
@@ -90,6 +112,27 @@ public class CmsArticle extends BaseEntity
 
     public void setPublishTime(Date publishTime) { this.publishTime = publishTime; }
     public Date getPublishTime() { return publishTime; }
+
+    public void setSort(Long sort) { this.sort = sort; }
+    public Long getSort() { return sort; }
+
+    public void setAttachment(String attachment) { this.attachment = attachment; }
+    public String getAttachment() { return attachment; }
+
+    public void setKeywords(String keywords) { this.keywords = keywords; }
+    public String getKeywords() { return keywords; }
+
+    public void setDescription(String description) { this.description = description; }
+    public String getDescription() { return description; }
+
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public String getDelFlag() { return delFlag; }
+
+    public void setDeletedTime(Date deletedTime) { this.deletedTime = deletedTime; }
+    public Date getDeletedTime() { return deletedTime; }
+
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
+    public String getDeletedBy() { return deletedBy; }
 
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
     public String getCategoryName() { return categoryName; }

@@ -26,8 +26,26 @@ public interface ICmsArticleService
     /** 修改文章（状态切为已发布且无发布时间时自动补写） */
     public int updateCmsArticle(CmsArticle cmsArticle);
 
-    /** 批量删除文章 */
+    /** 删除文章（软删除：移入回收站，del_flag='2'，可恢复） */
     public int deleteCmsArticleByArticleIds(Long[] articleIds);
+
+    /** 回收站列表（del_flag='2'） */
+    public List<CmsArticle> selectRecycleArticleList(CmsArticle cmsArticle);
+
+    /** 恢复回收站文章（del_flag 置 '0'） */
+    public int restoreCmsArticleByArticleIds(Long[] articleIds);
+
+    /** 永久删除回收站文章（物理删除，不可恢复） */
+    public int purgeCmsArticleByArticleIds(Long[] articleIds);
+
+    /** 批量置顶/取消置顶 */
+    public int batchTop(Long[] articleIds, String isTop);
+
+    /** 批量状态切换（置为已发布需要发布权限，与单条一致） */
+    public int batchChangeStatus(Long[] articleIds, String status);
+
+    /** 批量排序（逐条更新 sort） */
+    public int batchSort(List<CmsArticle> list);
 
     /** 状态切换：0已发布 1草稿 2已下线（置为已发布且无发布时间时自动补写） */
     public int changeArticleStatus(Long articleId, String status);

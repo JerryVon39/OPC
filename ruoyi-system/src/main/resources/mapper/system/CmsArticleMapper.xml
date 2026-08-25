@@ -14,6 +14,13 @@
         <result property="status"      column="status"       />
         <result property="views"       column="views"        />
         <result property="publishTime" column="publish_time" />
+        <result property="sort"        column="sort"         />
+        <result property="attachment"  column="attachment"   />
+        <result property="keywords"    column="keywords"     />
+        <result property="description" column="description"  />
+        <result property="delFlag"     column="del_flag"     />
+        <result property="deletedTime" column="deleted_time" />
+        <result property="deletedBy"   column="deleted_by"   />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"  column="create_time"  />
         <result property="updateBy"    column="update_by"    />
@@ -24,47 +31,51 @@
     <!-- 后台列表查询列（含正文之外的展示字段 + 栏目名；正文 content 单独走详情查询，避免列表传输过重） -->
     <sql id="selectCmsArticleListVo">
         select a.article_id, a.category_id, a.title, a.summary, a.cover, a.author, a.is_top, a.status,
-               a.views, a.publish_time, a.create_by, a.create_time, a.update_by, a.update_time,
+               a.views, a.publish_time, a.sort, a.attachment, a.keywords, a.description,
+               a.del_flag, a.deleted_time, a.deleted_by, a.create_by, a.create_time, a.update_by, a.update_time,
                c.category_name
         from cms_article a
         left join cms_category c on c.category_id = a.category_id
     </sql>
 
-    <!-- 后台列表：标题模糊 + 栏目 + 状态筛选，置顶优先、发布时间倒序 -->
+    <!-- 后台列表：标题模糊 + 栏目 + 状态 + 软删筛选（默认只看未删除），置顶优先、sort、发布时间倒序 -->
     <select id="selectCmsArticleList" parameterType="CmsArticle" resultMap="CmsArticleResult">
         <include refid="selectCmsArticleListVo"/>
         <where>
+            <if test="delFlag == null or delFlag == ''"> and a.del_flag = '0'</if>
+            <if test="delFlag != null and delFlag != ''"> and a.del_flag = #{delFlag}</if>
             <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
             <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
             <if test="status != null and status != ''"> and a.status = #{status}</if>
         </where>
-        order by a.is_top desc, a.publish_time desc, a.article_id desc
+        order by a.is_top desc, a.sort asc, a.publish_time desc, a.article_id desc
     </select>
 
-    <!-- 前台公开列表：仅已发布，置顶优先、发布时间倒序（与后台列表共用列，不含正文） -->
+    <!-- 前台公开列表：仅已发布、未删除，置顶优先、sort、发布时间倒序（与后台列表共用列，不含正文） -->
     <select id="selectPublicArticleList" parameterType="CmsArticle" resultMap="CmsArticleResult">
         <include refid="selectCmsArticleListVo"/>
         <where>
-            a.status = '0'
+            a.status = '0' and a.del_flag = '0'
             <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
             <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
         </where>
-        order by a.is_top desc, a.publish_time desc, a.article_id desc
+        order by a.is_top desc, a.sort asc, a.publish_time desc, a.article_id desc
     </select>
 
-    <!-- 栏目下文章数（M3 守卫：删除栏目前调用，>0 则拒绝） -->
+    <!-- 栏目下有效文章数（M3 守卫：删除栏目前调用，不含已删除文章，>0 则拒绝） -->
     <select id="countCmsArticleByCategoryId" resultType="int">
-        select count(*) from cms_article where category_id = #{categoryId}
+        select count(*) from cms_article where category_id = #{categoryId} and del_flag = '0'
     </select>
 
-    <!-- 详情（含正文与栏目名）：后台编辑回显 + 前台公开详情共用 -->
+    <!-- 详情（含正文与栏目名）：后台编辑回显 + 前台公开详情共用，仅未删除 -->
     <select id="selectCmsArticleByArticleId" parameterType="Long" resultMap="CmsArticleResult">
         select a.article_id, a.category_id, a.title, a.summary, a.content, a.cover, a.author, a.is_top,
-               a.status, a.views, a.publish_time, a.create_by, a.create_time, a.update_by, a.update_time,
+               a.status, a.views, a.publish_time, a.sort, a.attachment, a.keywords, a.description,
+               a.del_flag, a.deleted_time, a.deleted_by, a.create_by, a.create_time, a.update_by, a.update_time,
                c.category_name
         from cms_article a
         left join cms_category c on c.category_id = a.category_id
-        where a.article_id = #{articleId}
+        where a.article_id = #{articleId} and a.del_flag = '0'
     </select>
 
     <!-- 浏览量 +1（前台详情阅读计数） -->
@@ -85,6 +96,10 @@
             <if test="status != null">status,</if>
             <if test="views != null">views,</if>
             <if test="publishTime != null">publish_time,</if>
+            <if test="sort != null">sort,</if>
+            <if test="attachment != null">attachment,</if>
+            <if test="keywords != null">keywords,</if>
+            <if test="description != null">description,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateBy != null">update_by,</if>
@@ -101,6 +116,10 @@
             <if test="status != null">#{status},</if>
             <if test="views != null">#{views},</if>
             <if test="publishTime != null">#{publishTime},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="attachment != null">#{attachment},</if>
+            <if test="keywords != null">#{keywords},</if>
+            <if test="description != null">#{description},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateBy != null">#{updateBy},</if>
@@ -121,6 +140,10 @@
             <if test="status != null">status = #{status},</if>
             <if test="views != null">views = #{views},</if>
             <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="attachment != null">attachment = #{attachment},</if>
+            <if test="keywords != null">keywords = #{keywords},</if>
+            <if test="description != null">description = #{description},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
@@ -145,9 +168,59 @@
         where article_id = #{articleId}
     </update>
 
-    <delete id="deleteCmsArticleByArticleIds" parameterType="String">
-        delete from cms_article where article_id in
-        <foreach item="articleId" collection="array" open="(" separator="," close=")">
+    <!-- 批量置顶/取消置顶（仅未删除文章） -->
+    <update id="batchUpdateTop">
+        update cms_article set is_top = #{isTop}, update_time = sysdate()
+        where del_flag = '0' and article_id in
+        <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </update>
+
+    <!-- 批量状态切换：置为已发布且尚无发布时间时自动补写（预约发布在 P2 引入，此处保持即时语义） -->
+    <update id="batchUpdateStatus">
+        update cms_article
+        <set>
+            status = #{status},
+            <if test="status == '0'">publish_time = IFNULL(publish_time, sysdate()),</if>
+            update_time = sysdate()
+        </set>
+        where del_flag = '0' and article_id in
+        <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </update>
+
+    <!-- 批量排序（逐条更新，仅未删除文章） -->
+    <update id="batchUpdateSort">
+        <foreach item="a" collection="list" separator=";">
+            update cms_article set sort = #{a.sort}, update_time = sysdate()
+            where article_id = #{a.articleId} and del_flag = '0'
+        </foreach>
+    </update>
+
+    <!-- 软删除（两态：del_flag 置 '2'；仅未删除的可删，同事务由 service 校验存在性） -->
+    <update id="softDeleteCmsArticleByArticleIds">
+        update cms_article set del_flag = '2', deleted_by = #{deletedBy}, deleted_time = #{deletedTime}
+        where del_flag = '0' and article_id in
+        <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </update>
+
+    <!-- 恢复：del_flag 置 '0'，清空删除人/时间（仅回收站内可恢复） -->
+    <update id="restoreCmsArticleByArticleIds">
+        update cms_article set del_flag = '0', deleted_by = '', deleted_time = null
+        where del_flag = '2' and article_id in
+        <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </update>
+
+    <!-- 永久删除（物理删除；仅回收站内可彻底删除） -->
+    <delete id="purgeCmsArticleByArticleIds">
+        delete from cms_article where del_flag = '2' and article_id in
+        <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
             #{articleId}
         </foreach>
     </delete>

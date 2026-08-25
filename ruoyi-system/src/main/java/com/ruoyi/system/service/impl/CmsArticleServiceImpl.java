@@ -114,7 +114,109 @@ public class CmsArticleServiceImpl implements ICmsArticleService
                 throw new ServiceException("部分文章不存在或已删除");
             }
         }
-        return cmsArticleMapper.deleteCmsArticleByArticleIds(articleIds);
+        // 软删除（两态，对齐 book）：数据保留在原表，del_flag 置 '2'，后台回收站可恢复/永久删除
+        return cmsArticleMapper.softDeleteCmsArticleByArticleIds(articleIds, operator(), new Date());
+    }
+
+    @Override
+    public List<CmsArticle> selectRecycleArticleList(CmsArticle cmsArticle)
+    {
+        if (cmsArticle == null)
+        {
+            cmsArticle = new CmsArticle();
+        }
+        cmsArticle.setDelFlag("2");
+        return cmsArticleMapper.selectCmsArticleList(cmsArticle);
+    }
+
+    @Override
+    public int restoreCmsArticleByArticleIds(Long[] articleIds)
+    {
+        if (articleIds == null || articleIds.length == 0)
+        {
+            return 0;
+        }
+        int rows = cmsArticleMapper.restoreCmsArticleByArticleIds(articleIds);
+        if (rows == 0)
+        {
+            throw new ServiceException("部分文章不在回收站中，无法恢复");
+        }
+        return rows;
+    }
+
+    @Override
+    public int purgeCmsArticleByArticleIds(Long[] articleIds)
+    {
+        if (articleIds == null || articleIds.length == 0)
+        {
+            return 0;
+        }
+        int rows = cmsArticleMapper.purgeCmsArticleByArticleIds(articleIds);
+        if (rows == 0)
+        {
+            throw new ServiceException("部分文章不在回收站中，无法彻底删除");
+        }
+        return rows;
+    }
+
+    @Override
+    public int batchTop(Long[] articleIds, String isTop)
+    {
+        if (articleIds == null || articleIds.length == 0)
+        {
+            return 0;
+        }
+        if (isTop == null || (!"0".equals(isTop) && !"1".equals(isTop)))
+        {
+            throw new ServiceException("置顶参数不合法（0普通 1置顶）");
+        }
+        return cmsArticleMapper.batchUpdateTop(articleIds, isTop);
+    }
+
+    @Override
+    public int batchChangeStatus(Long[] articleIds, String status)
+    {
+        if (articleIds == null || articleIds.length == 0)
+        {
+            return 0;
+        }
+        if (status == null || (!"0".equals(status) && !"1".equals(status) && !"2".equals(status)))
+        {
+            throw new ServiceException("状态参数不合法（0已发布 1草稿 2已下线）");
+        }
+        // 批量置为已发布同样需要发布权限（与单条 changeArticleStatus 同一守卫，防仅 edit 权限者旁路发布）
+        if ("0".equals(status))
+        {
+            if (!SecurityUtils.getLoginUser().getPermissions().contains("system:cms:publish"))
+            {
+                throw new ServiceException("无发布权限：批量发布需要 system:cms:publish 权限");
+            }
+        }
+        return cmsArticleMapper.batchUpdateStatus(articleIds, status);
+    }
+
+    @Override
+    public int batchSort(List<CmsArticle> list)
+    {
+        if (list == null || list.isEmpty())
+        {
+            return 0;
+        }
+        for (CmsArticle a : list)
+        {
+            if (a == null || a.getArticleId() == null)
+            {
+                throw new ServiceException("排序参数不合法：缺少文章ID");
+            }
+        }
+        return cmsArticleMapper.batchUpdateSort(list);
+    }
+
+    /** 当前登录用户名（软删除记录删除人；未登录场景容错为空串） */
+    private String operator()
+    {
+        try { return SecurityUtils.getUsername(); }
+        catch (Exception e) { return ""; }
     }
 
     @Override

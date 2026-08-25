@@ -59,6 +59,7 @@
       <div class="article-crumb"><a href="home.html">首页</a> › <a id="crumbList" href="news.html">新闻动态</a> › <span id="crumbCat">—</span></div>
       <h1 class="article-title" id="artTitle">加载中…</h1>
       <div class="article-meta" id="artMeta"></div>
+      <div id="artAttach" style="margin:16px 0;display:none"></div>
       <div class="article-content" id="artContent">加载中…</div>
       <div class="article-back">
         <a class="btn-buy" style="text-decoration:none" id="backBtn" href="news.html">← 返回列表</a>
@@ -93,26 +94,60 @@
   // HTML 转义：标题/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
 
-  // 正文安全渲染：整段 textContent 后，把其中的 http/https 链接单独转成可点击 <a>
-  // （白名单协议；其余内容一律纯文本，防存储型 XSS）
-  function renderContent(el, rawText) {
-    const text = String(rawText || '').replace(/<[^>]+>/g, '');
-    if (!text) { el.textContent = '（正文为空）'; return; }
-    const frag = document.createDocumentFragment();
+  // 正文安全渲染：白名单 HTML（后台 Quill 富文本：加粗/图片/列表/标题等）
+  // 白名单之外的标签剥掉只留文本；文本节点中的 http/https 链接自动转 <a>（防存储型 XSS）
+  const ALLOWED_TAGS = new Set(['P','BR','STRONG','B','EM','I','U','H1','H2','H3','H4','UL','OL','LI','A','IMG','BLOCKQUOTE','PRE','CODE','SPAN','TABLE','THEAD','TBODY','TR','TH','TD','DIV','HR']);
+
+  /** 递归净化：白名单标签保留（属性按类型过滤），其余标签剥壳只留文本；文本节点链接化 */
+  function sanitizeNode(node, frag) {
     const urlRe = /(https?:\/\/[^\s，。；、）】""''》]+)/g;
-    let last = 0, m;
-    while ((m = urlRe.exec(text)) !== null) {
-      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-      const a = document.createElement('a');
-      a.href = m[1];
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = m[1];
-      frag.appendChild(a);
-      last = m.index + m[1].length;
-    }
-    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-    el.appendChild(frag);
+    Array.from(node.childNodes).forEach(child => {
+      // 文本节点：链接化后追加
+      if (child.nodeType === 3) {
+        let last = 0, m;
+        while ((m = urlRe.exec(child.nodeValue)) !== null) {
+          if (m.index > last) frag.appendChild(document.createTextNode(child.nodeValue.slice(last, m.index)));
+          const a = document.createElement('a');
+          a.href = m[1];
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = m[1];
+          frag.appendChild(a);
+          last = m.index + m[1].length;
+        }
+        if (last < child.nodeValue.length) frag.appendChild(document.createTextNode(child.nodeValue.slice(last)));
+        return;
+      }
+      // 非元素节点（注释等）跳过
+      if (child.nodeType !== 1) return;
+      const tag = child.tagName;
+      // 白名单外的标签：剥壳（保留其子内容）
+      if (!ALLOWED_TAGS.has(tag)) { sanitizeNode(child, frag); return; }
+      const el2 = document.createElement(tag.toLowerCase());
+      if (tag === 'A') {
+        const href = child.getAttribute('href') || '';
+        if (/^https?:\/\//i.test(href)) { el2.href = href; el2.target = '_blank'; el2.rel = 'noopener'; }
+      } else if (tag === 'IMG') {
+        const src = child.getAttribute('src') || '';
+        if (/^(https?:\/\/|\/)/i.test(src)) el2.src = src;
+        const alt = child.getAttribute('alt') || '';
+        if (alt) el2.alt = alt;
+        el2.style.maxWidth = '100%';
+      } else if (tag === 'SPAN') {
+        const color = child.style && child.style.color;
+        if (color && /^#[0-9a-fA-F]{3,6}$/.test(color)) el2.style.color = color;
+      }
+      sanitizeNode(child, el2);
+      frag.appendChild(el2);
+    });
+  }
+
+  function renderContent(el, rawHtml) {
+    const html = String(rawHtml || '').trim();
+    if (!html) { el.textContent = '（正文为空）'; return; }
+    el.textContent = '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    sanitizeNode(doc.body, el);
   }
 
   // 按栏目名决定返回列表与面包屑去向
@@ -154,6 +189,16 @@
         '<span>🕐 ' + esc(a.publishTime || '—') + '</span>' +
         '<span>✍️ ' + esc(a.author || '—') + '</span>' +
         '<span>👁 ' + (a.views || 0) + ' 次阅读</span>';
+      // 附件（政策原文 PDF 等）：有附件时显示下载按钮（相对路径补 /prod-api 前缀）
+      const attachEl = document.getElementById('artAttach');
+      if (attachEl) {
+        attachEl.style.display = 'none';
+        if (a.attachment) {
+          const href = /^https?:\/\//.test(a.attachment) ? a.attachment : '/prod-api' + a.attachment;
+          attachEl.innerHTML = '<a class="btn-buy" style="text-decoration:none;display:inline-block" href="' + esc(href) + '" target="_blank" rel="noopener">📄 下载政策原文 / 附件</a>';
+          attachEl.style.display = 'block';
+        }
+      }
       contentEl.textContent = '';
       renderContent(contentEl, a.content);
       // 政策类文章：正文尾部追加原文链接提示（content 中已含【原文链接】，此处兜底提示）
