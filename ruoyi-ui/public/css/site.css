@@ -632,3 +632,6 @@ textarea.form-input { resize: vertical; }
 .home-intro-btns .btn-buy { box-shadow: 0 6px 18px rgba(47,111,237,.22); }
 /* 新闻卡片左侧强调条加粗 */
 .home-mod .news-card { border-left-width: 5px; }
+
+/* CTA 色块完整包裹文字（修复内边距缺失） */
+.home-cta-inner { padding: 46px 28px; max-width: 920px; margin: 0 auto; text-align: center; }

@@ -484,6 +484,9 @@ function secHead(no, title, en) {
 function renderSection(s, no) {
   let cfg = {};
   try { cfg = s.configJson ? JSON.parse(s.configJson) : {}; } catch (e) { cfg = {}; }
+  // 背景色交替（品牌理念/三大赋能/产业生态/新闻/联系 依次轮换，避免同色堆叠）
+  const BG_CYCLE = ['home-alt', 'home-alt2', 'home-alt3', 'home-mod', 'home-alt', 'home-alt2', 'home-alt3', 'home-mod'];
+  const bg = BG_CYCLE[(no - 1) % BG_CYCLE.length];
   if (s.template === 'hero') {
     // 首屏文案配置驱动（页面搭建可改；无配置时用默认文案兜底）
     const hTitle = cfg.title || '清远市首个人工智能 OPC 生态社区';
@@ -508,7 +511,7 @@ function renderSection(s, no) {
       '<div class="hs-item"><span class="hs-no">' + ['①', '②', '③', '④', '⑤'][si] + '</span>' +
       '<div><span class="hs-title">' + esc(st.title) + '</span><span class="hs-desc">' + esc(st.desc) + '</span></div></div>' +
       (si < cfg.steps.length - 1 ? '<div class="hs-arrow">→</div>' : '')).join('');
-    return '<section class="home-mod home-alt"><div class="container">' + secHead(no, s.title) +
+    return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title) +
       '<div class="about-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div>' +
       (steps ? '<div class="home-steps">' + steps + '</div>' : '') + '</div></section>';
   }
@@ -516,7 +519,7 @@ function renderSection(s, no) {
     const groups = (cfg.groups || []).map(g =>
       '<div class="home-plus-tags"><span class="hpt-title">' + esc(g.title) + '：</span>' +
       (g.tags || []).map(t => '<span>' + esc(t) + '</span>').join('') + '</div>').join('');
-    return '<section class="home-mod home-alt2"><div class="container">' + secHead(no, s.title) + groups + '</div></section>';
+    return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title) + groups + '</div></section>';
   }
   if (s.template === 'news') {
     // 渲染容器后自包含拉取新闻（动态模块不依赖 home.html 内联函数）
@@ -544,21 +547,21 @@ function renderSection(s, no) {
         box.innerHTML = '<div class="no-result">新闻加载失败</div>';
       }
     }, 0);
-    return '<section class="home-mod"><div class="container">' + secHead(no, s.title, 'NEWS') +
+    return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title, 'NEWS') +
       '<div id="newsList" class="news-list"><div class="loading">加载中…</div></div></div></section>';
   }
   if (s.template === 'timeline') {
     const items = (cfg.items || []).map(it =>
       '<div class="tl-item"><div class="tl-date">' + esc(it.date) + '</div>' +
       '<div class="tl-title">' + esc(it.title) + '</div><div class="tl-desc">' + esc(it.desc) + '</div></div>').join('');
-    return '<section class="home-mod home-alt3"><div class="container">' + secHead(no, s.title) +
+    return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title) +
       '<div class="timeline">' + items + '</div></div></section>';
   }
   if (s.template === 'contact') {
     const items = (cfg.items || []).map(it =>
       '<div class="tl-item"><div class="tl-date">' + esc(it.date) + '</div>' +
       '<div class="tl-title">' + esc(it.title) + '</div><div class="tl-desc">' + esc(it.desc) + '</div></div>').join('');
-    return '<section class="home-mod home-deep"><div class="container">' + secHead(no, s.title, 'MILESTONES & CONTACT') +
+    return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title, 'MILESTONES & CONTACT') +
       '<div class="home-merge"><div class="timeline" style="flex:1.1;max-width:560px">' + items + '</div>' +
       '<div style="flex:1;max-width:420px"><div class="contact-list">' +
       '<div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>' +
@@ -577,13 +580,15 @@ function renderSection(s, no) {
       '</div></section>';
   }
   // text：纯文本段落
-  return '<section class="home-mod home-alt3"><div class="container">' + secHead(no, s.title) +
+  return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title) +
     '<div style="font-size:15px;line-height:2;color:var(--text)">' + esc(cfg.text || '') + '</div></div></section>';
 }
 
 async function loadHomeSections() {
   const box = document.getElementById('homeSections');
   if (!box) return;
+  // 先绑定静态模块吸附（兜底场景）；动态渲染成功后再重绑（幂等清理旧绑定）
+  if (window.__initHomeAnimations) window.__initHomeAnimations();
   let list = [];
   try {
     const ctrl = new AbortController();
@@ -592,7 +597,7 @@ async function loadHomeSections() {
     clearTimeout(timer);
     const d = await res.json();
     if (d.code === 200) list = d.data || [];
-  } catch (e) { return; } // 失败/超时：保留静态模块
+  } catch (e) { return; } // 失败/超时：保留静态模块（吸附已绑定静态）
   if (!list.length) return;
   let no = 0;
   box.innerHTML = list.map(s => { no += 1; return renderSection(s, no); }).join('');

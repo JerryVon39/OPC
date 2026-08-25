@@ -319,7 +319,6 @@
   loadHomeSections(); // 首页模块化渲染（页面搭建驱动；失败/空时静态模块兜底）
 </script>
 <script>
-<script>
   // ===== 接口地址（匿名公开接口）=====
   const API = '/prod-api/system/book/list';
       // ===== 找回密码（证号/手机号/邮箱 → 邮箱验证码 → 新密码）=====
@@ -547,7 +546,7 @@
       window.addEventListener('wheel', wheelHandler, { passive: true });
     };
   })();
-  __initHomeAnimations(); // 静态兜底场景立即绑定；模块化渲染后由 loadHomeSections 重新调用
+  // 吸附绑定统一由 site.js 的 loadHomeSections 管理（静态兜底与动态渲染均在其中绑定）
 
   // ===== 初始化 =====
   try {
