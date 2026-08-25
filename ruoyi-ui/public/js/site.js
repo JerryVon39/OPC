@@ -317,6 +317,25 @@ function initNav() {
 // 同页锚点跳转（#contact）不重载页面：hash 变化时重新高亮
 window.addEventListener('hashchange', initNav);
 
+// 长滚动首页滚动联动：滚到「联系我们」区块高亮「联系我们」，离开回到「首页」。
+// 仅存在 #contact 区块的页面（首页）生效，其余页面自动跳过（保持文件名高亮）
+function syncNavByScroll() {
+  const target = document.getElementById('contact');
+  const homeLink = document.querySelector('.nav-links a[href="home.html"]');
+  const contactLink = document.querySelector('.nav-links a[href="home.html#contact"]');
+  if (!target || !homeLink || !contactLink) return; // 仅首页有锚点区块
+  const top = target.getBoundingClientRect().top;
+  const inView = top < window.innerHeight * 0.6; // 区块进入视口上部即切换
+  contactLink.classList.toggle('active', inView);
+  homeLink.classList.toggle('active', !inView);
+}
+let navScrollTicking = false;
+window.addEventListener('scroll', function () {
+  if (navScrollTicking) return;
+  navScrollTicking = true;
+  requestAnimationFrame(function () { navScrollTicking = false; syncNavByScroll(); });
+});
+
 // 点击页面其他区域关闭"更多"下拉
 document.addEventListener('click', function (e) {
   if (!e.target.closest('.nav-more')) {
@@ -329,6 +348,7 @@ document.addEventListener('click', function (e) {
 function initPage() {
   renderLoginState();
   initNav();
+  syncNavByScroll(); // 首帧对齐：URL 带 #contact 进入时浏览器已滚到锚点，滚动联动立即生效
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initPage);
