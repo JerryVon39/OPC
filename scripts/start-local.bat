@@ -131,7 +131,7 @@ goto mysql_ok
 :mysql_wait_docker
 REM container start can be slower on first init (up to 60s)
 set MYSQL_READY=0
-for /l %%i in (1,1,60) do (
+for /l %%i in (1,1,150) do (
   netstat -an | findstr /C:":3306 " | findstr LISTENING >nul
   if not errorlevel 1 (
     "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% -e "SELECT 1" >nul 2>&1
@@ -156,12 +156,12 @@ if not "%DB_EXISTS%"=="0" (
 if "%DB_EXISTS%"=="0" goto :db_fresh
 if not "%TABLE_COUNT%"=="3" goto :db_fresh
 echo [5/5] Existing DB detected. Running idempotent upgrades...
-REM 幂等升级全清单（与 docker/mysql-upgrade.sh 一致，另含 auth/recycle_menu/reorg/cleanup）：
-REM   - purchase 旧脚本含旧名父菜单 INSERT，在业务化库上重跑会产生孤儿菜单，
-REM     由清单末尾的 menu_cleanup 统一清理（getRouters NPE 防御）
-REM   - auth 依赖 two_state 的 del_flag，必须排在 two_state 之后
-REM   - recycle 旧脚本（三态快照建表）已废弃删除，不再执行
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql upgrade_20260825_editor_fix.sql) do (
+REM Idempotent upgrade list (mirrors docker/mysql-upgrade.sh + auth/recycle_menu/reorg/cleanup):
+REM   - purchase legacy script inserts old-name parent menus; re-running on an OPC-ized
+REM     DB creates orphans - cleaned by menu_cleanup at list end (getRouters NPE guard)
+REM   - auth depends on del_flag from two_state; keep two_state BEFORE auth
+REM   - legacy recycle scripts (3-state snapshot tables) removed; do not re-add
+for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql sql\upgrade_20260825_editor_fix.sql) do (
   if exist "%%f" (
     echo   executing %%f
     "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul
@@ -179,9 +179,9 @@ for %%f in (sql\ry_20260417.sql sql\quartz.sql sql\business_init.sql sql\role_in
   "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul
   if errorlevel 1 (echo [5/5] import %%f failed & goto :fail)
 )
-REM 全新库与 Docker 首次初始化对齐：补跑全部幂等升级（del_flag/password_hash/CMS/菜单等）+ 业务数据快照
+REM Fresh DB aligned with Docker first-init: run all idempotent upgrades (del_flag/password_hash/CMS/menus) + data snapshot
 echo   applying idempotent upgrades...
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql upgrade_20260825_editor_fix.sql) do (
+for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql sql\upgrade_20260825_editor_fix.sql) do (
   if exist "%%f" (
     echo   applying %%f
     "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul
@@ -229,21 +229,21 @@ if not exist "ruoyi-ui\node_modules" (
 echo [7/5] Starting frontend - port %FE_PORT% ...
 REM vue-cli 4.x: --port must use the equals form (space form is treated as webpack entry)
 start "wanshiwu-frontend" cmd /k "cd /d ruoyi-ui && npm run dev -- --no-open --port=%FE_PORT%"
-echo [7/5] Waiting for frontend compile - up to 120s...
+echo [7/5] Waiting for frontend compile - up to 300s...
 set FE_URL=
 for /l %%i in (1,1,30) do (
-  curl -s --max-time 3 "http://localhost:%FE_PORT%/dev-api/captchaImage" | findstr /C:"code" >nul
+  curl -s --max-time 3 "http://localhost:%FE_PORT%/prod-api/captchaImage" | findstr /C:"code" >nul
   if not errorlevel 1 (set "FE_URL=http://localhost:%FE_PORT%" & goto frontend_ok)
   ping -n 2 127.0.0.1 >nul
 )
 :frontend_ok
-if "%FE_URL%"=="" (echo [7/5] Frontend not ready in 120s - check the wanshiwu-frontend window & goto :fail)
+if "%FE_URL%"=="" (echo [7/5] Frontend not ready in 300s - check the wanshiwu-frontend window & goto :fail)
 echo [7/5] Frontend ready
 
 echo.
 echo ============================================
 echo   All services started!
-echo   Admin:  %FE_URL%/              admin / Ee606EcUQsgj�:	
+echo   Admin:  %FE_URL%/              admin / Ee606EcUQsgj�:	
 echo   Reader: %FE_URL%/home.html
 echo   Stop:   scripts\stop-local.bat
 echo ============================================
