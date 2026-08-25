@@ -23,7 +23,7 @@ WHERE r.role_key='editor' AND m.menu_name IN
 ('服务信息','成员管理','活动预约','报名管理','报名导出')
 AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
 
--- ---------- 测试账号（内容编辑；密码与 admin 相同 admin123，复用其 BCrypt 哈希） ----------
+-- ---------- 测试账号（内容编辑；密码与 admin 相同，复用其 BCrypt 哈希——admin 口令随机化后此处自动跟随） ----------
 SET @pwd = (SELECT password FROM sys_user WHERE user_name='admin' LIMIT 1);
 INSERT INTO sys_user (dept_id, user_name, nick_name, user_type, email, phonenumber, sex, avatar, password, status, del_flag, login_ip, login_date, create_by, create_time, remark)
 SELECT 101, 'editor', '内容编辑', '00', '', '', '0', '', @pwd, '0', '0', '127.0.0.1', NOW(), 'admin', NOW(), '内容编辑角色测试账号' WHERE NOT EXISTS (SELECT 1 FROM sys_user WHERE user_name='editor');
