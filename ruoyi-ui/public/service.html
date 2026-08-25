@@ -241,36 +241,7 @@
     if (url.startsWith('/')) return '/prod-api' + url;
     return url;
   }
-  
-  );
 
-  // ===== 登录 / 注册（与 home.html 一致）=====
-  // 汉堡菜单展开/收起（移动端导航）  
-  async function doLogin() {
-    const card = document.getElementById('loginCard').value.trim();
-    const pwd = document.getElementById('loginPwd').value;
-    const msg = document.getElementById('loginMsg');
-    if (!card || !pwd) { msg.textContent = '请输入成员编号和密码'; return; }
-    const body = new URLSearchParams({ cardNo: card, password: pwd });
-    try {
-      const res = await apiFetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-      const d = await res.json();
-      if (d.code === 200 && d.data) {
-        currentUser = d.data;
-        localStorage.setItem('shopUser', JSON.stringify(currentUser));
-      
-        closeModal('loginModal');
-        toast('欢迎回来，' + currentUser.readerName);
-        refreshBorrowState();
-      } else if (d.code === 601) {
-        closeModal('loginModal');
-        toast('该账号需先验证邮箱并设置密码，请按提示操作');
-        setTimeout(() => { location.href = 'services.html'; }, 1500);
-      } else {
-        msg.textContent = d.msg || '登录失败：请确认编号与密码正确';
-      }
-    } catch (e) { msg.textContent = '登录失败：' + e.message; }
-  }
   
   
     

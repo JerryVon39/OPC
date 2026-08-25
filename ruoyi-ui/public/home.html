@@ -723,7 +723,8 @@
   });
 
   // ===== "更多"下拉菜单（点击展开 / 点外部或选完收起）=====
-  // 汉堡菜单展开/收起（移动端导航）  document.getElementById('moreMenu').addEventListener('click', function () {
+  // 点击更多菜单选项后自动关闭
+  document.getElementById('moreMenu').addEventListener('click', function () {
     document.getElementById('navMore').classList.remove('open');
   });
 
