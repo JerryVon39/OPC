@@ -38,7 +38,7 @@ def tc(no, name, cond, detail=''):
     results.append((no, name, 'PASS' if cond else 'FAIL', detail))
     print('  [%s] %s: %s %s' % (no, name, 'PASS' if cond else 'FAIL', detail))
 
-def login(username, password='admin123'):
+def login(username, password='Ee606EcUQsgj'):
     s, d = req('/login', 'POST', json.dumps({'username': username, 'password': password}).encode(), {'Content-Type': 'application/json'})
     return d
 
@@ -64,7 +64,7 @@ d = login('viewer')
 s, d2 = req('/system/order/list?pageNum=1&pageSize=5', headers={'Authorization': 'Bearer ' + d['token']})
 tc('1.3', 'viewer无订单权限', '没有权限' in str(d2.get('msg')))
 # 认证改造：存量测试账号无密码（pwd_set=0），先由 admin 通过"管理员设密"接口设置测试密码，再走证号+密码登录
-_, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+_, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'Ee606EcUQsgj'}).encode(), {'Content-Type': 'application/json'})
 ADMIN_AUTH = {'Authorization': 'Bearer ' + da['token']}
 for tcard, tname, expect in [('JS20260001','学生测试',True), ('JS20260002','教师测试',True), ('JS20260003','普通测试',True), ('DK','Jerry',True), ('JS20260004','挂失测试',False)]:
     # 查 readerId（仅未设密账号需要设密；已设密账号幂等跳过——接口每次都会重置密码，可重复执行）
@@ -323,7 +323,7 @@ except Exception as e:
 # ============ 11. 回收站 ============
 print('=== 11. 回收站 ===')
 try:
-    s, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    s, da = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'Ee606EcUQsgj'}).encode(), {'Content-Type': 'application/json'})
     auth = {'Authorization': 'Bearer ' + da['token']}
 
     # 11.1 图书：造新书 → 删除 → 进回收站
@@ -366,12 +366,12 @@ try:
     tc('11.5', '彻底删除回收站图书', d.get('code') == 200 and cnt == '0')
 
     # 11.6 权限：viewer 无回收站权限
-    _, dv = req('/login', 'POST', json.dumps({'username': 'viewer', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    _, dv = req('/login', 'POST', json.dumps({'username': 'viewer', 'password': 'Ee606EcUQsgj'}).encode(), {'Content-Type': 'application/json'})
     s, d = req('/system/recycle/book/list?pageNum=1&pageSize=5', headers={'Authorization': 'Bearer ' + dv['token']})
     tc('11.6', 'viewer无回收站权限', '没有权限' in str(d.get('msg')))
 
     # 11.7 librarian 有回收站权限
-    _, dl = req('/login', 'POST', json.dumps({'username': 'librarian', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    _, dl = req('/login', 'POST', json.dumps({'username': 'librarian', 'password': 'Ee606EcUQsgj'}).encode(), {'Content-Type': 'application/json'})
     s, d = req('/system/recycle/book/list?pageNum=1&pageSize=5', headers={'Authorization': 'Bearer ' + dl['token']})
     tc('11.7', 'librarian有回收站权限', d.get('code') == 200)
 except Exception as e:
@@ -388,7 +388,7 @@ try:
     tc('12.2', '登记带邮箱成功', d.get('code') == 200 and (d.get('data') or {}).get('email'), str((d.get('data') or {}).get('email'))[:40])
     mc = sql("SELECT card_no FROM reader WHERE reader_name='邮件测试' LIMIT 1;")
     # 12.3 借书（带邮箱读者）→ 业务成功（邮件异步尽力而为，不阻断）
-    s, d = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'admin123'}).encode(), {'Content-Type': 'application/json'})
+    s, d = req('/login', 'POST', json.dumps({'username': 'admin', 'password': 'Ee606EcUQsgj'}).encode(), {'Content-Type': 'application/json'})
     auth = {'Authorization': 'Bearer ' + d['token']}
     # 删除测试读者（进回收站）
     nr = sql("SELECT reader_id FROM reader WHERE reader_name='邮件测试' LIMIT 1;")
