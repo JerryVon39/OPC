@@ -509,6 +509,31 @@ function renderSection(s, no) {
     return '<section class="home-mod home-alt2"><div class="container">' + secHead(no, s.title) + groups + '</div></section>';
   }
   if (s.template === 'news') {
+    // 渲染容器后自包含拉取新闻（动态模块不依赖 home.html 内联函数）
+    const count = (cfg && cfg.count) || 6;
+    setTimeout(async () => {
+      const box = document.getElementById('newsList');
+      if (!box) return;
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 3000);
+        const res = await fetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=' + count, { signal: ctrl.signal });
+        clearTimeout(timer);
+        const d = await res.json();
+        const rows = d.rows || [];
+        if (!rows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
+        box.innerHTML = rows.map(a => {
+          const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
+          return '<div class="news-card" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
+            '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">置顶</span> ' : '') + esc(a.title || '') + '</div>' +
+            '<div class="news-date">🕐 ' + esc(a.publishTime || '') + ' ｜ ' + esc(a.categoryName || '') + '</div>' +
+            '<div class="news-summary">' + esc(raw.slice(0, 120)) + (raw.length > 120 ? '…' : '') + '</div>' +
+          '</div>';
+        }).join('');
+      } catch (e) {
+        box.innerHTML = '<div class="no-result">新闻加载失败</div>';
+      }
+    }, 0);
     return '<section class="home-mod"><div class="container">' + secHead(no, s.title, 'NEWS') +
       '<div id="newsList" class="news-list"><div class="loading">加载中…</div></div></div></section>';
   }
