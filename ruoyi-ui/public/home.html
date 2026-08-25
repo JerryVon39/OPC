@@ -521,55 +521,60 @@
   });
 
   // ===== 首页滚动动画 + 全屏翻页（封装为可重跑函数：静态兜底与模块化渲染后均调用）=====
-  window.__initHomeAnimations = function () {
-  // ===== 首页滚动动画（模块进入视口淡入上移；低动效偏好自动禁用）=====
-  (function () {
-    const els = document.querySelectorAll('.home-mod > .container, .home-intro, .home-cta-inner');
-    if (!els.length || !('IntersectionObserver' in window)) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    els.forEach(el => el.classList.add('reveal'));
-    const io = new IntersectionObserver(function (entries) {
-      entries.forEach(en => {
-        if (en.isIntersecting) { en.target.classList.add('reveal-in'); io.unobserve(en.target); }
-      });
-    }, { threshold: 0.12 });
-    els.forEach(el => io.observe(el));
-  })();
-
-  // ===== 全屏翻页：滚轮累积 18% 屏高即翻页（慢速滚动同样灵敏，方向跟随滚轮）=====
-  (function () {
-    const mods = document.querySelectorAll('body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta, body.home-page footer.footer');
-    if (!mods.length) return;
-    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return; // 移动端自由滚动
-    let acc = 0;          // 滚轮累积量
-    let locking = false;  // 翻页动画期间锁定，防止连翻
-    function go(targetTop) {
-      locking = true;
-      window.scrollTo({ top: targetTop, behavior: 'smooth' });
-      setTimeout(function () { locking = false; }, 650);
-    }
-    window.addEventListener('wheel', function (e) {
-      if (locking) return;
-      acc += e.deltaY;
-      const vh = window.innerHeight;
-      if (Math.abs(acc) < vh * 0.18) return;
-      const dir = acc > 0 ? 1 : -1;
-      acc = 0;
-      // 当前所在模块（视口中心线向下最近的模块顶）
-      const center = window.scrollY + vh * 0.5;
-      let cur = mods[0];
-      mods.forEach(m => { if (m.offsetTop <= center) cur = m; });
-      const i = Array.from(mods).indexOf(cur);
-      const target = mods[Math.min(Math.max(i + dir, 0), mods.length - 1)];
-      if (target.offsetTop !== cur.offsetTop || Math.abs(window.scrollY - cur.offsetTop) > 20) {
-        go(target.offsetTop);
-      } else {
-        // 已停在模块顶且方向相同：仍平滑滚动一下（当前模块回正）
-        go(cur.offsetTop);
+  // 幂等可重跑：保存 IO/wheel 引用，再次调用先清理旧绑定（防动态渲染后重复绑定叠加）
+  window.__initHomeAnimations = (function () {
+    let io = null;
+    let wheelHandler = null;
+    return function () {
+      // ===== 首页滚动动画（模块进入视口淡入上移；低动效偏好自动禁用）=====
+      if (io) { io.disconnect(); io = null; }
+      const els = document.querySelectorAll('.home-mod > .container, .home-intro, .home-cta-inner');
+      if (els.length && 'IntersectionObserver' in window &&
+          !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+        els.forEach(el => el.classList.add('reveal'));
+        io = new IntersectionObserver(function (entries) {
+          entries.forEach(en => {
+            if (en.isIntersecting) { en.target.classList.add('reveal-in'); io.unobserve(en.target); }
+          });
+        }, { threshold: 0.12 });
+        els.forEach(el => io.observe(el));
       }
-    }, { passive: true });
+
+      // ===== 全屏翻页：滚轮累积 18% 屏高即翻页（慢速滚动同样灵敏，方向跟随滚轮）=====
+      if (wheelHandler) { window.removeEventListener('wheel', wheelHandler); wheelHandler = null; }
+      const mods = document.querySelectorAll('body.home-page section.home-mod, body.home-page section#home, body.home-page .home-cta, body.home-page footer.footer');
+      if (!mods.length) return;
+      if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return; // 移动端自由滚动
+      let acc = 0;          // 滚轮累积量
+      let locking = false;  // 翻页动画期间锁定，防止连翻
+      function go(targetTop) {
+        locking = true;
+        window.scrollTo({ top: targetTop, behavior: 'smooth' });
+        setTimeout(function () { locking = false; }, 650);
+      }
+      wheelHandler = function (e) {
+        if (locking) return;
+        acc += e.deltaY;
+        const vh = window.innerHeight;
+        if (Math.abs(acc) < vh * 0.18) return;
+        const dir = acc > 0 ? 1 : -1;
+        acc = 0;
+        // 当前所在模块（视口中心线向下最近的模块顶）
+        const center = window.scrollY + vh * 0.5;
+        let cur = mods[0];
+        mods.forEach(m => { if (m.offsetTop <= center) cur = m; });
+        const i = Array.from(mods).indexOf(cur);
+        const target = mods[Math.min(Math.max(i + dir, 0), mods.length - 1)];
+        if (target.offsetTop !== cur.offsetTop || Math.abs(window.scrollY - cur.offsetTop) > 20) {
+          go(target.offsetTop);
+        } else {
+          // 已停在模块顶且方向相同：仍平滑滚动一下（当前模块回正）
+          go(cur.offsetTop);
+        }
+      };
+      window.addEventListener('wheel', wheelHandler, { passive: true });
+    };
   })();
-  };
   __initHomeAnimations(); // 静态兜底场景立即绑定；模块化渲染后由 loadHomeSections 重新调用
 
   // ===== 初始化 =====
