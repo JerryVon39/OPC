@@ -1,7 +1,7 @@
 # 数智游民创新工场 · CMS 整体改进方案（含全部决策）
 
-> 制定日期：2026-08-25（首版）；2026-08-25（v2：代码审查修订——取消 cms_page 统一区块模型）；2026-08-25（v3：对照 `CMS改进2.md` 查漏补缺——数据条恢复 P0、角色边界细化、清理批次、关联新模块立项）
-> 输入材料：`CMS改进.md` + `CMS改进2.md`（两份功能分析）+ **代码审查**（`ruoyi-system`/`ruoyi-ui`/`sql/` 全量核实）
+> 制定日期：2026-08-25（首版）；v2 代码审查修订；v3 对照 `CMS改进2.md` 查漏补缺；**v4（2026-08-25）：用户拍板"首页数据条不做"——D5 定案为不做；D17 关联模块降级为候选待确认；新增后续批次完善设计（第十一节）**
+> 输入材料：`CMS改进.md` + `CMS改进2.md`（两份功能分析，**建议≠最终决定，以用户拍板为准**）+ **代码审查**（全量核实）
 > 说明：本方案已包含全部推荐决策（【决策】条目），无需再拍板；如需调整可在评审时提出异议。
 > 目标用户：老板 / 运营（非程序员）——"后台能自己维护内容与部分前台页面，且不容易改坏"
 
@@ -62,7 +62,7 @@
 | D2 | 服务/大赛/招聘 | **继续用 book 体系**，不并入 CMS | 已有分类字典/上下架/回收站/报名流；招聘复用 book 报名流 |
 | D3 | 政策文件 | **文章 + `attachment` 附件列**（PDF 上传），不建独立模型 | 正文文本块已承载要点，缺的只是"原文下载" |
 | D4 | 前台页面可改形态 | **取消 cms_page 整页富文本；改为 cms_block 文本槽**：4 个栏目页各开放 2–3 个文本槽（hero 副标语/CTA/联系区），首页开放 8–10 个区块（intro/品牌理念/三大赋能/产业生态/CTA） | 代码审查证据：about 7 个 section、join 4、talent 5、industry 5 全是 info-card 栅格/时间线结构化布局；整页富文本会拍平布局，非程序员被迫重造卡片，更易改坏。cms_page 记为远期（未来新建自由排版页再用） |
-| D5 | 首页数据条 | **恢复为 P0 必做**（v2 曾因"现首页无数据条"判定不做，v3 依据 CMS改进2 §3.1 反转）：新增 `home-stats` 数据条区块，4 项指标 = 已上线服务（bookTotal，自动）/ 政策文件总数（新增统计 policyCount，自动）/ 入驻成员（readerTotal，自动）/ 合作机构（companyCount，自动或手动覆盖） | 第二份需求文档明确"首页运营统计数字"为 MVP 必须；`StatisticsService` 已有 bookTotal/readerTotal，只需补政策文件计数与覆盖键 |
+| D5 | 首页数据条 | **不做（用户拍板，2026-08-25 定案）**。v2 因"现首页无数据条"判定不做 → v3 依 CMS改进2 §3.1 反转为 P0 → v4 用户明确否决。**最终：不做**。hero 保持"轮播（banner 驱动）+ intro 文字块"现状，intro 作为 1 个区块 | 用户决策优先于需求文档建议；`site_stat_*` 覆盖键与统计扩展一并取消 |
 | D6 | 联系方式 | 进"站点配置"（`sys_config` 键 + **复用现有 `@Anonymous /configKey/{key}`**），前台 footer/联系区优先取配置，未配置走静态默认 | 零后端工作；电话 0763-3391888 现写死在 12 页 footer 中 |
 | D7 | 运营角色 | **新建 role_key=`operator`（运营专员）**，边界对齐 CMS改进2 §6.3：operator = 工作台 + 成员与报名 + 运营辅助（**不含内容运营**）；editor（内容编辑）= 工作台 + 内容运营 + 运营辅助；两者均**不授系统设置** | 职责分明：内容编辑管内容、运营专员管报名/入驻审批，互不越界；doc 的三角色表与本决策一致 |
 | D8 | 文章回收站 | **做**（对齐 book：`del_flag='2'` + deleted_by/time + restore/purge + `recycle/cms.vue`） | 误删可恢复，非程序员兜底刚需 |
@@ -74,7 +74,7 @@
 | D14 | 栏目删除守卫 | **现有"有文章拒绝删除"守卫之外，补"有子栏目拒绝删除"** | 代码审查发现：删父栏目会留孤儿子栏目 |
 | D15 | 前台弹窗收敛 | **把 12 页内联复制的登录/注册/找回密码弹窗 HTML 收敛进 `site.js` 动态注入**（第四批） | 审查发现：改登录流程要改 12 个文件，是非程序员不可维护的真实根源；`site.js` 已有公共底座 |
 | D16 | 清理批次（对齐 CMS改进2 第一阶段，代码已核实） | ① 删除挂失补办（`ReaderController:566` 起整段 + 前台入口，图书遗留功能）；② 移除 book/reader 页 Excel 导入导出按钮（保留代码）；③ **保留 git hooks 数据快照**（不采纳 doc 的移除建议——快照是无成本备份，commit 自动导出，删后仅剩手动脚本）；④ 公告定时任务无需处理（doc 所述 3 个公告任务现状已不存在，仅剩业务必需的 `BorrowTask`） | 按 doc 意图精简运维面；git hooks 保留理由单独标注 |
-| D17 | 关联新业务模块（**超出 CMS 范畴，建议单独立项排期**） | 算力资源预约（P0，3–4 人日，compute_resource + compute_reservation，宣传的"70B 大模型一体机免费试用"线上化）；订单发布与投标（P0，3–4 人日，project_order + order_bid）；政策智能匹配（P1，2 人日）；讨论区/工具箱/在线支付（P2，按需） | 与 CMS 4 批无耦合，插队会拖慢内容闭环；作为独立批次在 CMS 交付后启动 |
+| D17 | 关联新业务模块 | **降级为候选清单（待用户确认后才排期）**：算力资源预约（3–4 人日）、订单发布与投标（3–4 人日）、政策智能匹配（2 人日）、讨论区/工具箱/在线支付（按需）。**不纳入 CMS 批次，不默认立项**——CMS改进2 的新增建议与"数据条"同源，采纳度以用户确认为准 | 超出 CMS 范畴且用户未表态；保持候选状态，避免文档默认承诺 |
 | D18 | 操作路径最短化（CMS改进2 §4.3） | 分类树节点上直接"发文章"：栏目管理页每个节点加发文章按钮 → 跳文章页并预选该栏目（query 传参） | 对齐"分类即操作入口"模式，成本约 0.2 人日 |
 
 ---
@@ -120,7 +120,7 @@
 - 后台"区块管理"页：按页面分组，每块一个卡片表单（标题/副标题/正文/图片/链接/排序/显示开关）；**隐藏用开关不用删除**；历史版本 Tab（查看/一键回滚）
 - 公开接口 `@Anonymous`：`/system/cmsBlock/publicList?pageKey=home`（仅 visible=0 区块）
 - 前台接入（均带静态兜底）：
-  - `home.html`：`home-stats`（**数据条**：已上线服务/政策文件/入驻成员/合作机构 4 指标，自动统计 + `site_stat_*` 手动覆盖，D5）、`home-intro`（标题/副标语/简介/双 CTA）、`home-concept`（品牌理念段落）、`home-feature-1/2/3`（三大赋能卡片）、`home-ecosystem`（产业生态入口）、`home-cta`（入驻 CTA）
+  - `home.html`：`home-intro`（标题/副标语/简介/双 CTA）、`home-concept`（品牌理念段落）、`home-feature-1/2/3`（三大赋能卡片）、`home-ecosystem`（产业生态入口）、`home-cta`（入驻 CTA）——**无数据条**（D5 用户拍板不做）
   - 4 个栏目页文本槽：`about-hero-sub` / `about-cta`、`join-hero-sub` / `join-cta`、`talent-hero-sub` / `talent-cta`、`industry-hero-sub` / `industry-cta`（hero 副标语 + 结尾 CTA 文案）
   - 联系区统一走站点配置（P1-3），不做区块
 - 渲染 JS 放 `site.js`（或 `site-content.js`）：`window.CMS_BLOCKS` 钩子，页面声明槽位 id → 区块 key 映射，fetch 成功后替换 `textContent`/`innerHTML`（白名单），失败走静态兜底
@@ -177,9 +177,6 @@ deleted_time datetime / deleted_by varchar(64)
 
 -- sys_config 预置键（幂等 INSERT）
 site_phone / site_email / site_address / site_wechat / site_qrcode
-site_stat_service / site_stat_policy / site_stat_member / site_stat_company  -- 数据条覆盖键（自动统计优先，覆盖值非空时生效）
-
--- 统计扩展：StatisticsService.publicStats 增加 policyCount（政策文件栏目文章数）、companyCount（企业类型成员数）
 
 -- 栏目种子：4 栏目页文本槽 + 首页区块的初始记录（与前台静态内容一致，兜底双保险）
 ```
@@ -230,14 +227,14 @@ site_stat_service / site_stat_policy / site_stat_member / site_stat_company  -- 
 | 批次 | 内容 | 工作量 | 验收标准 |
 |---|---|---|---|
 | **第一批 · 文章管理闭环** ✅ 已交付 | P0-1 栏目树（含子栏目守卫）+ P0-2 文章增强（含加列）+ P0-3 回收站 + P0-4 HTML 渲染 + P0-5 PDF 附件 | ~4 人日（已完成） | 后台可建栏目树、文章封面/批量/排序、删除进回收站可恢复；前台富文本所见即所得；政策可传 PDF 并可下载 |
-| **第二批 · 区块化前台** | P1-1 cms_block + 历史回滚 + 区块管理页 + home 7 类区块（含 **home-stats 数据条**，D5）+ 4 栏目页文本槽 + **P1-4 树上发文章快捷入口** | ~4 人日 | 后台改"三大赋能"文案与首页数据条，前台刷新即变；改坏可回滚；接口失败前台显示静态内容；栏目页一键发文章 |
+| **第二批 · 区块化前台** | P1-1 cms_block + 历史回滚 + 区块管理页 + home 6 类区块（无数据条，D5）+ 4 栏目页文本槽 + **P1-4 树上发文章快捷入口** | ~3.5 人日 | 后台改"三大赋能"文案，前台刷新即变；改坏可回滚；接口失败前台显示静态内容；栏目页一键发文章 |
 | **第三批 · 站点配置+工作台+角色** | P1-2 sys_config 键 + footer 接入（零后端）+ P1-3 工作台/角色收敛（D7 边界）/帮助 | ~3 人日 | 改电话前台即时生效；operator 只见 工作台+成员报名+运营辅助；editor 只见 工作台+内容运营+运营辅助；三步发文章流程 |
 | **第四批 · 增强与收敛** | P2 防刷/定时发布/SEO + 前台弹窗收敛（D15） | ~2 人日 | 浏览量防刷生效；预约发布生效；登录弹窗全站单源 |
 | **清理批次（可选）** | D16：删除挂失补办、移除 Excel 导入导出按钮（保留代码）、git hooks 保留 | ~1 人日 | 后台无挂失/导入残留入口；快照备份机制不变 |
 
-合计约 **14 人日**（含可选清理批次 1 人日）。每批完成自动 commit（push 需另行确认）；SQL 升级脚本随批交付。
+合计约 **13.5 人日**（含可选清理批次 1 人日）。每批完成自动 commit（push 需另行确认）；SQL 升级脚本随批交付。
 
-**关联新业务模块（D17，独立立项，不在本方案 4 批内）**：算力资源预约（3–4 人日）、订单发布与投标（3–4 人日）、政策智能匹配（2 人日）、讨论区/工具箱/在线支付（按需）。
+**候选新业务模块（D17，待用户确认后才排期，不默认立项）**：算力资源预约（3–4 人日）、订单发布与投标（3–4 人日）、政策智能匹配（2 人日）、讨论区/工具箱/在线支付（按需）。
 
 ---
 
@@ -263,7 +260,7 @@ site_stat_service / site_stat_policy / site_stat_member / site_stat_company  -- 
 | 数据快照 git hooks 移除 | 删减 | ❌ 不采纳 | D16 ③：快照是无成本备份且 commit 自动触发；删除后备份依赖手动脚本，风险大于收益 |
 | Excel 导入导出后置 | 删减 | ✅ 采纳（部分） | D16 ②：移除按钮保留代码（doc 同建议）；菜单已隐藏系统工具，无二期待办 |
 | 角色精简为 2 个 | 删减 | ⚠️ 调整为 3 个 | D7：doc 自身 §6.3 即三角色（管理员/内容编辑/运营专员），按后者细化边界 |
-| 首页运营统计数字 | 新增 | ✅ 采纳（P0） | D5 反转 + 第二批 home-stats 数据条（4 指标自动统计+覆盖） |
+| 首页运营统计数字 | 新增 | ❌ 不采纳（**用户拍板 2026-08-25**） | D5 定案不做：hero 保持轮播+intro 现状；需求文档建议不等于最终决定 |
 | 算力资源预约 | 新增 | ✅ 采纳（P0，**独立立项**） | D17：超出 CMS 范畴，单独立项 3–4 人日 |
 | 订单发布与投标 | 新增 | ✅ 采纳（P0，**独立立项**） | D17：超出 CMS 范畴，单独立项 3–4 人日 |
 | 政策智能匹配 | 新增 | ✅ 采纳（P1，独立立项） | D17：可后续基于政策文章 ext 字段扩展 |
@@ -276,3 +273,64 @@ site_stat_service / site_stat_policy / site_stat_member / site_stat_company  -- 
 | 标题长度 ≤200 | 借鉴 | ✅ 采纳 | P1-4：前端 maxlength=200（DB 已约束） |
 | 分类树上直接操作（最短路径） | 借鉴 | ✅ 采纳 | D18/P1-4：栏目节点"发文章"快捷入口 |
 | 全选/批量排序 | 借鉴 | ✅ 已落地 | 第一批批量置顶/下线 + 行内排序 |
+
+---
+
+## 十一、后续批次完善设计（第二批起，可执行粒度）
+
+### 第二批 · 区块化前台（~3.5 人日）
+
+**数据模型**（详细）：
+```sql
+cms_block          block_id(自增PK) / block_key varchar(50) / page_key varchar(30) /
+                   title varchar(200) / subtitle varchar(200) / content mediumtext(HTML) /
+                   image varchar(255) / link varchar(255) / sort int DEFAULT 0 /
+                   visible char(1) DEFAULT '0' / version int DEFAULT 1 /
+                   updated_by varchar(64) / update_time datetime
+                   -- 唯一键 uk(block_key)；page_key 用于后台分组展示
+cms_block_history  history_id(PK) / block_id / version / title / subtitle / content /
+                   image / link / updated_by / update_time   -- 每区块最多 20 版（超限删最旧）
+```
+
+**区块 key 全集**（与前台静态内容同文，兜底双保险）：
+- home：`home-intro`（标题/副标语/简介/双 CTA）、`home-concept`（品牌理念段落）、`home-feature-1`/`home-feature-2`/`home-feature-3`（三大赋能）、`home-ecosystem`（产业生态标题+入口）、`home-cta`（入驻 CTA）
+- 栏目页文本槽（各 2 个）：`about-hero-sub`/`about-cta`、`join-hero-sub`/`join-cta`、`talent-hero-sub`/`talent-cta`、`industry-hero-sub`/`industry-cta`
+- 后台"区块管理"页按 `page_key` 分组展示，仅列表这 13 个 key（不开放新建 key——防非程序员造出前台不认识的区块）
+
+**接口**（沿用 controller/service/mapper 模式）：
+- 公开：`GET /system/cmsBlock/publicList?pageKey=home`（@Anonymous，仅 visible='0'，按 sort）
+- 后台：`list`/`{id}`/`add`/`edit`/`delete`（权限 `system:cmsBlock:*`）+ `GET /history/{blockId}`（含版本列表）+ `PUT /rollback/{blockId}/{version}`（回滚=取该版写入主表并 version+1 记新历史）
+- 保存时自动写历史（service 层：先插 history，再更新主表 version+1）
+
+**前台渲染机制**（`site.js` 新增，12 页共用）：
+- `window.CMS_BLOCK_SLOTS = { 'home-intro': { el: '#homeIntro', mode: 'html'|'text' }, ... }` 每页声明槽位映射
+- `loadCmsBlocks(pageKey)`：fetch 成功 → 逐槽替换（text 用 textContent / html 用白名单 innerHTML，复用第一批 sanitizer 逻辑抽出为 `site.js` 公共函数）；失败/超时(3s)/空 → 保留静态内容
+- home 与 4 栏目页各加一段 `loadCmsBlocks('home'|'about'|...)` 调用
+
+**验收清单**：后台改"三大赋能"卡片文案 → 前台刷新即变；改坏 → 区块管理历史 Tab 一键回滚；断网 → 前台显示静态原文；栏目管理页节点"发文章" → 文章页预选栏目；标题输入框 maxlength=200。
+
+### 第三批 · 站点配置 + 工作台 + 角色（~3 人日）
+
+- `sys_config` 预置键（幂等 INSERT）：`site_phone`(0763-3391888)/`site_email`/`site_address`/`site_wechat`/`site_qrcode`
+- 前台接入：12 页 footer 联系区 + home `home-contact` 区，fetch `/prod-api/system/config/configKey/site_phone` 等，未配置走静态（**零后端**，RuoYi 原生匿名端点已确认）
+- 运营工作台（`views/system/ops/index.vue`，菜单"运营工作台"置于顶层 order_num=0）：
+  - 快捷入口：发文章/管栏目/改区块/传轮播/管服务/看报名（按角色显隐）
+  - 数据卡：复用 `StatisticsService.dashboard()`（服务/成员/今日报名/今日订单）+ 新增 `articleTotal`/`articleToday`/`draftCount`/`recycleCount`（dashboard() 补 4 个 count）
+  - 最近编辑：文章/区块各 5 条（按 update_time 倒序）
+  - 指引卡："三步发一篇新闻"静态文案
+- 角色收敛（D7）：`operator` 新建并挂 工作台+成员与报名+运营辅助；`editor` 补挂 工作台；菜单可见性按角色（admin 全量，系统设置仅 admin）
+- 帮助页：`views/system/help/index.vue` 静态图文（发文章/改区块/传轮播/审批/回滚五篇），菜单"使用帮助"挂运营辅助
+
+### 第四批 · 增强与收敛（~2 人日）
+
+- 浏览量防刷：`selectPublicArticleDetail` 前查 Redis `cms:view:{ip}:{articleId}`（TTL 10 分钟），未命中才 `increaseArticleViews`；Redis 不可用静默降级为自增
+- 定时发布：前台 `selectPublicArticleList` 加 `and a.publish_time <= NOW()`；后台编辑弹窗发布时可选发布时间（datetime-picker，默认立即=null）；`publishArticle`/`changeArticleStatus` 置已发布时保留原 publish_time
+- SEO：`article.html` 详情加载后动态写 `<meta name="keywords">` / `<meta name="description">`（取 `a.keywords`/`a.description`，空则用默认）
+- 弹窗收敛（D15）：登录/注册/找回密码弹窗 HTML 从 12 页内联移入 `site.js`（`injectAuthModals()` 动态创建 DOM），12 页逐一回归全流程后提交
+
+### 清理批次（可选，~1 人日，D16）
+
+- 删除挂失补办：`ReaderController` 挂失/补办两端点 + `ReaderServiceImpl` 相关方法 + 前台入口 + `BizStatus` 相关常量（0.5 人日）
+- 移除 Excel 导入导出：book/reader 页顶栏导入按钮与 `api/system/book.js` 的 `importData` 调用（保留后端接口与代码注释）（0.3 人日）
+- git hooks 数据快照：**保留**（不采纳移除）
+- 验收：后台无挂失/导入残留入口；挂失接口 404；快照机制不变
