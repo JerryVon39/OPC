@@ -83,7 +83,7 @@ public class BookReserveController extends BaseController
 
     /** 后台删除候补记录 */
     @PreAuthorize("@ss.hasPermi('system:borrow:remove')")
-    @Log(title = "图书预约", businessType = BusinessType.DELETE)
+    @Log(title = "活动预约", businessType = BusinessType.DELETE)
     @DeleteMapping("/{reserveIds}")
     public AjaxResult remove(@PathVariable Long[] reserveIds)
     {

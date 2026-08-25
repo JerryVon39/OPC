@@ -5,7 +5,7 @@ import java.util.List;
 import com.ruoyi.system.domain.ReaderLoginLog;
 
 /**
- * 读者端登录审计 Mapper
+ * 成员端登录审计 Mapper
  */
 public interface ReaderLoginLogMapper
 {

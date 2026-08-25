@@ -3,7 +3,7 @@ package com.ruoyi.system.domain;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 读者端登录/安全事件审计对象 reader_login_log（后台可查）
+ * 成员端登录/安全事件审计对象 reader_login_log（后台可查）
  * 事件：login / login_fail / logout / change_pwd / reset_pwd / change_email / register
  */
 public class ReaderLoginLog extends BaseEntity

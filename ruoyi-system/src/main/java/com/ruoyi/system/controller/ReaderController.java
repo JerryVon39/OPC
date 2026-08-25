@@ -85,20 +85,20 @@ public class ReaderController extends BaseController
      * 导出成员管理列表
      */
     @PreAuthorize("@ss.hasPermi('system:reader:export')")
-    @Log(title = "读者管理", businessType = BusinessType.EXPORT)
+    @Log(title = "成员管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, Reader reader)
     {
         List<Reader> list = readerService.selectReaderList(reader);
         ExcelUtil<Reader> util = new ExcelUtil<Reader>(Reader.class);
-        util.exportExcel(response, list, "读者管理数据");
+        util.exportExcel(response, list, "成员管理数据");
     }
 
     /**
      * 批量导入成员（Excel）：逐行校验，证号判重/留空自动生成，返回成功/失败明细
      */
     @PreAuthorize("@ss.hasPermi('system:reader:add')")
-    @Log(title = "读者管理", businessType = BusinessType.IMPORT)
+    @Log(title = "成员管理", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(org.springframework.web.multipart.MultipartFile file) throws Exception
     {
@@ -115,7 +115,7 @@ public class ReaderController extends BaseController
     public void importTemplate(HttpServletResponse response)
     {
         ExcelUtil<Reader> util = new ExcelUtil<Reader>(Reader.class);
-        util.importTemplateExcel(response, "读者管理数据");
+        util.importTemplateExcel(response, "成员管理数据");
     }
 
     /**
@@ -226,7 +226,7 @@ public class ReaderController extends BaseController
                 || readerType == null || readerType.trim().isEmpty())
         {
             readerSessionService.recordFail(failKey);
-            return error("请填写姓名、手机号和读者类型");
+            return error("请填写姓名、手机号和成员类型");
         }
         if (!phone.trim().matches("\\d{11}"))
         {
@@ -562,7 +562,7 @@ public class ReaderController extends BaseController
     /** 挂失补办：生成新证号并恢复状态（旧证号作废）
      * 注意：success(字符串) 会走 msg 字段，前端取 data 拿不到，必须显式放 data */
     @PreAuthorize("@ss.hasPermi('system:reader:edit')")
-    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @Log(title = "成员管理", businessType = BusinessType.UPDATE)
     @PutMapping("/reissue/{readerId}")
     public AjaxResult reissue(@PathVariable("readerId") Long readerId)
     {
@@ -574,7 +574,7 @@ public class ReaderController extends BaseController
     /** 管理员发送"重置密码"邀请（向成员登记邮箱发验证码，成员用找回密码流程自助重置）
      * 权限：system:reader:resetPwd */
     @PreAuthorize("@ss.hasPermi('system:reader:resetPwd')")
-    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @Log(title = "成员管理", businessType = BusinessType.UPDATE)
     @PostMapping("/reset-pwd-invite/{readerId}")
     public AjaxResult resetPwdInvite(@PathVariable("readerId") Long readerId, jakarta.servlet.http.HttpServletRequest request)
     {
@@ -597,7 +597,7 @@ public class ReaderController extends BaseController
 
     /** 管理员直接设置密码（代客设密/测试/忘记密码兜底）；权限：system:reader:resetPwd */
     @PreAuthorize("@ss.hasPermi('system:reader:resetPwd')")
-    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @Log(title = "成员管理", businessType = BusinessType.UPDATE)
     @PutMapping("/set-password")
     public AjaxResult setPassword(@RequestBody com.ruoyi.system.domain.SetPasswordBody body,
             jakarta.servlet.http.HttpServletRequest request)
@@ -653,7 +653,7 @@ public class ReaderController extends BaseController
         if (list == null || list.isEmpty())
         {
             readerSessionService.recordFail(failKey);
-            return error("未找到该姓名的读者，请确认是否已登记");
+            return error("未找到该姓名的成员，请确认是否已登记");
         }
         // 手机号精确匹配（reader_name 是模糊查询，这里必须精确比对）
         Reader matched = null;
@@ -706,12 +706,12 @@ public class ReaderController extends BaseController
         java.util.List<Reader> list = readerService.selectReaderList(query);
         if (list == null || list.isEmpty())
         {
-            return error("借书证号不存在");
+            return error("成员编号不存在");
         }
         Reader r = list.get(0);
         if (!readerName.trim().equals(r.getReaderName()))
         {
-            return error("姓名与借书证号不匹配");
+            return error("姓名与成员编号不匹配");
         }
         // 邮箱不允许在此接口修改（安全：改邮箱必须走验证码流程 change-email）
         if (email != null && !email.trim().isEmpty() && !email.trim().equalsIgnoreCase(r.getEmail()))
@@ -736,7 +736,7 @@ public class ReaderController extends BaseController
 
     /** 后台添加成员（需要权限） */
     @PreAuthorize("@ss.hasPermi('system:reader:add')")
-    @Log(title = "读者管理", businessType = BusinessType.INSERT)
+    @Log(title = "成员管理", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Reader reader)
     {
@@ -747,7 +747,7 @@ public class ReaderController extends BaseController
      * 修改成员管理
      */
     @PreAuthorize("@ss.hasPermi('system:reader:edit')")
-    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @Log(title = "成员管理", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Reader reader)
     {
@@ -758,7 +758,7 @@ public class ReaderController extends BaseController
      * 删除成员管理
      */
     @PreAuthorize("@ss.hasPermi('system:reader:remove')")
-    @Log(title = "读者管理", businessType = BusinessType.DELETE)
+    @Log(title = "成员管理", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{readerIds}")
     public AjaxResult remove(@PathVariable Long[] readerIds)
     {
@@ -782,7 +782,7 @@ public class ReaderController extends BaseController
      * 恢复已删除成员（两态软删除）
      */
     @PreAuthorize("@ss.hasPermi('system:reader:remove')")
-    @Log(title = "读者管理", businessType = BusinessType.UPDATE)
+    @Log(title = "成员管理", businessType = BusinessType.UPDATE)
     @PutMapping("/restore/{readerIds}")
     public AjaxResult restore(@PathVariable Long[] readerIds)
     {
@@ -793,7 +793,7 @@ public class ReaderController extends BaseController
      * 永久删除成员（两态软删除）：物理删除，不可恢复
      */
     @PreAuthorize("@ss.hasPermi('system:reader:remove')")
-    @Log(title = "读者管理", businessType = BusinessType.DELETE)
+    @Log(title = "成员管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/purge/{readerIds}")
     public AjaxResult purge(@PathVariable Long[] readerIds)
     {
@@ -801,7 +801,7 @@ public class ReaderController extends BaseController
     }
 
     /**
-     * 读者端登录审计列表（后台查询）：按证号/事件/结果筛选
+     * 成员端登录审计列表（后台查询）：按证号/事件/结果筛选
      */
     @PreAuthorize("@ss.hasPermi('system:reader:list')")
     @GetMapping("/loginLog")

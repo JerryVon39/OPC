@@ -68,8 +68,8 @@ public class BorrowRecord extends BaseEntity
     @Excel(name = "罚款状态", readConverterExp = "0=未缴,1=已缴")
     private String finePaid;
 
-    /** 已续借次数 */
-    @Excel(name = "续借次数")
+    /** 已续期次数 */
+    @Excel(name = "续期次数")
     private Long renewCount;
 
     public Long getBorrowId() { return borrowId; }

@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 查询图书信息列表
+// 查询服务信息列表
 export function listBook(query) {
   return request({
     url: '/system/book/list',
@@ -9,7 +9,7 @@ export function listBook(query) {
   })
 }
 
-// 查询图书信息详细
+// 查询服务信息详细
 export function getBook(bookId) {
   return request({
     url: '/system/book/' + bookId,
@@ -17,7 +17,7 @@ export function getBook(bookId) {
   })
 }
 
-// 新增图书信息
+// 新增服务信息
 export function addBook(data) {
   return request({
     url: '/system/book',
@@ -26,7 +26,7 @@ export function addBook(data) {
   })
 }
 
-// 修改图书信息
+// 修改服务信息
 export function updateBook(data) {
   return request({
     url: '/system/book',
@@ -44,7 +44,7 @@ export function changeBookStatus(bookId, status) {
   })
 }
 
-// 删除图书信息
+// 删除服务信息
 export function delBook(bookId) {
   return request({
     url: '/system/book/' + bookId,
@@ -52,7 +52,7 @@ export function delBook(bookId) {
   })
 }
 
-// 查询已删除图书列表（后台回收站视图）
+// 查询已删除服务列表（后台回收站视图）
 export function listDeletedBook(query) {
   return request({
     url: '/system/book/deletedList',
@@ -61,7 +61,7 @@ export function listDeletedBook(query) {
   })
 }
 
-// 恢复已删除图书
+// 恢复已删除服务
 export function restoreBook(bookIds) {
   return request({
     url: '/system/book/restore/' + bookIds,
@@ -69,7 +69,7 @@ export function restoreBook(bookIds) {
   })
 }
 
-// 永久删除图书
+// 永久删除服务
 export function purgeBook(bookIds) {
   return request({
     url: '/system/book/purge/' + bookIds,

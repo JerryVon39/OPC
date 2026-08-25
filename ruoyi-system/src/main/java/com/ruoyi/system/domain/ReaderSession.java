@@ -1,7 +1,7 @@
 package com.ruoyi.system.domain;
 
 /**
- * 读者端会话信息（Redis 存储，多端管理展示用）
+ * 成员端会话信息（Redis 存储，多端管理展示用）
  */
 public class ReaderSession
 {

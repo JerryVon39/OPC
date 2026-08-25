@@ -100,7 +100,7 @@ public class BorrowRecordController extends BaseController
         return toAjax(borrowRecordService.borrowByCard(sessionCard, bookId));
     }
 
-    /** 续借：截止日期 +30 天 */
+    /** 续期：截止日期 +30 天 */
     @PreAuthorize("@ss.hasPermi('system:borrow:edit')")
     @Log(title = "报名记录", businessType = BusinessType.UPDATE)
     @PutMapping("/renew/{borrowId}")
@@ -122,7 +122,7 @@ public class BorrowRecordController extends BaseController
         return success(borrowRecordService.selectBorrowListByCard(sessionCard));
     }
 
-    /** 前台续借：短期成员会话 + 记录归属校验 */
+    /** 前台续期：短期成员会话 + 记录归属校验 */
     @Anonymous
     @PostMapping("/renewByCard")
     public AjaxResult renewByCard(String cardNo, String sessionToken, Long borrowId, jakarta.servlet.http.HttpServletRequest request)

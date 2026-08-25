@@ -25,7 +25,7 @@ export function returnBorrow(borrowId) {
   return request({ url: '/system/borrow/return/' + borrowId, method: 'put' })
 }
 
-// 续借
+// 续期
 export function renewBorrow(borrowId) {
   return request({ url: '/system/borrow/renew/' + borrowId, method: 'put' })
 }

@@ -5,14 +5,14 @@ package com.ruoyi.system.constant;
  */
 public class BizStatus
 {
-    /** 图书在架 */
+    /** 服务招募中 */
     public static final String BOOK_ON_SALE = "0";
-    /** 图书下架 */
+    /** 服务已结束 */
     public static final String BOOK_OFF_SALE = "1";
 
-    /** 读者正常 */
+    /** 成员正常 */
     public static final String READER_NORMAL = "0";
-    /** 读者停用/挂失 */
+    /** 成员停用/挂失 */
     public static final String READER_DISABLED = "1";
 
     /** 借出中 */

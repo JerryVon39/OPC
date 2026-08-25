@@ -33,7 +33,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="成员姓名" align="center" prop="readerName" min-width="100" />
       <el-table-column label="手机号" align="center" prop="phone" width="130" />
-      <el-table-column label="借书证号" align="center" prop="cardNo" width="160" />
+      <el-table-column label="成员编号" align="center" prop="cardNo" width="160" />
       <el-table-column label="类型" align="center" prop="readerType" width="90">
         <template slot-scope="scope">
           <dict-tag :options="readerTypeOptions" :value="scope.row.readerType" />

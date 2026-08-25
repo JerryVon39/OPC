@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.Reader;
 
 /**
- * 读者管理Mapper接口
+ * 成员管理Mapper接口
  * 
  * @author Jerry
  * @date 2026-08-12
@@ -13,9 +13,9 @@ import com.ruoyi.system.domain.Reader;
 public interface ReaderMapper 
 {
     /**
-     * 查询读者管理
+     * 查询成员管理
      * 
-     * @param readerId 读者管理主键
+     * @param readerId 成员管理主键
      * @return 读者管理
      */
     public Reader selectReaderByReaderId(Long readerId);
@@ -32,7 +32,7 @@ public interface ReaderMapper
     public int countByPhone(@Param("phone") String phone);
 
     /**
-     * 查询读者管理列表
+     * 查询成员管理列表
      * 
      * @param reader 读者管理
      * @return 读者管理集合
@@ -58,7 +58,7 @@ public interface ReaderMapper
     /**
      * 删除读者管理
      * 
-     * @param readerId 读者管理主键
+     * @param readerId 成员管理主键
      * @return 结果
      */
     public int deleteReaderByReaderId(Long readerId);

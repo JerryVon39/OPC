@@ -110,20 +110,20 @@ public class BookController extends BaseController
      * 导出服务信息列表
      */
     @PreAuthorize("@ss.hasPermi('system:book:export')")
-    @Log(title = "图书信息", businessType = BusinessType.EXPORT)
+    @Log(title = "服务信息", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, Book book)
     {
         List<Book> list = bookService.selectBookList(book);
         ExcelUtil<Book> util = new ExcelUtil<Book>(Book.class);
-        util.exportExcel(response, list, "图书信息数据");
+        util.exportExcel(response, list, "服务信息数据");
     }
 
     /**
      * 批量导入服务（Excel）：逐行校验，同名跳过，返回成功/失败明细
      */
     @PreAuthorize("@ss.hasPermi('system:book:add')")
-    @Log(title = "图书信息", businessType = BusinessType.IMPORT)
+    @Log(title = "服务信息", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
     public AjaxResult importData(org.springframework.web.multipart.MultipartFile file) throws Exception
     {
@@ -140,7 +140,7 @@ public class BookController extends BaseController
     public void importTemplate(HttpServletResponse response)
     {
         ExcelUtil<Book> util = new ExcelUtil<Book>(Book.class);
-        util.importTemplateExcel(response, "图书信息数据");
+        util.importTemplateExcel(response, "服务信息数据");
     }
 
     /**
@@ -157,7 +157,7 @@ public class BookController extends BaseController
      * 新增服务信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:add')")
-    @Log(title = "图书信息", businessType = BusinessType.INSERT)
+    @Log(title = "服务信息", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Book book)
     {
@@ -168,7 +168,7 @@ public class BookController extends BaseController
      * 修改服务信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:edit')")
-    @Log(title = "图书信息", businessType = BusinessType.UPDATE)
+    @Log(title = "服务信息", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Book book)
     {
@@ -180,7 +180,7 @@ public class BookController extends BaseController
      * 有候补中/有名额候补的服务禁止下架（Service 层联动校验）
      */
     @PreAuthorize("@ss.hasPermi('system:book:edit')")
-    @Log(title = "图书信息", businessType = BusinessType.UPDATE)
+    @Log(title = "服务信息", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(Long bookId, String status)
     {
@@ -191,7 +191,7 @@ public class BookController extends BaseController
      * 删除服务信息
      */
     @PreAuthorize("@ss.hasPermi('system:book:remove')")
-    @Log(title = "图书信息", businessType = BusinessType.DELETE)
+    @Log(title = "服务信息", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{bookIds}")
     public AjaxResult remove(@PathVariable Long[] bookIds)
     {
@@ -215,7 +215,7 @@ public class BookController extends BaseController
      * 恢复已删除服务（两态软删除）
      */
     @PreAuthorize("@ss.hasPermi('system:book:remove')")
-    @Log(title = "图书信息", businessType = BusinessType.UPDATE)
+    @Log(title = "服务信息", businessType = BusinessType.UPDATE)
     @PutMapping("/restore/{bookIds}")
     public AjaxResult restore(@PathVariable Long[] bookIds)
     {
@@ -226,7 +226,7 @@ public class BookController extends BaseController
      * 永久删除服务（两态软删除）：物理删除，不可恢复
      */
     @PreAuthorize("@ss.hasPermi('system:book:remove')")
-    @Log(title = "图书信息", businessType = BusinessType.DELETE)
+    @Log(title = "服务信息", businessType = BusinessType.DELETE)
     @DeleteMapping("/purge/{bookIds}")
     public AjaxResult purge(@PathVariable Long[] bookIds)
     {

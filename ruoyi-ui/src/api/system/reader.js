@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 查询读者管理列表
+// 查询成员管理列表
 export function listReader(query) {
   return request({
     url: '/system/reader/list',
@@ -9,7 +9,7 @@ export function listReader(query) {
   })
 }
 
-// 查询读者管理详细
+// 查询成员管理详细
 export function getReader(readerId) {
   return request({
     url: '/system/reader/' + readerId,
@@ -17,7 +17,7 @@ export function getReader(readerId) {
   })
 }
 
-// 新增读者管理
+// 新增成员管理
 export function addReader(data) {
   return request({
     url: '/system/reader',
@@ -26,7 +26,7 @@ export function addReader(data) {
   })
 }
 
-// 修改读者管理
+// 修改成员管理
 export function updateReader(data) {
   return request({
     url: '/system/reader',
@@ -66,7 +66,7 @@ export function delReader(readerId) {
   })
 }
 
-// 查询已删除读者列表（后台回收站视图）
+// 查询已删除成员列表（后台回收站视图）
 export function listDeletedReader(query) {
   return request({
     url: '/system/reader/deletedList',
@@ -75,7 +75,7 @@ export function listDeletedReader(query) {
   })
 }
 
-// 恢复已删除读者
+// 恢复已删除成员
 export function restoreReader(readerIds) {
   return request({
     url: '/system/reader/restore/' + readerIds,
@@ -83,7 +83,7 @@ export function restoreReader(readerIds) {
   })
 }
 
-// 永久删除读者
+// 永久删除成员
 export function purgeReader(readerIds) {
   return request({
     url: '/system/reader/purge/' + readerIds,

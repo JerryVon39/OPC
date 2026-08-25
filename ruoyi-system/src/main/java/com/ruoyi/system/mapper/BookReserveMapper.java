@@ -4,7 +4,7 @@ import java.util.List;
 import com.ruoyi.system.domain.BookReserve;
 
 /**
- * 图书预约Mapper接口
+ * 活动预约Mapper接口
  */
 public interface BookReserveMapper
 {

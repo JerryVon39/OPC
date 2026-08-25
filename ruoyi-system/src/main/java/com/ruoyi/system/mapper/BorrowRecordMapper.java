@@ -12,7 +12,7 @@ public interface BorrowRecordMapper
     /** 查询报名记录 */
     public BorrowRecord selectBorrowRecordByBorrowId(Long borrowId);
 
-    /** 加锁查询报名记录（FOR UPDATE）：续借的校验与写入原子化，并发续借只有一次生效 */
+    /** 加锁查询报名记录（FOR UPDATE）：续期的校验与写入原子化，并发续期只有一次生效 */
     public BorrowRecord selectBorrowRecordByBorrowIdForUpdate(Long borrowId);
 
     /** 查询报名记录列表 */

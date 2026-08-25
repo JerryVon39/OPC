@@ -37,7 +37,7 @@ public class DashboardController extends BaseController
         return success(stats);
     }
 
-    /** 前台公开统计（匿名）：店铺数据条用（馆藏/成员/今日报名/今日订单，无敏感数据） */
+    /** 前台公开统计（匿名）：店铺数据条用（服务/成员/今日报名/今日订单，无敏感数据） */
     @Anonymous
     @GetMapping("/publicStats")
     public AjaxResult publicStats()
