@@ -499,8 +499,14 @@ function renderSection(s, no) {
     const cards = (cfg.cards || []).map(c =>
       '<div class="about-card"><div class="about-icon">' + esc(c.icon || '📄') + '</div>' +
       '<div class="about-title">' + esc(c.title) + '</div><p>' + esc(c.text) + '</p></div>').join('');
+    // 可选步骤条（cfg.steps：{title, desc} 数组，样式复用 home-steps）
+    const steps = (cfg.steps || []).map((st, si) =>
+      '<div class="hs-item"><span class="hs-no">' + ['①', '②', '③', '④', '⑤'][si] + '</span>' +
+      '<div><span class="hs-title">' + esc(st.title) + '</span><span class="hs-desc">' + esc(st.desc) + '</span></div></div>' +
+      (si < cfg.steps.length - 1 ? '<div class="hs-arrow">→</div>' : '')).join('');
     return '<section class="home-mod home-alt"><div class="container">' + secHead(no, s.title) +
-      '<div class="about-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div></div></section>';
+      '<div class="about-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div>' +
+      (steps ? '<div class="home-steps">' + steps + '</div>' : '') + '</div></section>';
   }
   if (s.template === 'tags') {
     const groups = (cfg.groups || []).map(g =>
