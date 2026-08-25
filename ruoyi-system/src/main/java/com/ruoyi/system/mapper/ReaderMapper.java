@@ -16,14 +16,14 @@ public interface ReaderMapper
      * 查询成员管理
      * 
      * @param readerId 成员管理主键
-     * @return 读者管理
+     * @return 成员管理
      */
     public Reader selectReaderByReaderId(Long readerId);
 
-    /** 行锁查询（FOR UPDATE）：并发写路径（借书/预约/下单/删除读者）串行化同一读者的操作 */
+    /** 行锁查询（FOR UPDATE）：并发写路径（报名/预约/下单/删除成员）串行化同一读者的操作 */
     public Reader selectReaderByReaderIdForUpdate(Long readerId);
 
-    /** 批量导入判重：借书证号是否已存在（uk_card_no 冲突前先友好提示） */
+    /** 批量导入判重：成员编号是否已存在（uk_card_no 冲突前先友好提示） */
     public int countByCardNo(@Param("cardNo") String cardNo);
 
     /** 邮箱判重：改邮箱/注册前友好提示（uk_email 兜底） */
@@ -34,15 +34,15 @@ public interface ReaderMapper
     /**
      * 查询成员管理列表
      * 
-     * @param reader 读者管理
-     * @return 读者管理集合
+     * @param reader 成员管理
+     * @return 成员管理集合
      */
     public List<Reader> selectReaderList(Reader reader);
 
     /**
-     * 新增读者管理
+     * 新增成员管理
      * 
-     * @param reader 读者管理
+     * @param reader 成员管理
      * @return 结果
      */
     public int insertReader(Reader reader);
@@ -50,13 +50,13 @@ public interface ReaderMapper
     /**
      * 修改读者管理
      * 
-     * @param reader 读者管理
+     * @param reader 成员管理
      * @return 结果
      */
     public int updateReader(Reader reader);
 
     /**
-     * 删除读者管理
+     * 删除成员管理
      * 
      * @param readerId 成员管理主键
      * @return 结果
@@ -64,7 +64,7 @@ public interface ReaderMapper
     public int deleteReaderByReaderId(Long readerId);
 
     /**
-     * 批量删除读者管理
+     * 批量删除成员管理
      *
      * @param readerIds 需要删除的数据主键集合
      * @return 结果
