@@ -37,6 +37,8 @@ mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DA
 # 回收站菜单恢复（幂等）：回收站页已改接两态接口（del_flag 软删），恢复菜单可见性并兜底重建
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_recycle_menu.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_menu_reorg.sql
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_recycle_cleanup.sql
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_recycle_restore.sql
 # 业务数据快照（幂等 REPLACE）：最新一次 commit 时的前台服务/文章/轮播/公告/字典等业务数据，
 # 随部署打包进库——本地改后台数据后 commit，部署方拉起即有最新内容（与 .githooks/pre-commit 联动）
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/data_snapshot.sql

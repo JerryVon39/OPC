@@ -90,7 +90,8 @@ sql/upgrade_20260826_policy.sql
 sql/upgrade_20260824_menu_cleanup.sql
 sql/upgrade_20260825_recycle_menu.sql
 sql/upgrade_20260825_menu_reorg.sql
-sql/upgrade_20260825_recycle_cleanup.sql"
+sql/upgrade_20260825_recycle_cleanup.sql
+sql/upgrade_20260825_recycle_restore.sql"
 
 DB_EXISTS=$(mysql -uroot -p"$DB_PASSWORD" -N -e "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='ry-vue'" 2>/dev/null || echo 0)
 TABLE_COUNT=0
