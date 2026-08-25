@@ -6,7 +6,7 @@
       :type="bookCount > 0 ? 'warning' : 'success'"
       :closable="false"
       show-icon
-      :title="bookCount > 0 ? '回收站暂存 ' + bookCount + ' 本图书，可还原到图书列表；清空后无法恢复。' : '回收站为空，被删除的图书会暂存 30 天，可随时在此还原。'"
+      :title="bookCount > 0 ? '回收站暂存 ' + bookCount + ' 项服务，可还原到服务列表；彻底删除后无法恢复。' : '回收站为空，被删除的服务会保留在此，可随时还原或彻底删除。'"
     />
 
     <el-row :gutter="10" class="mb8">
@@ -15,9 +15,6 @@
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete-solid" size="mini" :disabled="multiple" @click="handlePurge">彻底删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-delete" size="mini" @click="handleClear">清空回收站</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -80,18 +77,18 @@
 </template>
 
 <script>
-import { listRecycleBook, countRecycleBook, restoreRecycleBook, delRecycleBook, clearRecycleBook } from "@/api/system/recycle"
+import { listDeletedBook, restoreBook, purgeBook } from "@/api/system/book"
 import { getDicts } from "@/api/system/dict/data"
 
 export default {
   name: "RecycleBook",
   data() {
     return {
-      // 图书类型字典
+      // 服务类型字典
       bookTypeOptions: [],
       // 遮罩层
       loading: true,
-      // 选中回收站ID数组
+      // 选中服务ID数组
       ids: [],
       // 非多个禁用
       multiple: true,
@@ -99,9 +96,9 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 回收站内图书数量（顶部概览）
+      // 回收站内服务数量（顶部概览）
       bookCount: 0,
-      // 回收站图书数据
+      // 回收站服务数据
       bookList: [],
       // 查询参数
       queryParams: {
@@ -125,16 +122,16 @@ export default {
       if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
     },
-    /** 查询回收站图书数量 */
+    /** 查询回收站服务数量（取第 1 页 total 即可） */
     getCount() {
-      countRecycleBook().then(res => {
-        this.bookCount = res.data || 0
+      listDeletedBook({ pageNum: 1, pageSize: 1 }).then(res => {
+        this.bookCount = res.total || 0
       })
     },
-    /** 查询回收站图书列表 */
+    /** 查询回收站服务列表（两态软删除：del_flag='2'） */
     getList() {
       this.loading = true
-      listRecycleBook(this.queryParams).then(response => {
+      listDeletedBook(this.queryParams).then(response => {
         this.bookList = response.rows
         this.total = response.total
         this.loading = false
@@ -150,39 +147,29 @@ export default {
       this.resetForm("queryForm")
       this.handleQuery()
     },
-    // 多选框选中数据（回收站ID）
+    // 多选框选中数据（服务ID）
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.recycleId)
+      this.ids = selection.map(item => item.bookId)
       this.multiple = !selection.length
     },
-    /** 还原：优先保留原图书ID，被占用则自动分配新ID */
+    /** 还原：del_flag 置 '0'，重新对前台/列表可见 */
     handleRestore(row) {
-      const ids = row.recycleId != null ? [row.recycleId] : this.ids
-      this.$modal.confirm('确认还原选中的 ' + ids.length + ' 本图书？还原后出现在图书列表中。').then(() => {
-        return restoreRecycleBook(ids.join(','))
+      const ids = row.bookId != null ? [row.bookId] : this.ids
+      this.$modal.confirm('确认还原选中的 ' + ids.length + ' 项服务？还原后出现在服务列表中。').then(() => {
+        return restoreBook(ids.join(','))
       }).then(() => {
         this.$modal.msgSuccess('还原成功')
         this.getList()
         this.getCount()
       }).catch(() => {})
     },
-    /** 彻底删除：从回收站移除，不可恢复 */
+    /** 彻底删除：物理删除，不可恢复 */
     handlePurge(row) {
-      const ids = row.recycleId != null ? [row.recycleId] : this.ids
-      this.$modal.confirm('彻底删除后无法恢复，确认删除选中的 ' + ids.length + ' 本回收站图书？').then(() => {
-        return delRecycleBook(ids.join(','))
+      const ids = row.bookId != null ? [row.bookId] : this.ids
+      this.$modal.confirm('彻底删除后无法恢复，确认删除选中的 ' + ids.length + ' 项回收站服务？').then(() => {
+        return purgeBook(ids.join(','))
       }).then(() => {
         this.$modal.msgSuccess('删除成功')
-        this.getList()
-        this.getCount()
-      }).catch(() => {})
-    },
-    /** 清空回收站 */
-    handleClear() {
-      this.$modal.confirm('确认清空整个图书回收站？清空后所有暂存图书将无法恢复！').then(() => {
-        return clearRecycleBook()
-      }).then(() => {
-        this.$modal.msgSuccess('清空成功')
         this.getList()
         this.getCount()
       }).catch(() => {})

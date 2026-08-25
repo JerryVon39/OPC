@@ -20,6 +20,9 @@ cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
 DB_PASSWORD=${DB_PASSWORD:-password}
 FE_PORT=${FE_PORT:-8081}
+# 上传目录：Linux 默认家目录下（application.yml 的 Windows 盘符默认值在 Linux 会落到 <cwd>/D:/ruoyi/uploadPath）
+RUOYI_PROFILE=${RUOYI_PROFILE:-$HOME/ruoyi/uploadPath}
+mkdir -p "$RUOYI_PROFILE"
 mkdir -p logs
 
 # ---------- 1. Prerequisite check ----------
@@ -65,6 +68,29 @@ mysql_ready || { echo "[3/5] MySQL not ready - check DB_PASSWORD in .env"; exit 
 echo "[3/5] MySQL ready"
 
 # ---------- 4. Database init (fresh: full import / existing: idempotent upgrades) ----------
+# 幂等升级脚本全清单（与 docker/mysql-upgrade.sh 一致，另含 auth）：
+#   - purchase/recycle 旧脚本含旧名父菜单 INSERT，在业务化库上重跑会产生孤儿菜单，
+#     由清单末尾的 menu_cleanup 统一清理（getRouters NPE 防御）
+#   - auth 依赖 two_state 的 del_flag，必须排在 two_state 之后
+UPGRADES="sql/upgrade_20260818_purchase.sql
+sql/upgrade_20260819_recycle.sql
+sql/upgrade_20260819_mail.sql
+sql/upgrade_20260819_menu.sql
+sql/upgrade_20260820_cleanup.sql
+sql/upgrade_20260821_official.sql
+sql/upgrade_20260822_realcontent.sql
+sql/upgrade_20260822_cms.sql
+sql/upgrade_20260823_cms.sql
+sql/upgrade_20260824_opc_cleanup.sql
+sql/upgrade_20260824_profile.sql
+sql/upgrade_20260824_two_state.sql
+sql/upgrade_20260824_auth.sql
+sql/upgrade_20260824_contest.sql
+sql/upgrade_20260824_roles.sql
+sql/upgrade_20260826_policy.sql
+sql/upgrade_20260824_menu_cleanup.sql
+sql/upgrade_20260825_recycle_menu.sql"
+
 DB_EXISTS=$(mysql -uroot -p"$DB_PASSWORD" -N -e "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='ry-vue'" 2>/dev/null || echo 0)
 TABLE_COUNT=0
 if [ "$DB_EXISTS" != "0" ]; then
@@ -72,7 +98,7 @@ if [ "$DB_EXISTS" != "0" ]; then
 fi
 if [ "$DB_EXISTS" != "0" ] && [ "$TABLE_COUNT" = "3" ]; then
   echo "[4/5] Existing DB detected. Running idempotent upgrades..."
-  for f in sql/upgrade_20260818_purchase.sql sql/upgrade_20260819_recycle.sql sql/upgrade_20260819_mail.sql sql/upgrade_20260819_menu.sql sql/upgrade_20260820_cleanup.sql; do
+  for f in $UPGRADES; do
     if [ -f "$f" ]; then
       echo "      executing $f"
       mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }
@@ -85,6 +111,18 @@ else
     echo "      importing $f"
     mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] import $f failed"; exit 1; }
   done
+  # 全新库与 Docker 首次初始化对齐：补跑全部幂等升级（del_flag/password_hash/CMS/菜单等）+ 业务数据快照
+  echo "      applying idempotent upgrades..."
+  for f in $UPGRADES; do
+    if [ -f "$f" ]; then
+      echo "      applying $f"
+      mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }
+    fi
+  done
+  if [ -f sql/data_snapshot.sql ]; then
+    echo "      applying sql/data_snapshot.sql"
+    mysql -uroot -p"$DB_PASSWORD" ry-vue < sql/data_snapshot.sql || { echo "[4/5] data_snapshot failed"; exit 1; }
+  fi
 fi
 
 # ---------- 5. Backend (port 8080) ----------

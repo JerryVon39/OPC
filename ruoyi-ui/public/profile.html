@@ -160,6 +160,42 @@
     </div>
   </div>
 
+  <!-- 注册弹窗（与其余 11 页一致：profile 页导航「成员注册」入口依赖此 id，缺失会 TypeError） -->
+  <div id="regModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3>📝 成员注册</h3>
+      <p class="modal-tip">第一步：填写资料并设置登录密码（≥10 位，含大小写/数字/符号至少 3 类）</p>
+      <div id="regStep1">
+        <input id="regName" class="modal-input" placeholder="👤 成员姓名" />
+        <input id="regPhone" class="modal-input" placeholder="📱 手机号码" />
+        <input id="regEmail" class="modal-input" placeholder="📧 电子邮箱（必填，用于验证与通知）" />
+        <select id="regType" class="modal-input">
+          <option value="">请选择成员类型</option>
+          <option value="1">个人主理人</option>
+          <option value="2">团队</option>
+          <option value="3">企业</option>
+        </select>
+        <input id="regPwd" class="modal-input" type="password" placeholder="🔑 设置登录密码（≥10 位）" />
+        <input id="regPwd2" class="modal-input" type="password" placeholder="🔑 确认登录密码" />
+        <input id="regRemark" class="modal-input" placeholder="备注（选填）" />
+        <div class="modal-btns">
+          <button class="btn-buy" onclick="submitRegister()">下一步：获取验证码</button>
+          <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('regModal')">取消</button>
+        </div>
+      </div>
+      <div id="regStep2" style="display:none">
+        <p class="modal-tip">第二步：输入发送至邮箱的 6 位验证码完成注册</p>
+        <p style="font-size:13px">成员编号：<b id="regNewCard" style="color:#2f6fed"></b>（请牢记，登录用）</p>
+        <input id="regCode" class="modal-input" placeholder="📧 邮箱验证码（6 位）" />
+        <div class="modal-btns">
+          <button class="btn-buy" onclick="verifyRegister()">完成注册</button>
+          <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="resendRegCode()">重发验证码</button>
+        </div>
+      </div>
+      <div id="regMsg" class="modal-msg"></div>
+    </div>
+  </div>
+
   <!-- 登录弹窗（统一版：成员编号/手机号/邮箱 + 密码） -->
   <div id="loginModal" class="modal" style="display:none">
     <div class="modal-box">

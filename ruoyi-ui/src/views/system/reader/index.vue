@@ -390,6 +390,18 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 登录日志弹窗状态（必须声明在 data() 才具备响应式，否则弹窗无法打开）
+      logOpen: false,
+      logLoading: false,
+      logList: [],
+      logTotal: 0,
+      logQuery: { pageNum: 1, pageSize: 10, cardNo: '', event: '', result: '' },
+      // 重置密码弹窗状态
+      pwdOpen: false,
+      pwdSaving: false,
+      pwdRow: {},
+      pwdMode: 'invite',
+      pwdNew: '',
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -458,20 +470,10 @@ export default {
       this.open = false
       this.reset()
     },
-    // 表单重置
+    // 表单重置（弹窗状态在 data() 中维护，不再混入 form）
     reset() {
       this.form = {
         readerId: null,
-        logOpen: false,
-        logLoading: false,
-        logList: [],
-        logTotal: 0,
-        logQuery: { pageNum: 1, pageSize: 10, cardNo: '', event: '', result: '' },
-        pwdOpen: false,
-        pwdSaving: false,
-        pwdRow: {},
-        pwdMode: 'invite',
-        pwdNew: '',
         readerName: null,
         phone: null,
         email: null,

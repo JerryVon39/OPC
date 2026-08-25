@@ -65,3 +65,28 @@ export function delReader(readerId) {
     method: 'delete'
   })
 }
+
+// 查询已删除读者列表（后台回收站视图）
+export function listDeletedReader(query) {
+  return request({
+    url: '/system/reader/deletedList',
+    method: 'get',
+    params: query
+  })
+}
+
+// 恢复已删除读者
+export function restoreReader(readerIds) {
+  return request({
+    url: '/system/reader/restore/' + readerIds,
+    method: 'put'
+  })
+}
+
+// 永久删除读者
+export function purgeReader(readerIds) {
+  return request({
+    url: '/system/reader/purge/' + readerIds,
+    method: 'delete'
+  })
+}

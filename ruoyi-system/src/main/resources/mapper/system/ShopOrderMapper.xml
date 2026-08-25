@@ -87,6 +87,12 @@
         where order_id = #{orderId} and status = #{fromStatus}
     </update>
 
+    <!-- 换证号后同步订单历史快照（reissueCard 调用；否则补办后「我的订单」查不到历史） -->
+    <update id="updateCardNoSnapshot">
+        update shop_order set card_no = #{newCardNo}
+        where reader_id = #{readerId} and card_no is not null
+    </update>
+
     <delete id="deleteShopOrderByOrderId" parameterType="Long">
         delete from shop_order where order_id = #{orderId}
     </delete>

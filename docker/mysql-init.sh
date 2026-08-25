@@ -27,9 +27,15 @@ mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DA
 # 回收站三态→两态（幂等）：book/reader 加 del_flag/deleted_by/deleted_time 软删列。
 # 后端起 book/reader 查询普遍依赖 del_flag，全新库必须执行本脚本，否则报 Unknown column 'del_flag'
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_two_state.sql
+# 读者认证与邮件（幂等）：reader 加 password_hash/pwd_set/email_verified/phone_verified/last_login_time，
+# reader_login_log/mail_config/mail_template 建表、uk_email 唯一索引、登录日志/邮件通知后台菜单。
+# 依赖 two_state（内部引用 del_flag），必须排在 two_state 之后；缺它全新库读者登录/注册直接 500
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_auth.sql
 # 创客大赛报名服务条目（book_id=23，contest.html 报名入口固定引用，幂等）
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260824_contest.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260826_policy.sql
+# 回收站菜单恢复（幂等）：回收站页已改接两态接口（del_flag 软删），恢复菜单可见性并兜底重建
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260825_recycle_menu.sql
 # 业务数据快照（幂等 REPLACE）：最新一次 commit 时的前台服务/文章/轮播/公告/字典等业务数据，
 # 随部署打包进库——本地改后台数据后 commit，部署方拉起即有最新内容（与 .githooks/pre-commit 联动）
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/data_snapshot.sql

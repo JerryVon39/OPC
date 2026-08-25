@@ -28,6 +28,7 @@
             <if test="readerId != null"> and reader_id = #{readerId}</if>
             <if test="cardNo != null and cardNo != ''"> and card_no = #{cardNo}</if>
             <if test="bookName != null and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="readerName != null and readerName != ''"> and reader_name like concat('%', #{readerName}, '%')</if>
             <if test="status != null and status != ''"> and status = #{status}</if>
         </where>
         order by reserve_id asc

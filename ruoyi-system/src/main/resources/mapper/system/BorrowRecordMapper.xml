@@ -36,7 +36,14 @@
         <where>
             <if test="readerId != null"> and b.reader_id = #{readerId}</if>
             <if test="bookId != null"> and b.book_id = #{bookId}</if>
-            <if test="status != null and status != ''"> and b.status = #{status}</if>
+            <if test="status != null and status != ''">
+                <!-- 逾期（'2'）为列表返回后动态计算、不落库：筛选口径与展示口径一致 -->
+                <choose>
+                    <when test="status == '2'"> and (b.status = '2' or (b.status = '0' and b.due_date &lt; now()))</when>
+                    <when test="status == '0'"> and b.status = '0' and b.due_date &gt;= now()</when>
+                    <otherwise> and b.status = #{status}</otherwise>
+                </choose>
+            </if>
             <if test="borrowDate != null"> and b.borrow_date = #{borrowDate}</if>
             <if test="readerName != null and readerName != ''"> and COALESCE(b.reader_name, r.reader_name) like concat('%', #{readerName}, '%')</if>
             <if test="bookName != null and bookName != ''"> and COALESCE(b.book_name, k.book_name) like concat('%', #{bookName}, '%')</if>

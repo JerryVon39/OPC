@@ -92,7 +92,14 @@ public class MailConfigServiceImpl implements IMailConfigService, MailConfigProv
         }
         else
         {
-            mailConfig.setAuthCode(AesUtil.encrypt(mailConfig.getAuthCode().trim()));
+            String encrypted = AesUtil.encrypt(mailConfig.getAuthCode().trim());
+            // 无 MAIL_SECRET_KEY 时 encrypt 原样返回明文：拒绝保存，防授权码明文落库（备份/库泄露即 SMTP 失陷）
+            if (!encrypted.startsWith("enc:"))
+            {
+                throw new com.ruoyi.common.exception.ServiceException(
+                        "未配置 MAIL_SECRET_KEY，授权码将明文存储——请先在 .env 设置 MAIL_SECRET_KEY（openssl rand -hex 32）后重试");
+            }
+            mailConfig.setAuthCode(encrypted);
         }
         if (mailConfig.getFromName() != null)
         {

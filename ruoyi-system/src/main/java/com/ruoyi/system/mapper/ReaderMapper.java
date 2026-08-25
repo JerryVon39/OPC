@@ -29,6 +29,8 @@ public interface ReaderMapper
     /** 邮箱判重：改邮箱/注册前友好提示（uk_email 兜底） */
     public int countByEmail(@Param("email") String email);
 
+    public int countByPhone(@Param("phone") String phone);
+
     /**
      * 查询读者管理列表
      * 

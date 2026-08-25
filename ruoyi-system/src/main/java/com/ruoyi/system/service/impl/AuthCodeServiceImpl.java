@@ -19,9 +19,9 @@ public class AuthCodeServiceImpl implements AuthCodeService
 {
     /** 验证码本体：auth:code:{purpose}:{target} */
     private static final String PREFIX = "auth:code:";
-    /** 发送间隔闸：auth:code:throttle:{purpose}:{target} */
+    /** 发送间隔闸：auth:code:throttle:{target}（按邮箱全局，不含 purpose——防轮换 purpose 绕过 60s 节流） */
     private static final String THROTTLE_PREFIX = "auth:code:throttle:";
-    /** IP 每日计数：auth:code:ip:{purpose}:{ip} */
+    /** IP 每日计数：auth:code:ip:{ip}（按 IP 全局，不含 purpose——防轮换 purpose 绕过每日配额） */
     private static final String IP_PREFIX = "auth:code:ip:";
     /** 校验失败计数：auth:code:try:{purpose}:{target}（连续失败 5 次作废验证码，防暴力枚举） */
     private static final String TRY_PREFIX = "auth:code:try:";
@@ -47,13 +47,13 @@ public class AuthCodeServiceImpl implements AuthCodeService
             throw new ServiceException("目标邮箱不能为空");
         }
         String t = target.trim().toLowerCase();
-        // 频控 1：同目标 60 秒内只能发一条
-        if (redisCache.hasKey(THROTTLE_PREFIX + purpose + ":" + t))
+        // 频控 1：同目标（邮箱）60 秒内只能发一条，与 purpose 无关（防轮换 purpose 绕过）
+        if (redisCache.hasKey(THROTTLE_PREFIX + t))
         {
             throw new ServiceException("验证码发送过于频繁，请 60 秒后再试");
         }
-        // 频控 2：同 IP 每日上限（防批量轰炸）
-        String ipKey = IP_PREFIX + purpose + ":" + (ip == null ? "unknown" : ip);
+        // 频控 2：同 IP 每日上限，与 purpose 无关（防轮换 purpose 绕过配额批量轰炸）
+        String ipKey = IP_PREFIX + (ip == null ? "unknown" : ip);
         Integer sent = redisCache.getCacheObject(ipKey);
         if (sent != null && sent >= DAILY_IP_LIMIT)
         {
@@ -62,7 +62,7 @@ public class AuthCodeServiceImpl implements AuthCodeService
         // 生成 6 位数字验证码（SecureRandom，不可预测）
         String code = String.format("%06d", RANDOM.nextInt(1000000));
         redisCache.setCacheObject(PREFIX + purpose + ":" + t, code, TTL_MINUTES, TimeUnit.MINUTES);
-        redisCache.setCacheObject(THROTTLE_PREFIX + purpose + ":" + t, 1, SEND_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        redisCache.setCacheObject(THROTTLE_PREFIX + t, 1, SEND_INTERVAL_SECONDS, TimeUnit.SECONDS);
         if (sent == null)
         {
             redisCache.setCacheObject(ipKey, 1, 24, TimeUnit.HOURS);

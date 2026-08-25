@@ -68,11 +68,24 @@ function renderLoginState() {
 
 // ===== 登录（成员编号/手机号/邮箱 + 密码）=====
 function openLogin() { document.getElementById('loginModal').style.display = 'flex'; }
+/** 密码强度：≥10 位且含大小写字母/数字/符号至少 3 类（与后端 PasswordStrength.check 一致） */
+function passwordStrengthOk(pwd) {
+  if (!pwd || pwd.length < 10) return false;
+  let cls = 0;
+  if (/[a-z]/.test(pwd)) cls++;
+  if (/[A-Z]/.test(pwd)) cls++;
+  if (/[0-9]/.test(pwd)) cls++;
+  if (/[^a-zA-Z0-9]/.test(pwd)) cls++;
+  return cls >= 3;
+}
 async function submitLogin() {
   const card = document.getElementById('loginCard').value.trim();
   const pwd = document.getElementById('loginPwd').value;
   const msg = document.getElementById('loginMsg');
+  const btn = document.getElementById('loginSubmit');
   if (!card || !pwd) { msg.textContent = '请输入成员编号/手机号/邮箱和密码'; msg.style.color = '#c65d43'; return; }
+  if (btn && btn.disabled) return; // 防重复提交
+  if (btn) btn.disabled = true;
   try {
     const body = new URLSearchParams({ account: card, password: pwd });
     const res = await apiFetch(LOGIN_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
@@ -101,6 +114,8 @@ async function submitLogin() {
   } catch (e) {
     msg.textContent = '登录失败：' + e.message;
     msg.style.color = '#c65d43';
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -139,7 +154,7 @@ async function submitRegister() {
   if (!name || !phone || !type) { msg.textContent = '请填写姓名、手机号和成员类型'; msg.style.color = '#c65d43'; return; }
   if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（用于验证与通知）'; msg.style.color = '#c65d43'; return; }
   if (!pwd || pwd !== pwd2) { msg.textContent = '两次输入的密码不一致'; msg.style.color = '#c65d43'; return; }
-  if (pwd.length < 10) { msg.textContent = '密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; msg.style.color = '#c65d43'; return; }
+  if (!passwordStrengthOk(pwd)) { msg.textContent = '密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; msg.style.color = '#c65d43'; return; }
   try {
     // 成员编号由后端生成（防伪造/占坑）；第一步提交后向邮箱发验证码
     const res = await apiFetch(REG_API, {
@@ -220,7 +235,7 @@ async function submitReset() {
   const msg = document.getElementById('forgotMsg');
   if (!card || !code) { msg.textContent = '请输入账号和验证码'; msg.style.color = '#c65d43'; return; }
   if (!pwd || pwd !== pwd2) { msg.textContent = '两次输入的密码不一致'; msg.style.color = '#c65d43'; return; }
-  if (pwd.length < 10) { msg.textContent = '密码长度至少 10 位'; msg.style.color = '#c65d43'; return; }
+  if (!passwordStrengthOk(pwd)) { msg.textContent = '密码长度至少 10 位，且含大小写/数字/符号至少 3 类'; msg.style.color = '#c65d43'; return; }
   try {
     const body = new URLSearchParams({ account: card, code: code, newPassword: pwd });
     const res = await apiFetch(RESET_PWD_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });

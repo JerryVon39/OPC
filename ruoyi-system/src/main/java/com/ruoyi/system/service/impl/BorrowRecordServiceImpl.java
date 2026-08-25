@@ -533,6 +533,15 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
             if (com.ruoyi.system.constant.BizStatus.BORROW_OUT.equals(record.getStatus())
                     || com.ruoyi.system.constant.BizStatus.BORROW_OVERDUE.equals(record.getStatus()))
             {
+                // 动态逾期（status='0' 但已过应还日）的罚款尚未落库（仅在还书时结算）：
+                // 先结算入账，否则下面的欠费拦截必然放行，删除会把逾期产生的欠费一并抹掉
+                java.math.BigDecimal fineNow = fineService.calcFine(record);
+                if (fineNow != null && record.getFineAmount() == null)
+                {
+                    record.setFineAmount(fineNow);
+                    record.setFinePaid(com.ruoyi.system.constant.BizStatus.FINE_UNPAID);
+                    borrowRecordMapper.updateBorrowRecord(record);
+                }
                 // 有未缴罚款的逾期记录不可删：先到服务台收款，否则欠费随记录一起消失
                 if (record.getFineAmount() != null
                         && record.getFineAmount().compareTo(java.math.BigDecimal.ZERO) > 0

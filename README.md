@@ -133,9 +133,11 @@ mysql --default-character-set=utf8mb4 -uroot -p < sql/quartz.sql             # �
 mysql --default-character-set=utf8mb4 -uroot -p < sql/business_init.sql      # 业务表+字典+菜单（全新库初始化）
 
 # ⚠️ 全新库**必须**继续按 docker/mysql-init.sh 的顺序执行其余幂等升级脚本
-#   （role_init → upgrade_20260824_roles → …_cleanup → …_official → …_realcontent → …_cms → …_profile
-#    → upgrade_20260824_two_state（book/reader 加 del_flag，回收站两态）→ …_contest → …_policy），
-#   否则后端查询 book/reader 会报 Unknown column 'del_flag' 或缺列缺表。
+#   （role_init → upgrade_20260824_roles → …_cleanup → …_official → …_realcontent → …_cms(0822/0823)
+#    → …_opc_cleanup → …_profile → upgrade_20260824_two_state（book/reader 加 del_flag，回收站两态）
+#    → upgrade_20260824_auth（reader 加 password_hash 等认证列 + reader_login_log/mail_config/mail_template 表）
+#    → …_contest → …_policy → upgrade_20260824_menu_cleanup（清理孤儿菜单，防后台 getRouters NPE）），
+#   否则后端查询 book/reader 报 Unknown column 'del_flag'，读者登录/注册报 Unknown column 'password_hash'。
 
 # 已有旧库升级到当前版本时，business_init.sql 顶部建表语句在已有库会报"表已存在"，
 # 只需额外执行增量升级脚本（幂等）：

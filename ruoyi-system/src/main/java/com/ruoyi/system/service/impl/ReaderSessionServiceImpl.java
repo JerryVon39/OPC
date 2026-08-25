@@ -95,8 +95,12 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
         {
             idx = new java.util.HashSet<>();
         }
+        // 顺手清理已过期会话的残留 token（防索引无界增长）
+        pruneStaleIndex(idxKey, idx);
         idx.add(token);
         redisCache.setCacheSet(idxKey, idx);
+        // 索引本身带 TTL（随会话滑动续期刷新，见 resolveInfo），避免长期残留
+        redisCache.expire(idxKey, sessionMinutes(), TimeUnit.MINUTES);
         return token;
     }
 
@@ -122,9 +126,30 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
         {
             return null;
         }
-        // 滑动续期：刷新 TTL（值不变）
-        redisCache.setCacheObject(key, stored, sessionMinutes(), TimeUnit.MINUTES);
+        // 滑动续期 + 刷新最近活跃时间（值重写，TTL 一并重置）
+        s.setLastActiveAt(System.currentTimeMillis());
+        redisCache.setCacheObject(key, s.toStored(), sessionMinutes(), TimeUnit.MINUTES);
+        // 索引 TTL 随会话续期刷新，避免活跃成员的索引过期丢失
+        redisCache.expire(CARD_INDEX_PREFIX + s.getCardNo(), sessionMinutes(), TimeUnit.MINUTES);
         return s;
+    }
+
+    /** 从成员索引中剔除已过期（会话 key 不存在）的残留 token */
+    private void pruneStaleIndex(String idxKey, java.util.Set<String> idx)
+    {
+        if (idx.isEmpty())
+        {
+            return;
+        }
+        java.util.Iterator<String> it = idx.iterator();
+        while (it.hasNext())
+        {
+            if (!redisCache.hasKey(PREFIX + it.next()))
+            {
+                it.remove();
+            }
+        }
+        redisCache.setCacheSet(idxKey, idx);
     }
 
     @Override
@@ -269,7 +294,17 @@ public class ReaderSessionServiceImpl implements ReaderSessionService
         }
         else
         {
-            redisCache.setCacheObject(k, n + 1);
+            // 窗口内叠加：必须带剩余 TTL 重设（Redis SET 不带过期参数会清除原 TTL，导致计数永不过期、IP 被永久封禁）
+            int count = n + 1;
+            Long ttl = redisCache.getExpire(k);
+            if (ttl != null && ttl > 0)
+            {
+                redisCache.setCacheObject(k, count, ttl.intValue(), TimeUnit.SECONDS);
+            }
+            else
+            {
+                redisCache.setCacheObject(k, count, IP_RATE_WINDOW_SECONDS, TimeUnit.SECONDS);
+            }
         }
     }
 }

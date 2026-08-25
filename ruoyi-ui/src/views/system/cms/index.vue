@@ -180,6 +180,9 @@ export default {
       listArticle(this.queryParams).then(response => {
         this.articleList = response.rows
         this.total = response.total
+      }).catch(() => {
+        // 错误提示已由 request.js 拦截器统一弹出
+      }).finally(() => {
         this.loading = false
       })
     },

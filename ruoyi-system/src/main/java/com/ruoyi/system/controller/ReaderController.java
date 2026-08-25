@@ -157,11 +157,10 @@ public class ReaderController extends BaseController
             return error("尝试次数过多，请稍后再试");
         }
         Reader auth = readerService.findAuthByAccount(account.trim());
-        if (auth == null || auth.getPasswordHash() == null
-                || !com.ruoyi.common.utils.SecurityUtils.matchesPassword(password, auth.getPasswordHash()))
+        if (auth == null)
         {
             readerSessionService.recordFail(failKey);
-            loginLogService.log(account, null, ip, "login_fail", false, "密码错误");
+            loginLogService.log(account, null, ip, "login_fail", false, "账号不存在");
             return error("成员编号/手机号/邮箱或密码不正确");
         }
         // 停用/挂失的证号不允许登录前台（报名、下单前就把问题拦下）
@@ -170,14 +169,23 @@ public class ReaderController extends BaseController
             loginLogService.log(account, auth.getReaderId(), ip, "login_fail", false, "账号停用/挂失");
             return error("该成员编号已停用/挂失，请联系管理员");
         }
-        // 未设置密码（存量成员迁移）：返回专用状态码，前端引导设密流程
+        // 未设置密码（存量成员迁移）：返回专用状态码，前端引导「邮箱验证 → 设置密码」。
+        // 必须先于密码校验（passwordHash 为 NULL 时 matchesPassword 恒 false，原顺序使 601 永远不可达）
         if (!"1".equals(auth.getPwdSet()))
         {
+            loginLogService.log(account, auth.getReaderId(), ip, "login_setup", false, "首次登录引导设密");
             AjaxResult setup = AjaxResult.success();
             setup.put("code", 601);
             setup.put("msg", "首次登录请先验证邮箱并设置密码");
             setup.put("data", "AUTH_SETUP_REQUIRED");
             return setup;
+        }
+        if (auth.getPasswordHash() == null
+                || !com.ruoyi.common.utils.SecurityUtils.matchesPassword(password, auth.getPasswordHash()))
+        {
+            readerSessionService.recordFail(failKey);
+            loginLogService.log(account, auth.getReaderId(), ip, "login_fail", false, "密码错误");
+            return error("成员编号/手机号/邮箱或密码不正确");
         }
         readerSessionService.clearFail(failKey);
         readerService.touchLogin(auth.getReaderId());
@@ -225,11 +233,23 @@ public class ReaderController extends BaseController
             readerSessionService.recordFail(failKey);
             return error("手机号格式不正确（需 11 位数字）");
         }
+        // 成员类型白名单（1=个人主理人 2=团队 3=企业）；脏值会使借期/上限规则静默回退默认
+        if (!"1".equals(readerType.trim()) && !"2".equals(readerType.trim()) && !"3".equals(readerType.trim()))
+        {
+            readerSessionService.recordFail(failKey);
+            return error("请选择有效的成员类型");
+        }
         String em = trimEmail(email);
         if (em == null)
         {
             readerSessionService.recordFail(failKey);
             return error("请填写有效的电子邮箱（用于接收报名/候补通知）");
+        }
+        // 手机号判重（phone 无唯一索引，防同号多账号导致手机号登录/找回解析歧义）
+        if (readerService.findAuthByAccount(phone.trim()) != null)
+        {
+            readerSessionService.recordFail(failKey);
+            return error("该手机号已被注册，请直接登录");
         }
         // 密码强度校验（≥10 位、至少 3 类字符）
         try
@@ -295,7 +315,8 @@ public class ReaderController extends BaseController
         return success(result);
     }
 
-    /** 重发验证码（注册/找回通用）：频控由 AuthCodeService 兜底（60s 一条、IP 每日 10 条） */
+    /** 重发验证码（匿名）：仅支持注册场景（purpose 白名单防轮换绕过频控）；
+     * 目标邮箱已注册时拒绝发送（防对存量成员邮箱的邮件轰炸）；找回/改邮箱走各自的会话鉴权流程 */
     @Anonymous
     @PostMapping("/resend-code")
     public AjaxResult resendCode(String target, String purpose, jakarta.servlet.http.HttpServletRequest request)
@@ -305,9 +326,17 @@ public class ReaderController extends BaseController
         {
             return error("请输入有效的邮箱");
         }
+        if (!"register".equals(purpose))
+        {
+            return error("不支持的验证码用途");
+        }
+        if (readerService.findAuthByAccount(em) != null)
+        {
+            return error("该邮箱已注册，请直接登录");
+        }
         try
         {
-            authCodeService.sendCode(em, purpose == null ? "register" : purpose.trim(), ipOf(request));
+            authCodeService.sendCode(em, purpose, ipOf(request));
         }
         catch (Exception e)
         {
@@ -377,7 +406,8 @@ public class ReaderController extends BaseController
         Reader auth = readerService.findAuthByAccount(account.trim());
         if (auth == null || auth.getEmail() == null || auth.getEmail().isEmpty())
         {
-            return error("账号不存在或未登记邮箱");
+            // 与验证码错误统一提示，防账号枚举（与 forgotPassword 的防枚举口径一致）
+            return error("验证码不正确或已过期，请重新获取");
         }
         if (!authCodeService.verify(auth.getEmail(), "resetPwd", code))
         {
@@ -596,7 +626,8 @@ public class ReaderController extends BaseController
         return success("密码已设置，该成员需用新密码重新登录");
     }
 
-    /** 前台补办报名证（匿名）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
+    /** 前台补办报名证（登录态）：姓名+登记手机号校验 → 生成新证号（旧证号作废）
+     * 安全：要求登录会话且会话归属与补办对象一致（防仅凭"姓名+手机号"作废他人证号/强制激活挂失证号）
      * 频控：按 IP 维度（补办即换证号，防脚本批量作废他人证号） */
     @Anonymous
     @PostMapping("/applyReissue")
@@ -605,6 +636,11 @@ public class ReaderController extends BaseController
         if (readerName == null || readerName.trim().isEmpty() || phone == null || phone.trim().isEmpty())
         {
             return error("请输入姓名和登记手机号");
+        }
+        String sessionCard = readerSessionService.resolveFromRequest(request);
+        if (sessionCard == null)
+        {
+            return error("登录已失效，请重新登录");
         }
         String failKey = "reissue:" + com.ruoyi.common.utils.ip.IpUtils.getIpAddr(request);
         if (readerSessionService.isBlocked(failKey))
@@ -633,6 +669,12 @@ public class ReaderController extends BaseController
         {
             readerSessionService.recordFail(failKey);
             return error("手机号与登记信息不匹配");
+        }
+        // 会话归属必须与补办对象一致（本人补办）；防仅凭姓名+手机号作废他人证号
+        if (!sessionCard.equals(matched.getCardNo()))
+        {
+            readerSessionService.recordFail(failKey);
+            return error("只能补办本人成员编号");
         }
         readerSessionService.clearFail(failKey);
         AjaxResult ajax = AjaxResult.success();

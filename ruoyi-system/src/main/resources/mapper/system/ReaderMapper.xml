@@ -157,12 +157,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select count(1) from reader where email = #{email} and del_flag = '0'
     </select>
 
+    <!-- 手机号判重（注册前校验；phone 无唯一索引，防同号多账号导致登录/找回解析歧义） -->
+    <select id="countByPhone" parameterType="String" resultType="int">
+        select count(1) from reader where phone = #{phone} and del_flag = '0'
+    </select>
+
     <!-- 认证专用查询：含 password_hash（登录/改密/重置；普通查询不含，防泄露）
-         登录标识支持：证号 / 手机号 / 邮箱（email 与 card_no 唯一，phone 取第一条） -->
+         登录标识支持：证号 / 手机号 / 邮箱（email 与 card_no 唯一，phone 取第一条）
+         排序固定：优先已设密码的账号（可正常登录），再按 reader_id 取最早注册的——解析结果确定，防执行计划歧义 -->
     <select id="selectAuthInfo" parameterType="String" resultMap="ReaderResult">
         select reader_id, reader_name, phone, email, password_hash, pwd_set, email_verified, card_no, reader_type, sex, birth_date, status, last_login_time, del_flag
         from reader
         where del_flag = '0' and (card_no = #{account} or phone = #{account} or email = #{account})
+        order by case when pwd_set = '1' then 0 else 1 end, reader_id
         limit 1
     </select>
 

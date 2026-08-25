@@ -402,13 +402,13 @@ export default {
     getConfigKey('book.stock.warn').then(res => {
       const v = parseInt(res.msg, 10)
       if (!isNaN(v)) this.warnThreshold = v
-      // 看板"名额预警"跳转：lowStock=1 时按阈值过滤名额紧张的服务
+      // 看板"名额预警"跳转：lowStock=1 时按阈值过滤名额紧张的服务。
+      // 只发一次请求（阈值就绪后再查），避免与下方 getList 并发、慢响应覆盖快响应
       if (this.$route.query.lowStock) {
         this.queryParams.stock = this.warnThreshold
-        this.getList()
       }
+      this.getList()
     })
-    this.getList()
   },
   methods: {
     /** 封面相对路径转完整地址（http 开头的不处理） */
@@ -423,6 +423,9 @@ export default {
       listBook(this.queryParams).then(response => {
         this.bookList = response.rows
         this.total = response.total
+      }).catch(() => {
+        // 错误提示已由 request.js 拦截器统一弹出
+      }).finally(() => {
         this.loading = false
       })
     },

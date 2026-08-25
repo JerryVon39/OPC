@@ -1,6 +1,7 @@
 package com.ruoyi.system.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,14 +36,16 @@ public class FineService
             return null;
         }
         int grace = configUtil.getInt("book.fine.graceDays", 0);
-        long overdueDays = (new Date().getTime() - record.getDueDate().getTime()) / (24L * 3600 * 1000);
+        // 逾期天数向上取整（超过免罚期的部分按整天计，不满一天按一天——避免"差几分钟免罚/全额"的边界跳变）
+        long diffMs = new Date().getTime() - record.getDueDate().getTime();
+        long overdueDays = (diffMs + 24L * 3600 * 1000 - 1) / (24L * 3600 * 1000);
         if (overdueDays <= grace)
         {
             return null;
         }
         BigDecimal perDay = BigDecimal.valueOf(configUtil.getDouble("book.fine.perDay", 0.1));
         BigDecimal fine = perDay.multiply(BigDecimal.valueOf(overdueDays - grace));
-        return fine.setScale(2, BigDecimal.ROUND_HALF_UP);
+        return fine.setScale(2, RoundingMode.HALF_UP);
     }
 
     /** 欠费检查（报名前）：有未缴罚款则抛异常 */

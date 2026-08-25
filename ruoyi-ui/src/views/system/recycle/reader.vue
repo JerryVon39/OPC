@@ -6,7 +6,7 @@
       :type="readerCount > 0 ? 'warning' : 'success'"
       :closable="false"
       show-icon
-      :title="readerCount > 0 ? '回收站暂存 ' + readerCount + ' 位读者，可还原到读者列表；清空后无法恢复。' : '回收站为空，被删除的读者会暂存在这里，可随时在此还原。'"
+      :title="readerCount > 0 ? '回收站暂存 ' + readerCount + ' 位成员，可还原到成员列表；彻底删除后无法恢复。' : '回收站为空，被删除的成员会保留在此，可随时还原或彻底删除。'"
     />
 
     <el-row :gutter="10" class="mb8">
@@ -15,9 +15,6 @@
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete-solid" size="mini" :disabled="multiple" @click="handlePurge">彻底删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-delete" size="mini" @click="handleClear">清空回收站</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -74,18 +71,18 @@
 </template>
 
 <script>
-import { listRecycleReader, countRecycleReader, restoreRecycleReader, delRecycleReader, clearRecycleReader } from "@/api/system/recycle"
+import { listDeletedReader, restoreReader, purgeReader } from "@/api/system/reader"
 import { getDicts } from "@/api/system/dict/data"
 
 export default {
   name: "RecycleReader",
   data() {
     return {
-      // 读者类型字典
+      // 成员类型字典
       readerTypeOptions: [],
       // 遮罩层
       loading: true,
-      // 选中回收站ID数组
+      // 选中成员ID数组
       ids: [],
       // 非多个禁用
       multiple: true,
@@ -93,9 +90,9 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 回收站内读者数量（顶部概览）
+      // 回收站内成员数量（顶部概览）
       readerCount: 0,
-      // 回收站读者数据
+      // 回收站成员数据
       readerList: [],
       // 查询参数
       queryParams: {
@@ -113,16 +110,16 @@ export default {
     this.getList()
   },
   methods: {
-    /** 查询回收站读者数量 */
+    /** 查询回收站成员数量（取第 1 页 total 即可） */
     getCount() {
-      countRecycleReader().then(res => {
-        this.readerCount = res.data || 0
+      listDeletedReader({ pageNum: 1, pageSize: 1 }).then(res => {
+        this.readerCount = res.total || 0
       })
     },
-    /** 查询回收站读者列表 */
+    /** 查询回收站成员列表（两态软删除：del_flag='2'） */
     getList() {
       this.loading = true
-      listRecycleReader(this.queryParams).then(response => {
+      listDeletedReader(this.queryParams).then(response => {
         this.readerList = response.rows
         this.total = response.total
         this.loading = false
@@ -138,39 +135,29 @@ export default {
       this.resetForm("queryForm")
       this.handleQuery()
     },
-    // 多选框选中数据（回收站ID）
+    // 多选框选中数据（成员ID）
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.recycleId)
+      this.ids = selection.map(item => item.readerId)
       this.multiple = !selection.length
     },
-    /** 还原：优先保留原证号，被占用则自动换新证号 */
+    /** 还原：del_flag 置 '0'，重新对前台/列表可见 */
     handleRestore(row) {
-      const ids = row.recycleId != null ? [row.recycleId] : this.ids
-      this.$modal.confirm('确认还原选中的 ' + ids.length + ' 位读者？还原后出现在读者列表中。').then(() => {
-        return restoreRecycleReader(ids.join(','))
+      const ids = row.readerId != null ? [row.readerId] : this.ids
+      this.$modal.confirm('确认还原选中的 ' + ids.length + ' 位成员？还原后出现在成员列表中。').then(() => {
+        return restoreReader(ids.join(','))
       }).then(() => {
         this.$modal.msgSuccess('还原成功')
         this.getList()
         this.getCount()
       }).catch(() => {})
     },
-    /** 彻底删除：从回收站移除，不可恢复 */
+    /** 彻底删除：物理删除，不可恢复 */
     handlePurge(row) {
-      const ids = row.recycleId != null ? [row.recycleId] : this.ids
-      this.$modal.confirm('彻底删除后无法恢复，确认删除选中的 ' + ids.length + ' 位回收站读者？').then(() => {
-        return delRecycleReader(ids.join(','))
+      const ids = row.readerId != null ? [row.readerId] : this.ids
+      this.$modal.confirm('彻底删除后无法恢复，确认删除选中的 ' + ids.length + ' 位回收站成员？').then(() => {
+        return purgeReader(ids.join(','))
       }).then(() => {
         this.$modal.msgSuccess('删除成功')
-        this.getList()
-        this.getCount()
-      }).catch(() => {})
-    },
-    /** 清空回收站 */
-    handleClear() {
-      this.$modal.confirm('确认清空整个读者回收站？清空后所有暂存读者将无法恢复！').then(() => {
-        return clearRecycleReader()
-      }).then(() => {
-        this.$modal.msgSuccess('清空成功')
         this.getList()
         this.getCount()
       }).catch(() => {})

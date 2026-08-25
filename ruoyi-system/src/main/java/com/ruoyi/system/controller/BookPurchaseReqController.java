@@ -77,7 +77,9 @@ public class BookPurchaseReqController extends BaseController
         {
             return error("操作过于频繁，请稍后再试");
         }
-        // 登录态绑定：会话合法时把申请挂到该成员名下（不强制登录，匿名仍可提交）
+        // 登录态绑定：会话合法时把申请挂到该成员名下（不强制登录，匿名仍可提交）。
+        // readerId 是表单可绑定属性，未登录时必须强制置空，防伪造参数把申请"栽赃"到任意成员名下
+        bookPurchaseReq.setReaderId(null);
         String sessionCard = readerSessionService.resolveFromRequest(request);
         if (sessionCard != null)
         {

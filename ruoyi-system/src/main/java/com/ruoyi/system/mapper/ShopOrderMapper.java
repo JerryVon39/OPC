@@ -20,5 +20,8 @@ public interface ShopOrderMapper
 
     public int deleteShopOrderByOrderId(Long orderId);
 
+    public int updateCardNoSnapshot(@org.apache.ibatis.annotations.Param("readerId") Long readerId,
+            @org.apache.ibatis.annotations.Param("newCardNo") String newCardNo);
+
     public int deleteShopOrderByOrderIds(Long[] orderIds);
 }
