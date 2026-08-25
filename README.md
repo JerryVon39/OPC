@@ -92,7 +92,7 @@ scripts\start-all.bat
 
 > 💡 **镜像说明**：本项目为私有项目，镜像不推 Docker Hub——`start-all.bat` 检测到本地无 v2.1 镜像时自动 `docker compose build` 构建（首次需几分钟）。
 
-- 管理后台：`http://localhost/index.html`（默认账号 admin / admin123，首次登录请修改密码）
+- 管理后台：`http://localhost/index.html`（默认账号 admin / Ee606EcUQsgj（已随机化，首次登录请修改））
 - 官网前台：`http://localhost/home.html`
 - 停止：`scripts\stop-all.bat` / `./scripts/stop-all.sh`（数据保留，重跑 start 即恢复）
 
@@ -116,7 +116,7 @@ scripts\start-local.bat
 
 脚本自动完成：生成 `.env`（默认配置可直接启动）→ 启动/复用 MySQL 与 Redis（本机原生优先，无则自动用 Docker 拉起容器）→ 首次自动建库导入 `sql/` 初始化脚本、已有库自动跑增量升级 → 构建并启动后端（8080）→ 启动前端（8081）→ 打印访问地址。
 
-- 管理后台：`http://localhost:8081/index.html`（默认账号 admin / admin123，首次登录请修改密码）
+- 管理后台：`http://localhost:8081/index.html`（默认账号 admin / Ee606EcUQsgj（已随机化，首次登录请修改））
 - 官网前台：`http://localhost:8081/home.html`
 - 前端端口可在 `.env` 用 `FE_PORT` 修改；本机原生 MySQL/Redis 不在 PATH 时可设 `TOOLS_HOME` 指向其安装目录
 - 停止：`scripts\stop-local.bat` / `./scripts/stop-local.sh`（数据保留，重跑 start 即恢复）
@@ -162,7 +162,7 @@ npm run dev
 > 💡 **邮件通知**（可选）：新成员登记需填邮箱，报名/候补等自动发信。在项目根目录建 `.env` 文件写入
 > `MAIL_AUTH_CODE=你的QQ邮箱授权码` 和 `MAIL_USERNAME=你的发件邮箱`（启动脚本自动读取注入）；不配则邮件不发送、业务不受影响。
 
-- 后台地址：`http://localhost:8081/`（默认账号 admin / admin123）
+- 后台地址：`http://localhost:8081/`（默认账号 admin / Ee606EcUQsgj（已随机化））
 - 官网前台：`http://localhost:8081/`（根路径直达首页；旧链接 /home.html 仍可用）
 
 > 💡 前端端口在 `ruoyi-ui/vue.config.js` 中配置（默认 80，本机被占用时可改端口）。
