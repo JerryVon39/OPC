@@ -471,3 +471,100 @@ async function loadCmsBlocks(pageKey) {
     });
   });
 }
+
+// ===== 首页模块化渲染（方案 B：页面搭建驱动，静态兜底）=====
+const CMS_SECTION_API = '/prod-api/system/cmsSection/publicList?pageKey=home';
+
+function secHead(no, title, en) {
+  return '<div class="home-mod-head"><span class="home-mod-no">' + (no < 10 ? '0' + no : no) + '</span>' +
+    '<h2 class="home-mod-title">' + esc(title) + '</h2>' +
+    (en ? '<span class="home-mod-en">' + esc(en) + '</span>' : '') + '</div>';
+}
+
+function renderSection(s, no) {
+  let cfg = {};
+  try { cfg = s.configJson ? JSON.parse(s.configJson) : {}; } catch (e) { cfg = {}; }
+  if (s.template === 'hero') {
+    return '<section id="home" class="home-hero">' +
+      '<div class="home-hero-carousel"><div class="banner"><div id="bannerSlides"></div><div class="banner-dots" id="bannerDots"></div></div></div>' +
+      '<div class="home-intro">' +
+      '<h2 class="home-intro-title">清远市首个人工智能 OPC 生态社区</h2>' +
+      '<p class="home-intro-sub">一个人 + AI，把想法变成事业</p>' +
+      '<p class="home-intro-text">数智游民创新工场由清城区政府与清远星链科技合作共建，以"国企引领、民企赋能"模式运营。社区整合算力、政策、订单、人才四大资源，为 AI 时代的超级个体与一人公司提供"拎脑入驻"的创业生态。</p>' +
+      '<div class="home-intro-btns"><a class="btn-buy" href="about.html" style="text-decoration:none">走进社区</a>' +
+      '<a class="btn-buy home-btn-ghost" href="join.html" style="text-decoration:none">立即入驻</a></div>' +
+      '<div class="home-scroll-hint">▼ 向下滚动探索</div></div></section>';
+  }
+  if (s.template === 'cards') {
+    const cards = (cfg.cards || []).map(c =>
+      '<div class="about-card"><div class="about-icon">' + esc(c.icon || '📄') + '</div>' +
+      '<div class="about-title">' + esc(c.title) + '</div><p>' + esc(c.text) + '</p></div>').join('');
+    return '<section class="home-mod home-alt"><div class="container">' + secHead(no, s.title) +
+      '<div class="about-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div></div></section>';
+  }
+  if (s.template === 'tags') {
+    const groups = (cfg.groups || []).map(g =>
+      '<div class="home-plus-tags"><span class="hpt-title">' + esc(g.title) + '：</span>' +
+      (g.tags || []).map(t => '<span>' + esc(t) + '</span>').join('') + '</div>').join('');
+    return '<section class="home-mod home-alt2"><div class="container">' + secHead(no, s.title) + groups + '</div></section>';
+  }
+  if (s.template === 'news') {
+    return '<section class="home-mod"><div class="container">' + secHead(no, s.title, 'NEWS') +
+      '<div id="newsList" class="news-list"><div class="loading">加载中…</div></div></div></section>';
+  }
+  if (s.template === 'timeline') {
+    const items = (cfg.items || []).map(it =>
+      '<div class="tl-item"><div class="tl-date">' + esc(it.date) + '</div>' +
+      '<div class="tl-title">' + esc(it.title) + '</div><div class="tl-desc">' + esc(it.desc) + '</div></div>').join('');
+    return '<section class="home-mod home-alt3"><div class="container">' + secHead(no, s.title) +
+      '<div class="timeline">' + items + '</div></div></section>';
+  }
+  if (s.template === 'contact') {
+    const items = (cfg.items || []).map(it =>
+      '<div class="tl-item"><div class="tl-date">' + esc(it.date) + '</div>' +
+      '<div class="tl-title">' + esc(it.title) + '</div><div class="tl-desc">' + esc(it.desc) + '</div></div>').join('');
+    return '<section class="home-mod home-deep"><div class="container">' + secHead(no, s.title, 'MILESTONES & CONTACT') +
+      '<div class="home-merge"><div class="timeline" style="flex:1.1;max-width:560px">' + items + '</div>' +
+      '<div style="flex:1;max-width:420px"><div class="contact-list">' +
+      '<div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>' +
+      '<div class="contact-item"><span class="c-icon">📞</span><div><div class="c-label">电话</div><div class="c-value">0763-3391888</div></div></div>' +
+      '<div class="contact-item"><span class="c-icon">💬</span><div><div class="c-label">公众号</div><div class="c-value">互动世界</div></div></div>' +
+      '<div class="contact-item"><span class="c-icon">📱</span><div><div class="c-label">视频号</div><div class="c-value">互动AI世界</div></div></div>' +
+      '</div></div></div></div></section>';
+  }
+  if (s.template === 'cta' || s.template === 'banner_text') {
+    const img = s.template === 'banner_text' && cfg.image
+      ? '<img src="' + esc(/^https?:\/\//.test(cfg.image) ? cfg.image : '/prod-api' + cfg.image) + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:14px" />' : '';
+    return '<section class="home-cta"><div class="home-cta-inner">' + img +
+      '<h3>' + esc(cfg.title || '') + '</h3>' +
+      (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
+      (cfg.btnText ? '<a class="btn-buy home-cta-btn" href="' + esc(cfg.btnLink || '#') + '">' + esc(cfg.btnText) + '</a>' : '') +
+      '</div></section>';
+  }
+  // text：纯文本段落
+  return '<section class="home-mod home-alt3"><div class="container">' + secHead(no, s.title) +
+    '<div style="font-size:15px;line-height:2;color:var(--text)">' + esc(cfg.text || '') + '</div></div></section>';
+}
+
+async function loadHomeSections() {
+  const box = document.getElementById('homeSections');
+  if (!box) return;
+  let list = [];
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(CMS_SECTION_API, { signal: ctrl.signal });
+    clearTimeout(timer);
+    const d = await res.json();
+    if (d.code === 200) list = d.data || [];
+  } catch (e) { return; } // 失败/超时：保留静态模块
+  if (!list.length) return;
+  let no = 0;
+  box.innerHTML = list.map(s => { no += 1; return renderSection(s, no); }).join('');
+  const stat = document.getElementById('homeStatic');
+  if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底（区块槽位重新定位到动态元素）
+  // 动态 hero：重新拉取轮播（复用 home.html 暴露的函数）
+  if (window.__loadBanners) window.__loadBanners();
+  // 区块覆盖重新应用（此时只命中动态元素）
+  if (window.CMS_BLOCK_SLOTS) loadCmsBlocks('home');
+}

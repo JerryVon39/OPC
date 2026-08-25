@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.CmsPageSectionMapper">
+
+    <resultMap type="CmsPageSection" id="CmsPageSectionResult">
+        <result property="sectionId"  column="section_id"  />
+        <result property="pageKey"    column="page_key"    />
+        <result property="sectionKey" column="section_key" />
+        <result property="template"   column="template"    />
+        <result property="title"      column="title"       />
+        <result property="configJson" column="config_json" />
+        <result property="sort"       column="sort"        />
+        <result property="visible"    column="visible"     />
+        <result property="updateBy"   column="update_by"   />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectCmsPageSectionVo">
+        select section_id, page_key, section_key, template, title, config_json, sort, visible, update_by, update_time
+        from cms_page_section
+    </sql>
+
+    <select id="selectCmsPageSectionList" parameterType="CmsPageSection" resultMap="CmsPageSectionResult">
+        <include refid="selectCmsPageSectionVo"/>
+        <where>
+            <if test="pageKey != null and pageKey != ''"> and page_key = #{pageKey}</if>
+            <if test="template != null and template != ''"> and template = #{template}</if>
+        </where>
+        order by sort asc, section_id asc
+    </select>
+
+    <select id="selectPublicSectionList" parameterType="String" resultMap="CmsPageSectionResult">
+        <include refid="selectCmsPageSectionVo"/>
+        where visible = '0' and page_key = #{pageKey}
+        order by sort asc, section_id asc
+    </select>
+
+    <select id="selectCmsPageSectionBySectionId" parameterType="Long" resultMap="CmsPageSectionResult">
+        <include refid="selectCmsPageSectionVo"/>
+        where section_id = #{sectionId}
+    </select>
+
+    <select id="selectCmsPageSectionBySectionKey" parameterType="String" resultMap="CmsPageSectionResult">
+        <include refid="selectCmsPageSectionVo"/>
+        where section_key = #{sectionKey}
+    </select>
+
+    <select id="selectNeighborSection" resultMap="CmsPageSectionResult">
+        <include refid="selectCmsPageSectionVo"/>
+        where page_key = #{pageKey}
+        <if test="dir == 'up'"> and sort &lt; #{sort} order by sort desc limit 1</if>
+        <if test="dir == 'down'"> and sort &gt; #{sort} order by sort asc limit 1</if>
+    </select>
+
+    <insert id="insertCmsPageSection" parameterType="CmsPageSection" useGeneratedKeys="true" keyProperty="sectionId">
+        insert into cms_page_section
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="pageKey != null">page_key,</if>
+            <if test="sectionKey != null">section_key,</if>
+            <if test="template != null">template,</if>
+            <if test="title != null">title,</if>
+            <if test="configJson != null">config_json,</if>
+            <if test="sort != null">sort,</if>
+            <if test="visible != null">visible,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="pageKey != null">#{pageKey},</if>
+            <if test="sectionKey != null">#{sectionKey},</if>
+            <if test="template != null">#{template},</if>
+            <if test="title != null">#{title},</if>
+            <if test="configJson != null">#{configJson},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="visible != null">#{visible},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateCmsPageSection" parameterType="CmsPageSection">
+        update cms_page_section
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="pageKey != null">page_key = #{pageKey},</if>
+            <if test="sectionKey != null">section_key = #{sectionKey},</if>
+            <if test="template != null">template = #{template},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="configJson != null">config_json = #{configJson},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="visible != null">visible = #{visible},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where section_id = #{sectionId}
+    </update>
+
+    <delete id="deleteCmsPageSectionBySectionIds" parameterType="String">
+        delete from cms_page_section where section_id in
+        <foreach item="sectionId" collection="array" open="(" separator="," close=")">
+            #{sectionId}
+        </foreach>
+    </delete>
+</mapper>

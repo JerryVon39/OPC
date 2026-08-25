@@ -39,6 +39,9 @@
     </div>
   </div>
 
+  <!-- 模块化渲染容器（页面搭建动态渲染；失败/空时保留下方静态模块兜底） -->
+  <div id="homeSections"></div>
+  <div id="homeStatic">
   <!-- ================= ① Hero：轮播（小）+ 公司整体简介 ================= -->
   <section id="home" class="home-hero">
     <div class="home-hero-carousel">
@@ -232,6 +235,8 @@
     </div>
   </section>
 
+  </div><!-- /homeStatic（模块化渲染成功时移除，静态模块兜底） -->
+
   <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
@@ -340,6 +345,7 @@
     ]
   };
   loadCmsBlocks('home');
+  loadHomeSections(); // 模块化渲染（页面搭建驱动；失败/空时静态模块兜底）
 </script>
 <script>
   // ===== 接口地址（匿名公开接口）=====
@@ -426,6 +432,9 @@
     };
     initBanner();
   }
+
+  // 暴露给 site.js 的模块化渲染器复用（页面搭建动态 hero 时重新拉取轮播）
+  window.__loadBanners = loadBanners;
 
   // ===== 新书上架判断（最近 7 天入库）=====
   function isNewBook(b) {

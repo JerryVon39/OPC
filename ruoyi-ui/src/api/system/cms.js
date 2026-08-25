@@ -216,3 +216,35 @@ export function delCategory(categoryId) {
     method: 'delete'
   })
 }
+
+// ===== 首页模块（页面搭建 cms_page_section）=====
+
+// 查询模块列表
+export function listSection(query) {
+  return request({ url: '/system/cmsSection/list', method: 'get', params: query })
+}
+
+// 查询模块详情
+export function getSection(sectionId) {
+  return request({ url: '/system/cmsSection/' + sectionId, method: 'get' })
+}
+
+// 新增模块
+export function addSection(data) {
+  return request({ url: '/system/cmsSection', method: 'post', data: data })
+}
+
+// 修改模块
+export function updateSection(data) {
+  return request({ url: '/system/cmsSection', method: 'put', data: data })
+}
+
+// 删除模块
+export function delSection(sectionIds) {
+  return request({ url: '/system/cmsSection/' + sectionIds, method: 'delete' })
+}
+
+// 上移/下移
+export function moveSection(sectionId, dir) {
+  return request({ url: '/system/cmsSection/move/' + sectionId + '/' + dir, method: 'put' })
+}
