@@ -485,12 +485,16 @@ function renderSection(s, no) {
   let cfg = {};
   try { cfg = s.configJson ? JSON.parse(s.configJson) : {}; } catch (e) { cfg = {}; }
   if (s.template === 'hero') {
+    // 首屏文案配置驱动（页面搭建可改；无配置时用默认文案兜底）
+    const hTitle = cfg.title || '清远市首个人工智能 OPC 生态社区';
+    const hSub = cfg.subtitle || '一个人 + AI，把想法变成事业';
+    const hText = cfg.content || '数智游民创新工场由清城区政府与清远星链科技合作共建，以"国企引领、民企赋能"模式运营，为 AI 时代的超级个体与一人公司提供"拎脑入驻"的创业生态。';
     return '<section id="home" class="home-hero">' +
       '<div class="home-hero-carousel"><div class="banner"><div id="bannerSlides"></div><div class="banner-dots" id="bannerDots"></div></div></div>' +
       '<div class="home-intro">' +
-      '<h2 class="home-intro-title">清远市首个人工智能 OPC 生态社区</h2>' +
-      '<p class="home-intro-sub">一个人 + AI，把想法变成事业</p>' +
-      '<p class="home-intro-text">数智游民创新工场由清城区政府与清远星链科技合作共建，以"国企引领、民企赋能"模式运营。社区整合算力、政策、订单、人才四大资源，为 AI 时代的超级个体与一人公司提供"拎脑入驻"的创业生态。</p>' +
+      '<h2 class="home-intro-title">' + esc(hTitle) + '</h2>' +
+      '<p class="home-intro-sub">' + esc(hSub) + '</p>' +
+      '<p class="home-intro-text">' + esc(hText) + '</p>' +
       '<div class="home-intro-btns"><a class="btn-buy" href="about.html" style="text-decoration:none">走进社区</a>' +
       '<a class="btn-buy home-btn-ghost" href="join.html" style="text-decoration:none">立即入驻</a></div>' +
       '<div class="home-scroll-hint">▼ 向下滚动探索</div></div></section>';
@@ -596,8 +600,7 @@ async function loadHomeSections() {
   if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底（区块槽位重新定位到动态元素）
   // 动态 hero：重新拉取轮播（复用 home.html 暴露的函数）
   if (window.__loadBanners) window.__loadBanners();
-  // 区块覆盖重新应用（此时只命中动态元素）
-  if (window.CMS_BLOCK_SLOTS) loadCmsBlocks('home');
+  // 首页内容已统一由页面搭建管理（home-* 区块已停用），无需再应用区块覆盖
   // 滚动动画/全屏翻页重新绑定动态模块（home.html 暴露的可重跑函数）
   if (window.__initHomeAnimations) window.__initHomeAnimations();
 }

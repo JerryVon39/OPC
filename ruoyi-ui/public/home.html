@@ -316,37 +316,9 @@
 
 <script src="js/site.js"></script>
 <script>
-  // CMS 区块槽位声明（第二批）：后台「区块管理」可改；内容留空则保持静态原样
-  window.CMS_BLOCK_SLOTS = {
-    'home-intro': [
-      { field: 'title', sel: '.home-intro-title' },
-      { field: 'subtitle', sel: '.home-intro-sub' },
-      { field: 'content', sel: '.home-intro-text' }
-    ],
-    'home-concept': [
-      { field: 'content', sel: '#concept .about-cards', mode: 'html' }
-    ],
-    'home-feature-1': [
-      { field: 'title', sel: '#empower .about-card:nth-child(1) .about-title' },
-      { field: 'content', sel: '#empower .about-card:nth-child(1) p' }
-    ],
-    'home-feature-2': [
-      { field: 'title', sel: '#empower .about-card:nth-child(2) .about-title' },
-      { field: 'content', sel: '#empower .about-card:nth-child(2) p' }
-    ],
-    'home-feature-3': [
-      { field: 'title', sel: '#empower .about-card:nth-child(3) .about-title' },
-      { field: 'content', sel: '#empower .about-card:nth-child(3) p' }
-    ],
-    'home-ecosystem': [
-      { field: 'title', sel: '#ecosystem .home-mod-title' },
-      { field: 'subtitle', sel: '#ecosystem .home-mod-en' },
-      { field: 'content', sel: '#ecosystem .ecosystem-tags', mode: 'html' }
-    ]
-  };
-  loadCmsBlocks('home');
-  loadHomeSections(); // 模块化渲染（页面搭建驱动；失败/空时静态模块兜底）
+  loadHomeSections(); // 首页模块化渲染（页面搭建驱动；失败/空时静态模块兜底）
 </script>
+<script>
 <script>
   // ===== 接口地址（匿名公开接口）=====
   const API = '/prod-api/system/book/list';

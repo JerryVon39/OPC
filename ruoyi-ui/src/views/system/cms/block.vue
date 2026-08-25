@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <!-- 顶部说明：面向非程序员 -->
-    <el-alert type="info" :closable="false" show-icon title="区块 = 前台页面上可改的文案：编辑保存后前台刷新即生效；内容留空则前台保持原样。改错了可在「历史版本」里一键回滚。" />
+    <el-alert type="info" :closable="false" show-icon title="区块 = 栏目页面上可改的文案（首屏副标语/结尾引导语）：编辑保存后前台刷新即生效；内容留空则前台保持原样。改错了可在「历史版本」里一键回滚。首页内容请到「页面搭建」管理（模块增删/排序/文案都在那里）。" />
 
     <el-tabs v-model="activePage" @tab-click="getList">
       <el-tab-pane v-for="p in pages" :key="p.key" :label="p.name" :name="p.key" />
@@ -61,7 +61,6 @@ export default {
   data() {
     return {
       pages: [
-        { key: 'home', name: '首页' },
         { key: 'about', name: '走进社区' },
         { key: 'join', name: '入驻招商' },
         { key: 'talent', name: '人才培养' },
