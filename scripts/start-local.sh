@@ -73,7 +73,6 @@ echo "[3/5] MySQL ready"
 #     由清单末尾的 menu_cleanup 统一清理（getRouters NPE 防御）
 #   - auth 依赖 two_state 的 del_flag，必须排在 two_state 之后
 UPGRADES="sql/upgrade_20260818_purchase.sql
-sql/upgrade_20260819_recycle.sql
 sql/upgrade_20260819_mail.sql
 sql/upgrade_20260819_menu.sql
 sql/upgrade_20260820_cleanup.sql
@@ -90,7 +89,8 @@ sql/upgrade_20260824_roles.sql
 sql/upgrade_20260826_policy.sql
 sql/upgrade_20260824_menu_cleanup.sql
 sql/upgrade_20260825_recycle_menu.sql
-sql/upgrade_20260825_menu_reorg.sql"
+sql/upgrade_20260825_menu_reorg.sql
+sql/upgrade_20260825_recycle_cleanup.sql"
 
 DB_EXISTS=$(mysql -uroot -p"$DB_PASSWORD" -N -e "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='ry-vue'" 2>/dev/null || echo 0)
 TABLE_COUNT=0

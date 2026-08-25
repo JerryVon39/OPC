@@ -502,58 +502,6 @@ UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu
 UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='成员服务') tmp), order_num=2 WHERE menu_name='活动预约';
 UPDATE sys_menu SET parent_id=(SELECT menu_id FROM (SELECT menu_id FROM sys_menu WHERE menu_name='合作经营') tmp), order_num=1 WHERE menu_name='入驻申请';
 
--- ============================================
--- 回收站（幂等）：防止管理员误删服务/成员，删除时快照进回收站表，支持还原/彻底删除
--- 结构 = 原表字段 + deleted_by/deleted_time；还原优先保原主键（被占用则自动换新）
--- 注意：仅建表，不插菜单（回收站菜单在存量库由 upgrade 脚本停用）
--- ============================================
-CREATE TABLE IF NOT EXISTS `book_recycle` (
-  `recycle_id` bigint NOT NULL AUTO_INCREMENT COMMENT '回收站ID',
-  `book_id` bigint DEFAULT NULL COMMENT '原服务ID',
-  `book_name` varchar(100) NOT NULL COMMENT '服务名称',
-  `author` varchar(50) DEFAULT NULL COMMENT '主办方',
-  `book_type` varchar(10) DEFAULT NULL COMMENT '服务分类(字典:book_type)',
-  `publisher` varchar(100) DEFAULT NULL COMMENT '合作机构',
-  `price` decimal(10,2) DEFAULT NULL COMMENT '费用(元)',
-  `publish_date` date DEFAULT NULL COMMENT '上线时间',
-  `stock` int DEFAULT '0' COMMENT '剩余名额',
-  `status` char(1) DEFAULT '0' COMMENT '状态(0招募中 1已结束)',
-  `cover` varchar(255) DEFAULT NULL COMMENT '封面图片',
-  `isbn` varchar(20) DEFAULT NULL COMMENT '服务编号',
-  `intro` varchar(1000) DEFAULT NULL COMMENT '服务介绍',
-  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  `deleted_by` varchar(64) DEFAULT '' COMMENT '删除人',
-  `deleted_time` datetime DEFAULT NULL COMMENT '删除时间',
-  PRIMARY KEY (`recycle_id`),
-  KEY `idx_book_recycle_name` (`book_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='服务回收站';
-
-CREATE TABLE IF NOT EXISTS `reader_recycle` (
-  `recycle_id` bigint NOT NULL AUTO_INCREMENT COMMENT '回收站ID',
-  `reader_id` bigint DEFAULT NULL COMMENT '原成员ID',
-  `reader_name` varchar(50) NOT NULL COMMENT '成员姓名',
-  `phone` varchar(20) DEFAULT NULL COMMENT '手机号码',
-  `email` varchar(50) DEFAULT NULL COMMENT '电子邮箱',
-  `card_no` varchar(30) DEFAULT NULL COMMENT '成员证号',
-  `reader_type` varchar(10) DEFAULT NULL COMMENT '成员类型',
-  `sex` char(1) DEFAULT '0' COMMENT '性别(0男 1女 2未知)',
-  `birth_date` date DEFAULT NULL COMMENT '出生日期',
-  `status` char(1) DEFAULT '0' COMMENT '状态(0正常 1停用)',
-  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  `deleted_by` varchar(64) DEFAULT '' COMMENT '删除人',
-  `deleted_time` datetime DEFAULT NULL COMMENT '删除时间',
-  PRIMARY KEY (`recycle_id`),
-  KEY `idx_reader_recycle_name` (`reader_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='成员回收站';
-
 -- ---------- 幂等补索引：shop_order 订单号唯一（README 承诺的唯一约束，老库补齐） ----------
 SET @so1 = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='shop_order' AND index_name='uk_order_no');
 SET @so2 = IF(@so1=0, 'ALTER TABLE shop_order ADD UNIQUE INDEX uk_order_no (order_no)', 'SELECT 1');
