@@ -520,6 +520,8 @@
     document.getElementById('navMore').classList.remove('open');
   });
 
+  // ===== 首页滚动动画 + 全屏翻页（封装为可重跑函数：静态兜底与模块化渲染后均调用）=====
+  window.__initHomeAnimations = function () {
   // ===== 首页滚动动画（模块进入视口淡入上移；低动效偏好自动禁用）=====
   (function () {
     const els = document.querySelectorAll('.home-mod > .container, .home-intro, .home-cta-inner');
@@ -567,6 +569,8 @@
       }
     }, { passive: true });
   })();
+  };
+  __initHomeAnimations(); // 静态兜底场景立即绑定；模块化渲染后由 loadHomeSections 重新调用
 
   // ===== 初始化 =====
   try {

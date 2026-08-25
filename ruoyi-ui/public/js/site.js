@@ -592,4 +592,6 @@ async function loadHomeSections() {
   if (window.__loadBanners) window.__loadBanners();
   // 区块覆盖重新应用（此时只命中动态元素）
   if (window.CMS_BLOCK_SLOTS) loadCmsBlocks('home');
+  // 滚动动画/全屏翻页重新绑定动态模块（home.html 暴露的可重跑函数）
+  if (window.__initHomeAnimations) window.__initHomeAnimations();
 }
