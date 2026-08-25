@@ -635,3 +635,9 @@ textarea.form-input { resize: vertical; }
 
 /* CTA 色块完整包裹文字（修复内边距缺失） */
 .home-cta-inner { padding: 46px 28px; max-width: 920px; margin: 0 auto; text-align: center; }
+
+/* ===== 首页模块背景四色相交替（2026-08-25，加大相邻模块色差）===== */
+.home-mod.home-t1 { background: #eef3fb; }  /* 冷蓝白 */
+.home-mod.home-t2 { background: #e7f1ea; }  /* 浅绿 */
+.home-mod.home-t3 { background: #f9f2e7; }  /* 暖米 */
+.home-mod.home-t4 { background: #eef0f5; }  /* 灰蓝 */

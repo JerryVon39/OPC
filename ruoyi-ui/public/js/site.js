@@ -485,7 +485,7 @@ function renderSection(s, no) {
   let cfg = {};
   try { cfg = s.configJson ? JSON.parse(s.configJson) : {}; } catch (e) { cfg = {}; }
   // 背景色交替（品牌理念/三大赋能/产业生态/新闻/联系 依次轮换，避免同色堆叠）
-  const BG_CYCLE = ['home-alt', 'home-alt2', 'home-alt3', 'home-mod', 'home-alt', 'home-alt2', 'home-alt3', 'home-mod'];
+  const BG_CYCLE = ['home-t1', 'home-t2', 'home-t3', 'home-t4', 'home-t1', 'home-t2', 'home-t3', 'home-t4'];
   const bg = BG_CYCLE[(no - 1) % BG_CYCLE.length];
   if (s.template === 'hero') {
     // 首屏文案配置驱动（页面搭建可改；无配置时用默认文案兜底）
@@ -561,7 +561,7 @@ function renderSection(s, no) {
     const items = (cfg.items || []).map(it =>
       '<div class="tl-item"><div class="tl-date">' + esc(it.date) + '</div>' +
       '<div class="tl-title">' + esc(it.title) + '</div><div class="tl-desc">' + esc(it.desc) + '</div></div>').join('');
-    return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title, 'MILESTONES & CONTACT') +
+    return '<section id="contact" class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title, 'MILESTONES & CONTACT') +
       '<div class="home-merge"><div class="timeline" style="flex:1.1;max-width:560px">' + items + '</div>' +
       '<div style="flex:1;max-width:420px"><div class="contact-list">' +
       '<div class="contact-item"><span class="c-icon">📍</span><div><div class="c-label">地址</div><div class="c-value">清远国家高新技术产业开发区天安智谷产业园 B6 栋、T1 栋 1105</div></div></div>' +
