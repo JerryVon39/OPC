@@ -291,16 +291,31 @@ function toggleMoreMenu(e) {
 function goAdmin() { location.href = '/index'; }
 
 // 按当前 URL 自动高亮导航（各页不再手工标 active）
+// 锚点互斥：URL 带锚点时只高亮同锚点链接（如 home.html#contact 联系我们），
+// 无锚点链接（如首页 home.html）不再参与匹配——避免「首页」与「联系我们」
+// 指向同一文件时同步高亮；无锚点 URL 则按文件名匹配
 function initNav() {
-  const path = location.pathname.split('/').pop() || 'home.html';
+  const raw = location.pathname.split('/').pop() || 'home.html';
+  const path = raw.split('#')[0];
+  const anchor = location.hash; // '' 或 '#contact'
   const links = document.querySelectorAll('.nav-links a');
+  links.forEach(a => a.classList.remove('active')); // 先清旧高亮（hashchange 重跑时防止残留）
   links.forEach(a => {
-    const href = (a.getAttribute('href') || '').split('#')[0];
-    if (href === path || (path === 'index.html' && href === 'home.html')) {
-      a.classList.add('active');
+    const href = a.getAttribute('href') || '';
+    const file = href.split('#')[0];
+    const frag = href.includes('#') ? href.slice(href.indexOf('#')) : '';
+    const isHomeAlias = (path === 'index.html' || path === '') && file === 'home.html';
+    if (anchor) {
+      if (frag === anchor) {
+        a.classList.add('active'); // 带锚点 URL：只高亮锚点链接（「联系我们」）
+      }
+    } else if (!frag && (file === path || isHomeAlias)) {
+      a.classList.add('active'); // 无锚点 URL：按文件名匹配（「首页」等）
     }
   });
 }
+// 同页锚点跳转（#contact）不重载页面：hash 变化时重新高亮
+window.addEventListener('hashchange', initNav);
 
 // 点击页面其他区域关闭"更多"下拉
 document.addEventListener('click', function (e) {
