@@ -1,10 +1,6 @@
-# 官网前台页允许抓取；仅排除后台管理（/index）、动态接口与暂隐藏栏目
+# 官网前台页允许抓取；仅排除后台管理（/index）、动态接口与上传资源
 User-agent: *
 Allow: /
 Disallow: /index
 Disallow: /prod-api
 Disallow: /profile
-# 暂隐藏栏目：服务项目 / 创客大赛 / 服务详情（待内容确认后再放开）
-Disallow: /services.html
-Disallow: /contest.html
-Disallow: /service.html
