@@ -20,8 +20,8 @@
     </el-row>
 
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="80px">
-      <el-form-item label="读者姓名" prop="readerName">
-        <el-input v-model="queryParams.readerName" placeholder="请输入读者姓名" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="成员姓名" prop="readerName">
+        <el-input v-model="queryParams.readerName" placeholder="请输入成员姓名" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -31,7 +31,7 @@
 
     <el-table v-loading="loading" :data="readerList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="读者姓名" align="center" prop="readerName" min-width="100" />
+      <el-table-column label="成员姓名" align="center" prop="readerName" min-width="100" />
       <el-table-column label="手机号" align="center" prop="phone" width="130" />
       <el-table-column label="借书证号" align="center" prop="cardNo" width="160" />
       <el-table-column label="类型" align="center" prop="readerType" width="90">

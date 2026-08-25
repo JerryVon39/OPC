@@ -20,8 +20,8 @@
     </el-row>
 
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="图书名称" prop="bookName">
-        <el-input v-model="queryParams.bookName" placeholder="请输入图书名称" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="服务名称" prop="bookName">
+        <el-input v-model="queryParams.bookName" placeholder="请输入服务名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -37,19 +37,19 @@
           <span v-else>📕</span>
         </template>
       </el-table-column>
-      <el-table-column label="图书名称" align="center" prop="bookName" min-width="140" />
-      <el-table-column label="作者" align="center" prop="author" />
-      <el-table-column label="图书类型" align="center" prop="bookType" width="90">
+      <el-table-column label="服务名称" align="center" prop="bookName" min-width="140" />
+      <el-table-column label="主办方" align="center" prop="author" />
+      <el-table-column label="服务分类" align="center" prop="bookType" width="90">
         <template slot-scope="scope">
           <dict-tag :options="bookTypeOptions" :value="scope.row.bookType" />
         </template>
       </el-table-column>
-      <el-table-column label="价格(元)" align="center" prop="price" width="90" />
-      <el-table-column label="库存" align="center" prop="stock" width="70" />
+      <el-table-column label="费用(元)" align="center" prop="price" width="90" />
+      <el-table-column label="剩余名额" align="center" prop="stock" width="80" />
       <el-table-column label="原状态" align="center" width="80">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">在架</el-tag>
-          <el-tag v-else type="info" size="mini">下架</el-tag>
+          <el-tag v-if="scope.row.status === '0'" type="success" size="mini">招募中</el-tag>
+          <el-tag v-else type="info" size="mini">已结束</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="删除人" align="center" prop="deletedBy" width="100" />
