@@ -200,7 +200,7 @@ public class BookServiceImpl implements IBookService
             {
                 if ("0".equals(r.getStatus()) || "2".equals(r.getStatus()))
                 {
-                    throw new com.ruoyi.common.exception.ServiceException("《" + (r.getBookName() == null ? "该图书" : r.getBookName()) + "》存在未完成的报名记录，无法删除");
+                    throw new com.ruoyi.common.exception.ServiceException("《" + (r.getBookName() == null ? "该服务" : r.getBookName()) + "》存在未完成的报名记录，无法删除");
                 }
             }
             // 有待处理订单的服务不可删
