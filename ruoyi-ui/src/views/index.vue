@@ -34,10 +34,12 @@
             <span>⚡ 快捷入口</span>
           </div>
           <div class="quick-links">
-            <el-button type="primary" size="medium" icon="el-icon-notebook-2" @click="go('/content/book')">服务信息</el-button>
-            <el-button type="warning" size="medium" icon="el-icon-reading" @click="go('/member/borrow')">报名管理</el-button>
-            <el-button type="success" size="medium" icon="el-icon-shopping-cart-full" @click="go('/member/purchase')">入驻申请</el-button>
+            <el-button type="primary" size="medium" icon="el-icon-document-add" @click="go('/content/article')">发文章</el-button>
+            <el-button type="warning" size="medium" icon="el-icon-edit" @click="go('/content/block')">改区块</el-button>
+            <el-button type="success" size="medium" icon="el-icon-notebook-2" @click="go('/content/book')">服务信息</el-button>
+            <el-button type="danger" size="medium" icon="el-icon-reading" @click="go('/member/borrow')">报名管理</el-button>
             <el-button type="info" size="medium" icon="el-icon-user" @click="go('/member/reader')">成员管理</el-button>
+            <el-button type="primary" plain size="medium" icon="el-icon-shopping-cart-full" @click="go('/member/purchase')">入驻申请</el-button>
           </div>
           <div class="card-header sub-header">🏷️ 服务分类</div>
           <div class="type-list">
@@ -63,29 +65,69 @@
       </div>
       <el-empty v-else description="名额充足，无需补充" :image-size="60"></el-empty>
     </el-card>
+
+    <!-- 最近编辑（文章/区块各 5 条，点击直达编辑） -->
+    <el-row :gutter="16">
+      <el-col :xs="24" :sm="12">
+        <el-card shadow="never" class="section-card">
+          <div slot="header" class="card-header">
+            <span>📝 最近编辑文章</span>
+            <el-button type="text" size="mini" @click="go('/content/article')">更多 →</el-button>
+          </div>
+          <div v-if="recentArticles.length" class="recent-list">
+            <div v-for="a in recentArticles" :key="a.articleId" class="recent-item" @click="go('/content/article')">
+              <span class="recent-name">{{ a.title }}</span>
+              <span class="recent-time">{{ a.updateTime || '' }}</span>
+            </div>
+          </div>
+          <el-empty v-else description="还没有文章" :image-size="50"></el-empty>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12">
+        <el-card shadow="never" class="section-card">
+          <div slot="header" class="card-header">
+            <span>🧩 最近编辑区块</span>
+            <el-button type="text" size="mini" @click="go('/content/block')">更多 →</el-button>
+          </div>
+          <div v-if="recentBlocks.length" class="recent-list">
+            <div v-for="b in recentBlocks" :key="b.blockId" class="recent-item" @click="go('/content/block')">
+              <span class="recent-name">{{ b.title || b.blockKey }}</span>
+              <span class="recent-time">{{ b.updateTime || '' }}</span>
+            </div>
+          </div>
+          <el-empty v-else description="还没有区块内容" :image-size="50"></el-empty>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script>
 import * as echarts from 'echarts'
-import { getDashboard } from '@/api/system/dashboard'
+import { getDashboard, getRecentEdits } from '@/api/system/dashboard'
 import { getDicts } from '@/api/system/dict/data'
 
 export default {
   name: 'Index',
   data() {
     return {
-      // 业务统计卡片（6 项）
+      // 业务统计卡片（10 项：6 业务 + 4 CMS 文章）
       statCards: [
         { label: '服务总数', value: 0, color: '#409EFF' },
         { label: '招募中服务', value: 0, color: '#67C23A' },
         { label: '社区成员', value: 0, color: '#E6A23C' },
         { label: '进行中报名', value: 0, color: '#F56C6C' },
         { label: '今日报名', value: 0, color: '#409EFF' },
-        { label: '已逾期报名', value: 0, color: '#F56C6C' }
+        { label: '已逾期报名', value: 0, color: '#F56C6C' },
+        { label: '文章总数', value: 0, color: '#67C23A' },
+        { label: '今日发文', value: 0, color: '#409EFF' },
+        { label: '草稿', value: 0, color: '#E6A23C' },
+        { label: '回收站', value: 0, color: '#F56C6C' }
       ],
       topBooks: [],
       lowStockBooks: [], // 名额预警：招募中服务剩余名额 ≤ 阈值（book.stock.warn）
+      recentArticles: [], // 最近编辑文章 5 条
+      recentBlocks: [],   // 最近编辑区块 5 条
       bookTypes: [],
       today: '',
       userName: ''
@@ -95,6 +137,7 @@ export default {
     this.userName = this.$store.state.user.name || '管理员'
     this.today = this.getToday()
     this.loadStats()
+    this.loadRecentEdits()
     this.loadDicts()
   },
   mounted() {
@@ -122,9 +165,22 @@ export default {
         this.statCards[3].value = s.borrowingCount || 0
         this.statCards[4].value = s.borrowToday || 0
         this.statCards[5].value = s.overdueCount || 0
+        const ca = s.cmsArticle || {}
+        this.statCards[6].value = ca.articleTotal || 0
+        this.statCards[7].value = ca.articleToday || 0
+        this.statCards[8].value = ca.draftCount || 0
+        this.statCards[9].value = ca.recycleCount || 0
         this.topBooks = (s.topBooks || []).slice(0, 5)
         this.lowStockBooks = s.lowStockBooks || []
         this.initChart()
+      })
+    },
+    /** 加载最近编辑（文章/区块各 5 条） */
+    loadRecentEdits() {
+      getRecentEdits().then(res => {
+        const d = res.data || {}
+        this.recentArticles = d.articles || []
+        this.recentBlocks = d.blocks || []
       })
     },
     /** 跳服务信息页（lowStock=1：列表按 book.stock.warn 阈值过滤名额紧张的服务） */
@@ -257,5 +313,33 @@ export default {
   font-size: 12px;
   color: #c65d43;
   font-weight: bold;
+}
+.recent-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 4px;
+  border-bottom: 1px dashed #f0f0f0;
+  cursor: pointer;
+}
+.recent-item:hover {
+  background: #f7f8fa;
+}
+.recent-name {
+  color: #303133;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+.recent-time {
+  color: #909399;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 </style>

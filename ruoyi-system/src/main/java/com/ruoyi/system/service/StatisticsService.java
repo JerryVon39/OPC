@@ -10,6 +10,7 @@ import com.ruoyi.system.domain.Book;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.mapper.BookMapper;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.mapper.CmsArticleMapper;
 import com.ruoyi.system.util.ConfigUtil;
 
 /**
@@ -36,6 +37,9 @@ public class StatisticsService
 
     @Autowired
     private BookMapper bookMapper;
+
+    @Autowired
+    private CmsArticleMapper cmsArticleMapper;
 
     @Autowired
     private ConfigUtil configUtil;
@@ -82,6 +86,8 @@ public class StatisticsService
         int warn = configUtil.getInt("book.stock.warn", 3);
         java.util.List<Book> lowStock = bookMapper.selectLowStockBooks(warn, 10);
         map.put("lowStockBooks", lowStock);
+        // CMS 文章维度（运营工作台数据卡：总数/今日发文/草稿/回收站；文章写路径调用 evictAll 失效）
+        map.put("cmsArticle", cmsArticleMapper.selectCmsArticleStats());
         redisCache.setCacheObject(KEY_DASHBOARD, map, CACHE_MINUTES, TimeUnit.MINUTES);
         return map;
     }

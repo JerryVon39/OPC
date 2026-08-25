@@ -9,6 +9,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.CmsArticle;
 import com.ruoyi.system.mapper.CmsArticleMapper;
 import com.ruoyi.system.service.ICmsArticleService;
+import com.ruoyi.system.service.StatisticsService;
 
 /**
  * CMS 文章Service业务层处理
@@ -18,6 +19,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
 {
     @Autowired
     private CmsArticleMapper cmsArticleMapper;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     @Override
     public CmsArticle selectCmsArticleByArticleId(Long articleId)
@@ -75,7 +79,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             cmsArticle.setPublishTime(new Date());
         }
-        return cmsArticleMapper.insertCmsArticle(cmsArticle);
+        int rows = cmsArticleMapper.insertCmsArticle(cmsArticle);
+        statisticsService.evictAll(); // 文章计数变了：失效工作台统计缓存
+        return rows;
     }
 
     @Override
@@ -97,7 +103,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             cmsArticle.setPublishTime(new Date());
         }
-        return cmsArticleMapper.updateCmsArticle(cmsArticle);
+        int rows = cmsArticleMapper.updateCmsArticle(cmsArticle);
+        statisticsService.evictAll(); // 状态/内容可能影响统计
+        return rows;
     }
 
     @Override
@@ -115,7 +123,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
             }
         }
         // 软删除（两态，对齐 book）：数据保留在原表，del_flag 置 '2'，后台回收站可恢复/永久删除
-        return cmsArticleMapper.softDeleteCmsArticleByArticleIds(articleIds, operator(), new Date());
+        int rows = cmsArticleMapper.softDeleteCmsArticleByArticleIds(articleIds, operator(), new Date());
+        statisticsService.evictAll();
+        return rows;
     }
 
     @Override
@@ -141,6 +151,7 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             throw new ServiceException("部分文章不在回收站中，无法恢复");
         }
+        statisticsService.evictAll();
         return rows;
     }
 
@@ -156,6 +167,7 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             throw new ServiceException("部分文章不在回收站中，无法彻底删除");
         }
+        statisticsService.evictAll();
         return rows;
     }
 
@@ -192,7 +204,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
                 throw new ServiceException("无发布权限：批量发布需要 system:cms:publish 权限");
             }
         }
-        return cmsArticleMapper.batchUpdateStatus(articleIds, status);
+        int rows = cmsArticleMapper.batchUpdateStatus(articleIds, status);
+        statisticsService.evictAll();
+        return rows;
     }
 
     @Override
@@ -240,7 +254,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         CmsArticle article = new CmsArticle();
         article.setArticleId(articleId);
         article.setStatus(status);
-        return cmsArticleMapper.updateCmsArticleStatus(article);
+        int rows = cmsArticleMapper.updateCmsArticleStatus(article);
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**
@@ -273,6 +289,8 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         }
         CmsArticle article = new CmsArticle();
         article.setArticleId(articleId);
-        return cmsArticleMapper.publishCmsArticle(article);
+        int rows = cmsArticleMapper.publishCmsArticle(article);
+        statisticsService.evictAll();
+        return rows;
     }
 }

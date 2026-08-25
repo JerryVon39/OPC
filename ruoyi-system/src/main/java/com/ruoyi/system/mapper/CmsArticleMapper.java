@@ -54,4 +54,10 @@ public interface CmsArticleMapper
 
     /** 永久删除（物理删除；仅回收站内可彻底删除） */
     public int purgeCmsArticleByArticleIds(@Param("articleIds") Long[] articleIds);
+
+    /** 文章统计（运营工作台数据卡）：总数/今日发文/草稿/回收站 */
+    public java.util.Map<String, Object> selectCmsArticleStats();
+
+    /** 最近编辑文章（工作台"最近编辑"列表，不含正文） */
+    public List<CmsArticle> selectRecentArticles(int limit);
 }

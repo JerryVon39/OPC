@@ -151,4 +151,12 @@
             ) t
           )
     </delete>
+
+    <!-- 最近编辑区块（工作台"最近编辑"列表） -->
+    <select id="selectRecentBlocks" parameterType="int" resultMap="CmsBlockResult">
+        select block_id, block_key, page_key, title, subtitle, sort, visible, version, update_by, update_time
+        from cms_block
+        order by update_time desc, block_id desc
+        limit #{limit}
+    </select>
 </mapper>

@@ -10,6 +10,8 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.mapper.CmsArticleMapper;
+import com.ruoyi.system.mapper.CmsBlockMapper;
 import com.ruoyi.system.service.StatisticsService;
 
 /**
@@ -26,6 +28,12 @@ public class DashboardController extends BaseController
 
     @Autowired
     private StatisticsService statisticsService;
+
+    @Autowired
+    private CmsArticleMapper cmsArticleMapper;
+
+    @Autowired
+    private CmsBlockMapper cmsBlockMapper;
 
     /** 业务统计（登录即可访问，供后台首页看板使用）：数据走 Redis 缓存（5分钟） */
     @GetMapping("/stats")
@@ -48,6 +56,16 @@ public class DashboardController extends BaseController
         result.put("readerTotal", stats.get("readerTotal"));
         result.put("borrowToday", stats.get("borrowToday"));
         result.put("orderToday", stats.get("orderToday"));
+        return success(result);
+    }
+
+    /** 最近编辑记录（运营工作台）：文章/区块各 5 条，点击直达编辑 */
+    @GetMapping("/recentEdits")
+    public AjaxResult recentEdits()
+    {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("articles", cmsArticleMapper.selectRecentArticles(5));
+        result.put("blocks", cmsBlockMapper.selectRecentBlocks(5));
         return success(result);
     }
 }

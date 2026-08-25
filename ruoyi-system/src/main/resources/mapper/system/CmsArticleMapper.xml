@@ -224,4 +224,22 @@
             #{articleId}
         </foreach>
     </delete>
+
+    <!-- 文章统计（运营工作台数据卡）：总数/今日发文/草稿/回收站 -->
+    <select id="selectCmsArticleStats" resultType="java.util.Map">
+        select
+          sum(case when del_flag = '0' then 1 else 0 end) as articleTotal,
+          sum(case when del_flag = '0' and create_time &gt;= curdate() then 1 else 0 end) as articleToday,
+          sum(case when del_flag = '0' and status = '1' then 1 else 0 end) as draftCount,
+          sum(case when del_flag = '2' then 1 else 0 end) as recycleCount
+        from cms_article
+    </select>
+
+    <!-- 最近编辑文章（工作台列表，不含正文） -->
+    <select id="selectRecentArticles" parameterType="int" resultMap="CmsArticleResult">
+        <include refid="selectCmsArticleListVo"/>
+        where a.del_flag = '0'
+        order by a.update_time desc, a.article_id desc
+        limit #{limit}
+    </select>
 </mapper>

@@ -350,11 +350,60 @@ function initPage() {
   renderLoginState();
   initNav();
   syncNavByScroll(); // 首帧对齐：URL 带 #contact 进入时浏览器已滚到锚点，滚动联动立即生效
+  loadSiteConfig(); // 站点配置：footer/联系区动态展示（失败保留静态，无感）
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initPage);
 } else {
   initPage();
+}
+
+// ===== 站点配置：联系方式动态展示（第三批）=====
+// 后台「系统设置 → 参数设置」改 site_* 键，前台所有页面刷新即生效；配置为空/接口失败保留静态内容
+const SITE_KEYS = ['site_phone', 'site_email', 'site_address', 'site_wechat'];
+
+async function loadSiteConfig() {
+  const cfg = {};
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    await Promise.all(SITE_KEYS.map(async k => {
+      try {
+        const res = await fetch('/prod-api/system/config/configKey/' + k, { signal: ctrl.signal });
+        const d = await res.json();
+        if (d.code === 200 && d.data && d.data.configValue) cfg[k] = String(d.data.configValue).trim();
+      } catch (e) { /* 单个键失败跳过 */ }
+    }));
+    clearTimeout(timer);
+  } catch (e) { return; }
+  if (!cfg.site_phone && !cfg.site_address && !cfg.site_wechat) return;
+
+  // 1) footer 联系列（全站统一结构：找到 h4 含"联系"的列，整段替换 地址/电话/公众号）
+  document.querySelectorAll('footer .footer-col').forEach(col => {
+    const h = col.querySelector('h4');
+    const p = col.querySelector('p');
+    if (!h || !p) return;
+    if ((h.textContent || '').indexOf('联系') === -1) return;
+    const lines = [];
+    if (cfg.site_address) lines.push('地址：' + cfg.site_address);
+    if (cfg.site_phone) lines.push('电话：' + cfg.site_phone);
+    if (cfg.site_wechat) lines.push('公众号：' + cfg.site_wechat);
+    if (lines.length) p.innerHTML = lines.map(esc).join('<br>');
+  });
+
+  // 2) 首页联系区（.contact-item 逐项替换：地址/电话/公众号/视频号）
+  document.querySelectorAll('.contact-list .contact-item').forEach(item => {
+    const label = item.querySelector('.c-label');
+    const value = item.querySelector('.c-value');
+    if (!label || !value) return;
+    const t = label.textContent || '';
+    let v = null;
+    if (t.indexOf('地址') !== -1) v = cfg.site_address;
+    else if (t.indexOf('电话') !== -1) v = cfg.site_phone;
+    else if (t.indexOf('公众号') !== -1) v = cfg.site_wechat ? cfg.site_wechat.split('｜')[0].trim() : null;
+    else if (t.indexOf('视频号') !== -1) v = cfg.site_wechat && cfg.site_wechat.indexOf('｜') !== -1 ? cfg.site_wechat.split('｜')[1].trim() : null;
+    if (v) value.textContent = v;
+  });
 }
 
 // ===== CMS 区块：前台文本槽渐进增强加载（第二批）=====

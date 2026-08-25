@@ -42,4 +42,7 @@ public interface CmsBlockMapper
 
     /** 历史：清理该区块超限最旧版本（保留最新 keep 条） */
     public int trimHistory(@Param("blockId") Long blockId, @Param("keep") int keep);
+
+    /** 最近编辑区块（工作台"最近编辑"列表） */
+    public List<CmsBlock> selectRecentBlocks(int limit);
 }
