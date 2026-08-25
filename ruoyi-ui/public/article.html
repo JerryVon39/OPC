@@ -156,6 +156,14 @@
     return 'news.html';
   }
 
+  // 动态写 meta（SEO：keywords/description，后台文章可填）
+  function setMeta(name, content) {
+    if (!content) return;
+    let m = document.querySelector('meta[name="' + name + '"]');
+    if (!m) { m = document.createElement('meta'); m.setAttribute('name', name); document.head.appendChild(m); }
+    m.setAttribute('content', content);
+  }
+
   async function loadArticle() {
     const id = new URLSearchParams(location.search).get('id');
     const titleEl = document.getElementById('artTitle');
@@ -177,6 +185,8 @@
       const a = d.data;
       const isPolicy = (a.categoryName === '政策文件' || a.categoryName === '政策解读');
       document.title = (a.title || '文章详情') + ' · 数智游民创新工场';
+      setMeta('keywords', a.keywords);
+      setMeta('description', a.description);
       titleEl.textContent = a.title || '未命名文章';
       const cat = document.getElementById('crumbCat');
       cat.textContent = a.categoryName || '未分类';

@@ -102,10 +102,11 @@ SELECT '内容运营', 0, 1, 'content', '', 1, 0, 'M', '0', '0', '', 'content', 
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='内容运营' AND menu_type='M');
 SELECT menu_id INTO @content FROM sys_menu WHERE menu_name='内容运营' AND menu_type='M' LIMIT 1;
 
--- 官网轮播(3)/文章管理(4)/通知公告(5) 顺延一位，为「区块管理」腾出 order_num=3（幂等守卫：区块管理已存在则不再顺延）
+-- 官网轮播(3)/文章管理(4)/通知公告(5) 顺延一位，为「区块管理」腾出 order_num=3
+-- 幂等守卫：区块管理已存在则不再顺延（守卫用会话变量，规避 MySQL 1093 目标表子查询限制）
+SET @block_menu = (SELECT COUNT(*) FROM sys_menu WHERE menu_name='区块管理');
 UPDATE sys_menu SET order_num = order_num + 1
-WHERE parent_id = @content AND order_num >= 3
-  AND NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='区块管理');
+WHERE parent_id = @content AND order_num >= 3 AND @block_menu = 0;
 
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '区块管理', @content, 3, 'block', 'system/cms/block', 1, 0, 'C', '0', '0', 'system:cmsBlock:list', 'edit', 'admin', NOW(), '前台页面文本槽/区块管理'

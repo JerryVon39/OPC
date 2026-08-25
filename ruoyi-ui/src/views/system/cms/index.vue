@@ -166,6 +166,9 @@
           </el-radio-group>
           <div style="color:#999;font-size:12px">发布后将同步展示到前台新闻动态页</div>
         </el-form-item>
+        <el-form-item label="发布时间" prop="publishTime">
+          <el-date-picker v-model="form.publishTime" type="datetime" placeholder="留空 = 立即发布（预约发布：填未来时间则到点才在前台展示）" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
+        </el-form-item>
         <el-form-item label="SEO 关键词" prop="keywords">
           <el-input v-model="form.keywords" placeholder="选填，多个关键词用英文逗号分隔" />
         </el-form-item>

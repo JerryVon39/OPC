@@ -4,8 +4,12 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.concurrent.TimeUnit;
+import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.ServletUtils;
 import com.ruoyi.system.domain.CmsArticle;
 import com.ruoyi.system.mapper.CmsArticleMapper;
 import com.ruoyi.system.service.ICmsArticleService;
@@ -22,6 +26,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
 
     @Autowired
     private StatisticsService statisticsService;
+
+    @Autowired
+    private RedisCache redisCache;
 
     @Override
     public CmsArticle selectCmsArticleByArticleId(Long articleId)
@@ -54,15 +61,18 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             throw new ServiceException("文章未发布");
         }
-        // 浏览量自增（真实阅读量，异常时不影响详情展示）
-        try
+        // 浏览量自增（防刷：同一 IP + 文章 10 分钟内只计一次；Redis 异常降级为照常自增）
+        if (viewNotCounted(articleId))
         {
-            cmsArticleMapper.increaseArticleViews(articleId);
-            article.setViews(article.getViews() == null ? 1 : article.getViews() + 1);
-        }
-        catch (Exception e)
-        {
-            // 浏览量自增失败不阻断阅读
+            try
+            {
+                cmsArticleMapper.increaseArticleViews(articleId);
+                article.setViews(article.getViews() == null ? 1 : article.getViews() + 1);
+            }
+            catch (Exception e)
+            {
+                // 浏览量自增失败不阻断阅读
+            }
         }
         return article;
     }
@@ -224,6 +234,29 @@ public class CmsArticleServiceImpl implements ICmsArticleService
             }
         }
         return cmsArticleMapper.batchUpdateSort(list);
+    }
+
+    /**
+     * 浏览量防刷：同一 IP + 文章 10 分钟内只计一次。
+     * 返回 true = 本次应计数（首次访问或 Redis 不可用降级）；false = 命中防刷窗口跳过。
+     */
+    private boolean viewNotCounted(Long articleId)
+    {
+        try
+        {
+            String ip = IpUtils.getIpAddr(ServletUtils.getRequest());
+            String key = "cms:view:" + ip + ":" + articleId;
+            if (Boolean.TRUE.equals(redisCache.hasKey(key)))
+            {
+                return false;
+            }
+            redisCache.setCacheObject(key, 1, 10, TimeUnit.MINUTES);
+            return true;
+        }
+        catch (Exception e)
+        {
+            return true; // Redis 异常：降级为照常自增，不阻断阅读
+        }
     }
 
     /** 当前登录用户名（软删除记录删除人；未登录场景容错为空串） */

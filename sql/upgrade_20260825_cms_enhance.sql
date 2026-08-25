@@ -57,10 +57,11 @@ SELECT '运营辅助', 0, 3, 'ops', '', 1, 0, 'M', '0', '0', '', 'delete', 'admi
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='运营辅助' AND menu_type='M');
 SELECT menu_id INTO @ops FROM sys_menu WHERE menu_name='运营辅助' AND menu_type='M' LIMIT 1;
 
--- 原 官网轮播(2)/文章管理(3)/通知公告(4) 顺延一位，为「栏目管理」腾出 order_num=2（幂等守卫：栏目管理已存在则不再顺延）
+-- 原 官网轮播(2)/文章管理(3)/通知公告(4) 顺延一位，为「栏目管理」腾出 order_num=2
+-- 幂等守卫：栏目管理已存在则不再顺延（守卫用会话变量，规避 MySQL 1093 目标表子查询限制）
+SET @cat_menu = (SELECT COUNT(*) FROM sys_menu WHERE menu_name='栏目管理');
 UPDATE sys_menu SET order_num = order_num + 1
-WHERE parent_id = @content AND order_num >= 2
-  AND NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name='栏目管理');
+WHERE parent_id = @content AND order_num >= 2 AND @cat_menu = 0;
 
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '栏目管理', @content, 2, 'category', 'system/cms/category', 1, 0, 'C', '0', '0', 'system:cmsCategory:list', 'tree', 'admin', NOW(), 'CMS 栏目管理（分类树）'
