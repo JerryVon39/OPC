@@ -28,3 +28,11 @@ DELETE FROM sys_role_menu WHERE menu_id IN (
   SELECT menu_id FROM sys_menu WHERE perms LIKE 'system:recycle:%'
 );
 DELETE FROM sys_menu WHERE perms LIKE 'system:recycle:%';
+
+-- 4. 回收站入口整体移除（2026-08-25 用户确认）：删除 图书回收站/读者回收站 菜单及
+--    「运营辅助」空壳（M 菜单无子级会被若依渲染为可点击路由 → 白屏，须一并删除）。
+--    页面代码（views/system/recycle/*、api/system/recycle.js）保留，随时可恢复入口。
+DELETE rm FROM sys_role_menu rm
+JOIN sys_menu m ON m.menu_id = rm.menu_id
+WHERE m.menu_name IN ('图书回收站','读者回收站','运营辅助');
+DELETE FROM sys_menu WHERE menu_name IN ('图书回收站','读者回收站','运营辅助');
