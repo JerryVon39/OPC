@@ -37,7 +37,7 @@
 </style>
 </head>
 <body>
-  <!-- 顶部导航（吸顶） -->
+  <!-- 顶部导航（统一版：全站一致，active 由 site.js 按 URL 自动高亮） -->
   <div class="navbar">
     <div class="logo" style="cursor:pointer" onclick="location.href='home.html'">数智游民<span>创新工场</span></div>
     <span class="nav-toggle" onclick="toggleNavMenu(event)" title="菜单">☰</span>
@@ -55,6 +55,13 @@
     </div>
     <div class="nav-right">
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
+      <div class="nav-more" id="navMore">
+        <span class="more-trigger" onclick="toggleMoreMenu(event)">☰ 更多</span>
+        <div class="more-menu" id="moreMenu">
+          <div class="more-item" id="registerEntry" onclick="openRegister()">📝 成员注册</div>
+          <div class="more-item" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -238,18 +245,7 @@
   );
 
   // ===== 登录 / 注册（与 home.html 一致）=====
-  // 汉堡菜单展开/收起（移动端导航）
-  function toggleNavMenu(e) {
-    e.stopPropagation();
-    document.getElementById('navAnchors').classList.toggle('open');
-  }
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.navbar')) {
-      const nl = document.getElementById('navAnchors');
-      if (nl) nl.classList.remove('open');
-    }
-  });
-  
+  // 汉堡菜单展开/收起（移动端导航）  
   async function doLogin() {
     const card = document.getElementById('loginCard').value.trim();
     const pwd = document.getElementById('loginPwd').value;

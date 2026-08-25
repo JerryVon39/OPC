@@ -13,12 +13,12 @@
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body class="home-page">
-  <!-- 顶部导航（锚点 + 搜索 + 我的报名 + 登录区 + "更多"下拉） -->
+  <!-- 顶部导航（统一版：全站一致，active 由 site.js 按 URL 自动高亮） -->
   <div class="navbar">
-    <div class="logo" style="cursor:pointer" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="返回顶部">数智游民<span>创新工场</span></div>
+    <div class="logo" style="cursor:pointer" onclick="location.href='home.html'">数智游民<span>创新工场</span></div>
     <span class="nav-toggle" onclick="toggleNavMenu(event)" title="菜单">☰</span>
     <div class="nav-links" id="navAnchors">
-      <a data-target="home" class="active">首页</a>
+      <a href="home.html">首页</a>
       <!-- 暂隐藏导航：服务项目 -->
       <a href="about.html">走进社区</a>
       <a href="industry.html">产业生态</a>
@@ -27,7 +27,7 @@
       <a href="talent.html">人才培养</a>
       <!-- 暂隐藏导航：创客大赛 -->
       <a href="news.html">新闻动态</a>
-      <a data-target="contact">联系我们</a>
+      <a href="home.html#contact">联系我们</a>
     </div>
     <div class="nav-right">
       <span id="loginArea"><span style="cursor:pointer" onclick="openLogin()">👤 登录</span></span>
@@ -723,25 +723,7 @@
   });
 
   // ===== "更多"下拉菜单（点击展开 / 点外部或选完收起）=====
-  // 汉堡菜单展开/收起（移动端导航）
-  function toggleNavMenu(e) {
-    e.stopPropagation();
-    document.getElementById('navAnchors').classList.toggle('open');
-  }
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.navbar')) {
-      const nl = document.getElementById('navAnchors');
-      if (nl) nl.classList.remove('open');
-    }
-  });
-  function toggleMoreMenu(e) {
-    e.stopPropagation();
-    document.getElementById('navMore').classList.toggle('open');
-  }
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.nav-more')) document.getElementById('navMore').classList.remove('open');
-  });
-  document.getElementById('moreMenu').addEventListener('click', function () {
+  // 汉堡菜单展开/收起（移动端导航）  document.getElementById('moreMenu').addEventListener('click', function () {
     document.getElementById('navMore').classList.remove('open');
   });
 

@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-  <!-- 顶部导航（吸顶，当前页高亮；与 about.html 等栏目页一致） -->
+  <!-- 顶部导航（统一版：全站一致，active 由 site.js 按 URL 自动高亮） -->
   <div class="navbar">
     <div class="logo" style="cursor:pointer" onclick="location.href='home.html'">数智游民<span>创新工场</span></div>
     <span class="nav-toggle" onclick="toggleNavMenu(event)" title="菜单">☰</span>
@@ -26,7 +26,7 @@
       <a href="join.html">入驻招商</a>
       <a href="talent.html">人才培养</a>
       <!-- 暂隐藏导航：创客大赛 -->
-      <a href="news.html" class="active">新闻动态</a>
+      <a href="news.html">新闻动态</a>
       <a href="home.html#contact">联系我们</a>
     </div>
     <div class="nav-right">
@@ -34,12 +34,11 @@
       <div class="nav-more" id="navMore">
         <span class="more-trigger" onclick="toggleMoreMenu(event)">☰ 更多</span>
         <div class="more-menu" id="moreMenu">
-          <div class="more-item" onclick="openRegister()">📝 成员注册</div>
+          <div class="more-item" id="registerEntry" onclick="openRegister()">📝 成员注册</div>
           <div class="more-item" onclick="goAdmin()" title="进入后台管理">⚙️ 后台管理</div>
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- 栏目页头部 -->
@@ -220,28 +219,7 @@
   
   
   
-  // 汉堡菜单展开/收起（移动端导航）
-  function toggleNavMenu(e) {
-    e.stopPropagation();
-    document.getElementById('navAnchors').classList.toggle('open');
-  }
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.navbar')) {
-      const nl = document.getElementById('navAnchors');
-      if (nl) nl.classList.remove('open');
-    }
-  });
-  function toggleMoreMenu(e) {
-    e.stopPropagation();
-    document.getElementById('navMore').classList.toggle('open');
-  }
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.nav-more')) {
-      const m = document.getElementById('navMore');
-      if (m) m.classList.remove('open');
-    }
-  });
-  // 遮罩点击关闭（事件委托，无需等待弹窗 DOM 出现）
+  // 汉堡菜单展开/收起（移动端导航）  // 遮罩点击关闭（事件委托，无需等待弹窗 DOM 出现）
   document.addEventListener('click', function (e) {
     if (e.target.classList && e.target.classList.contains('modal')) e.target.style.display = 'none';
   });

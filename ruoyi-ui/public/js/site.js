@@ -259,9 +259,49 @@ async function updateMyInfo() {
   } catch (e) { msg.style.color = '#c65d43'; msg.textContent = '修改失败：' + e.message; }
 }
 
-// ===== 初始化：加载登录态并渲染（DOM 就绪后执行）=====
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderLoginState);
-} else {
+// ===== 导航（统一版 navbar 的交互与高亮）=====
+// 汉堡菜单展开/收起（移动端导航）
+function toggleNavMenu(e) {
+  e.stopPropagation();
+  const nl = document.getElementById('navAnchors');
+  if (nl) nl.classList.toggle('open');
+}
+// "更多"下拉展开/收起（注册/后台管理入口）
+function toggleMoreMenu(e) {
+  e.stopPropagation();
+  const m = document.getElementById('navMore');
+  if (m) m.classList.toggle('open');
+}
+// 进入后台管理（Vue 后台，未登录自动跳登录页）
+function goAdmin() { location.href = '/index'; }
+
+// 按当前 URL 自动高亮导航（各页不再手工标 active）
+function initNav() {
+  const path = location.pathname.split('/').pop() || 'home.html';
+  const links = document.querySelectorAll('.nav-links a');
+  links.forEach(a => {
+    const href = (a.getAttribute('href') || '').split('#')[0];
+    if (href === path || (path === 'index.html' && href === 'home.html')) {
+      a.classList.add('active');
+    }
+  });
+}
+
+// 点击页面其他区域关闭"更多"下拉
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('.nav-more')) {
+    const m = document.getElementById('navMore');
+    if (m) m.classList.remove('open');
+  }
+});
+
+// ===== 初始化：登录态渲染 + 导航高亮（DOM 就绪后执行）=====
+function initPage() {
   renderLoginState();
+  initNav();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPage);
+} else {
+  initPage();
 }
