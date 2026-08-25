@@ -612,3 +612,23 @@ textarea.form-input { resize: vertical; }
     .hs-arrow { display: none; }
     .home-steps { flex-direction: column; align-items: center; }
   }
+
+/* ===== 首页视觉升级（2026-08-25，覆盖式增强，不影响布局）===== */
+/* 模块标题装饰线 */
+.home-mod-head::after { content: ''; display: block; width: 56px; height: 3px; margin-top: 10px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
+/* 卡片：hover 浮起 + 图标渐变底色 */
+.home-mod .about-card { position: relative; overflow: hidden; border: 1px solid rgba(18,41,74,.05); transition: transform .22s, box-shadow .22s; }
+.home-mod .about-card::after { content: ''; position: absolute; right: -34px; top: -34px; width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle, rgba(47,111,237,.07), transparent 70%); pointer-events: none; }
+.home-mod .about-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(18,41,74,.13); }
+.home-mod .about-card .about-icon { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, rgba(47,111,237,.12), rgba(201,169,106,.16)); font-size: 22px; margin-bottom: 10px; }
+/* 标签墙胶囊化 */
+.home-mod .ecosystem-tags span, .home-mod .home-plus-tags span { background: rgba(47,111,237,.06); border: 1px solid rgba(47,111,237,.14); border-radius: 999px; padding: 5px 15px; font-size: 13px; color: var(--text); transition: all .15s; }
+.home-mod .ecosystem-tags span:hover, .home-mod .home-plus-tags span:hover { background: rgba(47,111,237,.12); transform: translateY(-1px); }
+/* 时间线节点光晕 */
+.home-mod .tl-item::after { content: ''; position: absolute; left: -31px; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle, rgba(201,169,106,.35), transparent 70%); pointer-events: none; }
+/* CTA 横幅渐变深空 */
+.home-cta-inner { background: linear-gradient(135deg, #101f36 0%, #16305c 55%, #1c3d78 100%); border-radius: 18px; box-shadow: 0 14px 34px rgba(16,31,54,.28); }
+/* 首屏按钮微调 */
+.home-intro-btns .btn-buy { box-shadow: 0 6px 18px rgba(47,111,237,.22); }
+/* 新闻卡片左侧强调条加粗 */
+.home-mod .news-card { border-left-width: 5px; }
