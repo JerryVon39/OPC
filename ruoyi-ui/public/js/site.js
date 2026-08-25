@@ -18,6 +18,12 @@ const FORGOT_API = '/prod-api/system/reader/forgot-password';
 const RESET_PWD_API = '/prod-api/system/reader/reset-password';
 const MYINFO_API = '/prod-api/system/reader/updateMyInfo';
 
+// ===== 后台预览模式（页面搭建/区块管理内嵌 iframe 使用）=====
+// ?preview=1：模块/区块容器加虚线框+角标（显示 section_key / block_key）
+// ?highlight=key：高亮该模块并滚动定位；后台也可 postMessage 发送滚动定位
+window.IS_PREVIEW = new URLSearchParams(location.search).get('preview') === '1';
+window.PREVIEW_HIGHLIGHT = new URLSearchParams(location.search).get('highlight') || '';
+
 // ===== 登录态（localStorage 持久化）=====
 let currentUser = null;
 try {
@@ -461,6 +467,7 @@ async function loadCmsBlocks(pageKey) {
     slots.forEach(s => {
       const el = document.querySelector(s.sel);
       if (!el) return;
+      el.setAttribute('data-block-key', b.blockKey); // 预览标注/高亮定位用（无副作用）
       const val = b[s.field == null ? 'content' : s.field];
       if (val == null || String(val).trim() === '') return; // 留空 = 不覆盖静态内容
       if (s.field === 'content' && s.mode === 'html') {
@@ -470,6 +477,7 @@ async function loadCmsBlocks(pageKey) {
       }
     });
   });
+  applyPreviewMarks();
 }
 
 // ===== 首页模块化渲染（方案 B：页面搭建驱动，静态兜底）=====
@@ -600,7 +608,15 @@ async function loadHomeSections() {
   } catch (e) { return; } // 失败/超时：保留静态模块（吸附已绑定静态）
   if (!list.length) return;
   let no = 0;
-  box.innerHTML = list.map(s => { no += 1; return renderSection(s, no); }).join('');
+  let html = list.map(s => { no += 1; return renderSection(s, no); }).join('');
+  // 按渲染顺序给 section 打 data-section-key（预览标注/高亮定位用，正式页面无副作用）
+  let si = 0;
+  html = html.replace(/<section\b[^>]*>/g, m => {
+    const s = list[si++];
+    if (!s) return m;
+    return m.replace(/>\s*$/, ' data-section-key="' + esc(s.sectionKey || '') + '">');
+  });
+  box.innerHTML = html;
   const stat = document.getElementById('homeStatic');
   if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底（区块槽位重新定位到动态元素）
   // 动态 hero：重新拉取轮播（复用 home.html 暴露的函数）
@@ -608,4 +624,39 @@ async function loadHomeSections() {
   // 首页内容已统一由页面搭建管理（home-* 区块已停用），无需再应用区块覆盖
   // 滚动动画/全屏翻页重新绑定动态模块（home.html 暴露的可重跑函数）
   if (window.__initHomeAnimations) window.__initHomeAnimations();
+  applyPreviewMarks();
 }
+
+// ===== 后台预览标注模式（配合后台页面搭建/区块管理的实时预览 iframe）=====
+// 1) ?preview=1 时给带 data-section-key / data-block-key 的容器加虚线框 + 角标
+// 2) ?highlight=key 或收到 postMessage 时高亮定位对应模块
+function markPreviewEl(el, key) {
+  el.classList.add('preview-mark');
+  let tag = el.querySelector(':scope > .preview-tag');
+  if (!tag) {
+    tag = document.createElement('span');
+    tag.className = 'preview-tag';
+    el.appendChild(tag);
+  }
+  tag.textContent = key;
+}
+function applyPreviewMarks() {
+  if (!window.IS_PREVIEW) return;
+  document.querySelectorAll('[data-section-key]').forEach(el => markPreviewEl(el, el.dataset.sectionKey));
+  document.querySelectorAll('[data-block-key]').forEach(el => markPreviewEl(el, el.dataset.blockKey));
+  if (window.PREVIEW_HIGHLIGHT) highlightPreviewKey(window.PREVIEW_HIGHLIGHT);
+}
+function highlightPreviewKey(key) {
+  if (!key) return;
+  document.querySelectorAll('.preview-highlight').forEach(el => el.classList.remove('preview-highlight'));
+  const el = document.querySelector('[data-section-key="' + key + '"], [data-block-key="' + key + '"]');
+  if (el) {
+    el.classList.add('preview-highlight');
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+window.addEventListener('message', function (e) {
+  const d = e.data;
+  if (!d || d.type !== 'opc-preview') return;
+  if (d.action === 'scrollTo') highlightPreviewKey(d.key);
+});

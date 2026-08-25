@@ -497,6 +497,8 @@
     let io = null;
     let wheelHandler = null;
     return function () {
+      // 后台预览模式（内嵌 iframe）：禁用滚动动画与全屏翻页，避免预览时干扰滚动
+      if (window.IS_PREVIEW) return;
       // ===== 首页滚动动画（模块进入视口淡入上移；低动效偏好自动禁用）=====
       if (io) { io.disconnect(); io = null; }
       const els = document.querySelectorAll('.home-mod > .container, .home-intro, .home-cta-inner');
