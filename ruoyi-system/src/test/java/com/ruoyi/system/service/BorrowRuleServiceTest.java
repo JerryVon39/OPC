@@ -100,7 +100,7 @@ public class BorrowRuleServiceTest
         record.setRenewCount(1L);
         when(configUtil.getInt("book.borrow.renewLimit", 1)).thenReturn(1);
         ServiceException e = assertThrows(ServiceException.class, () -> borrowRuleService.checkRenewAllowed(record));
-        assertTrue(e.getMessage().contains("不可再次续借"));
+        assertTrue(e.getMessage().contains("不可再次续期"));
     }
 
     /** 续借：未续借过 → 返回 0 */

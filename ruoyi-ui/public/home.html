@@ -289,43 +289,6 @@
     </div>
   </div>
 
-  <!-- 我的报名弹窗 -->
-  <div id="borrowModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>📋 我的报名</h3>
-      <p class="modal-tip">登录后自动显示；未登录请输入成员编号查询</p>
-      <input id="qCardNo" class="modal-input" placeholder="🎫 成员编号（如 JS12345678）" />
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="queryMyBorrow()">查询</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('borrowModal')">关闭</button>
-      </div>
-      <div id="borrowResult" style="margin-top:14px"></div>
-      <!-- 我的信息：登录态显示，可修改手机号/邮箱 -->
-      <div id="myInfoArea" style="display:none;margin-top:14px;border-top:1px solid #efe9dd;padding-top:12px">
-        <div style="font-weight:bold;margin-bottom:8px">📱 我的信息</div>
-        <input id="myPhone" class="modal-input" placeholder="📱 修改手机号码" />
-        <input id="myEmail" class="modal-input" placeholder="📧 修改电子邮箱（用于接收通知）" />
-        <button class="btn-buy" onclick="updateMyInfo()" style="width:100%">保存修改</button>
-        <div id="myInfoMsg" class="modal-msg"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 登录弹窗（统一版：成员编号/手机号/邮箱 + 密码） -->
-  <div id="loginModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>👤 成员登录</h3>
-      <p class="modal-tip">使用成员编号 / 手机号 / 邮箱 + 密码登录，登录后可一键报名、提交候补</p>
-      <input id="loginCard" class="modal-input" placeholder="🎫 成员编号 / 手机号 / 邮箱" />
-      <input id="loginPwd" class="modal-input" type="password" placeholder="🔑 登录密码" />
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="submitLogin()">登 录</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="openForgot()">忘记密码</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('loginModal')">取消</button>
-      </div>
-      <div id="loginMsg" class="modal-msg"></div>
-    </div>
-  </div>
   <!-- 找回密码弹窗（证号/手机号/邮箱 → 邮箱验证码 → 设新密码） -->
   <div id="forgotModal" class="modal" style="display:none">
     <div class="modal-box">
@@ -343,42 +306,6 @@
         <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('forgotModal')">取消</button>
       </div>
       <div id="forgotMsg" class="modal-msg"></div>
-    </div>
-  </div>
-
-  <!-- 活动候补弹窗 -->
-  <div id="reserveModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>📌 活动候补</h3>
-      <p class="modal-tip">登录后自动显示；未登录请输入成员编号查询</p>
-      <input id="qReserveCard" class="modal-input" placeholder="🎫 成员编号" />
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="queryMyReserves()">查询</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('reserveModal')">关闭</button>
-      </div>
-      <div id="reserveResult" style="margin-top:14px"></div>
-    </div>
-  </div>
-
-  <!-- 入驻申请弹窗（搜索无结果引导入口 / "更多"下拉） -->
-  <div id="purchaseModal" class="modal" style="display:none">
-    <div class="modal-box">
-      <h3>🏢 入驻申请</h3>
-      <p class="modal-tip">欢迎 AI 数字服务 / 创意设计 / 本地生活与创业团队入驻，提交后运营团队将尽快与您联系</p>
-      <input id="pBookName" class="modal-input" placeholder="🏢 项目/组织名称（必填）" />
-      <input id="pAuthor" class="modal-input" placeholder="✍️ 联系人（选填）" />
-      <input id="pEmail" class="modal-input" placeholder="📧 电子邮箱（必填，处理结果将邮件通知）" />
-      <select id="pType" class="modal-input">
-        <option value="A">A 类合伙人（免费入驻，需面试）</option>
-        <option value="B">B 类普通成员（小额租金 + 分摊水电）</option>
-      </select>
-
-      <textarea id="pRemark" class="modal-input" rows="2" placeholder="申请说明：项目简介 / 服务内容 / 合作需求（选填）" style="height:auto"></textarea>
-      <div class="modal-btns">
-        <button class="btn-buy" onclick="submitPurchase()">提交申请</button>
-        <button class="btn-buy" style="background:#cfc9bd;box-shadow:none" onclick="closeModal('purchaseModal')">取消</button>
-      </div>
-      <div id="purchaseMsg" class="modal-msg"></div>
     </div>
   </div>
 
@@ -479,32 +406,6 @@
   }
 
 
-  // ===== 当前成员候补中的服务（"已候补"标识，登录后加载）=====
-  async function loadReserved() {
-    reservedIds = [];
-    if (!currentUser) return;
-    try {
-      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
-      const d = await res.json();
-      (d.data || []).forEach(r => {
-        if (r.status === '0' || r.status === '1') reservedIds.push(r.bookId);
-      });
-    } catch (e) { }
-  }
-
-  // ===== 当前成员的报名记录（"已报名"标识，登录后加载）=====
-  async function loadBorrowed() {
-    borrowedIds = [];
-    if (!currentUser) return;
-    try {
-      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(currentUser.cardNo));
-      const d = await res.json();
-      (d.data || []).forEach(b => {
-        if (b.status === '0' || b.status === '2') borrowedIds.push(b.bookId);
-      });
-    } catch (e) { }
-  }
-
   // ===== 系统参数：库存预警阈值（后台"参数设置"可改）=====
   async function loadConfig() {
     try {
@@ -519,46 +420,6 @@
     } catch (e) { }
   }
 
-  // ===== 入驻申请（搜索无结果引导入口 / "更多"下拉）=====
-  let purchaseBusy = false; // 防重复提交
-  function openPurchase() {
-    document.getElementById('pBookName').value = '';
-    document.getElementById('pAuthor').value = '';
-    document.getElementById('pRemark').value = '';
-    document.getElementById('pType').value = 'A';
-    document.getElementById('purchaseMsg').textContent = '';
-    document.getElementById('purchaseModal').style.display = 'flex';
-  }
-  async function submitPurchase() {
-    const name = document.getElementById('pBookName').value.trim();
-    const email = document.getElementById('pEmail').value.trim();
-    const msg = document.getElementById('purchaseMsg');
-    if (!name) { msg.textContent = '请填写项目/组织名称'; msg.style.color = '#c65d43'; return; }
-    if (!email || !/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(email)) { msg.textContent = '请填写有效的电子邮箱（处理结果将邮件通知）'; msg.style.color = '#c65d43'; return; }
-    if (purchaseBusy) return;
-    purchaseBusy = true;
-    msg.textContent = '提交中…'; msg.style.color = '#999';
-    try {
-      const body = new URLSearchParams({
-        bookName: name,
-        author: document.getElementById('pAuthor').value.trim(),
-        email: email,
-        remark: ("【" + document.getElementById('pType').value + " 类】" + document.getElementById('pRemark').value.trim())
-      });
-      const res = await apiFetch(PURCHASE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-      const d = await res.json();
-      if (d.code === 200) {
-        msg.textContent = '入驻申请已提交！运营团队将尽快与您联系'; msg.style.color = '#4f8a62';
-        setTimeout(() => closeModal('purchaseModal'), 2500);
-      } else {
-        msg.textContent = d.msg || '提交失败'; msg.style.color = '#c65d43';
-      }
-    } catch (e) {
-      msg.textContent = '提交失败：' + e.message; msg.style.color = '#c65d43';
-    } finally {
-      purchaseBusy = false;
-    }
-  }
 
   // ===== 服务列表（keyword 搜索 + 分类 + 排序 + 加载骨架屏）=====
   // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /prod-api 代理到后端才能加载
@@ -608,117 +469,6 @@
   
   
   
-  function openMyReserves() {
-    document.getElementById('reserveModal').style.display = 'flex';
-    if (currentUser) {
-      document.getElementById('qReserveCard').style.display = 'none';
-      queryMyReserves();
-    } else {
-      document.getElementById('qReserveCard').style.display = 'block';
-      document.getElementById('reserveResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询活动候补</div>';
-    }
-  }
-  async function queryMyReserves() {
-    const box = document.getElementById('reserveResult');
-    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询活动候补</div>'; openLogin(); return; }
-    const cardNo = currentUser.cardNo;
-    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
-    box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
-    try {
-      const res = await apiFetch(MY_RESERVE_API + '?cardNo=' + encodeURIComponent(cardNo));
-      const d = await res.json();
-      if (d.code !== 200 || !d.data || !d.data.length) {
-        box.innerHTML = '<div class="empty-state"><span class="empty-icon">📌</span><span class="empty-text">暂无候补记录</span></div>';
-        return;
-      }
-      // 状态色竖条：候补中金 / 有名额绿 / 已完成灰 / 已取消灰
-      const barColor = { '0': '#d4a24e', '1': '#4f8a62', '2': '#b9b0a2', '3': '#b9b0a2' };
-      const tagCls = { '0': 'tag-off', '1': 'tag-sale', '2': 'tag-sale', '3': 'tag-off' };
-      box.innerHTML = d.data.map(r => `
-        <div class="borrow-item" style="border-left-color:${barColor[r.status] || '#b9b0a2'}">
-          <div style="font-weight:bold;margin-bottom:4px">${esc(r.bookName || '未知服务')} <span class="tag ${tagCls[r.status] || 'tag-off'}">${RESERVE_STATUS[r.status] || '未知'}</span></div>
-          <div style="color:#999">候补时间：${r.reserveDate || '-'}</div>
-          ${r.status === '1' ? '<div style="background:#eef7ef;border:1px solid #d5ead9;border-radius:8px;padding:6px 10px;font-size:12px;color:#4f8a62;margin-top:6px">✅ 已有名额，请尽快报名（名额有限，先到先得，报名后候补自动完成）</div>' : ''}
-          ${(r.status === '0' || r.status === '1') ? '<button class="btn-buy" style="padding:3px 10px;margin-top:6px;background:#cfc9bd;box-shadow:none" onclick="cancelReserve(' + r.reserveId + ')">取消候补</button>' : ''}
-        </div>`).join('');
-    } catch (e) {
-      box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
-    }
-  }
-  async function cancelReserve(reserveId) {
-    if (!currentUser) { toast('请先登录后再操作'); openLogin(); return; }
-    const cardNo = currentUser.cardNo;
-    if (!cardNo) { toast('请先输入成员编号'); return; }
-    if (!confirm('确认取消该候补吗？')) return;
-    try {
-      const body = new URLSearchParams({ cardNo: cardNo, reserveId: reserveId });
-      const res = await apiFetch(RESERVE_CANCEL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
-      const d = await res.json();
-      if (d.code === 200) {
-        toast('候补已取消');
-        await loadReserved();
-        queryMyReserves();
-      } else toast(d.msg || '取消失败');
-    } catch (e) { toast('取消失败：' + e.message); }
-  }
-
-  // ===== 我的报名 =====
-  function openMyBorrow() {
-    document.getElementById('borrowModal').style.display = 'flex';
-    document.getElementById('myPhone').value = '';
-    document.getElementById('myInfoMsg').textContent = '';
-    document.getElementById('myInfoArea').style.display = currentUser ? 'block' : 'none';
-    if (currentUser) {
-      document.getElementById('qCardNo').style.display = 'none';
-      queryMyBorrow();
-    } else {
-      document.getElementById('qCardNo').style.display = 'block';
-      document.getElementById('borrowResult').innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的报名</div>';
-    }
-  }
-  async function queryMyBorrow() {
-    const box = document.getElementById('borrowResult');
-    if (!currentUser) { box.innerHTML = '<div class="loading" style="padding:10px">请先登录后查询我的报名</div>'; openLogin(); return; }
-    const cardNo = currentUser.cardNo;
-    if (!cardNo) { box.innerHTML = '<div class="loading" style="padding:10px">请输入成员编号</div>'; return; }
-    box.innerHTML = '<div class="loading" style="padding:10px">查询中…</div>';
-    try {
-      const res = await apiFetch(CARD_API + '?cardNo=' + encodeURIComponent(cardNo));
-      const d = await res.json();
-      // M7：会话过期要引导重新登录，不能当作「暂无记录」静默吞掉
-      if (d.msg && d.msg.indexOf('登录已失效') >= 0) { handleSessionExpired(); return; }
-      if (d.code !== 200 || !d.data || !d.data.length) {
-        box.innerHTML = '<div class="loading" style="padding:10px">未查询到报名记录（请确认成员编号）</div>';
-        return;
-      }
-      const today = new Date();
-      box.innerHTML = d.data.map(b => {
-        let daysHtml = '';
-        if (b.status === '0' && b.dueDate) {
-          const days = Math.ceil((new Date(String(b.dueDate).replace(/-/g, '/')) - today) / 86400000);
-          daysHtml = '<span class="days-left ' + (days < 0 ? 'days-danger' : 'days-ok') + '">' + (days < 0 ? '已截止 ' + (-days) + ' 天' : '剩余 ' + days + ' 天') + '</span>';
-        }
-        // 状态色竖条：进行中蓝 / 已完成绿 / 已截止红
-        const barColor = { '0': '#409eff', '1': '#4f8a62', '2': '#c65d43' };
-        return `
-          <div class="borrow-item" style="border-left-color:${barColor[b.status] || '#b9b0a2'}">
-            <div style="font-weight:bold;margin-bottom:4px">${esc(b.bookName) || '未知服务'} ${daysHtml}</div>
-            <div style="color:#999">报名 ${b.borrowDate || '-'} ｜ 截止 ${b.dueDate || '-'}${b.returnDate ? ' ｜ 完成 ' + b.returnDate : ''}</div>
-            <span class="tag ${b.status === '2' ? 'tag-off' : 'tag-sale'}">${BORROW_STATUS[b.status] || '未知'}</span>
-          </div>`;
-      }).join('');
-    } catch (e) {
-      box.innerHTML = '<div class="loading" style="padding:10px">查询失败：' + e.message + '</div>';
-    }
-  }
-
-  // ===== 我的信息：修改手机号/邮箱（成员编号+姓名校验）=====
-  
-
-  // ===== 通用 =====
-  
-  
-
   // ===== 弹窗点击空白处（遮罩）自动关闭 =====
   document.querySelectorAll('.modal').forEach(function (m) {
     m.addEventListener('click', function (e) {

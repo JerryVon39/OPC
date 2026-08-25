@@ -117,7 +117,7 @@ public class ShopOrderServiceImplTest
         when(readerMapper.selectReaderByReaderIdForUpdate(2L)).thenReturn(null);
         ServiceException e = assertThrows(ServiceException.class,
                 () -> shopOrderService.createOrder("JS12345678", 3L, 1L));
-        assertTrue(e.getMessage().contains("读者不存在"));
+        assertTrue(e.getMessage().contains("成员不存在"));
     }
 
     /** 并发兜底：updateStock 返回 0（期间库存被抢光）→ 抛异常 */

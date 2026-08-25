@@ -60,11 +60,13 @@ public class FineServiceTest
         assertNull(fineService.calcFine(record));
     }
 
-    /** 逾期 2 天、免罚 2 天：在免罚期内，无罚款 */
+    /** 逾期 2 天内、免罚 2 天：在免罚期内，无罚款。
+     *  注意：逾期天数向上取整（生产注释：避免"差几分钟免罚/全额"边界跳变），
+     *  恰好满 2 天会被计为第 3 天，故用「2 天减 1 小时」表达免罚期内场景 */
     @Test
     void calcFine_overdueWithinGrace_returnsNull()
     {
-        record.setDueDate(new Date(System.currentTimeMillis() - 2L * 24 * 3600 * 1000));
+        record.setDueDate(new Date(System.currentTimeMillis() - 2L * 24 * 3600 * 1000 + 3600 * 1000L));
         when(configUtil.getInt("book.fine.graceDays", 0)).thenReturn(2);
         assertNull(fineService.calcFine(record));
     }
@@ -73,7 +75,8 @@ public class FineServiceTest
     @Test
     void calcFine_overdueThreeDays_chargeTwoDays()
     {
-        record.setDueDate(new Date(System.currentTimeMillis() - 3L * 24 * 3600 * 1000));
+        // 逾期天数向上取整：用「3 天减 1 小时」避免恰好 3 天被进位成第 4 天（边界抖动）
+        record.setDueDate(new Date(System.currentTimeMillis() - 3L * 24 * 3600 * 1000 + 3600 * 1000L));
         when(configUtil.getInt("book.fine.graceDays", 0)).thenReturn(1);
         when(configUtil.getDouble("book.fine.perDay", 0.1)).thenReturn(0.10);
         BigDecimal fine = fineService.calcFine(record);
@@ -85,7 +88,8 @@ public class FineServiceTest
     @Test
     void calcFine_noGrace_chargeFullDays()
     {
-        record.setDueDate(new Date(System.currentTimeMillis() - 3L * 24 * 3600 * 1000));
+        // 逾期天数向上取整：用「3 天减 1 小时」避免恰好 3 天被进位成第 4 天（边界抖动）
+        record.setDueDate(new Date(System.currentTimeMillis() - 3L * 24 * 3600 * 1000 + 3600 * 1000L));
         when(configUtil.getInt("book.fine.graceDays", 0)).thenReturn(0);
         when(configUtil.getDouble("book.fine.perDay", 0.1)).thenReturn(0.10);
         BigDecimal fine = fineService.calcFine(record);

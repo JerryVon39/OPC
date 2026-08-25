@@ -136,7 +136,10 @@ mysql --default-character-set=utf8mb4 -uroot -p < sql/business_init.sql      # �
 #   （role_init → upgrade_20260824_roles → …_cleanup → …_official → …_realcontent → …_cms(0822/0823)
 #    → …_opc_cleanup → …_profile → upgrade_20260824_two_state（book/reader 加 del_flag，回收站两态）
 #    → upgrade_20260824_auth（reader 加 password_hash 等认证列 + reader_login_log/mail_config/mail_template 表）
-#    → …_contest → …_policy → upgrade_20260824_menu_cleanup（清理孤儿菜单，防后台 getRouters NPE）），
+#    → …_contest → …_policy → upgrade_20260824_menu_cleanup（清理孤儿菜单，防后台 getRouters NPE）
+#    → upgrade_20260825_recycle_menu（回收站菜单恢复）→ upgrade_20260825_menu_reorg（业务导向四分组）
+#    → upgrade_20260825_recycle_cleanup（三态快照清理）→ upgrade_20260825_recycle_restore（回收站入口恢复）
+#    → upgrade_20260825_editor_fix（补建按钮权限菜单 + editor 角色按新目录重授）），
 #   否则后端查询 book/reader 报 Unknown column 'del_flag'，读者登录/注册报 Unknown column 'password_hash'。
 
 # 已有旧库升级到当前版本时，business_init.sql 顶部建表语句在已有库会报"表已存在"，

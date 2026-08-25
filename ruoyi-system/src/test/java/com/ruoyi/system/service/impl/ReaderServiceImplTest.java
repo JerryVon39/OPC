@@ -58,7 +58,7 @@ public class ReaderServiceImplTest
     {
         when(readerMapper.insertReader(any(Reader.class))).thenReturn(1);
 
-        Reader saved = readerService.register("测试读者", "13800000000", "1", "test@qq.com", "");
+        Reader saved = readerService.register("测试读者", "13800000000", "1", "test@qq.com", "", "Test1234!");
         assertNotNull(saved.getCardNo());
         assertTrue(saved.getCardNo().matches("JS\\d{8}"), "证号格式应为JS+8位数字，实际: " + saved.getCardNo());
         assertEquals("0", saved.getStatus());
