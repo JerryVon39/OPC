@@ -232,7 +232,7 @@
       const coverEl = document.getElementById('artCover');
       if (coverEl) {
         if (a.cover) {
-          const coverSrc = /^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + a.cover;
+          const coverSrc = /^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + encodeURI(a.cover);
           coverEl.innerHTML = '<img class="article-cover" src="' + esc(coverSrc) + '" alt="' + esc(a.title || '') + '" onerror="this.style.display=\'none\'">';
           coverEl.style.display = '';
         } else {

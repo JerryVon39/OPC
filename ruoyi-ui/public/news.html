@@ -201,7 +201,7 @@
       const raw = String(a.summary || '').replace(/<[^>]+>/g, ''); // 去掉可能残留的 HTML 标签后再截取摘要
       // 封面缩略图：统一左图右文结构——有封面显示真实图，无封面显示占位块（保证标题起点对齐）
       const cover = a.cover
-        ? '<img class="news-thumb" src="' + esc(/^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + a.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+        ? '<img class="news-thumb" src="' + esc(/^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + encodeURI(a.cover)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
         : '<div class="news-thumb news-thumb-ph">📰</div>';
       return '<div class="news-card has-thumb" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
         cover +

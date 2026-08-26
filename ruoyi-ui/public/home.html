@@ -462,7 +462,8 @@
   function imgSrc(url) {
     if (!url) return '';
     if (url.startsWith('http') || url.startsWith('/prod-api')) return url;
-    if (url.startsWith('/')) return '/prod-api' + url;
+    // 路径段 encodeURI：历史/异常文件名可能含 { } [ ] % 等 URL 特殊字符，不编码则浏览器请求失败
+    if (url.startsWith('/')) return '/prod-api' + encodeURI(url);
     return url;
   }
   // HTML 转义：服务名/主办方/成员名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）

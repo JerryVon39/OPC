@@ -68,7 +68,7 @@
           <el-upload
             class="avatar-uploader"
             :action="uploadUrl"
-            :headers="uploadHeaders"
+            :headers="{ Authorization: 'Bearer ' + getToken() }"
             :show-file-list="false"
             :on-success="handleImageSuccess"
             accept="image/*"
@@ -118,7 +118,6 @@ export default {
       title: "",
       open: false,
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
-      uploadHeaders: { Authorization: "Bearer " + getToken() },
       queryParams: { pageNum: 1, pageSize: 10, title: null, status: null },
       form: {},
       rules: {

@@ -804,7 +804,7 @@ function renderPageBlock(b, no) {
   const key = b.blockKey || '';
   const inner = (body) => '<section class="pblock" data-section-key="' + esc(key) + '"><div class="pblock-inner">' + body + '</div></section>';
   const head = (title) => (title ? '<h2 class="pblock-title">' + esc(title) + '</h2>' : '');
-  const imgUrl = (u) => (/^https?:\/\//.test(u || '') ? u : '/prod-api' + (u || ''));
+  const imgUrl = (u) => (/^https?:\/\//.test(u || '') ? u : '/prod-api' + encodeURI(u || ''));
 
   if (t === 'text') {
     return inner(head(b.title) +
