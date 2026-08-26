@@ -1,12 +1,9 @@
 package com.ruoyi.common.filter;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
-import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.ruoyi.common.utils.StringUtils;
@@ -48,54 +45,11 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper
     @Override
     public ServletInputStream getInputStream() throws IOException
     {
-        // 非json类型，直接返回
-        if (!isJsonRequest())
-        {
-            return super.getInputStream();
-        }
-
-        // 为空，直接返回
-        String json = IOUtils.toString(super.getInputStream(), "utf-8");
-        if (StringUtils.isEmpty(json))
-        {
-            return super.getInputStream();
-        }
-
-        // xss过滤
-        json = EscapeUtil.clean(json).trim();
-        byte[] jsonBytes = json.getBytes("utf-8");
-        final ByteArrayInputStream bis = new ByteArrayInputStream(jsonBytes);
-        return new ServletInputStream()
-        {
-            @Override
-            public boolean isFinished()
-            {
-                return true;
-            }
-
-            @Override
-            public boolean isReady()
-            {
-                return true;
-            }
-
-            @Override
-            public int available() throws IOException
-            {
-                return jsonBytes.length;
-            }
-
-            @Override
-            public void setReadListener(ReadListener readListener)
-            {
-            }
-
-            @Override
-            public int read() throws IOException
-            {
-                return bis.read();
-            }
-        };
+        // JSON body 不做 XSS 清洗（直接透传）：
+        // HTMLFilter 把 JSON 转义符（\" 等）当 HTML 属性处理，输出 =\" 的 PHP 风格转义，
+        // 破坏 JSON 结构导致 Jackson "JSON parse error"（正文含 <a href="..."> 等带属性标签时必现）。
+        // JSON 内容安全由各消费端白名单兜底：前台 article.html sanitizeNode、site.js cmsSanitizeHtml/esc。
+        return super.getInputStream();
     }
 
     /**

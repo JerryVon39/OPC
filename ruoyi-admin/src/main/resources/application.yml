@@ -160,6 +160,8 @@ xss:
   # 过滤开关
   enabled: true
   # 排除链接（多个用逗号分隔）
-  excludes: /system/notice
+  # /system/cms、/system/cmsBlock、/system/cmsSection：富文本正文（Quill HTML）保存，XSS 的 HTMLFilter 会把 JSON 转义引号误读为属性引号导致 JSON 解析失败；
+  # 安全由前台白名单净化渲染兜底（article.html ALLOWED_TAGS + site.js cmsSanitizeHtml），此处仅跳过保存端过滤
+  excludes: /system/notice,/system/cms,/system/cmsBlock,/system/cmsSection
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
