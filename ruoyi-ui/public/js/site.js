@@ -72,6 +72,7 @@ function safeCols(v) {
     if (html) box.innerHTML = html;
     if (typeof initNav === 'function') initNav(); // 渲染后重跑 URL 高亮（替换 innerHTML 会丢 active 类）
   };
+  window.__navConfigRendered = false; // 异步配置渲染完成后置位：取消兜底，防旧缓存"旧盖新"
   try {
     const raw = localStorage.getItem('opc_site_nav');
     if (raw) {
@@ -83,6 +84,7 @@ function safeCols(v) {
       } catch (e) {}
       if (Array.isArray(items) && items.length && Date.now() - t <= 60000) {
         render(items);
+        window.__navConfigRendered = true;
         return;
       }
     }
@@ -91,6 +93,7 @@ function safeCols(v) {
   // 兜底（请求失败/超时）：优先渲染任意缓存（即使过期——上次配置也好过静态初版顺序），
   // 无缓存才恢复静态导航——任何情况下都不闪"静态初版"
   setTimeout(function () {
+    if (window.__navConfigRendered) return; // 配置已到达并渲染：无需兜底
     let items = null;
     try {
       const raw = localStorage.getItem('opc_site_nav');
@@ -494,6 +497,7 @@ async function loadSiteConfig() {
           box.innerHTML = html;
           initNav(); // 重跑 URL 高亮（整体替换 innerHTML 会丢掉 active 类）
         }
+        window.__navConfigRendered = true; // 通知兜底定时器：配置已到达，勿再用旧缓存覆盖
         box.classList.remove('nav-pending'); // 配置已渲染：显示导航（同步块隐藏的在此恢复）
         // 写入带时间戳的本地缓存：60s 内切页同步渲染零闪烁；过期不渲染旧顺序
         try { localStorage.setItem('opc_site_nav', JSON.stringify({ t: Date.now(), items: items })); } catch (e) {}

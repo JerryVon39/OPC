@@ -94,7 +94,7 @@ echo [start-all] Backend is ready.
 echo.
 echo ============================================
 echo   Startup complete!
-echo   Admin:  http://localhost/          admin / admin123 (change password on first login)
+echo   Admin:  http://localhost/index.html   (login with the randomized admin password from deployment handover)
 echo   Reader: http://localhost/home.html
 echo   Stop:   scripts\stop-all.bat
 echo ============================================

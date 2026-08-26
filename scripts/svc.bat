@@ -78,7 +78,7 @@ echo.
 echo ============================================
 echo   All services starting - wait 30-60s
 echo   Frontend: http://localhost:%FE_PORT%/home.html
-echo   Admin:    http://localhost:%FE_PORT%/  (admin / admin123)
+echo   Admin:    http://localhost:%FE_PORT%/  (login with the randomized admin password)
 echo   Status:   scripts\svc.bat status
 echo   Stop:     scripts\svc.bat stop
 echo ============================================
