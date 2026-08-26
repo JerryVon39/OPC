@@ -1,5 +1,5 @@
 -- ============================================
--- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-26 15:41:33）
+-- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-26 15:50:39）
 -- 来源：数智游民创新工场官网数据库（ry-vue）业务数据
 -- 导入（可重复执行，REPLACE 模式）：
 --   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql
@@ -35,7 +35,7 @@ REPLACE INTO `book_reserve` VALUES (1,15,2,'李想','JS20260002','具身智能�
 /*!40000 ALTER TABLE `book_reserve` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `sys_banner` DISABLE KEYS */;
-REPLACE INTO `sys_banner` VALUES (1,'数智游民创新工场','清远市首个人工智能 OPC 生态社区 ｜ 一个人 + AI，就是一家公司',NULL,'',1,'0','admin','2026-08-21 09:12:06','',NULL,NULL,'#ffffff'),(3,'欢迎入驻','A 类免费合伙人 · B 类付费成员 ｜ 工位注册 / 地址挂靠一站解决',NULL,'',3,'0','admin','2026-08-21 09:12:06','',NULL,NULL,'#ffffff'),(4,'三大赋能体系','算力支持 · 政策金融 · 订单牵引，低门槛 AI 创业生态',NULL,'',2,'0','admin','2026-08-21 10:26:53','',NULL,NULL,'#ffffff');
+REPLACE INTO `sys_banner` VALUES (1,'数智游民创新工场','清远市首个人工智能 OPC 生态社区 ｜ 一个人 + AI，就是一家公司','/profile/upload/2026/08/26/DBNN_20260826154440A001.png','',1,'0','admin','2026-08-21 09:12:06','',NULL,'#39c5bb','#ffffff','cover','rgba(0,0,0,0.30)'),(3,'欢迎入驻','A 类免费合伙人 · B 类付费成员 ｜ 工位注册 / 地址挂靠一站解决',NULL,'',3,'0','admin','2026-08-21 09:12:06','',NULL,NULL,'#ffffff','cover','rgba(0,0,0,0.30)'),(4,'三大赋能体系','算力支持 · 政策金融 · 订单牵引，低门槛 AI 创业生态',NULL,'',2,'0','admin','2026-08-21 10:26:53','',NULL,NULL,'#ffffff','cover','rgba(0,0,0,0.30)');
 /*!40000 ALTER TABLE `sys_banner` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `sys_notice` DISABLE KEYS */;

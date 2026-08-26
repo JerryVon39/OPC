@@ -78,18 +78,40 @@
             <img v-if="form.image" :src="imgUrl(form.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
             <i v-else class="el-icon-plus avatar-uploader-icon" style="width:100%"></i>
           </el-upload>
-          <div style="color:#999;font-size:12px">可不上传图片，留空则前台显示渐变背景+文字</div>
+          <el-button v-if="form.image" type="danger" plain size="mini" icon="el-icon-delete" style="margin-top:8px" @click="removeImage">移除图片</el-button>
+          <div style="color:#999;font-size:12px">建议 1920×600 横向大图（效果最佳）；可不上传，留空则显示背景+文字</div>
+        </el-form-item>
+        <el-form-item label="图片适配" prop="imageFit">
+          <el-radio-group v-model="form.imageFit">
+            <el-radio label="cover">铺满裁切（推荐大图）</el-radio>
+            <el-radio label="contain">完整显示</el-radio>
+          </el-radio-group>
+          <div style="color:#999;font-size:12px">图片比例与轮播区域不一致时：铺满裁切会裁剪边缘，完整显示会保留整图（两侧露出背景）</div>
         </el-form-item>
         <el-form-item label="背景样式" prop="bgColor">
           <el-select v-model="bgMode" style="width:200px" @change="onBgModeChange">
             <el-option label="默认深空渐变" value="default" />
             <el-option label="自定义纯色/渐变" value="custom" />
           </el-select>
-          <el-input v-if="bgMode === 'custom'" v-model="form.bgColor" placeholder="如 #123456 或 linear-gradient(135deg,#0b1a2e,#1d3f6e)" style="width:320px;margin-left:10px" maxlength="100" />
+          <div v-if="bgMode === 'custom'" style="margin-top:8px">
+            <el-color-picker v-model="form.bgColor" style="vertical-align:middle" />
+            <span style="color:#999;font-size:12px;margin:0 10px">纯色取色，或选渐变：</span>
+            <el-select v-model="gradientPreset" size="small" style="width:180px" @change="onGradientChange" placeholder="渐变预设">
+              <el-option v-for="g in gradientPresets" :key="g.value" :label="g.label" :value="g.value" />
+            </el-select>
+          </div>
         </el-form-item>
         <el-form-item label="文字颜色" prop="textColor">
           <el-color-picker v-model="form.textColor" />
           <span style="color:#999;font-size:12px;margin-left:10px">轮播文字/副标题颜色（默认白色）</span>
+        </el-form-item>
+        <el-form-item label="文字底色" prop="textBg">
+          <el-select v-model="form.textBg" style="width:220px">
+            <el-option label="无底色（直接显示在图上）" value="" />
+            <el-option label="半透明黑 30%（通用）" value="rgba(0,0,0,0.30)" />
+            <el-option label="半透明黑 60%（深色图更清晰）" value="rgba(0,0,0,0.60)" />
+            <el-option label="不透明深色（最清晰）" value="rgba(11,26,46,0.92)" />
+          </el-select>
         </el-form-item>
         <el-form-item label="跳转链接" prop="link">
           <el-input v-model="form.link" placeholder="如 /home.html 或空" />
@@ -105,8 +127,8 @@
         </el-form-item>
         <el-form-item label="效果预览">
           <div class="banner-live-preview" :style="{ background: form.bgColor || 'linear-gradient(135deg,#0b1a2e,#1d3f6e)' }">
-            <img v-if="form.image" :src="imgUrl(form.image)" class="blp-img" alt="" />
-            <div class="blp-text" :style="{ color: form.textColor || '#ffffff' }">
+            <img v-if="form.image" :src="imgUrl(form.image)" class="blp-img" :style="{ objectFit: form.imageFit || 'cover' }" alt="" />
+            <div class="blp-text" :style="{ color: form.textColor || '#ffffff', background: form.textBg === undefined || form.textBg === null ? 'rgba(0,0,0,0.30)' : form.textBg }">
               <div class="blp-title">{{ form.title || '轮播标题' }}</div>
               <div class="blp-sub">{{ form.subtitle || '副标题' }}</div>
             </div>
@@ -148,6 +170,15 @@ export default {
       queryParams: { pageNum: 1, pageSize: 10, title: null, status: null },
       form: {},
       bgMode: 'default',
+      gradientPreset: '',
+      gradientPresets: [
+        { label: '深空科技蓝', value: 'linear-gradient(135deg,#0b1a2e,#1d3f6e)' },
+        { label: '科技蓝亮', value: 'linear-gradient(135deg,#1d3f6e,#5b8df2)' },
+        { label: '墨绿森林', value: 'linear-gradient(135deg,#16302a,#3d6a52)' },
+        { label: '暖橙活力', value: 'linear-gradient(135deg,#7a3b1f,#c2571e)' },
+        { label: '紫罗兰', value: 'linear-gradient(135deg,#2b1e5e,#6a4bc4)' },
+        { label: '商务灰', value: 'linear-gradient(135deg,#23272e,#4a5568)' }
+      ],
       rules: {
         title: [{ required: true, message: "标题不能为空", trigger: "blur" }]
       }
@@ -179,6 +210,12 @@ export default {
     onBgModeChange(v) {
       if (v === 'default') this.form.bgColor = ''
     },
+    onGradientChange(v) {
+      this.form.bgColor = v
+    },
+    removeImage() {
+      this.form.image = ''
+    },
     handleUploadError(err) {
       // 401 = 登录令牌过期（el-upload 不走 axios 拦截器，过期不会自动跳登录）
       if (err && err.status === 401) {
@@ -206,12 +243,14 @@ export default {
     },
     handleAdd() {
       this.bgMode = 'default'
+      this.gradientPreset = ''
       this.reset()
       this.open = true
       this.title = "新增轮播图"
     },
     handleUpdate(row) {
       this.bgMode = row.bgColor ? 'custom' : 'default'
+      this.gradientPreset = ''
       this.reset()
       getBanner(row.bannerId).then(response => {
         this.form = response.data

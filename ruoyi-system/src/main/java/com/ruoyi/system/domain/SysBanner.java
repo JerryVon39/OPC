@@ -38,6 +38,12 @@ public class SysBanner extends BaseEntity
     /** 文字颜色（默认 #ffffff） */
     private String textColor;
 
+    /** 图片适配（cover铺满裁切/contain完整显示，默认 cover） */
+    private String imageFit;
+
+    /** 文字底色CSS（空=无底色） */
+    private String textBg;
+
     public void setBannerId(Long bannerId) { this.bannerId = bannerId; }
     public Long getBannerId() { return bannerId; }
 
@@ -67,6 +73,14 @@ public class SysBanner extends BaseEntity
 
     public void setTextColor(String textColor) { this.textColor = textColor; }
 
+    public String getImageFit() { return imageFit; }
+
+    public void setImageFit(String imageFit) { this.imageFit = imageFit; }
+
+    public String getTextBg() { return textBg; }
+
+    public void setTextBg(String textBg) { this.textBg = textBg; }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -79,6 +93,8 @@ public class SysBanner extends BaseEntity
             .append("status", getStatus())
             .append("bgColor", getBgColor())
             .append("textColor", getTextColor())
+            .append("imageFit", getImageFit())
+            .append("textBg", getTextBg())
             .toString();
     }
 }

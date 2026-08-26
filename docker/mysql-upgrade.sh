@@ -62,7 +62,8 @@ sql/upgrade_20260826_engine_merge.sql
 sql/upgrade_20260826_site_settings.sql
 sql/upgrade_20260826_article_history.sql
 sql/upgrade_20260826_recycle_purge_job.sql
-sql/upgrade_20260826_banner_style.sql"
+sql/upgrade_20260826_banner_style.sql
+sql/upgrade_20260826_banner_style2.sql"
 
 for f in $UPGRADES; do
   if [ -f "$f" ]; then

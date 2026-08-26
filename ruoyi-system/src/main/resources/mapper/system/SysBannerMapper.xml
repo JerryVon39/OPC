@@ -11,6 +11,8 @@
         <result property="sort"      column="sort"        />
         <result property="bgColor"   column="bg_color"    />
         <result property="textColor" column="text_color"   />
+        <result property="imageFit"  column="image_fit"    />
+        <result property="textBg"    column="text_bg"      />
         <result property="status"    column="status"      />
         <result property="createBy"  column="create_by"   />
         <result property="createTime" column="create_time" />
@@ -19,7 +21,7 @@
     </resultMap>
 
     <sql id="selectSysBannerVo">
-        select banner_id, title, subtitle, image, link, sort, status, bg_color, text_color, create_by, create_time, update_by, update_time from sys_banner
+        select banner_id, title, subtitle, image, link, sort, status, bg_color, text_color, image_fit, text_bg, create_by, create_time, update_by, update_time from sys_banner
     </sql>
 
     <select id="selectSysBannerList" parameterType="SysBanner" resultMap="SysBannerResult">
@@ -47,6 +49,8 @@
             <if test="status != null">status,</if>
             <if test="bgColor != null">bg_color,</if>
             <if test="textColor != null">text_color,</if>
+            <if test="imageFit != null">image_fit,</if>
+            <if test="textBg != null">text_bg,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
         </trim>
@@ -59,6 +63,8 @@
             <if test="status != null">#{status},</if>
             <if test="bgColor != null">#{bgColor},</if>
             <if test="textColor != null">#{textColor},</if>
+            <if test="imageFit != null">#{imageFit},</if>
+            <if test="textBg != null">#{textBg},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
         </trim>
@@ -75,6 +81,8 @@
             <if test="status != null">status = #{status},</if>
             <if test="bgColor != null">bg_color = #{bgColor},</if>
             <if test="textColor != null">text_color = #{textColor},</if>
+            <if test="imageFit != null">image_fit = #{imageFit},</if>
+            <if test="textBg != null">text_bg = #{textBg},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
