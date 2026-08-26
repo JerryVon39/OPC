@@ -5,6 +5,7 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ruoyi.common.core.domain.MailSettings;
 import com.ruoyi.common.utils.AesUtil;
@@ -18,6 +19,7 @@ import com.ruoyi.system.service.IMailConfigService;
  * 邮件 SMTP 配置服务：数据库优先，环境变量兜底，改完即时生效
  */
 @Service
+@Transactional
 public class MailConfigServiceImpl implements IMailConfigService, MailConfigProvider
 {
     @Autowired

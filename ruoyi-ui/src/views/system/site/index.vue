@@ -99,17 +99,23 @@ export default {
         'site.footer.join': this.footer.join, 'site_phone': this.contact.phone, 'site_email': this.contact.email,
         'site_address': this.contact.address, 'site_wechat': this.contact.wechat
       }
-      // RuoYi updateConfig 按 configId 更新：先查全部参数取各键 id
-      listConfig({ pageNum: 1, pageSize: 100 }).then(res => {
+      // RuoYi updateConfig 按 configId 更新：先查全部参数取各键 id。
+      // pageSize 放大到 500 防超页漏查；并核对每个待存键都存在，缺键明确报错而非静默丢配置（H10 修复）
+      listConfig({ pageNum: 1, pageSize: 500 }).then(res => {
         const rows = res.rows || []
-        const saves = rows
-          .filter(r => values[r.configKey] !== undefined)
-          .map(r => updateConfig({ configId: r.configId, configName: r.configName, configKey: r.configKey, configValue: values[r.configKey] }))
+        const byKey = {}
+        rows.forEach(r => { byKey[r.configKey] = r })
+        const missing = Object.keys(values).filter(k => !byKey[k])
+        if (missing.length) {
+          throw new Error('系统参数缺失：' + missing.join('、') + '（需先执行站点配置升级脚本）')
+        }
+        const saves = Object.keys(values)
+          .map(k => updateConfig({ configId: byKey[k].configId, configName: byKey[k].configName, configKey: k, configValue: values[k] }))
         return Promise.all(saves)
       }).then(() => {
         this.$modal.msgSuccess("已保存（前台刷新即生效）")
-      }).catch(() => {
-        this.$modal.msgError("保存失败，请检查权限")
+      }).catch(e => {
+        this.$modal.msgError("保存失败：" + (e && e.message ? e.message : "请检查权限"))
       })
     }
   }

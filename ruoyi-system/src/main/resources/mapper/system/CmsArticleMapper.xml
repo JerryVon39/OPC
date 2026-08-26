@@ -202,12 +202,19 @@
         </foreach>
     </update>
 
-    <!-- 批量排序（逐条更新，仅未删除文章） -->
+    <!-- 批量排序（单语句 CASE WHEN，仅未删除文章）：逐条 UPDATE 拼接为多语句，
+         JDBC URL 未开 allowMultiQueries，Connector/J 默认拒绝多语句必报错（H2 修复） -->
     <update id="batchUpdateSort">
-        <foreach item="a" collection="list" separator=";">
-            update cms_article set sort = #{a.sort}, update_time = sysdate()
-            where article_id = #{a.articleId} and del_flag = '0'
+        update cms_article
+        set sort = case article_id
+            <foreach item="a" collection="list">when #{a.articleId} then #{a.sort}</foreach>
+            else sort end,
+            update_time = sysdate()
+        where article_id in
+        <foreach item="a" collection="list" open="(" separator="," close=")">
+            #{a.articleId}
         </foreach>
+        and del_flag = '0'
     </update>
 
     <!-- 软删除（两态：del_flag 置 '2'；仅未删除的可删，同事务由 service 校验存在性） -->

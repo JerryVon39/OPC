@@ -120,7 +120,7 @@
 </template>
 
 <script>
-import { listArticle, delArticle, changeArticleStatus, publishArticle, listCategory, batchTop, batchStatus, batchSort } from "@/api/system/cms"
+import { listArticle, delArticle, changeArticleStatus, publishArticle, updateArticle, listCategory, batchTop, batchStatus, batchSort } from "@/api/system/cms"
 
 export default {
   name: "CmsArticle",

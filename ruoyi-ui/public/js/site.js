@@ -39,6 +39,24 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+// 链接协议白名单（对齐 home.html goBannerLink）：仅放行 http(s)/相对路径/锚点/mailto，
+// 其余一律落 '#' —— esc() 只转义 HTML 字符，拦不住 javascript: 直通（H3 修复）
+function safeLink(link) {
+  const s = String(link == null ? '' : link).trim();
+  if (!s || /^(https?:\/\/|\/|#|mailto:)/i.test(s)) return s || '#';
+  return '#';
+}
+// 正整数列数：非法值一律回退 3 —— 防 style 属性注入（H3 修复）
+function safeCols(v) {
+  return /^[1-9]\d*$/.test(String(v == null ? '' : v)) ? v : 3;
+}
+// canonical 占位域名修正（H7 修复）：9 个静态页 <link rel="canonical"> 原指保留域
+// opc.example.com，部署到正式域名后收录/权重会被引走；此处按当前站点地址改写
+(function () {
+  var link = document.querySelector('link[rel="canonical"]');
+  if (!link || !/opc\.example\.com/i.test(link.href)) return;
+  link.href = location.origin + location.pathname;
+})();
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function toast(text) {
   const t = document.getElementById('toast');
@@ -420,7 +438,7 @@ async function loadSiteConfig() {
       const box = document.getElementById('navAnchors');
       if (Array.isArray(items) && items.length && box) {
         box.innerHTML = items.map(n =>
-          '<a href="' + esc(n.link || '#') + '">' + esc(n.name || '') + '</a>').join('');
+          '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
       }
     } catch (e) { /* 导航配置损坏保留静态 */ }
   }
@@ -548,7 +566,7 @@ function renderSection(s, no) {
       '<div><span class="hs-title">' + esc(st.title) + '</span><span class="hs-desc">' + esc(st.desc) + '</span></div></div>' +
       (si < cfg.steps.length - 1 ? '<div class="hs-arrow">→</div>' : '')).join('');
     return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title) +
-      '<div class="about-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div>' +
+      '<div class="about-cards" style="grid-template-columns:repeat(' + safeCols(cfg.cols) + ',1fr)">' + cards + '</div>' +
       (steps ? '<div class="home-steps">' + steps + '</div>' : '') + '</div></section>';
   }
   if (s.template === 'tags') {
@@ -619,7 +637,7 @@ function renderSection(s, no) {
     return '<section class="home-cta"><div class="home-cta-inner">' + img +
       '<h3>' + esc(cfg.title || '') + '</h3>' +
       (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
-      (cfg.btnText ? '<a class="btn-buy home-cta-btn" href="' + esc(cfg.btnLink || '#') + '">' + esc(cfg.btnText) + '</a>' : '') +
+      (cfg.btnText ? '<a class="btn-buy home-cta-btn" href="' + esc(safeLink(cfg.btnLink)) + '">' + esc(cfg.btnText) + '</a>' : '') +
       '</div></section>';
   }
   // text：纯文本段落
@@ -722,7 +740,7 @@ function renderPageBlock(b, no) {
     return inner('<div class="pblock-feature' + (cfg.reverse === '1' ? ' pblock-feature-rev' : '') + '">' + img +
       '<div class="pblock-f-body">' + head(b.title) +
       (cfg.text ? '<div class="pblock-text">' + cmsSanitizeHtml(cfg.text) + '</div>' : '') +
-      (cfg.btnText ? '<a class="btn-buy pblock-f-btn" href="' + esc(cfg.btnLink || '#') + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
+      (cfg.btnText ? '<a class="btn-buy pblock-f-btn" href="' + esc(safeLink(cfg.btnLink)) + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
       '</div></div>');
   }
   if (t === 'cards') {
@@ -731,7 +749,7 @@ function renderPageBlock(b, no) {
       '<div class="pblock-card-title">' + esc(c.title) + '</div>' + cmsSanitizeHtml(c.text || '') + '</div>').join('');
     return inner(head(b.title) +
       (cfg.subtitle ? '<div class="pblock-sub">' + esc(cfg.subtitle) + '</div>' : '') +
-      '<div class="pblock-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div>');
+      '<div class="pblock-cards" style="grid-template-columns:repeat(' + safeCols(cfg.cols) + ',1fr)">' + cards + '</div>');
   }
   if (t === 'steps') {
     const steps = (cfg.steps || []).map((st, i) =>
@@ -772,7 +790,7 @@ function renderPageBlock(b, no) {
     return '<section class="pblock pblock-cta" data-section-key="' + esc(key) + '"><div class="pblock-cta-inner">' +
       '<h3>' + esc(cfg.title || b.title || '') + '</h3>' +
       (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
-      (cfg.btnText ? '<a class="btn-buy" href="' + esc(cfg.btnLink || '#') + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
+      (cfg.btnText ? '<a class="btn-buy" href="' + esc(safeLink(cfg.btnLink)) + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
       '</div></section>';
   }
   if (t === 'form') {

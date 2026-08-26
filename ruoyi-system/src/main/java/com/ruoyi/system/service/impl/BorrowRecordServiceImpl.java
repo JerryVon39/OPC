@@ -542,13 +542,13 @@ public class BorrowRecordServiceImpl implements IBorrowRecordService
                     || com.ruoyi.system.constant.BizStatus.BORROW_OVERDUE.equals(record.getStatus()))
             {
                 // 动态逾期（status='0' 但已过应还日）的罚款尚未落库（仅在核销时结算）：
-                // 先结算入账，否则下面的欠费拦截必然放行，删除会把逾期产生的欠费一并抹掉
+                // 删前先按当前时间重算应计罚款，>0 直接拒绝删除（删除会抹掉欠费凭据）。
+                // 此前实现"先结算落库再复查守卫"，但 CAS 会以 null 覆写刚落库的罚款，
+                // 结算形同虚设——应收罚款随记录一起被物理删除（H1 修复）。
                 java.math.BigDecimal fineNow = fineService.calcFine(record);
-                if (fineNow != null && record.getFineAmount() == null)
+                if (fineNow != null && fineNow.compareTo(java.math.BigDecimal.ZERO) > 0)
                 {
-                    record.setFineAmount(fineNow);
-                    record.setFinePaid(com.ruoyi.system.constant.BizStatus.FINE_UNPAID);
-                    borrowRecordMapper.updateBorrowRecord(record);
+                    throw new ServiceException("该报名记录已产生未缴罚款，请先到服务台收款后再删除");
                 }
                 // CAS 先置"已完成"再删：并发删除同一未还记录时只有一次回补库存（防库存双回补）
                 java.util.Date now = new Date();

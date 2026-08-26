@@ -18,7 +18,8 @@ if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
 
 set "MYSQLDUMP=%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqldump.exe"
 set "OUT=sql\data_snapshot.sql"
-set "TABLES=book reader borrow_record shop_order book_reserve book_purchase_req sys_banner sys_notice sys_notice_read cms_category cms_article sys_dict_type sys_dict_data"
+REM 隐私排除：reader（成员手机/邮箱）与 book_purchase_req（申请人信息）与 .githooks/pre-commit 一致，不导出（H4 修复）
+set "TABLES=book borrow_record shop_order book_reserve sys_banner sys_notice sys_notice_read cms_category cms_article sys_dict_type sys_dict_data"
 
 "%MYSQLDUMP%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% --no-create-info --replace --skip-comments --skip-add-locks --skip-lock-tables --set-gtid-purged=OFF ry-vue %TABLES% > "%OUT%" 2>nul
 if errorlevel 1 (

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ruoyi.common.utils.MailUtil;
 import com.ruoyi.system.domain.MailTemplate;
@@ -19,6 +20,7 @@ import com.ruoyi.system.service.IMailTemplateService;
  * 邮件场景模板服务：库模板优先、内置默认兜底（表未初始化/模板被删/停用都不影响发信）
  */
 @Service
+@Transactional
 public class MailTemplateServiceImpl implements IMailTemplateService
 {
     private static final Logger log = LoggerFactory.getLogger(MailTemplateServiceImpl.class);

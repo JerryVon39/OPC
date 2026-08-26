@@ -160,8 +160,13 @@ public class ReaderServiceImpl implements IReaderService
      * @return 结果
      */
     @Override
+    @Transactional
     public int updateReader(Reader reader)
     {
+        // 改证号前先取旧证号：换号必须联动历史快照表（H5 修复，对齐 reissueCard 的同步逻辑），
+        // 否则历史记录按旧证号匹配丢失、防重复借阅/候补归属比对失效
+        Reader old = reader.getReaderId() == null ? null : selectReaderByReaderId(reader.getReaderId());
+        String oldCardNo = old == null ? null : old.getCardNo();
         // 修改证号同样要查重（排除自身）：防撞 uk_card_no 唯一约束变成裸数据库异常
         if (reader.getCardNo() != null && !reader.getCardNo().trim().isEmpty())
         {
@@ -182,7 +187,18 @@ public class ReaderServiceImpl implements IReaderService
             reader.setCardNo(cardNo);
         }
         reader.setUpdateTime(DateUtils.getNowDate());
-        return readerMapper.updateReader(reader);
+        int rows = readerMapper.updateReader(reader);
+        // 证号确实变了（且成员确实存在）：同步三张历史快照表的证号（报名/候补/订单）
+        String newCardNo = reader.getCardNo();
+        if (rows > 0 && oldCardNo != null && newCardNo != null && !oldCardNo.equals(newCardNo))
+        {
+            borrowRecordMapper.updateCardNoSnapshot(reader.getReaderId(), newCardNo);
+            bookReserveMapper.updateCardNoSnapshot(reader.getReaderId(), newCardNo);
+            shopOrderMapper.updateCardNoSnapshot(reader.getReaderId(), newCardNo);
+        }
+        // 成员总数/证号变了：失效统计缓存
+        statisticsService.evictAll();
+        return rows;
     }
 
     /**

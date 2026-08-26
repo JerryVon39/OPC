@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.CmsCategory;
 import com.ruoyi.system.mapper.CmsArticleMapper;
@@ -13,6 +14,7 @@ import com.ruoyi.system.service.ICmsCategoryService;
  * CMS 文章栏目Service业务层处理
  */
 @Service
+@Transactional
 public class CmsCategoryServiceImpl implements ICmsCategoryService
 {
     @Autowired

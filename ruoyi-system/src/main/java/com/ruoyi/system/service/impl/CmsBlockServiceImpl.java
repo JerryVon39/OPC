@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.CmsBlock;
@@ -15,6 +16,7 @@ import com.ruoyi.system.service.ICmsBlockService;
  * CMS 区块Service业务层处理（保存自动写历史、回滚、每区块 20 版上限）
  */
 @Service
+@Transactional
 public class CmsBlockServiceImpl implements ICmsBlockService
 {
     /** 每区块历史版本上限 */

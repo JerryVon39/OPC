@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.CmsPageSection;
@@ -14,6 +15,7 @@ import com.ruoyi.system.service.ICmsPageSectionService;
  * CMS 首页模块Service业务层处理（含上移/下移排序）
  */
 @Service
+@Transactional
 public class CmsPageSectionServiceImpl implements ICmsPageSectionService
 {
     @Autowired

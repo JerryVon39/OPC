@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.concurrent.TimeUnit;
 import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.exception.ServiceException;
@@ -20,6 +21,7 @@ import com.ruoyi.system.service.StatisticsService;
  * CMS 文章Service业务层处理
  */
 @Service
+@Transactional
 public class CmsArticleServiceImpl implements ICmsArticleService
 {
     @Autowired

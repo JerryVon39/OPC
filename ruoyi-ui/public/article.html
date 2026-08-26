@@ -94,6 +94,8 @@
 <script>
   // ===== 文章详情（新闻/政策共用，?id= 直达，URL 可分享刷新）=====
   const DETAIL_API = '/prod-api/system/cms/publicDetail/';
+  // 后台鉴权预览接口（preview=1 时使用，需编辑页 iframe 传入 admin token）
+  const PREVIEW_API = '/prod-api/system/cms/preview/';
 
   // HTML 转义：标题/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
@@ -193,8 +195,10 @@
   async function loadArticle() {
     const qs = new URLSearchParams(location.search);
     const id = qs.get('id');
-    // 预览模式（后台编辑页 iframe）：preview=1 时接口跳过"仅已发布"校验、不计浏览量（草稿/下线文章也可见）
+    // 预览模式（后台编辑页 iframe）：preview=1 时改调后台鉴权预览接口（需 admin 会话，草稿/下线可见）
+    // 令牌由编辑页拼进 iframe URL（token 参数），本页仅转发——无令牌的匿名请求永远只能看到已发布文章
     const isPreview = qs.get('preview') === '1';
+    const token = isPreview ? (qs.get('token') || '') : '';
     const titleEl = document.getElementById('artTitle');
     const metaEl = document.getElementById('artMeta');
     const contentEl = document.getElementById('artContent');
@@ -204,7 +208,9 @@
       return;
     }
     try {
-      const res = await fetch(DETAIL_API + id + (isPreview ? '?preview=1' : ''));
+      const previewUrl = PREVIEW_API + id;
+      const res = await fetch(isPreview ? previewUrl : DETAIL_API + id,
+        isPreview ? { headers: token ? { 'Authorization': 'Bearer ' + token } : {} } : undefined);
       const d = await res.json();
       if (d.code !== 200 || !d.data) {
         titleEl.textContent = '文章不存在或未发布';

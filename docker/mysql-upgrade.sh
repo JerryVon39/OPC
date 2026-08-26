@@ -40,7 +40,28 @@ sql/upgrade_20260825_recycle_menu.sql
 sql/upgrade_20260825_menu_reorg.sql
 sql/upgrade_20260825_recycle_cleanup.sql
 sql/upgrade_20260825_recycle_restore.sql
-sql/upgrade_20260825_editor_fix.sql"
+sql/upgrade_20260825_editor_fix.sql
+sql/upgrade_20260825_cms_enhance.sql
+sql/upgrade_20260825_ops_workbench.sql
+sql/upgrade_20260825_menu_fix.sql
+sql/upgrade_20260825_menu_dedupe.sql
+sql/upgrade_20260825_cms_block.sql
+sql/upgrade_20260825_operator_block.sql
+sql/upgrade_20260825_cms_section.sql
+sql/upgrade_20260825_section_fix.sql
+sql/upgrade_20260825_section_fix2.sql
+sql/upgrade_20260825_home_polish.sql
+sql/upgrade_20260825_home_fill.sql
+sql/upgrade_20260825_cms_unify.sql
+sql/upgrade_20260825_preview.sql
+sql/upgrade_20260825_hide_book_menu.sql
+sql/upgrade_20260825_block_v3.sql
+sql/upgrade_20260825_block_v3_seed.sql
+sql/upgrade_20260826_menu_fix2.sql
+sql/upgrade_20260826_engine_merge.sql
+sql/upgrade_20260826_site_settings.sql
+sql/upgrade_20260826_article_history.sql
+sql/upgrade_20260826_recycle_purge_job.sql"
 
 for f in $UPGRADES; do
   if [ -f "$f" ]; then

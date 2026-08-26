@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
@@ -41,14 +40,20 @@ public class CmsArticleController extends BaseController
         return getDataTable(list);
     }
 
-    /** 前台公开文章详情（匿名）：浏览量 +1 */
+    /** 前台公开文章详情（匿名）：仅已发布可见，浏览量 +1（不受任何 URL 参数影响，防止草稿/下线泄露） */
     @Anonymous
     @GetMapping("/publicDetail/{articleId}")
-    public AjaxResult publicDetail(@PathVariable("articleId") Long articleId,
-                                   @RequestParam(name = "preview", required = false) String preview)
+    public AjaxResult publicDetail(@PathVariable("articleId") Long articleId)
     {
-        // preview=1：后台编辑页 iframe 预览（跳过"仅已发布"校验、不计浏览量）
-        return success(cmsArticleService.selectPublicArticleDetail(articleId, "1".equals(preview)));
+        return success(cmsArticleService.selectPublicArticleDetail(articleId, false));
+    }
+
+    /** 后台实时预览（需登录 + 文章查询权限）：草稿/下线文章也可见（仍不可见已删除），不计浏览量 */
+    @PreAuthorize("@ss.hasPermi('system:cms:query')")
+    @GetMapping("/preview/{articleId}")
+    public AjaxResult preview(@PathVariable("articleId") Long articleId)
+    {
+        return success(cmsArticleService.selectPublicArticleDetail(articleId, true));
     }
 
     /** 文章历史列表（version 倒序，最多 20 版） */

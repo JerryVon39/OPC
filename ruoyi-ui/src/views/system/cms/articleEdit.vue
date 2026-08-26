@@ -183,10 +183,13 @@ export default {
       if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
     },
-    /** 前台预览地址（真实 article.html 详情页；preview=1 让接口跳过"仅已发布"校验、不计浏览量） */
+    /** 前台预览地址（真实 article.html 详情页；preview=1 + 后台令牌调鉴权预览接口，草稿/下线可见） */
     previewUrl() {
       if (!this.isEdit) return ''
-      return this.frontOrigin + '/article.html?id=' + this.articleId + '&preview=1&t=' + this.previewTs
+      // token 取自若依登录态（localStorage Admin-Token）；无令牌时 article.html 只显示已发布内容
+      const token = (localStorage.getItem('Admin-Token') || '').replace(/^Bearer\s+/i, '')
+      return this.frontOrigin + '/article.html?id=' + this.articleId + '&preview=1&token=' +
+        encodeURIComponent(token) + '&t=' + this.previewTs
     }
   },
   watch: {
@@ -275,6 +278,11 @@ export default {
     /** 保存（forcePublish=true 时强制存为已发布；否则按右侧状态保存） */
     handleSave(forcePublish) {
       if (this.saving) return
+      // 标题输入框在 el-form 之外（左主栏），rules.title 的 required 永不生效——显式校验（H9 修复）
+      if (!this.form.title || !this.form.title.trim()) {
+        this.$modal.msgWarning('请填写必填项：标题')
+        return
+      }
       this.$refs.form.validate(valid => {
         if (!valid) {
           this.sideTab = 'settings'
