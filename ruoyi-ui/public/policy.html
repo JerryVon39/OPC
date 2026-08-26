@@ -110,8 +110,10 @@
 
     <div class="content-section">
       <div class="sub-title">📚 政策文件库</div>
-      <div style="margin-bottom:12px">
-        <input id="policySearch" class="form-input" placeholder="🔍 搜索政策文件标题…" maxlength="50" style="max-width:360px" />
+      <div style="margin-bottom:12px;position:relative;display:inline-block">
+        <!-- 73：搜索清除钮（关键词非空时显示，一键回全量列表） -->
+        <input id="policySearch" class="form-input" placeholder="🔍 搜索政策文件标题…" maxlength="50" style="max-width:360px;padding-right:32px" />
+        <span id="policySearchClear" class="search-clear" onclick="clearPolicySearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-size:15px;line-height:1" title="清除搜索">✕</span>
       </div>
       <div class="info-grid" id="policyGrid">
         <div class="loading">加载中…</div>
@@ -353,11 +355,21 @@
   document.getElementById('policySearch').addEventListener('input', function () {
     clearTimeout(policySearchTimer);
     const input = this;
+    document.getElementById('policySearchClear').style.display = input.value.trim() ? 'inline' : 'none'; // 73
     policySearchTimer = setTimeout(function () {
       libKw = input.value.trim();
       loadPolicyPage(1);
     }, 300);
   });
+
+  // 73：一键清除搜索，回全量列表
+  function clearPolicySearch() {
+    const input = document.getElementById('policySearch');
+    input.value = '';
+    document.getElementById('policySearchClear').style.display = 'none';
+    libKw = '';
+    loadPolicyPage(1);
+  }
 
   // ===== 政策咨询留言（复用入驻申请接口，remark 前缀【政策咨询】）=====
   const PURCHASE_API = '/prod-api/system/purchase/apply';

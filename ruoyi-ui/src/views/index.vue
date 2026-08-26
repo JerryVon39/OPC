@@ -9,7 +9,8 @@
     <!-- 业务统计卡片 -->
     <el-row :gutter="16" class="stat-row">
       <el-col :xs="12" :sm="6" v-for="item in statCards" :key="item.label">
-        <el-card shadow="hover" class="stat-card" :body-style="{ padding: '18px' }">
+        <!-- 69：统计卡可点击直达（path 为空 = 纯展示不可点） -->
+        <el-card shadow="hover" class="stat-card" :body-style="{ padding: '18px' }" :style="item.path ? 'cursor:pointer' : ''" @click.native="statGo(item)">
           <div class="stat-num" :style="{ color: item.color }">{{ item.value }}</div>
           <div class="stat-label">{{ item.label }}</div>
         </el-card>
@@ -78,13 +79,14 @@ export default {
   data() {
     return {
       // 业务统计卡片（6 项：成员 + CMS 文章 + 待办；服务业务已关停不再展示）
+      // 69：path 非空 = 可点击直达（草稿→文章列表带筛选；回收站/待审核→对应列表页）
       statCards: [
         { label: '社区成员', value: 0, color: '#E6A23C' },
-        { label: '文章总数', value: 0, color: '#67C23A' },
-        { label: '今日发文', value: 0, color: '#409EFF' },
-        { label: '草稿', value: 0, color: '#E6A23C' },
-        { label: '回收站', value: 0, color: '#F56C6C' },
-        { label: '待审核申请', value: 0, color: '#E2554B' }
+        { label: '文章总数', value: 0, color: '#67C23A', path: '/content/article' },
+        { label: '今日发文', value: 0, color: '#409EFF', path: '/content/article' },
+        { label: '草稿', value: 0, color: '#E6A23C', path: '/content/article?status=1' },
+        { label: '回收站', value: 0, color: '#F56C6C', path: '/recycle/cms' },
+        { label: '待审核申请', value: 0, color: '#E2554B', path: '/purchase' }
       ],
       recentArticles: [], // 最近编辑文章 5 条
       recentBlocks: [],   // 最近编辑区块 5 条
@@ -126,6 +128,14 @@ export default {
         this.recentArticles = d.articles || []
         this.recentBlocks = d.blocks || []
       }).catch(() => {}) // L8 修复：请求失败静默保留空态，不产生未捕获异常
+    },
+    /** 69：统计卡点击直达（path 含 query 时拆开传给 router） */
+    statGo(item) {
+      if (!item.path) return
+      const [path, queryStr] = item.path.split('?')
+      const query = {}
+      if (queryStr) queryStr.split('&').forEach(kv => { const [k, v] = kv.split('='); if (k && v !== undefined) query[k] = v })
+      this.$router.push({ path, query })
     },
     go(path) {
       this.$router.push(path)

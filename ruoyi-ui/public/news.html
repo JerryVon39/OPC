@@ -48,8 +48,10 @@
   <!-- 文章列表（栏目 Tab + 卡片列表 + 加载更多） -->
   <div class="content-section">
     <div class="sub-title">📰 全部动态</div>
-    <div style="margin-bottom:12px">
-      <input id="searchInput" class="form-input" placeholder="🔍 搜索文章标题…" maxlength="50" style="max-width:360px" />
+    <div style="margin-bottom:12px;position:relative;display:inline-block">
+      <!-- 73：搜索清除钮（关键词非空时显示，一键回全量列表） -->
+      <input id="searchInput" class="form-input" placeholder="🔍 搜索文章标题…" maxlength="50" style="max-width:360px;padding-right:32px" />
+      <span id="searchClear" class="search-clear" onclick="clearSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-size:15px;line-height:1" title="清除搜索">✕</span>
     </div>
     <div class="type-tabs" id="catTabs">
       <a class="active" data-id="" onclick="switchCat(this)">全部</a>
@@ -147,7 +149,10 @@
       const rows = d.rows || [];
       total = d.total || 0;
       if (!rows.length) {
-        box.innerHTML = '<div class="no-result"><div class="nr-icon">📰</div><div class="nr-title">暂无文章</div><div class="nr-desc">该栏目下还没有发布文章，敬请期待</div></div>';
+        // 73：零结果文案区分搜索与栏目——搜错词不再误导为"栏目没内容"
+        box.innerHTML = keyword
+          ? '<div class="no-result"><div class="nr-icon">🔍</div><div class="nr-title">未找到匹配文章</div><div class="nr-desc">换个关键词试试，或点击搜索框右侧 ✕ 清除搜索</div></div>'
+          : '<div class="no-result"><div class="nr-icon">📰</div><div class="nr-title">暂无文章</div><div class="nr-desc">该栏目下还没有发布文章，敬请期待</div></div>';
         return;
       }
       box.innerHTML = renderCards(rows);
@@ -233,12 +238,23 @@
   document.getElementById('searchInput').addEventListener('input', function () {
     clearTimeout(searchTimer);
     const input = this;
+    document.getElementById('searchClear').style.display = input.value.trim() ? 'inline' : 'none'; // 73
     searchTimer = setTimeout(function () {
       keyword = input.value.trim();
       pageNum = 1;
       loadList();
     }, 300);
   });
+
+  // 73：一键清除搜索，回全量列表
+  function clearSearch() {
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    document.getElementById('searchClear').style.display = 'none';
+    keyword = '';
+    pageNum = 1;
+    loadList();
+  }
 
   // ===== 共享：成员登录 / 注册 / 更多下拉（与 home.html 同一套公开接口）=====
       // ===== 找回密码（证号/手机号/邮箱 → 邮箱验证码 → 新密码）=====

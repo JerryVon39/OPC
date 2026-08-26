@@ -48,7 +48,8 @@ export const BLOCK_TEMPLATES = [
       { key: 'image', label: '配图', type: 'image' },
       { key: 'text', label: '正文', type: 'html', rows: 4, placeholder: '正文' },
       { key: 'btnText', label: '按钮文字', type: 'text', width: 200, placeholder: '如：了解更多' },
-      { key: 'btnLink', label: '按钮链接', type: 'text', width: 300, placeholder: '如：join.html' },
+      // 70：站内页面下拉选择 + 自定义输入兜底
+      { key: 'btnLink', label: '按钮链接', type: 'link', width: 300, options: ['home.html', 'about.html', 'join.html', 'talent.html', 'industry.html', 'news.html', 'policy.html'] },
       { key: 'reverse', label: '图文换向', type: 'switch', activeValue: '1', inactiveValue: '0', activeText: '图在右', inactiveText: '图在左' }
     ]
   },
@@ -73,7 +74,8 @@ export const BLOCK_TEMPLATES = [
       { key: 'title', label: '主标题', type: 'text', placeholder: '横幅标题' },
       { key: 'text', label: '正文', type: 'text', placeholder: '一句话说明' },
       { key: 'btnText', label: '按钮文字', type: 'text', width: 200, placeholder: '如：立即入驻' },
-      { key: 'btnLink', label: '按钮链接', type: 'text', width: 300, placeholder: '如：join.html' }
+      // 70：站内页面下拉选择 + 自定义输入兜底
+      { key: 'btnLink', label: '按钮链接', type: 'link', width: 300, options: ['home.html', 'about.html', 'join.html', 'talent.html', 'industry.html', 'news.html', 'policy.html'] }
     ]
   },
   {
@@ -92,7 +94,8 @@ export const BLOCK_TEMPLATES = [
     schema: [
       { key: 'cols', label: '每行列数', type: 'radio', options: [2, 3] },
       { key: 'items', label: '成员', type: 'list', itemLabel: '成员', fields: [
-        { key: 'image', label: '头像 URL', type: 'text', width: 220, placeholder: '头像图片 URL（可留空用默认）' },
+        // 71：头像改为上传组件（圆图预览 + 可清除；留空用默认）
+        { key: 'image', label: '头像', type: 'image', width: 220 },
         { key: 'name', label: '姓名/名称', type: 'text', width: 180, placeholder: '姓名/名称' },
         { key: 'role', label: '身份/标签', type: 'text', width: 180, placeholder: '如：AI 内容创作者' },
         { key: 'desc', label: '简介', type: 'textarea', rows: 2, placeholder: '一句话简介' }
@@ -177,7 +180,8 @@ export const BLOCK_TEMPLATES = [
       { key: 'title', label: '主标题', type: 'text', placeholder: '留空则用区块名称' },
       { key: 'text', label: '正文', type: 'textarea', rows: 2, placeholder: '引导文案' },
       { key: 'btnText', label: '按钮文字', type: 'text', width: 200, placeholder: '如：立即入驻' },
-      { key: 'btnLink', label: '按钮链接', type: 'text', width: 300, placeholder: '如：join.html' }
+      // 70：站内页面下拉选择 + 自定义输入兜底
+      { key: 'btnLink', label: '按钮链接', type: 'link', width: 300, options: ['home.html', 'about.html', 'join.html', 'talent.html', 'industry.html', 'news.html', 'policy.html'] }
     ]
   },
   {

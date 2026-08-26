@@ -143,6 +143,11 @@ export default {
     if (preset) {
       this.queryParams.categoryId = Number(preset)
     }
+    // 69：工作台「草稿」卡片直达（?status=1 = 草稿/未发布）
+    const presetStatus = this.$route.query.status
+    if (presetStatus) {
+      this.queryParams.status = presetStatus
+    }
     this.loadCategoryOptions()
     this.getList()
   },

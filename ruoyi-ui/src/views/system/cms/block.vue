@@ -101,13 +101,28 @@
                       <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                     </el-upload>
                   </template>
+                  <!-- 70：站内页面下拉 + 自定义输入兜底（feature/cta 按钮链接，防手填错地址） -->
+                  <template v-else-if="f.type === 'link'">
+                    <el-select v-model="cfg[f.key]" filterable allow-create default-first-option placeholder="选择或输入页面地址" :style="f.width ? 'width:' + f.width + 'px' : ''">
+                      <el-option v-for="opt in f.options" :key="opt" :label="opt" :value="opt" />
+                    </el-select>
+                    <div style="color:#999;font-size:12px;margin-top:4px">下拉为站内页面；也可自行输入外部链接（http:// 开头）</div>
+                  </template>
                   <template v-else-if="f.type === 'list'">
                     <div v-for="(item, i) in cfg[f.key]" :key="i" class="card-row" style="margin-bottom:8px">
                       <template v-for="sf in f.fields">
-                        <el-input v-if="sf.type !== 'html'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
+                        <el-input v-if="sf.type !== 'html' && sf.type !== 'image'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
                         <!-- 68：列表内 html 子字段同样用 Quill 工具栏 -->
-                        <div v-else :key="sf.key" style="width:100%">
+                        <div v-else-if="sf.type === 'html'" :key="sf.key" style="width:100%">
                           <Editor v-model="item[sf.key]" :height="120" />
+                        </div>
+                        <!-- 71：列表内 image 子字段（如 team 头像）改为上传组件 -->
+                        <div v-else-if="sf.type === 'image'" :key="sf.key" style="display:flex;align-items:center;gap:8px">
+                          <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="(res) => handleImageSuccess(res, item, sf.key)" accept="image/*">
+                            <img v-if="item[sf.key]" :src="imgUrl(item[sf.key])" style="width:56px;height:56px;object-fit:cover;border-radius:50%" />
+                            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                          </el-upload>
+                          <el-button v-if="item[sf.key]" type="text" icon="el-icon-delete" @click="item[sf.key] = ''">清除</el-button>
                         </div>
                       </template>
                       <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删</el-button>
@@ -374,8 +389,12 @@ export default {
     handleMove(b, dir, idx) {
       moveBlock(b.blockId, dir).then(() => { this.getList(true) })
     },
-    handleImageSuccess(res) {
-      if (res.code === 200) { this.cfg.image = res.fileName || res.url; this.$modal.msgSuccess("图片上传成功") }
+    // 71：支持列表内子字段图片上传（target+key 传入时写子字段；顶层调用保持 cfg.image）
+    handleImageSuccess(res, target, key) {
+      if (res.code === 200) {
+        if (key) { target[key] = res.fileName || res.url } else { this.cfg.image = res.fileName || res.url }
+        this.$modal.msgSuccess("图片上传成功")
+      }
     },
     handleSave() {
       // 序列化配置（tags 的 tagsText 转数组）

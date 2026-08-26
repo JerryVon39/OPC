@@ -300,8 +300,8 @@ export default {
 </script>
 
 <style scoped>
-/* 弹窗内轮播效果实时预览 */
-.banner-live-preview { position: relative; width: 100%; height: 120px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+/* 弹窗内轮播效果实时预览（72：改 16:5 宽横条，贴近前台轮播真实比例，contain 露底色等适配效果可辨） */
+.banner-live-preview { position: relative; width: 100%; aspect-ratio: 16 / 5; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .blp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .blp-text { position: relative; text-align: center; padding: 12px 20px; background: rgba(0,0,0,0.25); border-radius: 10px; }
 .blp-title { font-size: 18px; font-weight: bold; }
