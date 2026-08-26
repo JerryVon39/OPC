@@ -63,6 +63,7 @@ mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DA
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260826_site_settings.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260826_article_history.sql
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260826_recycle_purge_job.sql
+mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/upgrade_20260826_banner_style.sql
 # 业务数据快照（幂等 REPLACE）：最新一次 commit 时的前台服务/文章/轮播/公告/字典等业务数据，
 # 随部署打包进库——本地改后台数据后 commit，部署方拉起即有最新内容（与 .githooks/pre-commit 联动）
 mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/sql/data_snapshot.sql

@@ -32,6 +32,12 @@ public class SysBanner extends BaseEntity
     /** 状态(0启用 1停用) */
     private String status;
 
+    /** 背景样式（纯色/渐变CSS，留空=默认深空渐变） */
+    private String bgColor;
+
+    /** 文字颜色（默认 #ffffff） */
+    private String textColor;
+
     public void setBannerId(Long bannerId) { this.bannerId = bannerId; }
     public Long getBannerId() { return bannerId; }
 
@@ -53,6 +59,14 @@ public class SysBanner extends BaseEntity
     public void setStatus(String status) { this.status = status; }
     public String getStatus() { return status; }
 
+    public String getBgColor() { return bgColor; }
+
+    public void setBgColor(String bgColor) { this.bgColor = bgColor; }
+
+    public String getTextColor() { return textColor; }
+
+    public void setTextColor(String textColor) { this.textColor = textColor; }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -63,6 +77,8 @@ public class SysBanner extends BaseEntity
             .append("link", getLink())
             .append("sort", getSort())
             .append("status", getStatus())
+            .append("bgColor", getBgColor())
+            .append("textColor", getTextColor())
             .toString();
     }
 }

@@ -413,12 +413,15 @@
     slidesBox.innerHTML = list.map((b, i) => {
       // 标题/副标题/图片地址全部过 esc（后台可写内容，公开匿名页，防存储型 XSS）
       // 链接放 data-link 属性 + 事件委托统一处理，不再拼接内联 onclick（防属性注入）
+      // 背景：有 bg_color 用配置（纯色/渐变），无则默认深空渐变（.banner CSS）；图片盖在背景之上
       const link = b.link ? esc(b.link) : '';
-      return '<div class="banner-slide' + (i === 0 ? ' active' : '') + '"' + (link ? ' data-link="' + link + '"' : '') + '>' +
+      const bgStyle = b.bgColor ? ' style="background:' + esc(b.bgColor) + '"' : '';
+      const textColor = b.textColor ? ';color:' + esc(b.textColor) : '';
+      return '<div class="banner-slide' + (i === 0 ? ' active' : '') + '"' + bgStyle + (link ? ' data-link="' + link + '"' : '') + '>' +
         (b.image ? '<img src="' + esc(imgSrc(b.image)) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />' : '') +
-        '<div style="position:relative;z-index:2' + (b.image ? ';background:rgba(36,64,47,0.55);padding:16px 30px;border-radius:12px' : '') + '">' +
-          '<h1>' + esc(b.title) + '</h1>' +
-          (b.subtitle ? '<p>' + esc(b.subtitle) + '</p>' : '') +
+        '<div style="position:relative;z-index:2;background:rgba(0,0,0,0.30);padding:16px 30px;border-radius:12px' + textColor + '">' +
+          '<h1 style="margin:0">' + esc(b.title) + '</h1>' +
+          (b.subtitle ? '<p style="margin:6px 0 0">' + esc(b.subtitle) + '</p>' : '') +
         '</div>' +
       '</div>';
     }).join('');

@@ -80,6 +80,17 @@
           </el-upload>
           <div style="color:#999;font-size:12px">可不上传图片，留空则前台显示渐变背景+文字</div>
         </el-form-item>
+        <el-form-item label="背景样式" prop="bgColor">
+          <el-select v-model="bgMode" style="width:200px" @change="onBgModeChange">
+            <el-option label="默认深空渐变" value="default" />
+            <el-option label="自定义纯色/渐变" value="custom" />
+          </el-select>
+          <el-input v-if="bgMode === 'custom'" v-model="form.bgColor" placeholder="如 #123456 或 linear-gradient(135deg,#0b1a2e,#1d3f6e)" style="width:320px;margin-left:10px" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="文字颜色" prop="textColor">
+          <el-color-picker v-model="form.textColor" />
+          <span style="color:#999;font-size:12px;margin-left:10px">轮播文字/副标题颜色（默认白色）</span>
+        </el-form-item>
         <el-form-item label="跳转链接" prop="link">
           <el-input v-model="form.link" placeholder="如 /home.html 或空" />
         </el-form-item>
@@ -91,6 +102,15 @@
             <el-radio label="0">启用</el-radio>
             <el-radio label="1">停用</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="效果预览">
+          <div class="banner-live-preview" :style="{ background: form.bgColor || 'linear-gradient(135deg,#0b1a2e,#1d3f6e)' }">
+            <img v-if="form.image" :src="imgUrl(form.image)" class="blp-img" alt="" />
+            <div class="blp-text" :style="{ color: form.textColor || '#ffffff' }">
+              <div class="blp-title">{{ form.title || '轮播标题' }}</div>
+              <div class="blp-sub">{{ form.subtitle || '副标题' }}</div>
+            </div>
+          </div>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -127,6 +147,7 @@ export default {
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
       queryParams: { pageNum: 1, pageSize: 10, title: null, status: null },
       form: {},
+      bgMode: 'default',
       rules: {
         title: [{ required: true, message: "标题不能为空", trigger: "blur" }]
       }
@@ -155,6 +176,9 @@ export default {
       if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
       return true
     },
+    onBgModeChange(v) {
+      if (v === 'default') this.form.bgColor = ''
+    },
     handleUploadError(err) {
       // 401 = 登录令牌过期（el-upload 不走 axios 拦截器，过期不会自动跳登录）
       if (err && err.status === 401) {
@@ -181,11 +205,13 @@ export default {
       this.multiple = !selection.length
     },
     handleAdd() {
+      this.bgMode = 'default'
       this.reset()
       this.open = true
       this.title = "新增轮播图"
     },
     handleUpdate(row) {
+      this.bgMode = row.bgColor ? 'custom' : 'default'
       this.reset()
       getBanner(row.bannerId).then(response => {
         this.form = response.data
@@ -229,3 +255,12 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* 弹窗内轮播效果实时预览 */
+.banner-live-preview { position: relative; width: 100%; height: 120px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.blp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.blp-text { position: relative; text-align: center; padding: 12px 20px; background: rgba(0,0,0,0.25); border-radius: 10px; }
+.blp-title { font-size: 18px; font-weight: bold; }
+.blp-sub { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+</style>
