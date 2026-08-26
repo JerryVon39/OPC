@@ -324,13 +324,16 @@
 <script>
   loadHomeSections(); // 首页模块化渲染（页面搭建驱动；失败/空时静态模块兜底）
 
-  // ===== 公告条：拉取后台最新一条已发布公告（关闭后本机不再显示）=====
+  // ===== 公告条：拉取后台最新一条已发布公告（关闭标记按公告 ID 绑定，M3 修复：
+  // 关闭一条公告不再让未来所有公告永久失效）=====
+  let currentNoticeId = 0;
   (function () {
     const bar = document.getElementById('noticeBar');
     if (!bar) return;
-    try { if (localStorage.getItem('opc_notice_hidden')) return; } catch (e) {}
     fetch('/prod-api/system/notice/publicLatest').then(r => r.json()).then(d => {
       if (d.code === 200 && d.data && d.data.noticeTitle) {
+        currentNoticeId = d.data.noticeId || 0;
+        try { if (localStorage.getItem('opc_notice_hidden_' + currentNoticeId)) return; } catch (e) {}
         document.getElementById('noticeText').textContent = '📢 ' + d.data.noticeTitle;
         bar.style.display = 'flex';
       }
@@ -338,7 +341,7 @@
   })();
   function closeNoticeBar() {
     document.getElementById('noticeBar').style.display = 'none';
-    try { localStorage.setItem('opc_notice_hidden', '1'); } catch (e) {}
+    try { localStorage.setItem('opc_notice_hidden_' + currentNoticeId, '1'); } catch (e) {}
   }
 </script>
 <script>

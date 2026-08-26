@@ -62,6 +62,8 @@ public class SysNoticeController extends BaseController
     /**
      * 根据通知公告编号获取详细信息
      */
+    /** L7 修复：详情接口补权限注解（登录用户不再可遍历任意状态公告详情） */
+    @PreAuthorize("@ss.hasPermi('system:notice:query')")
     @GetMapping(value = "/{noticeId}")
     public AjaxResult getInfo(@PathVariable Long noticeId)
     {
@@ -100,7 +102,10 @@ public class SysNoticeController extends BaseController
     @GetMapping("/publicList")
     public AjaxResult publicList()
     {
-        java.util.List<SysNotice> list = noticeService.selectNoticeList(new SysNotice());
+        // M4 修复：匿名端点仅暴露已发布（status='0'）公告，防止管理员"关闭"的公告泄露
+        SysNotice query = new SysNotice();
+        query.setStatus("0");
+        java.util.List<SysNotice> list = noticeService.selectNoticeList(query);
         com.ruoyi.system.util.RenderUtil.renderNoticeContent(list);
         return AjaxResult.success(list);
     }

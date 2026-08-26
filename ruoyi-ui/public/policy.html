@@ -188,8 +188,9 @@
   // HTML 转义：标题/摘要等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
 
-  // 政策级别徽章（按标题关键词映射：省级/高新区/区级/市级）
+  // 政策级别徽章（按标题关键词映射：省级/高新区/区级/市级；空标题容错归市级）
   function levelOf(title) {
+    title = title || '';
     if (title.indexOf('广东省') >= 0) return '省级';
     if (title.indexOf('清城区') >= 0) return '区级';
     if (title.indexOf('高新区') >= 0) return '高新区';
@@ -201,6 +202,10 @@
   let libCatIds = [];   // 文件库栏目组（categoryIds 多栏目服务端分页，无条数上限）
   let readCatIds = [];  // 解读栏目组
   let libKw = '';       // 文件库搜索词（服务端 title 过滤）
+  // M1 修复：两块列表各自的请求序号——在途竞态守卫（连点页码/连续搜索时
+  // 只采纳最新一次请求的响应，旧响应后至不再覆盖新内容）
+  let libSeq = 0;
+  let readSeq = 0;
   const POLICY_PAGE = 12; // 每页条数
   const isReadCat = (name) => (name || '').indexOf('解读') >= 0;
 
@@ -287,6 +292,7 @@
 
   // 文件库（服务端分页：categoryIds + pageNum/pageSize + title 搜索）
   async function loadPolicyPage(page) {
+    const seq = ++libSeq;
     const grid = document.getElementById('policyGrid');
     const pager = document.getElementById('libPager');
     grid.innerHTML = '<div class="loading">加载中…</div>';
@@ -297,6 +303,7 @@
       if (libKw) params.set('title', libKw);
       const res = await fetch(LIST_API + '?' + params.toString());
       const d = await res.json();
+      if (seq !== libSeq) return; // 已有更新的请求，丢弃本次旧响应
       const rows = d.rows || [];
       if (!rows.length) {
         grid.innerHTML = libKw
@@ -307,12 +314,14 @@
       grid.innerHTML = renderPolicyCards(rows, false);
       renderPagerFor('libPager', d.total || 0, page, 'gotoLibPage');
     } catch (e) {
+      if (seq !== libSeq) return; // 旧请求的失败同样丢弃
       grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
     }
   }
 
   // 政策解读（同款服务端分页）
   async function loadReadPage(page) {
+    const seq = ++readSeq;
     const box = document.getElementById('readList');
     const pager = document.getElementById('readPager');
     box.innerHTML = '<div class="loading">加载中…</div>';
@@ -325,6 +334,7 @@
       const params = new URLSearchParams({ pageNum: page, pageSize: POLICY_PAGE, categoryIds: readCatIds.join(',') });
       const res = await fetch(LIST_API + '?' + params.toString());
       const d = await res.json();
+      if (seq !== readSeq) return; // 已有更新的请求，丢弃本次旧响应
       const rows = d.rows || [];
       if (!rows.length) {
         box.innerHTML = '<div class="no-result"><div class="nr-icon">📖</div><div class="nr-title">暂无政策解读</div><div class="nr-desc">政策解读文章发布后将在此展示</div></div>';
@@ -333,6 +343,7 @@
       box.innerHTML = renderPolicyCards(rows, true);
       renderPagerFor('readPager', d.total || 0, page, 'gotoReadPage');
     } catch (e) {
+      if (seq !== readSeq) return; // 旧请求的失败同样丢弃
       box.innerHTML = '<div class="loading">政策解读加载失败：' + esc(e.message) + '</div>';
     }
   }

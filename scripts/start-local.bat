@@ -156,15 +156,14 @@ if not "%DB_EXISTS%"=="0" (
 if "%DB_EXISTS%"=="0" goto :db_fresh
 if not "%TABLE_COUNT%"=="3" goto :db_fresh
 echo [5/5] Existing DB detected. Running idempotent upgrades...
-REM Idempotent upgrade list (mirrors docker/mysql-upgrade.sh + auth/recycle_menu/reorg/cleanup):
-REM   - purchase legacy script inserts old-name parent menus; re-running on an OPC-ized
-REM     DB creates orphans - cleaned by menu_cleanup at list end (getRouters NPE guard)
-REM   - auth depends on del_flag from two_state; keep two_state BEFORE auth
+REM Idempotent upgrade chain (I1 single source: wildcard scan sql\upgrade_*.sql)
+REM   - naming is ordering: upgrade_YYYYMMDD_NN_desc.sql; NN sequence keeps intra-day
+REM     dependencies (two_state before auth, menu_reorg before editor_fix, menu_cleanup last)
 REM   - legacy recycle scripts (3-state snapshot tables) removed; do not re-add
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql sql\upgrade_20260825_editor_fix.sql sql\upgrade_20260825_cms_enhance.sql sql\upgrade_20260825_ops_workbench.sql sql\upgrade_20260825_menu_fix.sql sql\upgrade_20260825_menu_dedupe.sql sql\upgrade_20260825_cms_block.sql sql\upgrade_20260825_operator_block.sql sql\upgrade_20260825_cms_section.sql sql\upgrade_20260825_section_fix.sql sql\upgrade_20260825_section_fix2.sql sql\upgrade_20260825_home_polish.sql sql\upgrade_20260825_home_fill.sql sql\upgrade_20260825_cms_unify.sql sql\upgrade_20260825_preview.sql sql\upgrade_20260825_hide_book_menu.sql sql\upgrade_20260825_block_v3.sql sql\upgrade_20260825_block_v3_seed.sql sql\upgrade_20260826_menu_fix2.sql sql\upgrade_20260826_engine_merge.sql sql\upgrade_20260826_site_settings.sql sql\upgrade_20260826_article_history.sql sql\upgrade_20260826_recycle_purge_job.sql sql\upgrade_20260826_banner_style.sql sql\upgrade_20260826_banner_style2.sql) do (
-  if exist "%%f" (
-    echo   executing %%f
-    "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul
+for /f "delims=" %%f in ('dir /b /on sql\upgrade_*.sql') do (
+  if exist "sql\%%f" (
+    echo   executing sql\%%f
+    "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "sql\%%f" >nul
     if errorlevel 1 (echo [5/5] upgrade %%f failed & goto :fail)
   )
 )
@@ -180,11 +179,12 @@ for %%f in (sql\ry_20260417.sql sql\quartz.sql sql\business_init.sql sql\role_in
   if errorlevel 1 (echo [5/5] import %%f failed & goto :fail)
 )
 REM Fresh DB aligned with Docker first-init: run all idempotent upgrades (del_flag/password_hash/CMS/menus) + data snapshot
+REM (I1: wildcard scan sql\upgrade_*.sql - filename order = execution order)
 echo   applying idempotent upgrades...
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260819_menu.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql sql\upgrade_20260825_editor_fix.sql sql\upgrade_20260825_cms_enhance.sql sql\upgrade_20260825_ops_workbench.sql sql\upgrade_20260825_menu_fix.sql sql\upgrade_20260825_menu_dedupe.sql sql\upgrade_20260825_cms_block.sql sql\upgrade_20260825_operator_block.sql sql\upgrade_20260825_cms_section.sql sql\upgrade_20260825_section_fix.sql sql\upgrade_20260825_section_fix2.sql sql\upgrade_20260825_home_polish.sql sql\upgrade_20260825_home_fill.sql sql\upgrade_20260825_cms_unify.sql sql\upgrade_20260825_preview.sql sql\upgrade_20260825_hide_book_menu.sql sql\upgrade_20260825_block_v3.sql sql\upgrade_20260825_block_v3_seed.sql sql\upgrade_20260826_menu_fix2.sql sql\upgrade_20260826_engine_merge.sql sql\upgrade_20260826_site_settings.sql sql\upgrade_20260826_article_history.sql sql\upgrade_20260826_recycle_purge_job.sql) do (
-  if exist "%%f" (
-    echo   applying %%f
-    "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "%%f" >nul
+for /f "delims=" %%f in ('dir /b /on sql\upgrade_*.sql') do (
+  if exist "sql\%%f" (
+    echo   applying sql\%%f
+    "%MYSQL_BIN%" --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue < "sql\%%f" >nul
     if errorlevel 1 (echo [5/5] upgrade %%f failed & goto :fail)
   )
 )

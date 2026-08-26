@@ -107,6 +107,7 @@ export default {
     },
     /** 加载业务统计 */
     loadStats() {
+      // L8 修复：失败不静默归零——catch 后保持上次数值/占位，不再与"零"不可区分
       getDashboard().then(res => {
         const s = res.data || {}
         this.statCards[0].value = s.readerTotal || 0
@@ -116,7 +117,7 @@ export default {
         this.statCards[3].value = ca.draftCount || 0
         this.statCards[4].value = ca.recycleCount || 0
         this.statCards[5].value = s.pendingApplyCount || 0
-      })
+      }).catch(() => {}) // L8 修复：请求失败静默保留上次数值，不产生未捕获异常
     },
     /** 加载最近编辑（文章/区块各 5 条） */
     loadRecentEdits() {
@@ -124,7 +125,7 @@ export default {
         const d = res.data || {}
         this.recentArticles = d.articles || []
         this.recentBlocks = d.blocks || []
-      })
+      }).catch(() => {}) // L8 修复：请求失败静默保留空态，不产生未捕获异常
     },
     go(path) {
       this.$router.push(path)

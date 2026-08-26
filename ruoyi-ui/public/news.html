@@ -92,7 +92,9 @@
   let nonPolicyIds = [];    // 非政策类栏目ID（"全部"Tab 用：政策类由「政策赋能」页展示，避免重复）
   let pageNum = 1;
   let total = 0;
-  let loading = false;      // 防重复请求（"加载更多"连点）
+  // M2 修复：请求序号——在途竞态守卫（只采纳最新一次请求的响应；
+  // 慢网时切栏目/搜索不再被 in-flight 旧请求顶掉，也不显示旧栏目内容）
+  let listSeq = 0;
   let articleList = [];     // 已加载文章（详情浏览量回写用）
   let keyword = '';         // 搜索关键字（标题模糊查询，后端 publicList 已支持 title）
 
@@ -129,8 +131,7 @@
 
   // ===== 文章列表（后端分页 pageNum/pageSize + 页码跳转）=====
   async function loadList() {
-    if (loading) return;
-    loading = true;
+    const seq = ++listSeq;
     const box = document.getElementById('articleList');
     const pager = document.getElementById('pager');
     box.innerHTML = '<div class="loading">加载中…</div>';
@@ -142,6 +143,7 @@
     try {
       const res = await fetch(LIST_API + '?' + params.toString());
       const d = await res.json();
+      if (seq !== listSeq) return; // 已有更新的请求，丢弃本次旧响应
       const rows = d.rows || [];
       total = d.total || 0;
       if (!rows.length) {
@@ -151,10 +153,9 @@
       box.innerHTML = renderCards(rows);
       renderPager(total, pageNum);
     } catch (e) {
+      if (seq !== listSeq) return; // 旧请求的失败同样丢弃，避免覆盖新内容
       const hint = /Unexpected token/.test(e.message) ? '（页面可能为缓存旧版，请按 Ctrl+F5 强制刷新重试）' : '';
       box.innerHTML = '<div class="loading">加载失败：' + esc(e.message) + hint + '</div>';
-    } finally {
-      loading = false;
     }
   }
 
@@ -191,6 +192,8 @@
 
   function gotoPage(p) {
     if (p < 1) p = 1;
+    const tp = Math.max(1, Math.ceil(total / PAGE_SIZE)); // 钳上下界：超界跳转后仍保留页码条可回
+    if (p > tp) p = tp;
     pageNum = p;
     loadList();
   }

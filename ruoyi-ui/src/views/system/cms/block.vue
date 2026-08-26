@@ -154,7 +154,8 @@
     </el-dialog>
 
     <!-- 模板样式预览：复用前台真实渲染器（block-preview.html），示例数据见 blockTemplates.js TEMPLATE_SAMPLES -->
-    <el-dialog :title="'模板样式预览 · ' + tplPreviewName" :visible.sync="tplPreviewOpen" width="760px" append-to-body>
+    <!-- L9 修复：destroy-on-close 关闭即销毁 iframe，避免预览页常驻占用 -->
+    <el-dialog :title="'模板样式预览 · ' + tplPreviewName" :visible.sync="tplPreviewOpen" width="760px" append-to-body destroy-on-close>
       <div class="tpl-preview-wrap">
         <iframe v-if="tplPreviewSrc" :key="tplPreviewTs" :src="tplPreviewSrc" class="tpl-preview-frame"></iframe>
       </div>

@@ -249,11 +249,14 @@ export default {
       this.title = "新增轮播图"
     },
     handleUpdate(row) {
-      this.bgMode = row.bgColor ? 'custom' : 'default'
-      this.gradientPreset = ''
       this.reset()
       getBanner(row.bannerId).then(response => {
         this.form = response.data
+        // M7 修复：编辑回显——渐变预设按 bgColor 反查回填、模式随背景同步，
+        // 不再出现三个控件全空、误以为背景丢失而误覆盖
+        this.bgMode = this.form.bgColor ? 'custom' : 'default'
+        const hit = this.gradientPresets.find(g => g.value === this.form.bgColor)
+        this.gradientPreset = hit ? hit.value : ''
         this.open = true
         this.title = "修改轮播图"
       })
@@ -288,7 +291,8 @@ export default {
     },
     cancel() { this.open = false; this.reset() },
     reset() {
-      this.form = { bannerId: null, title: null, subtitle: null, image: null, link: null, sort: 0, status: '0' }
+      // M7 修复：新增默认值与前台实际生效值一致（cover / 无文字底色）
+      this.form = { bannerId: null, title: null, subtitle: null, image: null, link: null, sort: 0, status: '0', imageFit: 'cover', textBg: null }
       this.resetForm("form")
     }
   }

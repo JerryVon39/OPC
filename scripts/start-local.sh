@@ -68,30 +68,10 @@ mysql_ready || { echo "[3/5] MySQL not ready - check DB_PASSWORD in .env"; exit 
 echo "[3/5] MySQL ready"
 
 # ---------- 4. Database init (fresh: full import / existing: idempotent upgrades) ----------
-# 幂等升级脚本全清单（与 docker/mysql-upgrade.sh 一致，另含 auth）：
-#   - purchase/recycle 旧脚本含旧名父菜单 INSERT，在业务化库上重跑会产生孤儿菜单，
-#     由清单末尾的 menu_cleanup 统一清理（getRouters NPE 防御）
-#   - auth 依赖 two_state 的 del_flag，必须排在 two_state 之后
-UPGRADES="sql/upgrade_20260818_purchase.sql
-sql/upgrade_20260819_mail.sql
-sql/upgrade_20260819_menu.sql
-sql/upgrade_20260820_cleanup.sql
-sql/upgrade_20260821_official.sql
-sql/upgrade_20260822_realcontent.sql
-sql/upgrade_20260822_cms.sql
-sql/upgrade_20260823_cms.sql
-sql/upgrade_20260824_opc_cleanup.sql
-sql/upgrade_20260824_profile.sql
-sql/upgrade_20260824_two_state.sql
-sql/upgrade_20260824_auth.sql
-sql/upgrade_20260824_contest.sql
-sql/upgrade_20260824_roles.sql
-sql/upgrade_20260826_policy.sql
-sql/upgrade_20260824_menu_cleanup.sql
-sql/upgrade_20260825_recycle_menu.sql
-sql/upgrade_20260825_menu_reorg.sql
-sql/upgrade_20260825_recycle_cleanup.sql
-sql/upgrade_20260825_recycle_restore.sql"
+# 幂等升级链（I1 单一来源：通配扫描 sql/upgrade_*.sql，文件名序=执行序）
+#   - 命名即顺序：upgrade_YYYYMMDD_NN_描述.sql（NN 两位序号保证同日内依赖序：
+#     two_state 先于 auth、menu_reorg 先于 editor_fix、menu_cleanup 垫后）
+UPGRADES="$(ls sql/upgrade_*.sql 2>/dev/null | sort)"
 
 DB_EXISTS=$(mysql -uroot -p"$DB_PASSWORD" -N -e "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='ry-vue'" 2>/dev/null || echo 0)
 TABLE_COUNT=0

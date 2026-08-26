@@ -788,6 +788,8 @@ function highlightPreviewKey(key) {
   }
 }
 window.addEventListener('message', function (e) {
+  // L10 修复：postMessage 加同源校验（后台预览 iframe 与本站同源，跨源消息一律忽略）
+  if (e.origin !== location.origin) return;
   const d = e.data;
   if (!d || d.type !== 'opc-preview') return;
   if (d.action === 'scrollTo') highlightPreviewKey(d.key);

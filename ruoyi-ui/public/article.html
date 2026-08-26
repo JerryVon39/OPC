@@ -283,9 +283,10 @@
             if (!prev && !next) return;
             const prevEl = document.getElementById('prevLink');
             const nextEl = document.getElementById('nextLink');
-            if (prev) { prevEl.href = 'article.html?id=' + prev.articleId; prevEl.textContent = '← ' + esc(prev.title).slice(0, 24); }
+            // L1 修复：textContent 赋值天然防注入，不再过 esc（原双重转义致实体原样显示）
+            if (prev) { prevEl.href = 'article.html?id=' + prev.articleId; prevEl.textContent = '← ' + String(prev.title || '').slice(0, 24); }
             else prevEl.style.visibility = 'hidden';
-            if (next) { nextEl.href = 'article.html?id=' + next.articleId; nextEl.textContent = esc(next.title).slice(0, 24) + ' →'; }
+            if (next) { nextEl.href = 'article.html?id=' + next.articleId; nextEl.textContent = String(next.title || '').slice(0, 24) + ' →'; }
             else nextEl.style.visibility = 'hidden';
             nav.style.display = 'flex';
           }).catch(() => {});

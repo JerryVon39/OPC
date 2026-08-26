@@ -62,11 +62,11 @@ REM 4. Old data volume incremental upgrades (idempotent):
 REM    existing mysql-data volume does NOT re-run init scripts, so upgrade
 REM    scripts are re-applied to align schema with new code (del_flag/reader_id
 REM    columns etc.), otherwise login/list fails with "Unknown column".
-REM    !! Keep this list in sync with docker/mysql-upgrade.sh (single source:
-REM    docker/mysql-init.sh for fresh volumes, mysql-upgrade.sh for old ones).
+REM    (I1: wildcard scan sql\upgrade_*.sql - filename order = execution order;
+REM    single source is the sql/ directory itself)
 echo [start-all] Running DB incremental upgrades for existing volume (idempotent)...
-for %%f in (sql\upgrade_20260818_purchase.sql sql\upgrade_20260819_mail.sql sql\upgrade_20260820_cleanup.sql sql\upgrade_20260821_official.sql sql\upgrade_20260822_realcontent.sql sql\upgrade_20260822_cms.sql sql\upgrade_20260823_cms.sql sql\upgrade_20260824_opc_cleanup.sql sql\upgrade_20260824_profile.sql sql\upgrade_20260824_two_state.sql sql\upgrade_20260824_auth.sql sql\upgrade_20260824_contest.sql sql\upgrade_20260824_roles.sql sql\upgrade_20260826_policy.sql sql\upgrade_20260824_menu_cleanup.sql sql\upgrade_20260825_recycle_menu.sql sql\upgrade_20260825_menu_reorg.sql sql\upgrade_20260825_recycle_cleanup.sql sql\upgrade_20260825_recycle_restore.sql sql\upgrade_20260825_editor_fix.sql sql\upgrade_20260825_cms_enhance.sql sql\upgrade_20260825_ops_workbench.sql sql\upgrade_20260825_menu_fix.sql sql\upgrade_20260825_menu_dedupe.sql sql\upgrade_20260825_cms_block.sql sql\upgrade_20260825_operator_block.sql sql\upgrade_20260825_cms_section.sql sql\upgrade_20260825_section_fix.sql sql\upgrade_20260825_section_fix2.sql sql\upgrade_20260825_home_polish.sql sql\upgrade_20260825_home_fill.sql sql\upgrade_20260825_cms_unify.sql sql\upgrade_20260825_preview.sql sql\upgrade_20260825_hide_book_menu.sql sql\upgrade_20260825_block_v3.sql sql\upgrade_20260825_block_v3_seed.sql sql\upgrade_20260826_menu_fix2.sql sql\upgrade_20260826_engine_merge.sql sql\upgrade_20260826_site_settings.sql sql\upgrade_20260826_article_history.sql sql\upgrade_20260826_recycle_purge_job.sql sql\upgrade_20260826_banner_style.sql sql\upgrade_20260826_banner_style2.sql) do (
-  type "%%f" | docker exec -i opc-mysql sh -c "mysql --default-character-set=utf8mb4 -uroot -p\"$MYSQL_ROOT_PASSWORD\" ry-vue" >nul 2>&1
+for /f "delims=" %%f in ('dir /b /on sql\upgrade_*.sql') do (
+  type "sql\%%f" | docker exec -i opc-mysql sh -c "mysql --default-character-set=utf8mb4 -uroot -p\"$MYSQL_ROOT_PASSWORD\" ry-vue" >nul 2>&1
 )
 echo [start-all] DB incremental upgrades done
 

@@ -47,7 +47,9 @@ fi
 # ---------- 导出业务数据（REPLACE 模式，可重复导入） ----------
 # 注意：reader / book_purchase_req 含手机号/邮箱等个人隐私，快照一律排除，
 # 防止真实成员信息随 commit 自动推上（可能公开的）GitHub。
-TABLES="book borrow_record shop_order book_reserve sys_banner sys_notice sys_notice_read cms_category cms_article sys_dict_type sys_dict_data"
+TABLES="book borrow_record shop_order book_reserve sys_banner sys_notice sys_notice_read cms_category sys_dict_type sys_dict_data"
+# cms_article 单独导出（I3）：回收站行（del_flag='2'）不随快照进部署链，防止测试数据固化复发
+ART_FILTER="del_flag <> '2'"
 OUT="sql/data_snapshot.sql"
 
 {
@@ -64,9 +66,12 @@ OUT="sql/data_snapshot.sql"
 
 if "$MYSQL_DUMP" --default-character-set=utf8mb4 -h"$DB_HOST" -P"$DB_PORT" -uroot -p"$DB_PASS" \
     --no-create-info --replace --skip-comments --skip-add-locks --skip-lock-tables \
-    --set-gtid-purged=OFF "$DB_NAME" $TABLES >> "$OUT" 2>/dev/null; then
+    --set-gtid-purged=OFF "$DB_NAME" $TABLES >> "$OUT" 2>/dev/null \
+    && "$MYSQL_DUMP" --default-character-set=utf8mb4 -h"$DB_HOST" -P"$DB_PORT" -uroot -p"$DB_PASS" \
+    --no-create-info --replace --skip-comments --skip-add-locks --skip-lock-tables \
+    --set-gtid-purged=OFF --where="$ART_FILTER" "$DB_NAME" cms_article >> "$OUT" 2>/dev/null; then
   git add "$OUT"
-  echo "[pre-commit] 数据快照已更新: $OUT ($(wc -l < "$OUT") 行)"
+  echo "[pre-commit] 数据快照已更新: $OUT ($(wc -l < "$OUT") 行，cms_article 已过滤回收站行)"
 else
   echo "[pre-commit] 数据导出失败（跳过，不影响提交）"
   exit 0

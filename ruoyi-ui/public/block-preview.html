@@ -38,7 +38,8 @@
         html = '<p style="text-align:center;color:#909399">渲染器未加载（site.js 加载失败）</p>';
       }
     } catch (e) {
-      html = '<p style="text-align:center;color:#c45656">渲染出错：' + String(e && e.message || e) + '</p>';
+      // L2 修复：错误信息过 esc 再入 innerHTML（错误消息含可回显文本，防自我 XSS 面）
+      html = '<p style="text-align:center;color:#c45656">渲染出错：' + esc(String(e && e.message || e)) + '</p>';
     }
     stage.innerHTML = html;
     // 预览说明条

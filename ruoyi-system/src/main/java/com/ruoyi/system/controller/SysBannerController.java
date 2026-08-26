@@ -64,6 +64,7 @@ public class SysBannerController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody SysBanner sysBanner)
     {
+        sanitizeStyleFields(sysBanner);
         return toAjax(sysBannerService.insertSysBanner(sysBanner));
     }
 
@@ -73,7 +74,33 @@ public class SysBannerController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody SysBanner sysBanner)
     {
+        sanitizeStyleFields(sysBanner);
         return toAjax(sysBannerService.updateSysBanner(sysBanner));
+    }
+
+    /**
+     * M5 修复：样式四字段服务端白名单校验（防存储型 CSS 注入——API 直调可入库
+     * 任意 CSS 字符串，如 url() 追踪像素/全屏遮罩钓鱼层；前台 esc() 防逃逸故非 XSS，
+     * 此处是纵深防御）。非法值一律置 null，前台渲染回退默认样式。
+     */
+    private void sanitizeStyleFields(SysBanner b)
+    {
+        if (b == null) return;
+        b.setBgColor(sanitizeCssValue(b.getBgColor(), "(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|(linear|radial)-gradient\\([0-9a-zA-Z%#,.()\\s\\-+]*\\))?"));
+        b.setTextColor(sanitizeCssValue(b.getTextColor(), "(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|rgba?\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*(,\\s*(0?(\\.\\d+)?|\\d{1,3}%?)\\s*)?\\))?"));
+        b.setTextBg(sanitizeCssValue(b.getTextBg(), "(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})|rgba?\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*(,\\s*(0?(\\.\\d+)?|\\d{1,3}%?)\\s*)?\\))?"));
+        String fit = b.getImageFit();
+        if (fit != null && !fit.isEmpty() && !"cover".equals(fit) && !"contain".equals(fit) && !"fill".equals(fit))
+        {
+            b.setImageFit(null);
+        }
+    }
+
+    private String sanitizeCssValue(String v, String pattern)
+    {
+        if (v == null || v.isEmpty()) return v;
+        if (v.matches(pattern)) return v;
+        return null; // 非法值回退默认
     }
 
     /** 删除 */
