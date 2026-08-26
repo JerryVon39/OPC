@@ -76,6 +76,11 @@
               {{ scope.row.categoryName || '未分类' }}
             </template>
           </el-table-column>
+          <el-table-column label="所属页面" align="center" width="110">
+            <template slot-scope="scope">
+              <el-tag size="mini" :type="isPolicyCat(scope.row) ? 'warning' : 'info'">{{ isPolicyCat(scope.row) ? '政策赋能页' : '资讯动态页' }}</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="排序" align="center" width="110">
             <template slot-scope="scope">
               <el-input-number v-model="scope.row.sort" :min="0" :max="999" size="mini" controls-position="right" @change="handleSortChange(scope.row)" />
@@ -204,7 +209,7 @@ export default {
       open: false,
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
       uploadHeaders: { Authorization: "Bearer " + getToken() },
-      queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, status: null },
+      queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, categoryIds: null, status: null },
       form: {},
       rules: {
         title: [{ required: true, message: "文章标题不能为空", trigger: "blur" }],
@@ -240,8 +245,19 @@ export default {
       listCategory({ pageNum: 1, pageSize: 100 }).then(response => {
         const rows = response.rows || []
         this.categoryOptions = rows
-        // 树顶部固定「全部文章」节点（categoryId=0 视为全部，防点栏目后无法回到全部）
-        this.treeOptions = [{ categoryId: 0, categoryName: "全部文章", children: this.buildTree(rows, 0) }]
+        // 树按前台页面分组：📰 资讯动态（news.html 页）📄 政策赋能（policy.html 页）
+        // 组节点带 categoryIds（组内栏目列表），点击按多栏目查询
+        const isPolicy = r => r.categoryName && r.categoryName.indexOf('政策') === 0
+        const newsCats = rows.filter(r => !isPolicy(r))
+        const policyCats = rows.filter(r => isPolicy(r))
+        this.treeOptions = [{
+          categoryId: 0,
+          categoryName: "全部文章",
+          children: [
+            { categoryId: 'grp-news', categoryName: "📰 资讯动态（新闻动态页）", categoryIds: newsCats.map(r => r.categoryId), children: this.buildTree(newsCats, 0) },
+            { categoryId: 'grp-policy', categoryName: "📄 政策赋能（政策赋能页）", categoryIds: policyCats.map(r => r.categoryId), children: this.buildTree(policyCats, 0) }
+          ]
+        }]
       })
     },
     /** 平铺栏目组装树（与栏目管理页同一逻辑，深度限制 3 级） */
@@ -253,8 +269,19 @@ export default {
         .map(r => ({ ...r, children: this.buildTree(rows, r.categoryId, depth + 1) }))
     },
     handleNodeClick(node) {
-      this.queryParams.categoryId = node.categoryId ? node.categoryId : null
+      // 组节点（grp-*）：按组内栏目多选查询；其余按单栏目/全部
+      if (node.categoryIds) {
+        this.queryParams.categoryId = null
+        this.queryParams.categoryIds = node.categoryIds.join(',')
+      } else {
+        this.queryParams.categoryIds = null
+        this.queryParams.categoryId = node.categoryId ? node.categoryId : null
+      }
       this.handleQuery()
+    },
+    /** 文章所属前台页面（政策类栏目 → 政策赋能页，其余 → 资讯动态页） */
+    isPolicyCat(row) {
+      return row.categoryName && row.categoryName.indexOf('政策') === 0
     },
     /** 跳到栏目管理页（路由 = 内容运营目录路径 content + 菜单路径 category） */
     goCategory() {

@@ -46,6 +46,10 @@
             <if test="delFlag != null and delFlag != ''"> and a.del_flag = #{delFlag}</if>
             <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
             <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
+            <if test="categoryIds != null and categoryIds != ''">
+                and a.category_id in
+                <foreach item="cid" collection="categoryIds.split(',')" open="(" separator="," close=")">#{cid}</foreach>
+            </if>
             <if test="status != null and status != ''"> and a.status = #{status}</if>
         </where>
         order by a.is_top desc, a.sort asc, a.publish_time desc, a.article_id desc
