@@ -90,6 +90,7 @@
 
   // ===== 全局状态 =====
   let currentCat = '';      // 当前栏目ID（'' 全部）
+  let nonPolicyIds = [];    // 非政策类栏目ID（"全部"Tab 用：政策类由「政策赋能」页展示，避免重复）
   let pageNum = 1;
   let total = 0;
   let loading = false;      // 防重复请求（"加载更多"连点）
@@ -106,7 +107,11 @@
       const list = d.data || [];
       const tabs = document.getElementById('catTabs');
       let html = '<a class="active" data-id="" onclick="switchCat(this)">全部</a>';
+      nonPolicyIds = [];
       list.forEach(c => {
+        // 政策类栏目（名称以"政策"开头）由「政策赋能」页展示，资讯动态不重复
+        if (c.categoryName && c.categoryName.indexOf('政策') === 0) return;
+        nonPolicyIds.push(c.categoryId);
         html += '<a data-id="' + c.categoryId + '" onclick="switchCat(this)">' + esc(c.categoryName) + '</a>';
       });
       tabs.innerHTML = html;
@@ -136,6 +141,7 @@
     }
     const params = new URLSearchParams({ pageNum: pageNum, pageSize: PAGE_SIZE });
     if (currentCat) params.set('categoryId', currentCat);
+    else if (nonPolicyIds.length) params.set('categoryIds', nonPolicyIds.join(','));
     try {
       const res = await fetch(LIST_API + '?' + params.toString());
       const d = await res.json();
@@ -196,8 +202,8 @@
     var el = document.getElementById('footerYear');
     if (el) el.textContent = new Date().getFullYear();
   })();
-  loadCats();
-  loadList();
+  // 栏目加载完成后再拉列表（"全部"需先知道非政策栏目 ID，避免竞态拉到政策文章）
+  loadCats().then(loadList);
 
   // ===== 共享：成员登录 / 注册 / 更多下拉（与 home.html 同一套公开接口）=====
       // ===== 找回密码（证号/手机号/邮箱 → 邮箱验证码 → 新密码）=====

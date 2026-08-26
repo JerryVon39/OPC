@@ -20,6 +20,9 @@ public class CmsArticle extends BaseEntity
     /** 栏目ID */
     private Long categoryId;
 
+    /** 多栏目ID（逗号分隔，前台列表"全部"筛选用，非表字段） */
+    private String categoryIds;
+
     /** 文章标题 */
     @Excel(name = "文章标题")
     private String title;
@@ -85,6 +88,9 @@ public class CmsArticle extends BaseEntity
 
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public Long getCategoryId() { return categoryId; }
+
+    public String getCategoryIds() { return categoryIds; }
+    public void setCategoryIds(String categoryIds) { this.categoryIds = categoryIds; }
 
     public void setTitle(String title) { this.title = title; }
     public String getTitle() { return title; }

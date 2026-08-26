@@ -198,23 +198,30 @@
     return '市级';
   }
 
-  // 政策卡片渲染（标题 + 级别 + 摘要；点击打开详情）
+  // 政策卡片渲染（标题 + 栏目 + 级别 + 摘要；点击打开详情）
+  // 自动收录所有名称以"政策"开头的栏目（政策解读/政策文件等），后台发文到政策类栏目即自动同步展示
   async function loadPolicyLib() {
     const grid = document.getElementById('policyGrid');
     try {
       const res = await fetch(CAT_API);
       const d = await res.json();
-      const cat = (d.data || []).find(c => c.categoryName === '政策文件');
-      if (!cat) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
-      const r2 = await fetch(LIST_API + '?pageNum=1&pageSize=50&categoryId=' + cat.categoryId);
-      const d2 = await r2.json();
-      const rows = d2.rows || [];
+      const cats = (d.data || []).filter(c => c.categoryName && c.categoryName.indexOf('政策') === 0);
+      if (!cats.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
+      const all = [];
+      for (const cat of cats) {
+        const r2 = await fetch(LIST_API + '?pageNum=1&pageSize=50&categoryId=' + cat.categoryId);
+        const d2 = await r2.json();
+        (d2.rows || []).forEach(p => { p._catName = cat.categoryName; all.push(p); });
+      }
+      all.sort((a, b) => (b.publishTime || '').localeCompare(a.publishTime || ''));
+      const rows = all;
       if (!rows.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
       grid.innerHTML = rows.map(p => {
         const raw = String(p.summary || '').replace(/<[^>]+>/g, '');
         return '<div class="info-card" style="cursor:pointer" onclick="location.href=\'article.html?id=' + p.articleId + '\'">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
             '<h3 style="margin:0">' + esc(p.title) + '</h3>' +
+            '<span class="tag tag-sale">' + esc(p._catName || '') + '</span>' +
             '<span class="tag tag-sale">' + levelOf(p.title) + '</span></div>' +
           '<p style="margin-top:10px">' + esc(raw.slice(0, 100)) + (raw.length > 100 ? '…' : '') + '</p>' +
           '<div style="color:#8a7d5c;font-size:13px">点击查看详情 →</div>' +

@@ -58,6 +58,10 @@
         <where>
             a.status = '0' and a.del_flag = '0' and a.publish_time &lt;= NOW()
             <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
+            <if test="categoryIds != null and categoryIds != ''">
+                and a.category_id in
+                <foreach item="cid" collection="categoryIds.split(',')" open="(" separator="," close=")">#{cid}</foreach>
+            </if>
             <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
         </where>
         order by a.is_top desc, a.sort asc, a.publish_time desc, a.article_id desc
