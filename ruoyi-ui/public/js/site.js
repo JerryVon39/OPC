@@ -399,7 +399,9 @@ async function loadSiteConfig() {
       try {
         const res = await fetch('/prod-api/system/config/configKey/' + k, { signal: ctrl.signal });
         const d = await res.json();
-        if (d.code === 200 && d.data && d.data.configValue) cfg[k] = String(d.data.configValue).trim();
+        // 接口返回 {code:200, msg:值}（无 data 字段）——此前读 d.data.configValue 永远取不到值，
+        // 站点设置（导航/页脚/联系方式）被静默丢弃、前台一直显示静态内容
+        if (d.code === 200 && d.msg) cfg[k] = String(d.msg).trim();
       } catch (e) { /* 单个键失败跳过 */ }
     }));
     clearTimeout(timer);
