@@ -1,7 +1,7 @@
 <template>
   <div class="app-container sec-app">
     <!-- 顶部说明：面向非程序员 -->
-    <el-alert type="info" :closable="false" show-icon title="区块管理 = 栏目页内容管理：① 内容区块（可新增/删除/上下移，用模板填充卡片、列表、表单等）② 固定文本槽（🔒 页头副标语）。左侧选区块，中间改内容，右侧实时预览该栏目页效果；保存后预览自动刷新，改错了可在「历史版本」回滚。" />
+    <el-alert type="info" :closable="false" show-icon title="区块管理 = 全站页面内容管理（首页 + 4 个栏目页）：① 内容区块（可新增/删除/上下移，用模板填充卡片、列表、表单等）② 固定文本槽（🔒 页头副标语）。左侧选区块，中间改内容，右侧实时预览对应页面效果；保存后预览自动刷新，改错了可在「历史版本」回滚。" />
 
     <div class="sec-layout">
       <!-- 左：栏目 Tab + 区块列表（内容区块 / 固定槽位分区） -->
@@ -70,6 +70,33 @@
               <el-form-item label="显示">
                 <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
               </el-form-item>
+
+              <!-- hero 首页首屏 -->
+              <template v-if="form.template === 'hero'">
+                <el-form-item label="主标题"><el-input v-model="cfg.title" maxlength="60" placeholder="留空 = 使用默认首屏标题" /></el-form-item>
+                <el-form-item label="副标题"><el-input v-model="cfg.subtitle" maxlength="100" placeholder="留空 = 使用默认副标题" /></el-form-item>
+                <el-form-item label="正文"><el-input v-model="cfg.content" type="textarea" :rows="4" placeholder="留空 = 使用默认文案" /></el-form-item>
+                <el-form-item label="说明"><span style="color:#999;font-size:12px">首屏轮播图请到「官网轮播」维护；文案留空则前台用默认文案。</span></el-form-item>
+              </template>
+
+              <!-- news 新闻动态 -->
+              <template v-if="form.template === 'news'">
+                <el-form-item label="显示条数"><el-input-number v-model="cfg.count" :min="1" :max="12" /></el-form-item>
+              </template>
+
+              <!-- contact 联系区 -->
+              <template v-if="form.template === 'contact'">
+                <el-form-item v-for="(it, i) in cfg.items" :key="i" :label="'条目 ' + (i + 1)">
+                  <div class="card-row">
+                    <el-input v-model="it.date" placeholder="日期" style="width:130px" />
+                    <el-input v-model="it.title" placeholder="标题" style="width:150px" />
+                    <el-input v-model="it.desc" placeholder="描述" />
+                    <el-button type="text" icon="el-icon-delete" @click="cfg.items.splice(i, 1)">删</el-button>
+                  </div>
+                </el-form-item>
+                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.items.push({ date: '', title: '', desc: '' })">＋ 添加条目</el-button></el-form-item>
+                <el-form-item label="说明"><span style="color:#999;font-size:12px">contact 模板的联系方式自动读取站点配置（系统设置 → 参数设置）</span></el-form-item>
+              </template>
 
               <!-- text 文本段落 -->
               <template v-if="form.template === 'text'">
@@ -258,6 +285,7 @@ export default {
   data() {
     return {
       pages: [
+        { key: 'home', name: '首页', file: 'home.html' },
         { key: 'about', name: '走进社区', file: 'about.html' },
         { key: 'join', name: '入驻招商', file: 'join.html' },
         { key: 'talent', name: '人才培养', file: 'talent.html' },
@@ -281,6 +309,9 @@ export default {
       currentBlockId: null,
       currentBlockTitle: '',
       templates: [
+        { value: 'hero', name: '首屏（轮播+文案）', icon: '🎠', desc: '首页首屏：标题/副标题/正文（轮播走官网轮播管理）' },
+        { value: 'news', name: '新闻动态', icon: '📰', desc: '自动拉取最新新闻列表，可设条数（首页）' },
+        { value: 'contact', name: '联系区', icon: '📮', desc: '时间线 + 联系方式（联系方式自动读站点配置）' },
         { value: 'text', name: '文本段落', icon: '📝', desc: '标题 + 长文段落（支持简单排版）' },
         { value: 'feature', name: '图文并排', icon: '🖼️', desc: '配图 + 标题 + 正文 + 按钮，可左右换向' },
         { value: 'cards', name: '图标卡片', icon: '🃏', desc: '2/3 列图标卡片（价值点/课程/企业）' },
@@ -303,7 +334,8 @@ export default {
       return this.blockList.filter(b => b.template && b.template !== '')
     },
     slotBlocks() {
-      return this.blockList.filter(b => !b.template || b.template === '')
+      // 仅显示启用中的固定文本槽（停用旧区块不展示，避免干扰）
+      return this.blockList.filter(b => (!b.template || b.template === '') && b.visible === '0')
     },
     selected() {
       if (this.selectedId == null) return null
@@ -377,6 +409,9 @@ export default {
       return cfg
     },
     defaultCfg(t) {
+      if (t === 'hero') return { title: '', subtitle: '', content: '' }
+      if (t === 'news') return { count: 6 }
+      if (t === 'contact') return { items: [{ date: '', title: '', desc: '' }] }
       if (t === 'text') return { subtitle: '', text: '' }
       if (t === 'feature') return { image: '', text: '', btnText: '', btnLink: '', reverse: '0' }
       if (t === 'cards') return { cols: 3, subtitle: '', cards: [{ icon: '', title: '', text: '' }] }

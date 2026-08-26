@@ -480,8 +480,8 @@ async function loadCmsBlocks(pageKey) {
   applyPreviewMarks();
 }
 
-// ===== 首页模块化渲染（方案 B：页面搭建驱动，静态兜底）=====
-const CMS_SECTION_API = '/prod-api/system/cmsSection/publicList?pageKey=home';
+// ===== 首页模块化渲染（内容引擎化：首页模块与栏目页区块统一由 cms_block 驱动，静态兜底）=====
+const CMS_SECTION_API = '/prod-api/system/cmsSection/publicList?pageKey=home'; // 遗留接口（数据已迁入 cms_block，保留兼容）
 
 function secHead(no, title, en) {
   return '<div class="home-mod-head"><span class="home-mod-no">' + (no < 10 ? '0' + no : no) + '</span>' +
@@ -601,12 +601,15 @@ async function loadHomeSections() {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 3000);
-    const res = await fetch(CMS_SECTION_API, { signal: ctrl.signal });
+    // 内容引擎化：首页模块已并入 cms_block（pageKey=home，template 非空 = 模块）
+    const res = await fetch(CMS_BLOCK_API + 'home', { signal: ctrl.signal });
     clearTimeout(timer);
     const d = await res.json();
-    if (d.code === 200) list = d.data || [];
+    if (d.code === 200) list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
   } catch (e) { return; } // 失败/超时：保留静态模块（吸附已绑定静态）
   if (!list.length) return;
+  // 兼容渲染器：block 对象映射 sectionKey（renderSection 按 sectionKey 打标）
+  list = list.map(b => ({ ...b, sectionKey: b.sectionKey || b.blockKey }));
   let no = 0;
   let html = list.map(s => { no += 1; return renderSection(s, no); }).join('');
   // 按渲染顺序给 section 打 data-section-key（预览标注/高亮定位用，正式页面无副作用）
