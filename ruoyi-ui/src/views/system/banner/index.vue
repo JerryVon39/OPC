@@ -68,7 +68,7 @@
           <el-upload
             class="avatar-uploader"
             :action="uploadUrl"
-            :headers="{ Authorization: 'Bearer ' + getToken() }"
+            :headers="uploadHeaders"
             :show-file-list="false"
             :on-success="handleImageSuccess"
             accept="image/*"
@@ -107,6 +107,13 @@ import { getToken } from "@/utils/auth"
 
 export default {
   name: "Banner",
+  computed: {
+    // 上传鉴权头：computed 每次渲染动态取 token（模板作用域无法访问 import 的 getToken；
+    // 登录过期重登后上传也始终使用最新令牌）
+    uploadHeaders() {
+      return { Authorization: "Bearer " + getToken() }
+    }
+  },
   data() {
     return {
       loading: true,
