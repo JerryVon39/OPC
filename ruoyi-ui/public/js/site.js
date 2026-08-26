@@ -684,6 +684,26 @@ function renderSection(s, no) {
     '<div style="font-size:15px;line-height:2;color:var(--text)">' + esc(cfg.text || '') + '</div></div></section>';
 }
 
+/** 首页模块渲染（同步缓存渲染与异步拉取共用，保证两路输出一致） */
+function renderHomeBlocks(list) {
+  const mapped = list.map(b => ({ ...b, sectionKey: b.sectionKey || b.blockKey }));
+  let no = 0;
+  let html = mapped.map(s => { no += 1; return renderSection(s, no); }).join('');
+  // 按渲染顺序给 section 打 data-section-key（预览标注/高亮定位用，正式页面无副作用）
+  let si = 0;
+  return html.replace(/<section\b[^>]*>/g, m => {
+    const s = mapped[si++];
+    if (!s) return m;
+    return m.replace(/>\s*$/, ' data-section-key="' + esc(s.sectionKey || '') + '">');
+  });
+}
+
+/** 恢复静态主体显示（无配置区块或请求失败时调用） */
+function revealStatic(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('content-pending');
+}
+
 async function loadHomeSections() {
   const box = document.getElementById('homeSections');
   if (!box) return;
@@ -698,20 +718,12 @@ async function loadHomeSections() {
     clearTimeout(timer);
     const d = await res.json();
     if (d.code === 200) list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
-  } catch (e) { return; } // 失败/超时：保留静态模块（吸附已绑定静态）
-  if (!list.length) return;
-  // 兼容渲染器：block 对象映射 sectionKey（renderSection 按 sectionKey 打标）
-  list = list.map(b => ({ ...b, sectionKey: b.sectionKey || b.blockKey }));
-  let no = 0;
-  let html = list.map(s => { no += 1; return renderSection(s, no); }).join('');
-  // 按渲染顺序给 section 打 data-section-key（预览标注/高亮定位用，正式页面无副作用）
-  let si = 0;
-  html = html.replace(/<section\b[^>]*>/g, m => {
-    const s = list[si++];
-    if (!s) return m;
-    return m.replace(/>\s*$/, ' data-section-key="' + esc(s.sectionKey || '') + '">');
-  });
+  } catch (e) { revealStatic('homeStatic'); return; } // 失败/超时：保留静态模块（吸附已绑定静态）
+  if (!list.length) { revealStatic('homeStatic'); return; }
+  const html = renderHomeBlocks(list);
   box.innerHTML = html;
+  // 写入带时间戳的本地缓存：切页时同步渲染防闪烁（60s 内新鲜）
+  try { localStorage.setItem('opc_blocks_home', JSON.stringify({ t: Date.now(), list: list })); } catch (e) {}
   const stat = document.getElementById('homeStatic');
   if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底（区块槽位重新定位到动态元素）
   // 动态 hero：重新拉取轮播（复用 home.html 暴露的函数）
@@ -895,10 +907,60 @@ async function loadPageSections(pageKey) {
     clearTimeout(timer);
     const d = await res.json();
     if (d.code === 200) list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
-  } catch (e) { return; }
-  if (!list.length) return; // 保留静态主体（页面永不白屏）
+  } catch (e) { revealStatic('pageStatic'); return; }
+  if (!list.length) { revealStatic('pageStatic'); return; } // 保留静态主体（页面永不白屏）
   box.innerHTML = list.map((b, i) => renderPageBlock(b, i + 1)).join('');
+  // 写入带时间戳的本地缓存：切页时同步渲染防闪烁（60s 内新鲜）
+  try { localStorage.setItem('opc_blocks_' + pageKey, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {}
   const stat = document.getElementById('pageStatic');
   if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底主体
   applyPreviewMarks();
 }
+
+// ===== 区块内容防闪烁（区块管理保存的内容切页即显，不闪静态原版）=====
+// 必须放在脚本尾部：渲染器引用 const（CMS_ALLOWED_TAGS 等），TDZ 下前置调用会抛
+// ReferenceError 并中断整段脚本（曾因此导致高亮/后续初始化全部失效）。
+// ① 新鲜缓存（≤60s）→ 同步渲染区块并移除静态主体（仍在首绘前，切页零闪烁）
+// ② 缓存缺失/过期 → 先隐藏静态主体（.content-pending，不占位抖动），异步配置到达后显示
+// ③ 请求失败/无区块 → 异步路径或 3.5s 兜底恢复静态主体（页面永不空白）
+(function () {
+  const PAGE_KEYS = { 'home.html': 'home', 'about.html': 'about', 'join.html': 'join', 'talent.html': 'talent', 'industry.html': 'industry' };
+  const page = (location.pathname.split('/').pop() || 'home.html').split('?')[0];
+  const pageKey = PAGE_KEYS[page] || '';
+  if (!pageKey) return;
+  const isHome = pageKey === 'home';
+  const box = document.getElementById(isHome ? 'homeSections' : 'pageSections');
+  if (!box) return;
+  const statId = isHome ? 'homeStatic' : 'pageStatic';
+  const stat = document.getElementById(statId);
+  let list = null;
+  try {
+    const raw = localStorage.getItem('opc_blocks_' + pageKey);
+    if (raw) {
+      const c = JSON.parse(raw);
+      if (c && Array.isArray(c.list) && c.list.length && Date.now() - (c.t || 0) <= 60000) {
+        list = c.list; // 仅新鲜缓存做首绘前同步渲染；过期缓存不渲染（避免闪旧内容）
+      }
+    }
+  } catch (e) { list = null; }
+  if (list) {
+    try {
+      if (isHome) {
+        box.innerHTML = renderHomeBlocks(list);
+        // 首页动态 hero 轮播与滚动动画：同步阶段内联脚本可能尚未定义，异步路径会再重绑
+        if (window.__loadBanners) window.__loadBanners();
+        if (window.__initHomeAnimations) window.__initHomeAnimations();
+      } else {
+        box.innerHTML = list.map((b, i) => renderPageBlock(b, i + 1)).join('');
+      }
+      if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底主体（与异步路径一致）
+      if (typeof applyPreviewMarks === 'function') applyPreviewMarks();
+    } catch (e) {
+      // 渲染异常：不阻塞页面，恢复静态主体
+      if (stat) stat.classList.remove('content-pending');
+    }
+  } else {
+    if (stat) stat.classList.add('content-pending'); // 无新鲜缓存：先隐藏静态主体
+    setTimeout(function () { revealStatic(statId); }, 3500); // 兜底：请求失败恢复静态
+  }
+})();
