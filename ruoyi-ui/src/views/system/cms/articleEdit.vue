@@ -186,8 +186,9 @@ export default {
     /** 前台预览地址（真实 article.html 详情页；preview=1 + 后台令牌调鉴权预览接口，草稿/下线可见） */
     previewUrl() {
       if (!this.isEdit) return ''
-      // token 取自若依登录态（localStorage Admin-Token）；无令牌时 article.html 只显示已发布内容
-      const token = (localStorage.getItem('Admin-Token') || '').replace(/^Bearer\s+/i, '')
+      // 修复：token 必须取自 Cookie（若依登录态存 Cookie，utils/auth.getToken 即 Cookie 读取）；
+      // 原 localStorage 读取恒为空 → 草稿/下线文章预览永远"文章不存在或未发布"
+      const token = getToken() || ''
       return this.frontOrigin + '/article.html?id=' + this.articleId + '&preview=1&token=' +
         encodeURIComponent(token) + '&t=' + this.previewTs
     }
