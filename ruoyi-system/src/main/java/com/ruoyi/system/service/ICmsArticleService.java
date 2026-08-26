@@ -21,6 +21,9 @@ public interface ICmsArticleService
     /** 前台文章详情：先浏览量+1 再返回文章 */
     public CmsArticle selectPublicArticleDetail(Long articleId);
 
+    /** 公开详情（后台预览模式 preview=true：跳过"仅已发布"校验、不计浏览量，供编辑页 iframe 预览草稿/下线文章） */
+    public CmsArticle selectPublicArticleDetail(Long articleId, boolean preview);
+
     /** 新增文章（状态为已发布且未填发布时间时自动写入当前时间） */
     public int insertCmsArticle(CmsArticle cmsArticle);
 

@@ -155,6 +155,21 @@ export const dynamicRoutes = [
     ]
   },
   {
+    path: '/content/article-edit',
+    component: Layout,
+    hidden: true,
+    permissions: ['system:cms:add', 'system:cms:edit'],
+    children: [
+      {
+        // articleId=0 表示新增，>0 表示编辑
+        path: 'index/:articleId(\\d+)',
+        component: () => import('@/views/system/cms/articleEdit'),
+        name: 'ArticleEdit',
+        meta: { title: '文章编辑', activeMenu: '/content/article' }
+      }
+    ]
+  },
+  {
     path: '/tool/gen-edit',
     component: Layout,
     hidden: true,

@@ -52,18 +52,26 @@ public class CmsArticleServiceImpl implements ICmsArticleService
     @Override
     public CmsArticle selectPublicArticleDetail(Long articleId)
     {
+        return selectPublicArticleDetail(articleId, false);
+    }
+
+    @Override
+    public CmsArticle selectPublicArticleDetail(Long articleId, boolean preview)
+    {
         CmsArticle article = cmsArticleMapper.selectCmsArticleByArticleId(articleId);
         if (article == null)
         {
             throw new ServiceException("文章不存在或已删除");
         }
         // 仅已发布文章可公开访问（草稿/已下线对前台不可见，防止未发布内容泄露）
-        if (!"0".equals(article.getStatus()))
+        // 预览模式（preview=true）跳过该校验：后台编辑页 iframe 预览专用，仍不可见未删除之外的文章
+        if (!preview && !"0".equals(article.getStatus()))
         {
             throw new ServiceException("文章未发布");
         }
         // 浏览量自增（防刷：同一 IP + 文章 10 分钟内只计一次；Redis 异常降级为照常自增）
-        if (viewNotCounted(articleId))
+        // 预览模式不计浏览量（编辑页每次保存都会刷新 iframe，避免刷虚）
+        if (!preview && viewNotCounted(articleId))
         {
             try
             {

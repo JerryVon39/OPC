@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
@@ -43,9 +44,11 @@ public class CmsArticleController extends BaseController
     /** 前台公开文章详情（匿名）：浏览量 +1 */
     @Anonymous
     @GetMapping("/publicDetail/{articleId}")
-    public AjaxResult publicDetail(@PathVariable("articleId") Long articleId)
+    public AjaxResult publicDetail(@PathVariable("articleId") Long articleId,
+                                   @RequestParam(name = "preview", required = false) String preview)
     {
-        return success(cmsArticleService.selectPublicArticleDetail(articleId));
+        // preview=1：后台编辑页 iframe 预览（跳过"仅已发布"校验、不计浏览量）
+        return success(cmsArticleService.selectPublicArticleDetail(articleId, "1".equals(preview)));
     }
 
     /** 文章历史列表（version 倒序，最多 20 版） */
@@ -89,7 +92,9 @@ public class CmsArticleController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody CmsArticle cmsArticle)
     {
-        return toAjax(cmsArticleService.insertCmsArticle(cmsArticle));
+        // 返回新文章 ID（data 字段）：独立编辑页新增后直接跳预览需要
+        int rows = cmsArticleService.insertCmsArticle(cmsArticle);
+        return rows > 0 ? AjaxResult.success("新增成功", cmsArticle.getArticleId()) : AjaxResult.error("新增失败");
     }
 
     /** 修改文章 */

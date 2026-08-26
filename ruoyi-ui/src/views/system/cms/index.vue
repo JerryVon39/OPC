@@ -116,102 +116,11 @@
       </el-col>
     </el-row>
 
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog :title="title" :visible.sync="open" width="760px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入文章标题（必填，最长 200 字）" maxlength="200" />
-        </el-form-item>
-        <el-form-item label="栏目" prop="categoryId">
-          <el-select v-model="form.categoryId" placeholder="请选择栏目（必填）" style="width:100%">
-            <el-option v-for="c in categoryOptions" :key="c.categoryId" :label="c.categoryName" :value="c.categoryId" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="作者" prop="author">
-          <el-input v-model="form.author" placeholder="请输入作者" />
-        </el-form-item>
-        <el-form-item label="摘要" prop="summary">
-          <el-input v-model="form.summary" type="textarea" :rows="3" placeholder="请输入摘要（前台列表展示，选填）" />
-        </el-form-item>
-        <el-form-item label="封面" prop="cover">
-          <el-upload
-            class="avatar-uploader"
-            :action="uploadUrl"
-            :headers="uploadHeaders"
-            :show-file-list="false"
-            :on-success="handleCoverSuccess"
-            accept="image/*"
-            :before-upload="beforeImageUpload"
-            :on-error="handleUploadError"
-          >
-            <img v-if="form.cover" :src="coverFullUrl" style="width:100%;max-height:140px;object-fit:cover;border-radius:6px" />
-            <i v-else class="el-icon-plus avatar-uploader-icon" style="width:100%"></i>
-          </el-upload>
-          <div style="color:#999;font-size:12px">可不上传封面图</div>
-        </el-form-item>
-        <el-form-item label="附件" prop="attachment">
-          <file-upload v-model="form.attachment" :limit="1" accept=".pdf,.doc,.docx,.zip" />
-          <div style="color:#999;font-size:12px">政策原文 PDF 等文件上传（≤20MB），前台详情页显示"下载"按钮</div>
-        </el-form-item>
-        <el-form-item label="正文" prop="content">
-          <Editor v-model="form.content" :min-height="200" />
-        </el-form-item>
-        <el-form-item label="置顶" prop="isTop">
-          <el-switch v-model="form.isTop" active-value="1" inactive-value="0" active-text="置顶" inactive-text="普通" />
-        </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" :max="999" controls-position="right" />
-          <span style="color:#999;font-size:12px;margin-left:8px">越小越靠前（置顶文章之后生效）</span>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio v-if="$auth.hasPermi('system:cms:publish')" label="0">已发布</el-radio>
-            <el-radio label="1">草稿</el-radio>
-            <el-radio label="2">已下线</el-radio>
-          </el-radio-group>
-          <div style="color:#999;font-size:12px">发布后将同步展示到前台新闻动态页</div>
-        </el-form-item>
-        <el-form-item label="发布时间" prop="publishTime">
-          <el-date-picker v-model="form.publishTime" type="datetime" placeholder="留空 = 立即发布（预约发布：填未来时间则到点才在前台展示）" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
-        </el-form-item>
-        <el-form-item label="SEO 关键词" prop="keywords">
-          <el-input v-model="form.keywords" placeholder="选填，多个关键词用英文逗号分隔" />
-        </el-form-item>
-        <el-form-item label="SEO 描述" prop="description">
-          <el-input v-model="form.description" type="textarea" :rows="2" placeholder="选填，前台详情页 meta description" />
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button v-if="form.articleId != null" type="warning" plain icon="el-icon-refresh-left" @click="openHistory">历史版本</el-button>
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
-    </el-dialog>
-
-    <!-- 文章历史版本弹窗（批次 A：保存前自动存档，最多 20 版） -->
-    <el-dialog :title="'历史版本 · ' + historyTitle" :visible.sync="historyOpen" width="680px" append-to-body>
-      <el-table :data="historyList" size="mini">
-        <el-table-column label="版本" prop="version" width="70" align="center" />
-        <el-table-column label="标题" prop="title" show-overflow-tooltip />
-        <el-table-column label="状态" width="80" align="center">
-          <template slot-scope="scope">{{ {0:'已发布',1:'草稿',2:'已下线'}[scope.row.status] || '-' }}</template>
-        </el-table-column>
-        <el-table-column label="更新人" prop="updateBy" width="100" />
-        <el-table-column label="更新时间" prop="updateTime" width="150" />
-        <el-table-column label="操作" width="80" align="center">
-          <template slot-scope="scope">
-            <el-button size="mini" type="text" icon="el-icon-refresh-left" @click="handleRollback(scope.row)">回滚</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div style="color:#999;font-size:12px;margin-top:8px">回滚 = 恢复该版本内容（含正文/摘要/栏目/封面），回滚本身也会存为新版本。最多保留 20 个版本。</div>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listArticle, getArticle, delArticle, addArticle, updateArticle, changeArticleStatus, publishArticle, listCategory, batchTop, batchStatus, batchSort, listArticleHistory, rollbackArticle } from "@/api/system/cms"
-import { getToken } from "@/utils/auth"
+import { listArticle, delArticle, changeArticleStatus, publishArticle, listCategory, batchTop, batchStatus, batchSort } from "@/api/system/cms"
 
 export default {
   name: "CmsArticle",
@@ -225,33 +134,7 @@ export default {
       articleList: [],
       categoryOptions: [],
       treeOptions: [],
-      title: "",
-      open: false,
-      uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
-      historyOpen: false,
-      historyList: [],
-      historyTitle: '',
-      uploadHeaders: { Authorization: "Bearer " + getToken() },
-      queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, categoryIds: null, status: null },
-      form: {},
-      rules: {
-        title: [{ required: true, message: "文章标题不能为空", trigger: "blur" }],
-        categoryId: [{ required: true, message: "请选择栏目", trigger: "change" }]
-      }
-    }
-  },
-  computed: {
-    coverFullUrl() {
-      const url = this.form.cover
-      if (!url) return ''
-      if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
-      return process.env.VUE_APP_BASE_API + url
-    }
-  },
-  watch: {
-    form: {
-      deep: true,
-      handler() { if (!this._suppressDirty) this.scheduleAutoSave() }
+      queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, categoryIds: null, status: null }
     }
   },
   created() {
@@ -269,6 +152,13 @@ export default {
       if (!url) return ''
       if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
+    },
+    /** 跳到独立编辑页（articleId=0 表示新增；带预选栏目 query） */
+    goEdit(articleId) {
+      const query = {}
+      const preset = this.$route.query.categoryId
+      if (articleId === 0 && preset) query.categoryId = preset
+      this.$router.push({ path: '/content/article-edit/index/' + articleId, query })
     },
     loadCategoryOptions() {
       listCategory({ pageNum: 1, pageSize: 100 }).then(response => {
@@ -316,23 +206,6 @@ export default {
     goCategory() {
       this.$router.push('/content/category')
     },
-    handleCoverSuccess(res) {
-      if (res.code === 200) {
-        this.form.cover = res.fileName || res.url
-        this.$modal.msgSuccess("封面上传成功")
-      } else {
-        this.$modal.msgError("上传失败：" + (res.msg || ""))
-      }
-    },
-    /** 封面上传前校验——仅图片、≤5MB（nginx 上限 20MB、后端 10MB） */
-    beforeImageUpload(file) {
-      if (file.type.indexOf('image/') !== 0) { this.$modal.msgError("仅支持图片文件"); return false }
-      if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
-      return true
-    },
-    handleUploadError() {
-      this.$modal.msgError("上传失败，请检查网络或文件大小")
-    },
     getList() {
       this.loading = true
       listArticle(this.queryParams).then(response => {
@@ -351,74 +224,11 @@ export default {
       this.multiple = !selection.length
     },
     handleAdd() {
-      this.reset()
-      // 预选栏目（来自栏目管理页"发文章"跳转或左侧树选择）
-      const preset = this.$route.query.categoryId
-      if (preset) {
-        this.form.categoryId = Number(preset)
-      }
-      this.open = true
-      this.title = "新增文章"
-    },
-    /** 清除未触发的自动保存 timer（切换文章/关闭弹窗时调用） */
-    _clearAutoSave() {
-      if (this._autoSaveTimer) { clearTimeout(this._autoSaveTimer); this._autoSaveTimer = null }
+      // 跳到独立编辑页（新增：articleId=0，预选栏目带 query）
+      this.goEdit(0)
     },
     handleUpdate(row) {
-      this.reset()
-      this._clearAutoSave()
-      this._suppressDirty = true
-      getArticle(row.articleId).then(response => {
-        this.form = response.data
-        this.open = true
-        this.title = "修改文章"
-        this.$nextTick(() => { this._suppressDirty = false })
-      })
-    },
-    /** 打开文章历史版本列表 */
-    openHistory() {
-      this.historyTitle = this.form.title || ''
-      listArticleHistory(this.form.articleId).then(response => {
-        this.historyList = response.data || []
-        this.historyOpen = true
-      })
-    },
-    /** 回滚到指定历史版本 */
-    handleRollback(row) {
-      this.$modal.confirm('确认回滚到 v' + row.version + ' 吗？当前内容将替换为该版本（当前版会先存入历史）。').then(() => {
-        return rollbackArticle(this.form.articleId, row.version)
-      }).then(() => {
-        this.$modal.msgSuccess("已回滚")
-        this.historyOpen = false
-        this.getList()
-      }).catch(() => {})
-    },
-    /** 草稿自动保存：编辑中防抖 90 秒静默保存（仅已存在文章，避免编辑丢失） */
-    scheduleAutoSave() {
-      if (this.form.articleId == null || this._autoSaveTimer) return
-      this._autoSaveTimer = setTimeout(() => {
-        this._autoSaveTimer = null
-        updateArticle(this.form).then(() => {}).catch(() => {})
-      }, 90000)
-    },
-    submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.articleId != null) {
-            updateArticle(this.form).then(() => {
-              this.$modal.msgSuccess("修改成功")
-              this.open = false
-              this.getList()
-            })
-          } else {
-            addArticle(this.form).then(() => {
-              this.$modal.msgSuccess("新增成功")
-              this.open = false
-              this.getList()
-            })
-          }
-        }
-      })
+      this.goEdit(row.articleId)
     },
     // 置顶/取消置顶（仅更新 isTop 字段，其余字段不受影响）
     handleTop(row) {
@@ -480,11 +290,6 @@ export default {
         this.getList()
         this.$modal.msgSuccess("已移入回收站")
       }).catch(() => {})
-    },
-    cancel() { this.open = false; this.reset() },
-    reset() {
-      this.form = { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '0', sort: 0, attachment: null, keywords: null, description: null }
-      this.resetForm("form")
     }
   }
 }

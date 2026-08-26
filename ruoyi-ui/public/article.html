@@ -163,7 +163,10 @@
   }
 
   async function loadArticle() {
-    const id = new URLSearchParams(location.search).get('id');
+    const qs = new URLSearchParams(location.search);
+    const id = qs.get('id');
+    // 预览模式（后台编辑页 iframe）：preview=1 时接口跳过"仅已发布"校验、不计浏览量（草稿/下线文章也可见）
+    const isPreview = qs.get('preview') === '1';
     const titleEl = document.getElementById('artTitle');
     const metaEl = document.getElementById('artMeta');
     const contentEl = document.getElementById('artContent');
@@ -173,7 +176,7 @@
       return;
     }
     try {
-      const res = await fetch(DETAIL_API + id);
+      const res = await fetch(DETAIL_API + id + (isPreview ? '?preview=1' : ''));
       const d = await res.json();
       if (d.code !== 200 || !d.data) {
         titleEl.textContent = '文章不存在或未发布';
