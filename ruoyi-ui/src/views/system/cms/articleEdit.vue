@@ -383,6 +383,7 @@ export default {
 .edit-main {
   flex: 1;
   min-width: 0;
+  min-height: 0; /* 必须：否则内容撑高后 .editor-wrap 的 flex:1 失效，长正文把工具栏挤出视口 */
   display: flex;
   flex-direction: column;
 }
@@ -396,10 +397,15 @@ export default {
   flex-direction: column;
   overflow: hidden;
 }
-/* Quill 填充剩余高度（Editor 组件未设固定高时自适应） */
-.editor-wrap >>> .editor { height: 100%; display: flex; flex-direction: column; }
+/* Quill 填充剩余高度（Editor 组件未设固定高时自适应）
+   flex 链：.editor-wrap → .editor-root（组件根，flex:1 min-height:0）
+   → .editor（height:100%）→ .ql-toolbar 固定 + .ql-container 内部滚动。
+   min-height:0 必须：flex 子项默认 min-height:auto 会让长正文撑开容器
+   而非内部滚动，导致工具栏被挤出视口 */
+.editor-wrap >>> .editor-root { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.editor-wrap >>> .editor { height: 100%; min-height: 0; display: flex; flex-direction: column; }
 .editor-wrap >>> .ql-toolbar.ql-snow { flex: 0 0 auto; border: 0; border-bottom: 1px solid #dcdfe6; }
-.editor-wrap >>> .ql-container.ql-snow { flex: 1; border: 0; overflow-y: auto; }
+.editor-wrap >>> .ql-container.ql-snow { flex: 1; min-height: 0; border: 0; overflow-y: auto; }
 
 .edit-side {
   width: 400px;

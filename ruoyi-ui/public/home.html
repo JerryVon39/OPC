@@ -459,11 +459,11 @@
       if (!rows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
       box.innerHTML = rows.slice(0, 3).map(a => {
         const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
-        // 封面缩略图：有封面才显示（左图右文），无封面保持纯文字卡片
+        // 封面缩略图：统一左图右文结构——有封面显示真实图，无封面显示占位块（保证标题起点对齐）
         const cover = a.cover
           ? '<img class="news-thumb" src="' + esc(/^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + a.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
-          : '';
-        return '<div class="news-card' + (a.cover ? ' has-thumb' : '') + '" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
+          : '<div class="news-thumb news-thumb-ph">📰</div>';
+        return '<div class="news-card has-thumb" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
           cover +
           '<div class="news-body">' +
             '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">置顶</span> ' : '') + esc(a.title || '') + '</div>' +

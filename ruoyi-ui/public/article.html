@@ -23,6 +23,9 @@
   .article-meta .tag-sale { padding: 2px 10px; }
   .article-content { font-size: 15px; line-height: 2; color: var(--text); white-space: pre-wrap; word-break: break-word; }
   .article-content a { color: var(--accent); word-break: break-all; }
+  .article-content table { border-collapse: collapse; margin: 12px 0; width: 100%; }
+  .article-content th, .article-content td { border: 1px solid #d8dee8; padding: 8px 12px; text-align: left; }
+  .article-content th { background: #f4f7fb; font-weight: bold; }
   .article-back { margin-top: 30px; text-align: center; }
 </style>
 </head>
@@ -95,9 +98,23 @@
   // HTML 转义：标题/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
 
-  // 正文安全渲染：白名单 HTML（后台 Quill 富文本：加粗/图片/列表/标题等）
+  // 正文安全渲染：白名单 HTML（后台 Quill 富文本：加粗/图片/列表/标题/表格/上下标等）
   // 白名单之外的标签剥掉只留文本；文本节点中的 http/https 链接自动转 <a>（防存储型 XSS）
-  const ALLOWED_TAGS = new Set(['P','BR','STRONG','B','EM','I','U','H1','H2','H3','H4','UL','OL','LI','A','IMG','BLOCKQUOTE','PRE','CODE','SPAN','TABLE','THEAD','TBODY','TR','TH','TD','DIV','HR']);
+  const ALLOWED_TAGS = new Set(['P','BR','STRONG','B','EM','I','U','SUB','SUP','H1','H2','H3','H4','UL','OL','LI','A','IMG','BLOCKQUOTE','PRE','CODE','SPAN','TABLE','THEAD','TBODY','TR','TH','TD','DIV','HR']);
+
+  /** Quill class → 内联样式映射（白名单剥 class，字号/对齐/字体需转内联才生效） */
+  function mapQuillStyles(el2) {
+    const cls = String(el2.className || '');
+    if (cls.indexOf('ql-size-small') !== -1) el2.style.fontSize = '0.75em';
+    else if (cls.indexOf('ql-size-large') !== -1) el2.style.fontSize = '1.5em';
+    else if (cls.indexOf('ql-size-huge') !== -1) el2.style.fontSize = '2.5em';
+    if (cls.indexOf('ql-align-center') !== -1) el2.style.textAlign = 'center';
+    else if (cls.indexOf('ql-align-right') !== -1) el2.style.textAlign = 'right';
+    else if (cls.indexOf('ql-align-justify') !== -1) el2.style.textAlign = 'justify';
+    if (cls.indexOf('ql-font-serif') !== -1) el2.style.fontFamily = 'Georgia, "Times New Roman", serif';
+    else if (cls.indexOf('ql-font-monospace') !== -1) el2.style.fontFamily = 'Consolas, Menlo, monospace';
+    el2.removeAttribute('class');
+  }
 
   /** 递归净化：白名单标签保留（属性按类型过滤），其余标签剥壳只留文本；文本节点链接化 */
   function sanitizeNode(node, frag) {
@@ -125,6 +142,9 @@
       // 白名单外的标签：剥壳（保留其子内容）
       if (!ALLOWED_TAGS.has(tag)) { sanitizeNode(child, frag); return; }
       const el2 = document.createElement(tag.toLowerCase());
+      // 保留 class（Quill 格式标记 ql-size-*/ql-align-*/ql-font-*，mapQuillStyles 转内联样式后清除）
+      const origCls = child.getAttribute('class');
+      if (origCls) el2.className = origCls;
       if (tag === 'A') {
         const href = child.getAttribute('href') || '';
         if (/^https?:\/\//i.test(href)) { el2.href = href; el2.target = '_blank'; el2.rel = 'noopener'; }
@@ -135,10 +155,15 @@
         if (alt) el2.alt = alt;
         el2.style.maxWidth = '100%';
       } else if (tag === 'SPAN') {
-        const color = child.style && child.style.color;
-        if (color && /^#[0-9a-fA-F]{3,6}$/.test(color)) el2.style.color = color;
+        const st = child.style || {};
+        // 颜色/背景色：#xxx 十六进制 或 rgb()/rgba()（Quill 输出格式）；字体族仅接受白名单值
+        const colorRe = /^(#[0-9a-fA-F]{3,6}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\))$/;
+        if (st.color && colorRe.test(st.color)) el2.style.color = st.color;
+        if (st.backgroundColor && colorRe.test(st.backgroundColor)) el2.style.backgroundColor = st.backgroundColor;
+        if (st.fontFamily && /^[A-Za-z ,"'"]+$/.test(st.fontFamily)) el2.style.fontFamily = st.fontFamily;
       }
       sanitizeNode(child, el2);
+      mapQuillStyles(el2);
       frag.appendChild(el2);
     });
   }

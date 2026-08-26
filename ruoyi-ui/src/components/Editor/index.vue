@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <!-- editor-root：供宿主页面 flex 填充（.editor 是内层子 div，height:100% 需要根 div 高度受限） -->
+  <div class="editor-root">
     <el-upload
       :action="uploadUrl"
       :before-upload="handleBeforeUpload"
@@ -20,10 +21,14 @@
 <script>
 import axios from "axios"
 import Quill from "quill"
+import TableModule from "quill/modules/table"
 import "quill/dist/quill.core.css"
 import "quill/dist/quill.snow.css"
 import "quill/dist/quill.bubble.css"
 import { getToken } from "@/utils/auth"
+
+// 注册 Quill2 表格模块（含 TableCell/TableRow/TableBody/TableContainer blots），工具栏可用 {table:'insert'} 插入表格
+Quill.register(TableModule, true)
 
 export default {
   name: "Editor",
@@ -72,18 +77,21 @@ export default {
         bounds: document.body,
         debug: "warn",
         modules: {
-          // 工具栏配置
+          // 工具栏配置（前台 article.html 白名单已同步支持：表格/上下标/字号/对齐/背景色）
           toolbar: [
             ["bold", "italic", "underline", "strike"],       // 加粗 斜体 下划线 删除线
-            ["blockquote", "code-block"],                    // 引用  代码块
-            [{ list: "ordered" }, { list: "bullet" }],       // 有序、无序列表
-            [{ indent: "-1" }, { indent: "+1" }],            // 缩进
-            [{ size: ["small", false, "large", "huge"] }],   // 字体大小
             [{ header: [1, 2, 3, 4, 5, 6, false] }],         // 标题
+            [{ size: ["small", false, "large", "huge"] }],   // 字体大小
+            [{ font: [] }],                                  // 字体（serif/monospace）
             [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色
             [{ align: [] }],                                 // 对齐方式
-            ["clean"],                                       // 清除文本格式
-            ["link", "image", "video"]                       // 链接、图片、视频
+            [{ script: "sub" }, { script: "super" }],        // 上标、下标
+            [{ list: "ordered" }, { list: "bullet" }],       // 有序、无序列表
+            [{ indent: "-1" }, { indent: "+1" }],            // 缩进
+            ["blockquote", "code-block"],                    // 引用  代码块
+            [{ table: "insert" }, { table: "delete" }],      // 插入/删除表格（Quill2 内置模块）
+            ["link", "image", "video"],                      // 链接、图片、视频
+            ["clean"]                                        // 清除文本格式
           ],
         },
         placeholder: "请输入内容",
