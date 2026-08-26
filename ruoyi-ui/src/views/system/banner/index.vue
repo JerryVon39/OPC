@@ -155,8 +155,13 @@ export default {
       if (file.size > 5 * 1024 * 1024) { this.$modal.msgError("图片大小不能超过 5MB"); return false }
       return true
     },
-    handleUploadError() {
-      this.$modal.msgError("上传失败，请检查网络或文件大小")
+    handleUploadError(err) {
+      // 401 = 登录令牌过期（el-upload 不走 axios 拦截器，过期不会自动跳登录）
+      if (err && err.status === 401) {
+        this.$modal.msgError("登录已过期，请重新登录后再上传")
+      } else {
+        this.$modal.msgError("上传失败，请检查网络或文件大小")
+      }
     },
     getList() {
       this.loading = true

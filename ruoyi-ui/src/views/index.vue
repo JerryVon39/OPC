@@ -27,8 +27,8 @@
             <el-button type="primary" size="medium" icon="el-icon-document-add" @click="go('/content/article')">发文章</el-button>
             <el-button type="warning" size="medium" icon="el-icon-edit" @click="go('/content/block')">改区块</el-button>
             <el-button type="info" size="medium" icon="el-icon-user" @click="go('/member/reader')">成员管理</el-button>
-            <el-button type="success" size="medium" icon="el-icon-picture-outline" @click="go('/banner')">官网轮播</el-button>
-            <el-button type="danger" plain size="medium" icon="el-icon-megaphone" @click="go('/system/notice')">发公告</el-button>
+            <el-button type="success" size="medium" icon="el-icon-picture-outline" @click="go('/content/banner')">官网轮播</el-button>
+            <el-button type="danger" plain size="medium" icon="el-icon-megaphone" @click="go('/content/notice')">发公告</el-button>
           </div>
         </el-card>
       </el-col>
