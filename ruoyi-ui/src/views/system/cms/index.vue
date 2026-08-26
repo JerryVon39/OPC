@@ -251,7 +251,7 @@ export default {
   watch: {
     form: {
       deep: true,
-      handler() { this.scheduleAutoSave() }
+      handler() { if (!this._suppressDirty) this.scheduleAutoSave() }
     }
   },
   created() {
@@ -360,12 +360,19 @@ export default {
       this.open = true
       this.title = "新增文章"
     },
+    /** 清除未触发的自动保存 timer（切换文章/关闭弹窗时调用） */
+    _clearAutoSave() {
+      if (this._autoSaveTimer) { clearTimeout(this._autoSaveTimer); this._autoSaveTimer = null }
+    },
     handleUpdate(row) {
       this.reset()
+      this._clearAutoSave()
+      this._suppressDirty = true
       getArticle(row.articleId).then(response => {
         this.form = response.data
         this.open = true
         this.title = "修改文章"
+        this.$nextTick(() => { this._suppressDirty = false })
       })
     },
     /** 打开文章历史版本列表 */
