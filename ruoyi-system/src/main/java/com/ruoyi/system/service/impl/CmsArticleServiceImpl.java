@@ -369,7 +369,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
             {
                 return false;
             }
-            redisCache.setCacheObject(key, 1, 10, TimeUnit.MINUTES);
+            // 防刷窗口 60 秒（原 10 分钟）：足以拦截连点刷量，同时运营自测/演示时
+            // 多次打开同一文章能看到数字变化，避免"浏览量不统计"的误判
+            redisCache.setCacheObject(key, 1, 60, TimeUnit.SECONDS);
             return true;
         }
         catch (Exception e)

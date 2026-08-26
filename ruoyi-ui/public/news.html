@@ -48,6 +48,9 @@
   <!-- 文章列表（栏目 Tab + 卡片列表 + 加载更多） -->
   <div class="content-section">
     <div class="sub-title">📰 全部动态</div>
+    <div style="margin-bottom:12px">
+      <input id="searchInput" class="form-input" placeholder="🔍 搜索文章标题…" maxlength="50" style="max-width:360px" />
+    </div>
     <div class="type-tabs" id="catTabs">
       <a class="active" data-id="" onclick="switchCat(this)">全部</a>
     </div>
@@ -95,6 +98,7 @@
   let total = 0;
   let loading = false;      // 防重复请求（"加载更多"连点）
   let articleList = [];     // 已加载文章（详情浏览量回写用）
+  let keyword = '';         // 搜索关键字（标题模糊查询，后端 publicList 已支持 title）
 
   // HTML 转义：标题/摘要/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
@@ -142,6 +146,7 @@
     const params = new URLSearchParams({ pageNum: pageNum, pageSize: PAGE_SIZE });
     if (currentCat) params.set('categoryId', currentCat);
     else if (nonPolicyIds.length) params.set('categoryIds', nonPolicyIds.join(','));
+    if (keyword) params.set('title', keyword);
     try {
       const res = await fetch(LIST_API + '?' + params.toString());
       const d = await res.json();
@@ -211,6 +216,19 @@
   })();
   // 栏目加载完成后再拉列表（"全部"需先知道非政策栏目 ID，避免竞态拉到政策文章）
   loadCats().then(loadList);
+
+  // ===== 搜索：输入防抖 300ms，重置分页后重新加载（与栏目 Tab 叠加过滤）=====
+  // 注意：setTimeout 回调里 this 指向 window，须先保存 input 引用（function 回调无箭头函数绑定）
+  let searchTimer = null;
+  document.getElementById('searchInput').addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    const input = this;
+    searchTimer = setTimeout(function () {
+      keyword = input.value.trim();
+      pageNum = 1;
+      loadList();
+    }, 300);
+  });
 
   // ===== 共享：成员登录 / 注册 / 更多下拉（与 home.html 同一套公开接口）=====
       // ===== 找回密码（证号/手机号/邮箱 → 邮箱验证码 → 新密码）=====

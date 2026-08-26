@@ -11,6 +11,15 @@
 <link rel="icon" href="favicon.ico">
 <meta name="description" content="数智游民创新工场三大赋能体系：算力与技术支持（阿里私有化部署、智谱大模型、算力券）、政策与金融服务（创客贷款、数字游民奖励与担保贷款）、订单与市场牵引（文创订单、创客大赛、创客基金）。">
 <link rel="stylesheet" href="css/site.css">
+<style>
+  /* 省级蓝图六大任务折叠 */
+  .bp-item { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 10px; background: #fff; }
+  .bp-item summary { cursor: pointer; padding: 12px 18px; font-weight: 600; color: var(--text); list-style: none; position: relative; }
+  .bp-item summary::-webkit-details-marker { display: none; }
+  .bp-item summary::after { content: '▾'; position: absolute; right: 16px; color: #909399; }
+  .bp-item[open] summary::after { content: '▴'; }
+  .bp-item p { padding: 0 18px 14px; color: #606266; line-height: 1.8; font-size: 14px; margin: 0; }
+</style>
 </head>
 <body>
   <!-- 顶部导航（统一版：全站一致，active 由 site.js 按 URL 自动高亮） -->
@@ -45,109 +54,98 @@
     <p>算力、政策、订单三大赋能体系，为入驻企业与数字游民创业全程护航</p>
   </div>
 
-  <!-- 三大赋能体系 -->
-  <div class="content-section">
-    <div class="sub-title">💡 三大赋能体系</div>
-
-    <div class="support-block">
-      <div class="sb-head"><span class="sb-icon">💻</span><h3>算力与技术支持</h3></div>
-      <ul>
-        <li>与阿里巴巴达成深度合作意向，核心 AI 生态体系清城区私有化部署，大幅降低算力成本</li>
-        <li>部署智谱等开源大模型为核心的开发支撑平台</li>
-        <li>加速部署 SD-WAN 网络，快速接入国内外优质大模型</li>
-        <li>入驻企业可申请试用 70B 以内大模型一体机</li>
-        <li>省级"支持人工智能 OPC 创新发展行动方案"：OPC 企业可享算力券补贴</li>
-      </ul>
-    </div>
-
-    <div class="support-block">
-      <div class="sb-head"><span class="sb-icon">🏦</span><h3>政策与金融服务</h3></div>
-      <ul>
-        <li>联动金融机构开发创客特色贷款产品，财政贴息、低息贷款</li>
-        <li>一站式政策对接：发改 / 工信 / 人社 / 农业农村 / 文广旅体 / 市场监管 / 政务服务</li>
-        <li>星谷科技园 AI 创客试点，破解"工位注册""地址挂靠"堵点</li>
-        <li>数字游民：最高 2 万元资金奖励、不超过 80 万元担保贷款、最高 3 万元运营激励</li>
-        <li>市级孵化基地入驻：最高 300㎡ 3 年免费使用权</li>
-      </ul>
-    </div>
-
-    <div class="support-block">
-      <div class="sb-head"><span class="sb-icon">📦</span><h3>订单与市场牵引</h3></div>
-      <ul>
-        <li>梳理文旅推广、政务科普、城市形象等领域文创订单需求</li>
-        <li>联动星火深智等 AI 头部企业，对接全国稳定内容订单与本地文创需求</li>
-        <li>筹备 2026 首届人工智能 OPC 创客短视频创作大赛</li>
-        <li>成立创客基金，以订单和赛事吸引产业集聚</li>
-      </ul>
+  <!-- Tab 导航：文件库（默认）｜政策解读｜省级蓝图 -->
+  <div class="content-section" style="padding-bottom:8px">
+    <div class="type-tabs" id="policyTabs">
+      <a class="active" data-tab="lib" onclick="switchPolicyTab('lib')">📚 政策文件库</a>
+      <a data-tab="read" onclick="switchPolicyTab('read')">📖 政策解读</a>
+      <a data-tab="blueprint" onclick="switchPolicyTab('blueprint')">📜 省级蓝图</a>
     </div>
   </div>
 
-  <!-- 政策一览表 -->
-  <div class="content-section">
-    <div class="sub-title">📋 政策一览表</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>政策</th><th>内容</th><th>适用对象</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>算力券补贴</td><td>省级行动方案支持，OPC 企业可享算力券补贴，降低模型训练与推理成本</td><td>入驻 OPC 企业</td></tr>
-          <tr><td>创客特色贷款</td><td>联动金融机构开发，财政贴息、低息贷款</td><td>入驻创客与创业团队</td></tr>
-          <tr><td>数字游民资金奖励</td><td>最高 2 万元资金奖励</td><td>数字游民创业者</td></tr>
-          <tr><td>数字游民担保贷款</td><td>不超过 80 万元担保贷款</td><td>数字游民创业者</td></tr>
-          <tr><td>运营激励</td><td>最高 3 万元运营激励</td><td>数字游民创业者</td></tr>
-          <tr><td>孵化基地免费入驻</td><td>市级孵化基地最高 300㎡ 3 年免费使用权</td><td>入驻孵化基地的创业团队</td></tr>
-          <tr><td>一站式政策对接</td><td>发改 / 工信 / 人社 / 农业农村 / 文广旅体 / 市场监管 / 政务服务跨部门对接</td><td>入驻企业与创业者</td></tr>
-          <tr><td>工位注册 / 地址挂靠</td><td>星谷科技园 AI 创客试点，破解"工位注册""地址挂靠"堵点</td><td>暂无法提供经营场所的创业者</td></tr>
-        </tbody>
-      </table>
+  <!-- Tab1 政策文件库：三大赋能概览 + 政策一览表 + 动态文件库（可搜索） -->
+  <div id="pt-lib">
+    <div class="content-section">
+      <div class="sub-title">💡 三大赋能体系</div>
+      <div class="info-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="info-card">
+          <div class="ic-icon">💻</div>
+          <h3>算力与技术支持</h3>
+          <p>阿里私有化部署降低算力成本；智谱等开源大模型开发平台；70B 以内大模型一体机免费试用；省级算力券补贴。</p>
+        </div>
+        <div class="info-card">
+          <div class="ic-icon">🏦</div>
+          <h3>政策与金融服务</h3>
+          <p>创客特色贷款（财政贴息）；数字游民最高 2 万元奖励、80 万担保贷款、3 万运营激励；孵化基地最高 300㎡ 三年免租。</p>
+        </div>
+        <div class="info-card">
+          <div class="ic-icon">📦</div>
+          <h3>订单与市场牵引</h3>
+          <p>文旅推广/政务科普/城市形象文创订单分发；星火深智等头部企业内容订单对接；创客短视频大赛与创客基金。</p>
+        </div>
+      </div>
     </div>
-    <div class="highlight-box" style="margin-top:14px">注：政策奖补以官方正式文件为准，社区提供一站式对接服务。政策原文与文号详见下方「政策文件库」。</div>
+
+    <div class="content-section">
+      <div class="sub-title">📋 政策一览表</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>政策</th><th>内容</th><th>适用对象</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>算力券补贴</td><td>省级行动方案支持，OPC 企业可享算力券补贴，降低模型训练与推理成本</td><td>入驻 OPC 企业</td></tr>
+            <tr><td>创客特色贷款</td><td>联动金融机构开发，财政贴息、低息贷款</td><td>入驻创客与创业团队</td></tr>
+            <tr><td>数字游民资金奖励</td><td>最高 2 万元资金奖励</td><td>数字游民创业者</td></tr>
+            <tr><td>数字游民担保贷款</td><td>不超过 80 万元担保贷款</td><td>数字游民创业者</td></tr>
+            <tr><td>运营激励</td><td>最高 3 万元运营激励</td><td>数字游民创业者</td></tr>
+            <tr><td>孵化基地免费入驻</td><td>市级孵化基地最高 300㎡ 3 年免费使用权</td><td>入驻孵化基地的创业团队</td></tr>
+            <tr><td>一站式政策对接</td><td>发改 / 工信 / 人社 / 农业农村 / 文广旅体 / 市场监管 / 政务服务跨部门对接</td><td>入驻企业与创业者</td></tr>
+            <tr><td>工位注册 / 地址挂靠</td><td>星谷科技园 AI 创客试点，破解"工位注册""地址挂靠"堵点</td><td>暂无法提供经营场所的创业者</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="highlight-box" style="margin-top:14px">注：政策奖补以官方正式文件为准，社区提供一站式对接服务。政策原文与文号详见下方「政策文件库」。</div>
+    </div>
+
+    <div class="content-section">
+      <div class="sub-title">📚 政策文件库</div>
+      <div style="margin-bottom:12px">
+        <input id="policySearch" class="form-input" placeholder="🔍 搜索政策文件标题…" maxlength="50" style="max-width:360px" />
+      </div>
+      <div class="info-grid" id="policyGrid">
+        <div class="loading">加载中…</div>
+      </div>
+      <div style="text-align:center;margin-top:18px">
+        <button class="btn-buy" id="policyMoreBtn" onclick="loadMorePolicy()" style="display:none">加载更多</button>
+        <div id="policyEnd" class="no-result" style="display:none;padding:14px 0;font-size:13px">已显示全部政策文件</div>
+      </div>
+      <div class="highlight-box" style="margin-top:14px">注：点击政策卡片可查看文号、核心要点与原文链接；政策内容以官方正式文件为准。</div>
+    </div>
   </div>
 
-  <!-- 政策文件库（CMS 动态加载：后台"文章管理-政策文件"栏目维护，前台自动更新） -->
-  <div class="content-section">
-    <div class="sub-title">📚 政策文件库</div>
-    <div class="info-grid" id="policyGrid">
-      <div class="loading">加载中…</div>
+  <!-- Tab2 政策解读（CMS 动态加载："政策解读"栏目文章） -->
+  <div id="pt-read" style="display:none">
+    <div class="content-section">
+      <div class="sub-title">📖 政策解读</div>
+      <div id="readList" class="info-grid">
+        <div class="loading">加载中…</div>
+      </div>
     </div>
-    <div class="highlight-box" style="margin-top:14px">注：点击政策卡片可查看文号、核心要点与原文链接；政策内容以官方正式文件为准。</div>
   </div>
 
-  <!-- 省级行动方案解读（静态板块，核心目标与六大任务） -->
-  <div class="content-section">
-    <div class="sub-title">📜 省级蓝图：100 个 OPC 生态社区</div>
-    <div class="highlight-box"><b>《广东省支持人工智能 OPC 创新发展行动方案（2026—2028年）》（粤发改高技〔2026〕78 号）</b>：2026 年先行培育 <b>10 个</b>具有引领效应的人工智能 OPC 生态社区；到 2028 年建成 <b>100 个</b>生态社区、培育 <b>1000 家</b>标杆企业、集聚 <b>10000 名</b>创新创业人才，将广东打造成为全国领先的人工智能 OPC 发展高地。</div>
-    <div class="info-grid" style="margin-top:16px">
-      <div class="info-card">
-        <div class="ic-icon">⚡</div>
-        <h3>基础能力保障</h3>
-        <p>算力券制度降低算力支出；算力公共服务平台优化供需匹配；"政府—社区—平台—OPC"联动机制；公共数据开放与授权运营；免费模型接口与安全合规检测的公共模型服务平台。</p>
-      </div>
-      <div class="info-card">
-        <div class="ic-icon">🏢</div>
-        <h3>空间载体配套</h3>
-        <p>打造"拎脑入驻"的 OPC 生态社区并给予算力补贴；开展省级社区认定评估；推动传统孵化器重构空间布局、向灵活共享工位转型。</p>
-      </div>
-      <div class="info-card">
-        <div class="ic-icon">🎬</div>
-        <h3>场景开放创新</h3>
-        <p>构建短剧短视频、电子商务、知识付费、数字文创、软件开发"场景池"；依托湾区应用场景发布厅供需对接；以琶洲算法大赛等"以会促兴、以赛促创"。</p>
-      </div>
-      <div class="info-card">
-        <div class="ic-icon">💰</div>
-        <h3>多元融资渠道</h3>
-        <p>创投基金矩阵接力投资（大湾区国家创投引导基金等）；银行业推出"人才贷、研发贷、成果贷、算力贷"全周期信贷产品。</p>
-      </div>
-      <div class="info-card">
-        <div class="ic-icon">🧑‍💻</div>
-        <h3>人才政策供给</h3>
-        <p>OPC 人才纳入高层次人才认定；高校设置"人工智能+"交叉学科；人工智能训练师职业技能等级认定；创业导师专家库；"一张床、一间房、一套房"安居保障。</p>
-      </div>
-      <div class="info-card">
-        <div class="ic-icon">🛡️</div>
-        <h3>服务保障体系</h3>
-        <p>企业开办"一日办结、一网通办"；知识产权质押处置板块；调解/公证/仲裁特色法律服务；人工智能应用中试基地；出海一站式服务（ODI 备案、跨境支付）。</p>
+  <!-- Tab3 省级蓝图：目标说明 + 六大任务（折叠） -->
+  <div id="pt-blueprint" style="display:none">
+    <div class="content-section">
+      <div class="sub-title">📜 省级蓝图：100 个 OPC 生态社区</div>
+      <div class="highlight-box"><b>《广东省支持人工智能 OPC 创新发展行动方案（2026—2028年）》（粤发改高技〔2026〕78 号）</b>：2026 年先行培育 <b>10 个</b>具有引领效应的人工智能 OPC 生态社区；到 2028 年建成 <b>100 个</b>生态社区、培育 <b>1000 家</b>标杆企业、集聚 <b>10000 名</b>创新创业人才，将广东打造成为全国领先的人工智能 OPC 发展高地。</div>
+      <div class="bp-fold">
+        <details class="bp-item"><summary>⚡ 基础能力保障</summary><p>算力券制度降低算力支出；算力公共服务平台优化供需匹配；"政府—社区—平台—OPC"联动机制；公共数据开放与授权运营；免费模型接口与安全合规检测的公共模型服务平台。</p></details>
+        <details class="bp-item"><summary>🏢 空间载体配套</summary><p>打造"拎脑入驻"的 OPC 生态社区并给予算力补贴；开展省级社区认定评估；推动传统孵化器重构空间布局、向灵活共享工位转型。</p></details>
+        <details class="bp-item"><summary>🎬 场景开放创新</summary><p>构建短剧短视频、电子商务、知识付费、数字文创、软件开发"场景池"；依托湾区应用场景发布厅供需对接；以琶洲算法大赛等"以会促兴、以赛促创"。</p></details>
+        <details class="bp-item"><summary>💰 多元融资渠道</summary><p>创投基金矩阵接力投资（大湾区国家创投引导基金等）；银行业推出"人才贷、研发贷、成果贷、算力贷"全周期信贷产品。</p></details>
+        <details class="bp-item"><summary>🧑‍💻 人才政策供给</summary><p>OPC 人才纳入高层次人才认定；高校设置"人工智能+"交叉学科；人工智能训练师职业技能等级认定；创业导师专家库；"一张床、一间房、一套房"安居保障。</p></details>
+        <details class="bp-item"><summary>🛡️ 服务保障体系</summary><p>企业开办"一日办结、一网通办"；知识产权质押处置板块；调解/公证/仲裁特色法律服务；人工智能应用中试基地；出海一站式服务（ODI 备案、跨境支付）。</p></details>
       </div>
     </div>
   </div>
@@ -199,9 +197,63 @@
   }
 
   // 政策卡片渲染（标题 + 栏目 + 级别 + 摘要；点击打开详情）
-  // 自动收录所有名称以"政策"开头的栏目（政策解读/政策文件等），后台发文到政策类栏目即自动同步展示
+  // 栏目分流：名称含"解读"→政策解读 Tab；其余以"政策"开头 → 政策文件库（后台发文到政策类栏目即自动同步）
+  let libAllFull = [];  // 文件库全量（搜索过滤的基准）
+  let libAll = [];      // 文件库当前显示集（搜索后为过滤结果）
+  let libShown = 0;     // 已显示条数（本地分页）
+  const LIB_PAGE = 12;  // 每页条数
+  const isReadCat = (name) => (name || '').indexOf('解读') >= 0;
+
+  function renderPolicyCards(rows, isRead) {
+    return rows.map(p => {
+      const raw = String(p.summary || '').replace(/<[^>]+>/g, '');
+      const date = String(p.publishTime || '').slice(0, 10);
+      return '<div class="info-card" style="cursor:pointer" onclick="location.href=\'article.html?id=' + p.articleId + '\'">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<h3 style="margin:0">' + esc(p.title) + '</h3>' +
+          (isRead ? '' : '<span class="tag tag-sale">' + esc(p._catName || '') + '</span>') +
+          (isRead ? '' : '<span class="tag tag-sale">' + levelOf(p.title) + '</span>') +
+          (isRead && date ? '<span style="color:#909399;font-size:12px">' + date + '</span>' : '') +
+        '</div>' +
+        '<p style="margin-top:10px">' + esc(raw.slice(0, 100)) + (raw.length > 100 ? '…' : '') + '</p>' +
+        '<div style="color:#8a7d5c;font-size:13px">点击查看详情 →</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // 文件库渲染当前页（本地分页：每页 LIB_PAGE 条 + 加载更多）
+  function renderPolicyPage() {
+    const grid = document.getElementById('policyGrid');
+    const moreBtn = document.getElementById('policyMoreBtn');
+    const end = document.getElementById('policyEnd');
+    const slice = libAll.slice(0, libShown + LIB_PAGE);
+    if (!slice.length) {
+      grid.innerHTML = '<div class="no-result"><div class="nr-icon">📚</div><div class="nr-title">未找到相关政策文件</div><div class="nr-desc">换个关键词试试</div></div>';
+      moreBtn.style.display = 'none'; end.style.display = 'none';
+      return;
+    }
+    grid.innerHTML = renderPolicyCards(slice, false);
+    const finished = slice.length >= libAll.length;
+    moreBtn.style.display = finished ? 'none' : 'inline-block';
+    end.style.display = finished ? 'block' : 'none';
+  }
+
+  function loadMorePolicy() { libShown += LIB_PAGE; renderPolicyPage(); }
+
+  // Tab 切换（政策文件库 / 政策解读 / 省级蓝图）
+  function switchPolicyTab(name) {
+    ['lib', 'read', 'blueprint'].forEach(function (n) {
+      const el = document.getElementById('pt-' + n);
+      if (el) el.style.display = n === name ? '' : 'none';
+    });
+    document.querySelectorAll('#policyTabs a').forEach(function (a) {
+      a.classList.toggle('active', a.dataset.tab === name);
+    });
+  }
+
   async function loadPolicyLib() {
     const grid = document.getElementById('policyGrid');
+    const readBox = document.getElementById('readList');
     try {
       const res = await fetch(CAT_API);
       const d = await res.json();
@@ -209,28 +261,38 @@
       if (!cats.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
       const all = [];
       for (const cat of cats) {
-        const r2 = await fetch(LIST_API + '?pageNum=1&pageSize=50&categoryId=' + cat.categoryId);
+        const r2 = await fetch(LIST_API + '?pageNum=1&pageSize=100&categoryId=' + cat.categoryId);
         const d2 = await r2.json();
         (d2.rows || []).forEach(p => { p._catName = cat.categoryName; all.push(p); });
       }
       all.sort((a, b) => (b.publishTime || '').localeCompare(a.publishTime || ''));
-      const rows = all;
-      if (!rows.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
-      grid.innerHTML = rows.map(p => {
-        const raw = String(p.summary || '').replace(/<[^>]+>/g, '');
-        return '<div class="info-card" style="cursor:pointer" onclick="location.href=\'article.html?id=' + p.articleId + '\'">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-            '<h3 style="margin:0">' + esc(p.title) + '</h3>' +
-            '<span class="tag tag-sale">' + esc(p._catName || '') + '</span>' +
-            '<span class="tag tag-sale">' + levelOf(p.title) + '</span></div>' +
-          '<p style="margin-top:10px">' + esc(raw.slice(0, 100)) + (raw.length > 100 ? '…' : '') + '</p>' +
-          '<div style="color:#8a7d5c;font-size:13px">点击查看详情 →</div>' +
-        '</div>';
-      }).join('');
+      libAllFull = all.filter(p => !isReadCat(p._catName));
+      libAll = libAllFull;
+      libShown = 0;
+      const reads = all.filter(p => isReadCat(p._catName));
+      if (!libAllFull.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; }
+      else renderPolicyPage();
+      readBox.innerHTML = reads.length
+        ? renderPolicyCards(reads, true)
+        : '<div class="no-result"><div class="nr-icon">📖</div><div class="nr-title">暂无政策解读</div><div class="nr-desc">政策解读文章发布后将在此展示</div></div>';
     } catch (e) {
       grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
+      readBox.innerHTML = '<div class="loading">政策解读加载失败：' + esc(e.message) + '</div>';
     }
   }
+
+  // 文件库搜索（前端过滤已加载数据，输入防抖 300ms）
+  let policySearchTimer = null;
+  document.getElementById('policySearch').addEventListener('input', function () {
+    clearTimeout(policySearchTimer);
+    const input = this;
+    policySearchTimer = setTimeout(function () {
+      const kw = input.value.trim();
+      libShown = 0;
+      libAll = libAllFull.filter(p => !kw || (p.title || '').indexOf(kw) >= 0);
+      renderPolicyPage();
+    }, 300);
+  });
 
   // ===== 政策咨询留言（复用入驻申请接口，remark 前缀【政策咨询】）=====
   const PURCHASE_API = '/prod-api/system/purchase/apply';
