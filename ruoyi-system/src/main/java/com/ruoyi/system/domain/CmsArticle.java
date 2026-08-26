@@ -61,6 +61,9 @@ public class CmsArticle extends BaseEntity
     /** 排序(越小越靠前，置顶之后生效) */
     private Long sort;
 
+    /** 当前版本号（历史回滚用） */
+    private Long version;
+
     /** 附件(政策原文PDF等) */
     private String attachment;
 
@@ -121,6 +124,9 @@ public class CmsArticle extends BaseEntity
 
     public void setSort(Long sort) { this.sort = sort; }
     public Long getSort() { return sort; }
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     public void setAttachment(String attachment) { this.attachment = attachment; }
     public String getAttachment() { return attachment; }

@@ -182,15 +182,35 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
+        <el-button v-if="form.articleId != null" type="warning" plain icon="el-icon-refresh-left" @click="openHistory">历史版本</el-button>
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
+    </el-dialog>
+
+    <!-- 文章历史版本弹窗（批次 A：保存前自动存档，最多 20 版） -->
+    <el-dialog :title="'历史版本 · ' + historyTitle" :visible.sync="historyOpen" width="680px" append-to-body>
+      <el-table :data="historyList" size="mini">
+        <el-table-column label="版本" prop="version" width="70" align="center" />
+        <el-table-column label="标题" prop="title" show-overflow-tooltip />
+        <el-table-column label="状态" width="80" align="center">
+          <template slot-scope="scope">{{ {0:'已发布',1:'草稿',2:'已下线'}[scope.row.status] || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="更新人" prop="updateBy" width="100" />
+        <el-table-column label="更新时间" prop="updateTime" width="150" />
+        <el-table-column label="操作" width="80" align="center">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" icon="el-icon-refresh-left" @click="handleRollback(scope.row)">回滚</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="color:#999;font-size:12px;margin-top:8px">回滚 = 恢复该版本内容（含正文/摘要/栏目/封面），回滚本身也会存为新版本。最多保留 20 个版本。</div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { listArticle, getArticle, delArticle, addArticle, updateArticle, changeArticleStatus, publishArticle, listCategory, batchTop, batchStatus, batchSort } from "@/api/system/cms"
+import { listArticle, getArticle, delArticle, addArticle, updateArticle, changeArticleStatus, publishArticle, listCategory, batchTop, batchStatus, batchSort, listArticleHistory, rollbackArticle } from "@/api/system/cms"
 import { getToken } from "@/utils/auth"
 
 export default {
@@ -208,6 +228,9 @@ export default {
       title: "",
       open: false,
       uploadUrl: process.env.VUE_APP_BASE_API + "/common/upload",
+      historyOpen: false,
+      historyList: [],
+      historyTitle: '',
       uploadHeaders: { Authorization: "Bearer " + getToken() },
       queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, categoryIds: null, status: null },
       form: {},
@@ -223,6 +246,12 @@ export default {
       if (!url) return ''
       if (url.startsWith('http') || url.startsWith(process.env.VUE_APP_BASE_API)) return url
       return process.env.VUE_APP_BASE_API + url
+    }
+  },
+  watch: {
+    form: {
+      deep: true,
+      handler() { this.scheduleAutoSave() }
     }
   },
   created() {
@@ -338,6 +367,32 @@ export default {
         this.open = true
         this.title = "修改文章"
       })
+    },
+    /** 打开文章历史版本列表 */
+    openHistory() {
+      this.historyTitle = this.form.title || ''
+      listArticleHistory(this.form.articleId).then(response => {
+        this.historyList = response.data || []
+        this.historyOpen = true
+      })
+    },
+    /** 回滚到指定历史版本 */
+    handleRollback(row) {
+      this.$modal.confirm('确认回滚到 v' + row.version + ' 吗？当前内容将替换为该版本（当前版会先存入历史）。').then(() => {
+        return rollbackArticle(this.form.articleId, row.version)
+      }).then(() => {
+        this.$modal.msgSuccess("已回滚")
+        this.historyOpen = false
+        this.getList()
+      }).catch(() => {})
+    },
+    /** 草稿自动保存：编辑中防抖 90 秒静默保存（仅已存在文章，避免编辑丢失） */
+    scheduleAutoSave() {
+      if (this.form.articleId == null || this._autoSaveTimer) return
+      this._autoSaveTimer = setTimeout(() => {
+        this._autoSaveTimer = null
+        updateArticle(this.form).then(() => {}).catch(() => {})
+      }, 90000)
     },
     submitForm() {
       this.$refs["form"].validate(valid => {

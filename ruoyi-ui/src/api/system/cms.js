@@ -156,6 +156,22 @@ export function rollbackBlock(blockId, version) {
   })
 }
 
+// 文章历史列表（version 倒序，最多 20 版）
+export function listArticleHistory(articleId) {
+  return request({
+    url: '/system/cms/history/' + articleId,
+    method: 'get'
+  })
+}
+
+// 回滚文章到指定版本
+export function rollbackArticle(articleId, version) {
+  return request({
+    url: '/system/cms/rollback/' + articleId + '/' + version,
+    method: 'put'
+  })
+}
+
 // 内容区块上下移（相邻 sort 交换）
 export function moveBlock(blockId, dir) {
   return request({

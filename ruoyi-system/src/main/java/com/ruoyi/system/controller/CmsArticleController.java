@@ -48,6 +48,23 @@ public class CmsArticleController extends BaseController
         return success(cmsArticleService.selectPublicArticleDetail(articleId));
     }
 
+    /** 文章历史列表（version 倒序，最多 20 版） */
+    @PreAuthorize("@ss.hasPermi('system:cms:query')")
+    @GetMapping("/history/{articleId}")
+    public AjaxResult history(@PathVariable("articleId") Long articleId)
+    {
+        return success(cmsArticleService.selectHistoryByArticleId(articleId));
+    }
+
+    /** 回滚到指定历史版本（回滚本身记为新版本） */
+    @PreAuthorize("@ss.hasPermi('system:cms:edit')")
+    @Log(title = "文章管理", businessType = BusinessType.UPDATE)
+    @PutMapping("/rollback/{articleId}/{version}")
+    public AjaxResult rollback(@PathVariable("articleId") Long articleId, @PathVariable("version") Long version)
+    {
+        return toAjax(cmsArticleService.rollbackArticle(articleId, version));
+    }
+
     /** 后台文章列表 */
     @PreAuthorize("@ss.hasPermi('system:cms:list')")
     @GetMapping("/list")

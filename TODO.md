@@ -130,3 +130,23 @@
 - [ ] 48. A-后台入口统一：页面搭建菜单并入区块管理（首页 Tab），section.vue 停用；cms_page_section 接口保留兼容
 - [ ] 49. C-全站骨架运行时注入（已确认，暂不做）：导航/页脚/登录弹窗 site.js 注入（TODO 23 升级版）
 - [ ] 50. 实测回归：首页 8 模块/栏目页 20 区块/增删排序/预览联动全流程
+
+## CMS 完美化蓝图（2026-08-26 确认，按批次加入）
+
+### 批次 A（P0，数据安全底线）
+- [ ] 51. 文章版本历史：cms_article 加 version 列 + cms_article_history 表（对齐 cms_block_history：保存前写当前版、20 版上限、回滚接口）；后台文章管理加「历史版本」按钮与回滚弹窗
+- [ ] 52. 草稿自动保存：文章编辑表单 watch 防抖自动保存（已有 articleId 时，避免编辑丢失）
+- [ ] 53. 回收站定时清理：RuoYi 定时任务每日清理回收站（del_flag='2' 且 deleted_time 超 30 天）文章
+
+### 批次 B（P1，检索与传播）
+- [ ] 54. 前台全文搜索：站内搜索（标题+摘要+正文 LIKE，复用 publicList title 模糊，扩展 content）
+- [ ] 55. sitemap.xml 动态生成 + OG 分享标签（文章详情页 title/description/image 卡片）
+
+### 批次 C（P1，互动）
+- [ ] 56. 前台文章评论 + 后台审核：cms_comment 表（article_id/nickname/content/status/audit），前台匿名+成员可评，后台审核列表
+
+### 批次 D（P2，体验增强）
+- [ ] 57. 媒体库：图片统一上传/复用/清理（cms_media 表）
+- [ ] 58. 文章标签体系：cms_article_tag + 标签筛选 + 相关文章推荐
+- [ ] 59. 浏览量报表：近 30 天趋势 + TOP 文章（工作台图表）
+- [ ] 60. 文章一键复制 + 后台预览设备切换（桌面/手机）

@@ -11,6 +11,7 @@ import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.ServletUtils;
 import com.ruoyi.system.domain.CmsArticle;
+import com.ruoyi.system.domain.CmsArticleHistory;
 import com.ruoyi.system.mapper.CmsArticleMapper;
 import com.ruoyi.system.service.ICmsArticleService;
 import com.ruoyi.system.service.StatisticsService;
@@ -113,9 +114,117 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             cmsArticle.setPublishTime(new Date());
         }
+        // 保存前写当前版本进历史（回滚基线），再更新主表 version+1（批次 A：文章版本历史）
+        saveHistory(existing);
+        cmsArticle.setVersion((existing.getVersion() == null ? 0L : existing.getVersion()) + 1);
         int rows = cmsArticleMapper.updateCmsArticle(cmsArticle);
+        cmsArticleMapper.trimArticleHistory(cmsArticle.getArticleId(), HISTORY_KEEP);
         statisticsService.evictAll(); // 状态/内容可能影响统计
         return rows;
+    }
+
+    /** 每篇文章历史版本上限 */
+    private static final int HISTORY_KEEP = 20;
+
+    /** 把文章当前版本写入历史表（回滚基线） */
+    private void saveHistory(CmsArticle a)
+    {
+        if (a == null || a.getArticleId() == null)
+        {
+            return;
+        }
+        CmsArticleHistory h = new CmsArticleHistory();
+        h.setArticleId(a.getArticleId());
+        h.setVersion(a.getVersion() == null ? 1L : a.getVersion());
+        h.setCategoryId(a.getCategoryId());
+        h.setTitle(a.getTitle());
+        h.setSummary(a.getSummary());
+        h.setContent(a.getContent());
+        h.setCover(a.getCover());
+        h.setAuthor(a.getAuthor());
+        h.setIsTop(a.getIsTop());
+        h.setStatus(a.getStatus());
+        h.setSort(a.getSort());
+        h.setAttachment(a.getAttachment());
+        h.setKeywords(a.getKeywords());
+        h.setDescription(a.getDescription());
+        h.setPublishTime(a.getPublishTime());
+        h.setUpdateBy(a.getUpdateBy());
+        h.setUpdateTime(a.getUpdateTime() == null ? new Date() : a.getUpdateTime());
+        cmsArticleMapper.insertArticleHistory(h);
+    }
+
+    @Override
+    public java.util.List<CmsArticleHistory> selectHistoryByArticleId(Long articleId)
+    {
+        if (articleId == null)
+        {
+            return java.util.Collections.emptyList();
+        }
+        return cmsArticleMapper.selectHistoryByArticleId(articleId);
+    }
+
+    @Override
+    public int rollbackArticle(Long articleId, Long version)
+    {
+        if (articleId == null || version == null)
+        {
+            throw new ServiceException("回滚参数不合法");
+        }
+        CmsArticle existing = cmsArticleMapper.selectCmsArticleByArticleId(articleId);
+        if (existing == null)
+        {
+            throw new ServiceException("文章不存在");
+        }
+        CmsArticleHistory hist = cmsArticleMapper.selectHistoryByVersion(articleId, version);
+        if (hist == null)
+        {
+            throw new ServiceException("历史版本不存在（版本 " + version + "）");
+        }
+        // 取该版写入主表，version+1 并记新历史（回滚本身也是一次可回滚的操作）
+        CmsArticle target = new CmsArticle();
+        target.setArticleId(articleId);
+        target.setCategoryId(hist.getCategoryId());
+        target.setTitle(hist.getTitle());
+        target.setSummary(hist.getSummary());
+        target.setContent(hist.getContent());
+        target.setCover(hist.getCover());
+        target.setAuthor(hist.getAuthor());
+        target.setIsTop(hist.getIsTop());
+        target.setStatus(hist.getStatus());
+        target.setSort(hist.getSort());
+        target.setAttachment(hist.getAttachment());
+        target.setKeywords(hist.getKeywords());
+        target.setDescription(hist.getDescription());
+        target.setPublishTime(hist.getPublishTime());
+        target.setVersion((existing.getVersion() == null ? 0L : existing.getVersion()) + 1);
+        target.setUpdateBy(operator());
+        target.setUpdateTime(new Date());
+        int rows = cmsArticleMapper.updateCmsArticle(target);
+        if (rows > 0)
+        {
+            saveHistory(target);
+            cmsArticleMapper.trimArticleHistory(articleId, HISTORY_KEEP);
+            statisticsService.evictAll();
+        }
+        return rows;
+    }
+
+    /** 定时任务：清理回收站超 30 天文章（每日执行，RuoYi 定时任务调用） */
+    public void purgeRecycleBinExpired()
+    {
+        int rows = cmsArticleMapper.purgeExpiredRecycle();
+        if (rows > 0)
+        {
+            statisticsService.evictAll();
+        }
+    }
+
+    /** 当前登录用户名（未登录容错为空串） */
+    private String operator()
+    {
+        try { return com.ruoyi.common.utils.SecurityUtils.getUsername(); }
+        catch (Exception e) { return ""; }
     }
 
     @Override
@@ -257,13 +366,6 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             return true; // Redis 异常：降级为照常自增，不阻断阅读
         }
-    }
-
-    /** 当前登录用户名（软删除记录删除人；未登录场景容错为空串） */
-    private String operator()
-    {
-        try { return SecurityUtils.getUsername(); }
-        catch (Exception e) { return ""; }
     }
 
     @Override

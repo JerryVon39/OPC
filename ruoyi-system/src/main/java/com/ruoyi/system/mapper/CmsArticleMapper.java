@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.system.domain.CmsArticle;
+import com.ruoyi.system.domain.CmsArticleHistory;
+import com.ruoyi.system.domain.CmsArticleHistory;
 
 /**
  * CMS 文章Mapper接口
@@ -53,6 +55,9 @@ public interface CmsArticleMapper
     public int restoreCmsArticleByArticleIds(@Param("articleIds") Long[] articleIds);
 
     /** 永久删除（物理删除；仅回收站内可彻底删除） */
+    /** 定时清理：回收站中超 30 天文章永久删除 */
+    public int purgeExpiredRecycle();
+
     public int purgeCmsArticleByArticleIds(@Param("articleIds") Long[] articleIds);
 
     /** 文章统计（运营工作台数据卡）：总数/今日发文/草稿/回收站 */
@@ -60,4 +65,16 @@ public interface CmsArticleMapper
 
     /** 最近编辑文章（工作台"最近编辑"列表，不含正文） */
     public List<CmsArticle> selectRecentArticles(int limit);
+
+    /** 历史：写入一版（保存前写当前版） */
+    public int insertArticleHistory(CmsArticleHistory history);
+
+    /** 历史：按文章查（version 倒序，limit 20） */
+    public List<CmsArticleHistory> selectHistoryByArticleId(Long articleId);
+
+    /** 历史：按文章+版本查（回滚取数） */
+    public CmsArticleHistory selectHistoryByVersion(@Param("articleId") Long articleId, @Param("version") Long version);
+
+    /** 历史：清理该文章超限最旧版本 */
+    public int trimArticleHistory(@Param("articleId") Long articleId, @Param("keep") int keep);
 }

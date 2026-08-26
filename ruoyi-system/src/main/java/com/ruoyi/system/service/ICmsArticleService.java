@@ -2,6 +2,7 @@ package com.ruoyi.system.service;
 
 import java.util.List;
 import com.ruoyi.system.domain.CmsArticle;
+import com.ruoyi.system.domain.CmsArticleHistory;
 
 /**
  * CMS 文章Service接口
@@ -46,6 +47,12 @@ public interface ICmsArticleService
 
     /** 批量排序（逐条更新 sort） */
     public int batchSort(List<CmsArticle> list);
+
+    /** 文章历史列表（version 倒序，最多 20 版） */
+    public java.util.List<CmsArticleHistory> selectHistoryByArticleId(Long articleId);
+
+    /** 回滚到指定版本（取该版写入主表，version+1 并记新历史） */
+    public int rollbackArticle(Long articleId, Long version);
 
     /** 状态切换：0已发布 1草稿 2已下线（置为已发布且无发布时间时自动补写） */
     public int changeArticleStatus(Long articleId, String status);
