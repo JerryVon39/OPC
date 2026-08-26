@@ -149,6 +149,17 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <!-- 63：公告生效/失效时间（留空=立即生效/长期有效；过期公告自动从首页公告条下架） -->
+            <el-form-item label="生效时间">
+              <el-date-picker v-model="form.beginTime" type="datetime" placeholder="留空=立即生效" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="失效时间">
+              <el-date-picker v-model="form.endTime" type="datetime" placeholder="留空=长期有效" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
+            </el-form-item>
+          </el-col>
           <el-col :span="24">
             <el-form-item label="状态">
               <el-radio-group v-model="form.status">
@@ -253,6 +264,8 @@ export default {
         noticeTitle: undefined,
         noticeType: undefined,
         noticeContent: undefined,
+        beginTime: undefined,
+        endTime: undefined,
         status: "0"
       }
       this.resetForm("form")

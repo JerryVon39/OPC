@@ -32,9 +32,20 @@ public class SysNotice extends BaseEntity
     /** 公告状态（0正常 1关闭） */
     private String status;
 
+    /** 生效时间（63：NULL=立即生效，公告条仅在时间窗内展示） */
+    private java.util.Date beginTime;
+
+    /** 失效时间（63：NULL=长期有效） */
+    private java.util.Date endTime;
+
     /** 是否已读 */
     @JsonProperty("isRead")
     private boolean isRead;
+
+    public java.util.Date getBeginTime() { return beginTime; }
+    public void setBeginTime(java.util.Date beginTime) { this.beginTime = beginTime; }
+    public java.util.Date getEndTime() { return endTime; }
+    public void setEndTime(java.util.Date endTime) { this.endTime = endTime; }
 
     public Long getNoticeId()
     {

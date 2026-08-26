@@ -18,7 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
     
     <sql id="selectNoticeVo">
-        select notice_id, notice_title, notice_type, cast(notice_content as char) as notice_content, status, create_by, create_time, update_by, update_time, remark 
+        select notice_id, notice_title, notice_type, cast(notice_content as char) as notice_content, status, begin_time, end_time, create_by, create_time, update_by, update_time, remark
 		from sys_notice
     </sql>
     
@@ -91,6 +91,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select notice_id, notice_title, notice_type, notice_content, status, create_time
         from sys_notice
         where status = '0'
+        and (begin_time is null or begin_time &lt;= now())
+        and (end_time is null or end_time &gt;= now())
         order by create_time desc, notice_id desc
         limit 1
     </select>

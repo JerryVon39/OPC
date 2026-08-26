@@ -77,6 +77,13 @@ public class MailTemplateServiceImpl implements IMailTemplateService
         DEFAULT_TEMPLATES.put("purchase.reject", new String[] {
                 "【入驻申请】您的入驻申请未通过",
                 "<p>您好：</p><p>很遗憾，您的申请《{applyName}》暂未通过审核。我们会持续关注您的需求，感谢支持！</p>" });
+        // 65：新入驻申请通知运营者（收件人为 sys_config 的 opc.apply.notify.email）
+        DEFAULT_TEMPLATES.put("apply.notify", new String[] {
+                "【入驻申请】有新申请待处理",
+                "<p>运营团队：</p><p>收到一条新的入驻申请，请及时登录后台处理：</p>"
+                + "<ul><li>项目/组织：<b>{applyName}</b></li><li>联系人：{contact}</li>"
+                + "<li>联系邮箱：{email}</li><li>补充说明：{remark}</li></ul>"
+                + "<p>处理入口：后台 → 服务业务 → 入驻申请（待处理列表）</p>" });
     }
 
     @Override

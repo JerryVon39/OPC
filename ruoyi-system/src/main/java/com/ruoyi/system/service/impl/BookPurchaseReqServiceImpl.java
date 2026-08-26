@@ -8,6 +8,7 @@ import com.ruoyi.system.domain.BookPurchaseReq;
 import com.ruoyi.system.mapper.BookPurchaseReqMapper;
 import com.ruoyi.system.service.IBookPurchaseReqService;
 import com.ruoyi.system.service.IMailTemplateService;
+import com.ruoyi.system.service.ISysConfigService;
 
 /**
  * 服务入驻申请申请Service业务层处理
@@ -23,6 +24,9 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
 
     @Autowired
     private IMailTemplateService mailTemplateService;
+
+    @Autowired
+    private ISysConfigService configService;
 
     @Override
     public BookPurchaseReq selectBookPurchaseReqByReqId(Long reqId)
@@ -62,7 +66,24 @@ public class BookPurchaseReqServiceImpl implements IBookPurchaseReqService
         }
         req.setStatus("0");
         req.setCreateTime(DateUtils.getNowDate());
-        return bookPurchaseReqMapper.insertBookPurchaseReq(req);
+        int rows = bookPurchaseReqMapper.insertBookPurchaseReq(req);
+        // 65：新申请邮件通知运营者（sys_config 键 opc.apply.notify.email，留空=不通知；
+        // 尽力而为：邮件配置缺失/发送失败不影响申请提交）
+        try
+        {
+            String adminEmail = configService.selectConfigByKey("opc.apply.notify.email");
+            if (adminEmail != null && !adminEmail.trim().isEmpty() && rows > 0)
+            {
+                java.util.Map<String, Object> params = new java.util.HashMap<>();
+                params.put("applyName", req.getBookName());
+                params.put("contact", req.getAuthor() == null ? "" : req.getAuthor());
+                params.put("email", req.getEmail());
+                params.put("remark", req.getRemark() == null ? "" : req.getRemark());
+                mailTemplateService.send("apply.notify", adminEmail.trim(), params);
+            }
+        }
+        catch (Exception ignored) { }
+        return rows;
     }
 
     @Override

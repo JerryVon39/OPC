@@ -77,8 +77,12 @@
                   <template v-if="f.type === 'text'">
                     <el-input v-model="cfg[f.key]" :maxlength="f.maxlength" :placeholder="f.placeholder" :style="f.width ? 'width:' + f.width + 'px' : ''" />
                   </template>
-                  <template v-else-if="f.type === 'textarea' || f.type === 'html'">
+                  <template v-else-if="f.type === 'textarea'">
                     <el-input v-model="cfg[f.key]" type="textarea" :rows="f.rows || 3" :placeholder="f.placeholder" />
+                  </template>
+                  <!-- 68：html 字段用 Quill 排版工具栏（加粗/列表/表格等可视化操作，无需手写标签） -->
+                  <template v-else-if="f.type === 'html'">
+                    <Editor v-model="cfg[f.key]" :height="f.rows && f.rows <= 2 ? 160 : 260" />
                   </template>
                   <template v-else-if="f.type === 'number'">
                     <el-input-number v-model="cfg[f.key]" :min="f.min" :max="f.max" />
@@ -99,7 +103,13 @@
                   </template>
                   <template v-else-if="f.type === 'list'">
                     <div v-for="(item, i) in cfg[f.key]" :key="i" class="card-row" style="margin-bottom:8px">
-                      <el-input v-for="sf in f.fields" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' || sf.type === 'html' ? 'textarea' : undefined" :rows="sf.rows" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
+                      <template v-for="sf in f.fields">
+                        <el-input v-if="sf.type !== 'html'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
+                        <!-- 68：列表内 html 子字段同样用 Quill 工具栏 -->
+                        <div v-else :key="sf.key" style="width:100%">
+                          <Editor v-model="item[sf.key]" :height="120" />
+                        </div>
+                      </template>
                       <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删</el-button>
                     </div>
                     <el-button type="primary" plain size="mini" @click="addListItem(f)">＋ 添加{{ f.itemLabel }}</el-button>
@@ -184,9 +194,12 @@ import { listBlock, addBlock, updateBlock, delBlock, moveBlock, listBlockHistory
 import { getConfigKey } from "@/api/system/config"
 import { getToken } from "@/utils/auth"
 import { BLOCK_TEMPLATES, templateOf, defaultCfgOf, sampleCfgOf } from "./blockTemplates"
+// 68：html 字段排版工具栏——复用文章编辑的 Quill 组件，非程序员不再手写 HTML 标签
+import Editor from "@/components/Editor"
 
 export default {
   name: "CmsBlock",
+  components: { Editor },
   data() {
     return {
       pages: [

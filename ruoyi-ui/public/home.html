@@ -39,10 +39,10 @@
     </div>
   </div>
 
-  <!-- 公告条（后台公告管理发布，最新一条自动展示；关闭后本机不再显示） -->
-  <div id="noticeBar" class="notice-bar" style="display:none">
+  <!-- 公告条（后台公告管理发布，最新一条自动展示；点击查看全文，✕ 关闭后本机不再显示） -->
+  <div id="noticeBar" class="notice-bar" style="display:none;cursor:pointer" onclick="openNoticeDetail()">
     <span id="noticeText"></span>
-    <span class="notice-close" onclick="closeNoticeBar()" title="关闭">✕</span>
+    <span class="notice-close" onclick="event.stopPropagation(); closeNoticeBar()" title="关闭">✕</span>
   </div>
 
   <!-- 模块化渲染容器（页面搭建动态渲染；失败/空时保留下方静态模块兜底） -->
@@ -333,6 +333,7 @@
     fetch('/prod-api/system/notice/publicLatest').then(r => r.json()).then(d => {
       if (d.code === 200 && d.data && d.data.noticeTitle) {
         currentNoticeId = d.data.noticeId || 0;
+        currentNotice = { title: d.data.noticeTitle, content: d.data.noticeContent || '' }; // 63：点击查看全文用
         try { if (localStorage.getItem('opc_notice_hidden_' + currentNoticeId)) return; } catch (e) {}
         document.getElementById('noticeText').textContent = '📢 ' + d.data.noticeTitle;
         bar.style.display = 'flex';
@@ -342,6 +343,36 @@
   function closeNoticeBar() {
     document.getElementById('noticeBar').style.display = 'none';
     try { localStorage.setItem('opc_notice_hidden_' + currentNoticeId, '1'); } catch (e) {}
+  }
+  // 63：点击公告条查看全文（BBCODE 粗转纯文本，textContent 渲染防注入）
+  let currentNotice = null;
+  function openNoticeDetail() {
+    if (!currentNotice) return;
+    let overlay = document.getElementById('noticeModal');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'noticeModal';
+      overlay.className = 'notice-modal-mask';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = '<div class="notice-modal" style="background:#fff;border-radius:12px;max-width:560px;width:90%;max-height:70vh;display:flex;flex-direction:column;overflow:hidden" onclick="event.stopPropagation()">' +
+        '<div class="nm-head" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eee">' +
+        '<span id="nmTitle" style="font-weight:bold;font-size:16px"></span>' +
+        '<span class="nm-close" onclick="closeNoticeModal()" style="cursor:pointer;color:#999;font-size:18px;padding:0 4px" title="关闭">✕</span></div>' +
+        '<div id="nmBody" style="padding:16px 18px;overflow-y:auto;line-height:1.8;color:#333;font-size:14px;white-space:pre-wrap"></div></div>';
+      overlay.addEventListener('click', closeNoticeModal);
+      document.body.appendChild(overlay);
+    }
+    document.getElementById('nmTitle').textContent = '📢 ' + (currentNotice.title || '');
+    const raw = String(currentNotice.content || '')
+      .replace(/\[url=([^\]]*)\]([\s\S]*?)\[\/url\]/gi, '$2')
+      .replace(/\[[^\]]*\]/g, '')
+      .replace(/\n{3,}/g, '\n\n');
+    document.getElementById('nmBody').textContent = raw;
+    overlay.style.display = 'flex';
+  }
+  function closeNoticeModal() {
+    const m = document.getElementById('noticeModal');
+    if (m) m.style.display = 'none';
   }
 </script>
 <script>
