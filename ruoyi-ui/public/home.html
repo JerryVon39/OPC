@@ -384,11 +384,15 @@
     document.querySelectorAll('.banner-slide').forEach((s, idx) => s.classList.toggle('active', idx === bannerIdx));
     document.querySelectorAll('#bannerDots span').forEach((d, idx) => d.classList.toggle('active', idx === bannerIdx));
   }
+  let bannerTimer = null;
   function initBanner() {
     document.querySelectorAll('#bannerDots span').forEach((d, i) => {
       d.onclick = () => showBanner(i);
     });
-    setInterval(() => showBanner(bannerIdx + 1), 5000);
+    // 幂等：同步缓存渲染 + 异步模块渲染两条路径都会调 __loadBanners → initBanner，
+    // 重复初始化若不清理旧定时器会叠加（每 5 秒连跳两张/越转越快）
+    if (bannerTimer) clearInterval(bannerTimer);
+    bannerTimer = setInterval(() => showBanner(bannerIdx + 1), 5000);
   }
   // 轮播跳转：仅允许 http/https 外链与 /、# 开头的站内跳转（白名单防 javascript: 等协议注入）
   function goBannerLink(link) {
