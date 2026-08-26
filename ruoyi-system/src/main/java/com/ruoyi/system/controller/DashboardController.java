@@ -10,6 +10,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.system.domain.BorrowRecord;
 import com.ruoyi.system.mapper.BorrowRecordMapper;
+import com.ruoyi.system.mapper.BookPurchaseReqMapper;
 import com.ruoyi.system.mapper.CmsArticleMapper;
 import com.ruoyi.system.mapper.CmsBlockMapper;
 import com.ruoyi.system.service.StatisticsService;
@@ -35,6 +36,9 @@ public class DashboardController extends BaseController
     @Autowired
     private CmsBlockMapper cmsBlockMapper;
 
+    @Autowired
+    private BookPurchaseReqMapper bookPurchaseReqMapper;
+
     /** 业务统计（登录即可访问，供后台首页看板使用）：数据走 Redis 缓存（5分钟） */
     @GetMapping("/stats")
     public AjaxResult stats()
@@ -42,6 +46,8 @@ public class DashboardController extends BaseController
         Map<String, Object> stats = statisticsService.dashboard();
         // 热门服务 Top10（前端取前5展示）
         stats.put("topBooks", statisticsService.topBooks());
+        // 运营待办：待审核入驻申请数（看板"待办"卡片用；草稿/回收站数在 dashboard() 的 cmsArticle 内）
+        stats.put("pendingApplyCount", bookPurchaseReqMapper.countPendingApply());
         return success(stats);
     }
 

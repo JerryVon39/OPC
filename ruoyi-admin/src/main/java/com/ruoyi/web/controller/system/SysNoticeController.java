@@ -39,6 +39,14 @@ public class SysNoticeController extends BaseController
     @Autowired
     private ISysNoticeReadService noticeReadService;
 
+    /** 前台公告条（匿名）：最新一条已发布公告（status='0'），首页顶部展示 */
+    @Anonymous
+    @GetMapping("/publicLatest")
+    public AjaxResult publicLatest()
+    {
+        return success(noticeService.selectPublicLatest());
+    }
+
     /**
      * 获取通知公告列表
      */

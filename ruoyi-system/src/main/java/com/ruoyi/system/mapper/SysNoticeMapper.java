@@ -26,6 +26,9 @@ public interface SysNoticeMapper
      */
     public List<SysNotice> selectNoticeList(SysNotice notice);
 
+    /** 前台公告条：最新一条已发布公告 */
+    public SysNotice selectPublicLatest();
+
     /**
      * 新增公告
      * 

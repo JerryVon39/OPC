@@ -15,6 +15,9 @@ public interface BookPurchaseReqMapper
 
     public List<BookPurchaseReq> selectBookPurchaseReqList(BookPurchaseReq bookPurchaseReq);
 
+    /** 待审核入驻申请数（运营看板待办） */
+    public int countPendingApply();
+
     /** 去重计数：同一书名且"待处理"状态的申请数（前台提交防重复） */
     public int countPendingByName(String bookName);
 

@@ -37,6 +37,11 @@ public class SysNoticeServiceImpl implements ISysNoticeService
      * @return 公告集合
      */
     @Override
+    public SysNotice selectPublicLatest()
+    {
+        return noticeMapper.selectPublicLatest();
+    }
+
     public List<SysNotice> selectNoticeList(SysNotice notice)
     {
         return noticeMapper.selectNoticeList(notice);

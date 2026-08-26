@@ -87,4 +87,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
     
+    <select id="selectPublicLatest" resultMap="SysNoticeResult">
+        select notice_id, notice_title, notice_type, notice_content, status, create_time
+        from sys_notice
+        where status = '0'
+        order by create_time desc
+        limit 1
+    </select>
 </mapper>

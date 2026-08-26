@@ -27,6 +27,8 @@
             <el-button type="primary" size="medium" icon="el-icon-document-add" @click="go('/content/article')">发文章</el-button>
             <el-button type="warning" size="medium" icon="el-icon-edit" @click="go('/content/block')">改区块</el-button>
             <el-button type="info" size="medium" icon="el-icon-user" @click="go('/member/reader')">成员管理</el-button>
+            <el-button type="success" size="medium" icon="el-icon-picture-outline" @click="go('/banner')">官网轮播</el-button>
+            <el-button type="danger" plain size="medium" icon="el-icon-megaphone" @click="go('/system/notice')">发公告</el-button>
           </div>
         </el-card>
       </el-col>
@@ -75,13 +77,14 @@ export default {
   name: 'Index',
   data() {
     return {
-      // 业务统计卡片（5 项：成员 + CMS 文章；服务业务已关停不再展示）
+      // 业务统计卡片（6 项：成员 + CMS 文章 + 待办；服务业务已关停不再展示）
       statCards: [
         { label: '社区成员', value: 0, color: '#E6A23C' },
         { label: '文章总数', value: 0, color: '#67C23A' },
         { label: '今日发文', value: 0, color: '#409EFF' },
         { label: '草稿', value: 0, color: '#E6A23C' },
-        { label: '回收站', value: 0, color: '#F56C6C' }
+        { label: '回收站', value: 0, color: '#F56C6C' },
+        { label: '待审核申请', value: 0, color: '#E2554B' }
       ],
       recentArticles: [], // 最近编辑文章 5 条
       recentBlocks: [],   // 最近编辑区块 5 条
@@ -112,6 +115,7 @@ export default {
         this.statCards[2].value = ca.articleToday || 0
         this.statCards[3].value = ca.draftCount || 0
         this.statCards[4].value = ca.recycleCount || 0
+        this.statCards[5].value = s.pendingApplyCount || 0
       })
     },
     /** 加载最近编辑（文章/区块各 5 条） */

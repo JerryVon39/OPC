@@ -773,3 +773,13 @@ textarea.form-input { resize: vertical; }
 .pg-btn:disabled { opacity: .45; cursor: not-allowed; }
 .pg-info { font-size: 13px; color: #909399; margin-left: 10px; }
 .pg-ellipsis { color: #909399; padding: 0 2px; }
+
+/* 公告条（首页顶部：后台公告管理发布，最新一条展示，可关闭） */
+.notice-bar { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(90deg, #fdf3e7, #fbe9d3); color: #8a5a1e; font-size: 14px; padding: 8px 16px; position: relative; }
+.notice-bar .notice-close { position: absolute; right: 14px; cursor: pointer; color: #b98a4a; font-weight: bold; }
+.notice-bar .notice-close:hover { color: #8a5a1e; }
+
+/* 文章详情：同栏目前后篇导航 */
+.article-prevnext { display: flex; justify-content: space-between; gap: 12px; margin: 20px 0 4px; }
+.pn-link { color: #2f6fed; text-decoration: none; font-size: 14px; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pn-link:hover { text-decoration: underline; }

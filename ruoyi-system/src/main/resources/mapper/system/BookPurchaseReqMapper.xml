@@ -90,4 +90,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{reqId}
         </foreach>
     </delete>
+<select id="countPendingApply" resultType="int">
+        select count(1) from book_purchase_req where status = '0'
+    </select>
 </mapper>

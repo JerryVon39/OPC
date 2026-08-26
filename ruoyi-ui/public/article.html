@@ -65,6 +65,11 @@
       <div class="article-meta" id="artMeta"></div>
       <div id="artAttach" style="margin:16px 0;display:none"></div>
       <div class="article-content" id="artContent">加载中…</div>
+      <!-- 同栏目前后篇导航（自动定位当前文章在栏目内的相邻篇） -->
+      <div class="article-prevnext" id="prevNext" style="display:none">
+        <a id="prevLink" class="pn-link" href="#">← 上一篇</a>
+        <a id="nextLink" class="pn-link" href="#">下一篇 →</a>
+      </div>
       <div class="article-back">
         <a class="btn-buy" style="text-decoration:none" id="backBtn" href="news.html">← 返回列表</a>
       </div>
@@ -264,6 +269,27 @@
         tip.textContent = '💡 政策内容以官方正式文件为准，原文链接见上方正文【原文链接】条目。';
         contentEl.appendChild(tip);
       }
+      // 同栏目前后篇：拉同栏目列表（最多 100 条）定位当前文章，取相邻两篇
+      (function () {
+        const nav = document.getElementById('prevNext');
+        if (!nav || !a.categoryId) return;
+        fetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=100&categoryId=' + a.categoryId)
+          .then(r => r.json()).then(d => {
+            const rows = d.rows || [];
+            const idx = rows.findIndex(x => String(x.articleId) === String(id));
+            if (idx < 0) return; // 列表页与详情页排序不一致时找不到即不显示
+            const prev = idx > 0 ? rows[idx - 1] : null;
+            const next = idx < rows.length - 1 ? rows[idx + 1] : null;
+            if (!prev && !next) return;
+            const prevEl = document.getElementById('prevLink');
+            const nextEl = document.getElementById('nextLink');
+            if (prev) { prevEl.href = 'article.html?id=' + prev.articleId; prevEl.textContent = '← ' + esc(prev.title).slice(0, 24); }
+            else prevEl.style.visibility = 'hidden';
+            if (next) { nextEl.href = 'article.html?id=' + next.articleId; nextEl.textContent = esc(next.title).slice(0, 24) + ' →'; }
+            else nextEl.style.visibility = 'hidden';
+            nav.style.display = 'flex';
+          }).catch(() => {});
+      })();
     } catch (e) {
       titleEl.textContent = '加载失败';
       contentEl.textContent = '加载失败：' + e.message + '（若为缓存旧版请按 Ctrl+F5 强制刷新）';
