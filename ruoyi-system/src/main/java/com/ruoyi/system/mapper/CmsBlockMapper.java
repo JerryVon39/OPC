@@ -22,6 +22,9 @@ public interface CmsBlockMapper
     /** 按区块键查询（种子/去重用） */
     public CmsBlock selectCmsBlockByBlockKey(String blockKey);
 
+    /** 相邻区块（上下移交换 sort 用，同 pageKey 且 template 非空=内容区块） */
+    public CmsBlock selectNeighborBlock(@Param("pageKey") String pageKey, @Param("sort") Long sort, @Param("dir") String dir);
+
     /** 新增区块 */
     public int insertCmsBlock(CmsBlock cmsBlock);
 

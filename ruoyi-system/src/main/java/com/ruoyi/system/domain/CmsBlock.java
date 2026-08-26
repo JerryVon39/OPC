@@ -37,6 +37,12 @@ public class CmsBlock extends BaseEntity
     /** 链接(预留) */
     private String link;
 
+    /** 模板(空=槽位区块;非空=内容区块模板) */
+    private String template;
+
+    /** 内容区块配置(JSON，模板化区块使用) */
+    private String configJson;
+
     /** 排序 */
     private Long sort;
 
@@ -76,6 +82,12 @@ public class CmsBlock extends BaseEntity
 
     public void setLink(String link) { this.link = link; }
     public String getLink() { return link; }
+
+    public void setTemplate(String template) { this.template = template; }
+    public String getTemplate() { return template; }
+
+    public void setConfigJson(String configJson) { this.configJson = configJson; }
+    public String getConfigJson() { return configJson; }
 
     public void setSort(Long sort) { this.sort = sort; }
     public Long getSort() { return sort; }

@@ -45,6 +45,8 @@
     <p>两种入驻方式，零门槛起步 —— 无论你是"一个人 + AI"的数字游民，还是创业团队，都能在这里安家</p>
   </div>
 
+  <div id="pageSections"></div>
+  <div id="pageStatic">
   <!-- 两种入驻方式 -->
   <div class="content-section">
     <div class="sub-title">🏠 两种入驻方式</div>
@@ -124,6 +126,8 @@
     </div>
   </div>
 
+    </div>
+
   <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
@@ -150,6 +154,7 @@
     'join-hero-sub': [{ field: 'content', sel: '.page-hero p' }]
   };
   loadCmsBlocks('join');
+  loadPageSections('join');
 </script>
 <script>
   // ===== 共享：页脚年份 =====

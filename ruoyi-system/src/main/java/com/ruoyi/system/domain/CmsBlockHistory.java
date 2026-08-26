@@ -30,6 +30,12 @@ public class CmsBlockHistory extends BaseEntity
 
     private String link;
 
+    /** 模板(空=槽位区块;非空=内容区块模板) */
+    private String template;
+
+    /** 内容区块配置(JSON) */
+    private String configJson;
+
     /** 更新者 */
     private String updateBy;
 
@@ -60,6 +66,12 @@ public class CmsBlockHistory extends BaseEntity
 
     public void setLink(String link) { this.link = link; }
     public String getLink() { return link; }
+
+    public void setTemplate(String template) { this.template = template; }
+    public String getTemplate() { return template; }
+
+    public void setConfigJson(String configJson) { this.configJson = configJson; }
+    public String getConfigJson() { return configJson; }
 
     public void setUpdateBy(String updateBy) { this.updateBy = updateBy; }
     public String getUpdateBy() { return updateBy; }

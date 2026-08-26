@@ -27,6 +27,9 @@ public interface ICmsBlockService
     /** 删除区块（含其历史） */
     public int deleteCmsBlockByBlockIds(Long[] blockIds);
 
+    /** 内容区块上下移（相邻 sort 交换，仅模板化区块参与排序） */
+    public int moveCmsBlock(Long blockId, String dir);
+
     /** 区块历史列表（version 倒序） */
     public List<CmsBlockHistory> selectHistoryByBlockId(Long blockId);
 

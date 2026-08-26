@@ -45,6 +45,8 @@
     <p>聚焦 AI 内容创作、AI 技术应用、AI 硬件与场景生态链三大赛道，构建"平台 + 培训 + 订单 + 运营"一体化产业生态</p>
   </div>
 
+  <div id="pageSections"></div>
+  <div id="pageStatic">
   <!-- 行业背景数据条 -->
   <div class="content-section">
     <div class="stat-band">
@@ -176,6 +178,8 @@
     </div>
   </div>
 
+    </div>
+
   <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
@@ -203,6 +207,7 @@
     'industry-cta': [{ field: 'content', sel: '.cta-box p' }]
   };
   loadCmsBlocks('industry');
+  loadPageSections('industry');
 </script>
 <script>
   // ===== 共享：页脚年份 =====

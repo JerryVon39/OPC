@@ -84,6 +84,15 @@ public class CmsBlockController extends BaseController
         return toAjax(cmsBlockService.deleteCmsBlockByBlockIds(blockIds));
     }
 
+    /** 内容区块上下移（相邻 sort 交换） */
+    @PreAuthorize("@ss.hasPermi('system:cmsBlock:edit')")
+    @Log(title = "CMS区块", businessType = BusinessType.UPDATE)
+    @PutMapping("/move/{blockId}/{dir}")
+    public AjaxResult move(@PathVariable("blockId") Long blockId, @PathVariable("dir") String dir)
+    {
+        return toAjax(cmsBlockService.moveCmsBlock(blockId, dir));
+    }
+
     /** 区块历史列表（version 倒序，最多 20 版） */
     @PreAuthorize("@ss.hasPermi('system:cmsBlock:query')")
     @GetMapping("/history/{blockId}")

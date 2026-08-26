@@ -156,6 +156,14 @@ export function rollbackBlock(blockId, version) {
   })
 }
 
+// 内容区块上下移（相邻 sort 交换）
+export function moveBlock(blockId, dir) {
+  return request({
+    url: '/system/cmsBlock/move/' + blockId + '/' + dir,
+    method: 'put'
+  })
+}
+
 // 状态切换（0已发布 1草稿 2已下线）
 export function changeArticleStatus(articleId, status) {
   return request({

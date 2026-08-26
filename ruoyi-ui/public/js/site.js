@@ -660,3 +660,116 @@ window.addEventListener('message', function (e) {
   if (!d || d.type !== 'opc-preview') return;
   if (d.action === 'scrollTo') highlightPreviewKey(d.key);
 });
+
+// ===== 栏目页内容区块渲染（区块管理 v3：栏目页主体模块化）=====
+// 模板集（11 个）：text/feature/cards/steps/list/tags/timeline/stats/quote/cta/form
+// 样式 .pblock 前缀（阅读型文档流：白卡/浅底 + 大间距 + 居中容器，与首页 renderSection 完全隔离）
+// 区块标题 = 后台区块的 title 字段（内容区块必填）；正文/配置来自 config_json
+function renderPageBlock(b, no) {
+  let cfg = {};
+  try { cfg = b.configJson ? JSON.parse(b.configJson) : {}; } catch (e) { cfg = {}; }
+  const t = b.template;
+  const key = b.blockKey || '';
+  const inner = (body) => '<section class="pblock" data-section-key="' + esc(key) + '"><div class="pblock-inner">' + body + '</div></section>';
+  const head = (title) => (title ? '<h2 class="pblock-title">' + esc(title) + '</h2>' : '');
+  const imgUrl = (u) => (/^https?:\/\//.test(u || '') ? u : '/prod-api' + (u || ''));
+
+  if (t === 'text') {
+    return inner(head(b.title) +
+      (cfg.subtitle ? '<div class="pblock-sub">' + esc(cfg.subtitle) + '</div>' : '') +
+      '<div class="pblock-text">' + cmsSanitizeHtml(cfg.text || '') + '</div>');
+  }
+  if (t === 'feature') {
+    const img = cfg.image ? '<div class="pblock-f-img"><img src="' + esc(imgUrl(cfg.image)) + '" alt="" /></div>' : '';
+    return inner('<div class="pblock-feature' + (cfg.reverse === '1' ? ' pblock-feature-rev' : '') + '">' + img +
+      '<div class="pblock-f-body">' + head(b.title) +
+      (cfg.text ? '<div class="pblock-text">' + cmsSanitizeHtml(cfg.text) + '</div>' : '') +
+      (cfg.btnText ? '<a class="btn-buy pblock-f-btn" href="' + esc(cfg.btnLink || '#') + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
+      '</div></div>');
+  }
+  if (t === 'cards') {
+    const cards = (cfg.cards || []).map(c =>
+      '<div class="pblock-card"><div class="pblock-card-icon">' + esc(c.icon || '📄') + '</div>' +
+      '<div class="pblock-card-title">' + esc(c.title) + '</div>' + cmsSanitizeHtml(c.text || '') + '</div>').join('');
+    return inner(head(b.title) +
+      (cfg.subtitle ? '<div class="pblock-sub">' + esc(cfg.subtitle) + '</div>' : '') +
+      '<div class="pblock-cards" style="grid-template-columns:repeat(' + (cfg.cols || 3) + ',1fr)">' + cards + '</div>');
+  }
+  if (t === 'steps') {
+    const steps = (cfg.steps || []).map((st, i) =>
+      '<div class="pblock-step"><span class="pblock-step-no">' + ['①', '②', '③', '④', '⑤', '⑥'][i] + '</span>' +
+      '<div class="pblock-step-body"><b>' + esc(st.title) + '</b><p>' + esc(st.desc) + '</p></div></div>').join('');
+    return inner(head(b.title) + '<div class="pblock-steps">' + steps + '</div>');
+  }
+  if (t === 'list') {
+    const items = (cfg.items || []).map(it =>
+      '<li><b>' + esc(it.title) + '</b>' + (it.desc ? '<span>' + esc(it.desc) + '</span>' : '') + '</li>').join('');
+    return inner(head(b.title) + '<ul class="pblock-list">' + items + '</ul>');
+  }
+  if (t === 'tags') {
+    const groups = (cfg.groups || []).map(g =>
+      '<div class="pblock-tags-row"><span class="pblock-tags-label">' + esc(g.title) + '：</span>' +
+      (g.tags || []).map(tg => '<span class="pblock-tag">' + esc(tg) + '</span>').join('') + '</div>').join('');
+    return inner(head(b.title) + '<div class="pblock-tags">' + groups + '</div>');
+  }
+  if (t === 'timeline') {
+    const items = (cfg.items || []).map(it =>
+      '<div class="pblock-tl-item"><div class="pblock-tl-date">' + esc(it.date) + '</div>' +
+      '<div class="pblock-tl-body"><b>' + esc(it.title) + '</b><p>' + esc(it.desc) + '</p></div></div>').join('');
+    return inner(head(b.title) + '<div class="pblock-tl">' + items + '</div>');
+  }
+  if (t === 'stats') {
+    const stats = (cfg.items || []).map(st =>
+      '<div class="pblock-stat"><div class="pblock-stat-num">' + esc(st.value) + '</div>' +
+      '<div class="pblock-stat-label">' + esc(st.label) + '</div>' +
+      (st.desc ? '<div class="pblock-stat-desc">' + esc(st.desc) + '</div>' : '') + '</div>').join('');
+    return inner(head(b.title) + '<div class="pblock-stats">' + stats + '</div>' +
+      (cfg.text ? '<div class="pblock-text" style="margin-top:18px">' + cmsSanitizeHtml(cfg.text) + '</div>' : ''));
+  }
+  if (t === 'quote') {
+    return inner('<div class="pblock-quote"><div class="pblock-quote-text">' + esc(cfg.text || '') + '</div>' +
+      (cfg.author ? '<div class="pblock-quote-author">—— ' + esc(cfg.author) + '</div>' : '') + '</div>');
+  }
+  if (t === 'cta') {
+    return '<section class="pblock pblock-cta" data-section-key="' + esc(key) + '"><div class="pblock-cta-inner">' +
+      '<h3>' + esc(cfg.title || b.title || '') + '</h3>' +
+      (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
+      (cfg.btnText ? '<a class="btn-buy" href="' + esc(cfg.btnLink || '#') + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
+      '</div></section>';
+  }
+  if (t === 'form') {
+    // 入驻申请表单（join 页专用；submitJoin() 按 id 取元素，模板渲染后功能不变）
+    return inner(head(b.title) +
+      '<div class="form-card">' +
+      '<div class="form-item"><label>项目/组织名称 <span class="req">*</span></label><input id="joinName" class="form-input" placeholder="如：某某 AI 内容工作室" /></div>' +
+      '<div class="form-item"><label>联系人 <span class="req">*</span></label><input id="joinAuthor" class="form-input" placeholder="✍️ 联系人姓名" /></div>' +
+      '<div class="form-item"><label>联系邮箱 <span class="req">*</span></label><input id="joinEmail" class="form-input" placeholder="📧 处理结果将通过邮件通知" /></div>' +
+      '<div class="form-item"><label>申请说明（选填）</label><textarea id="joinRemark" class="form-input" rows="3" placeholder="需要的服务 / 意向入驻类型（A 类免费合伙人 / B 类付费成员）/ 项目简介"></textarea></div>' +
+      '<button class="btn-buy" onclick="submitJoin()" style="font-size:15px;padding:11px 34px">提交入驻申请</button>' +
+      '<div id="joinMsg" class="form-msg"></div>' +
+      '<p style="font-size:12px;color:#8a8a8a;margin-top:10px">提交即表示同意社区入驻规则，运营团队将在收到申请后尽快与您联系。</p>' +
+      '</div>');
+  }
+  // 兜底：未知模板按文本段落渲染
+  return inner(head(b.title) + '<div class="pblock-text">' + esc(cfg.text || b.content || '') + '</div>');
+}
+
+/** 栏目页主体模块化渲染：内容区块列表 → #pageSections；接口失败/无内容区块 → 保留静态主体兜底 */
+async function loadPageSections(pageKey) {
+  const box = document.getElementById('pageSections');
+  if (!box) return;
+  let list = [];
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(CMS_BLOCK_API + pageKey, { signal: ctrl.signal });
+    clearTimeout(timer);
+    const d = await res.json();
+    if (d.code === 200) list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
+  } catch (e) { return; }
+  if (!list.length) return; // 保留静态主体（页面永不白屏）
+  box.innerHTML = list.map((b, i) => renderPageBlock(b, i + 1)).join('');
+  const stat = document.getElementById('pageStatic');
+  if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底主体
+  applyPreviewMarks();
+}

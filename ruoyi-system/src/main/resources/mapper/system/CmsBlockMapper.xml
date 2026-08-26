@@ -11,6 +11,8 @@
         <result property="content"   column="content"    />
         <result property="image"     column="image"      />
         <result property="link"      column="link"       />
+        <result property="template"  column="template"   />
+        <result property="configJson" column="config_json" />
         <result property="sort"      column="sort"       />
         <result property="visible"   column="visible"    />
         <result property="version"   column="version"    />
@@ -27,13 +29,15 @@
         <result property="content"    column="content"     />
         <result property="image"      column="image"       />
         <result property="link"       column="link"        />
+        <result property="template"   column="template"    />
+        <result property="configJson" column="config_json" />
         <result property="updateBy"   column="update_by"   />
         <result property="updateTime" column="update_time" />
     </resultMap>
 
     <sql id="selectCmsBlockVo">
         select block_id, block_key, page_key, title, subtitle, content, image, link,
-               sort, visible, version, update_by, update_time
+               template, config_json, sort, visible, version, update_by, update_time
         from cms_block
     </sql>
 
@@ -72,6 +76,8 @@
             <if test="content != null">content,</if>
             <if test="image != null">image,</if>
             <if test="link != null">link,</if>
+            <if test="template != null">template,</if>
+            <if test="configJson != null">config_json,</if>
             <if test="sort != null">sort,</if>
             <if test="visible != null">visible,</if>
             <if test="version != null">version,</if>
@@ -86,6 +92,8 @@
             <if test="content != null">#{content},</if>
             <if test="image != null">#{image},</if>
             <if test="link != null">#{link},</if>
+            <if test="template != null">#{template},</if>
+            <if test="configJson != null">#{configJson},</if>
             <if test="sort != null">#{sort},</if>
             <if test="visible != null">#{visible},</if>
             <if test="version != null">#{version},</if>
@@ -104,6 +112,8 @@
             <if test="content != null">content = #{content},</if>
             <if test="image != null">image = #{image},</if>
             <if test="link != null">link = #{link},</if>
+            <if test="template != null">template = #{template},</if>
+            <if test="configJson != null">config_json = #{configJson},</if>
             <if test="sort != null">sort = #{sort},</if>
             <if test="visible != null">visible = #{visible},</if>
             <if test="version != null">version = #{version},</if>
@@ -113,6 +123,14 @@
         where block_id = #{blockId}
     </update>
 
+    <!-- 相邻内容区块（上下移交换 sort；仅同 pageKey 的模板化区块参与排序） -->
+    <select id="selectNeighborBlock" resultMap="CmsBlockResult">
+        <include refid="selectCmsBlockVo"/>
+        where page_key = #{pageKey} and template is not null and template != ''
+        <if test="dir == 'up'"> and sort &lt; #{sort} order by sort desc limit 1</if>
+        <if test="dir == 'down'"> and sort &gt; #{sort} order by sort asc limit 1</if>
+    </select>
+
     <delete id="deleteCmsBlockByBlockIds" parameterType="String">
         delete from cms_block where block_id in
         <foreach item="blockId" collection="array" open="(" separator="," close=")">
@@ -121,7 +139,7 @@
     </delete>
 
     <select id="selectHistoryByBlockId" parameterType="Long" resultMap="CmsBlockHistoryResult">
-        select history_id, block_id, version, title, subtitle, content, image, link, update_by, update_time
+        select history_id, block_id, version, title, subtitle, content, image, link, template, config_json, update_by, update_time
         from cms_block_history
         where block_id = #{blockId}
         order by version desc
@@ -129,14 +147,14 @@
     </select>
 
     <select id="selectHistoryByVersion" resultMap="CmsBlockHistoryResult">
-        select history_id, block_id, version, title, subtitle, content, image, link, update_by, update_time
+        select history_id, block_id, version, title, subtitle, content, image, link, template, config_json, update_by, update_time
         from cms_block_history
         where block_id = #{blockId} and version = #{version}
     </select>
 
     <insert id="insertHistory" parameterType="CmsBlockHistory">
-        insert into cms_block_history (block_id, version, title, subtitle, content, image, link, update_by, update_time)
-        values (#{blockId}, #{version}, #{title}, #{subtitle}, #{content}, #{image}, #{link}, #{updateBy}, #{updateTime})
+        insert into cms_block_history (block_id, version, title, subtitle, content, image, link, template, config_json, update_by, update_time)
+        values (#{blockId}, #{version}, #{title}, #{subtitle}, #{content}, #{image}, #{link}, #{template}, #{configJson}, #{updateBy}, #{updateTime})
     </insert>
 
     <delete id="trimHistory">

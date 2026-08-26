@@ -45,6 +45,8 @@
     <p>从高校到实战，从技能培训到创业训练营，构建覆盖全周期的 AI 人才培养体系</p>
   </div>
 
+  <div id="pageSections"></div>
+  <div id="pageStatic">
   <!-- 高校合作 -->
   <div class="content-section">
     <div class="sub-title">🎓 高校合作 · 校外实践教学基地</div>
@@ -129,6 +131,8 @@
     </div>
   </div>
 
+    </div>
+
   <!-- 页脚（三栏） -->
   <footer class="footer">
     <div class="footer-cols">
@@ -156,6 +160,7 @@
     'talent-cta': [{ field: 'content', sel: '.cta-box p' }]
   };
   loadCmsBlocks('talent');
+  loadPageSections('talent');
 </script>
 <script>
   // ===== 共享：页脚年份 =====

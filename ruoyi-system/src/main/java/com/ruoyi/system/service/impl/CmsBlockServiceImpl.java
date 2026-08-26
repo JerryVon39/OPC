@@ -73,6 +73,7 @@ public class CmsBlockServiceImpl implements ICmsBlockService
         // 防御：全字段为 null 时动态 SET 为空会生成非法 SQL，拒绝空更新
         if (cmsBlock.getTitle() == null && cmsBlock.getSubtitle() == null && cmsBlock.getContent() == null
             && cmsBlock.getImage() == null && cmsBlock.getLink() == null
+            && cmsBlock.getTemplate() == null && cmsBlock.getConfigJson() == null
             && cmsBlock.getSort() == null && cmsBlock.getVisible() == null)
         {
             throw new ServiceException("没有要更新的内容");
@@ -86,6 +87,8 @@ public class CmsBlockServiceImpl implements ICmsBlockService
         history.setContent(existing.getContent());
         history.setImage(existing.getImage());
         history.setLink(existing.getLink());
+        history.setTemplate(existing.getTemplate());
+        history.setConfigJson(existing.getConfigJson());
         history.setUpdateBy(existing.getUpdateBy());
         history.setUpdateTime(existing.getUpdateTime() == null ? new Date() : existing.getUpdateTime());
         cmsBlockMapper.insertHistory(history);
@@ -97,6 +100,37 @@ public class CmsBlockServiceImpl implements ICmsBlockService
         // 历史超限清理（保留最新 20 条）
         cmsBlockMapper.trimHistory(existing.getBlockId(), HISTORY_KEEP);
         return rows;
+    }
+
+    @Override
+    public int moveCmsBlock(Long blockId, String dir)
+    {
+        if (blockId == null || (!"up".equals(dir) && !"down".equals(dir)))
+        {
+            throw new ServiceException("移动参数不合法");
+        }
+        CmsBlock current = cmsBlockMapper.selectCmsBlockByBlockId(blockId);
+        if (current == null)
+        {
+            throw new ServiceException("区块不存在");
+        }
+        // 找相邻内容区块（sort 邻近），交换 sort 值（避免整体重排）
+        CmsBlock neighbor = cmsBlockMapper.selectNeighborBlock(
+            current.getPageKey(), current.getSort() == null ? 0L : current.getSort(), dir);
+        if (neighbor == null)
+        {
+            return 0; // 已到边界，无可移动
+        }
+        Long curSort = current.getSort();
+        CmsBlock a = new CmsBlock();
+        a.setBlockId(current.getBlockId());
+        a.setSort(neighbor.getSort());
+        CmsBlock b = new CmsBlock();
+        b.setBlockId(neighbor.getBlockId());
+        b.setSort(curSort);
+        cmsBlockMapper.updateCmsBlock(a);
+        cmsBlockMapper.updateCmsBlock(b);
+        return 1;
     }
 
     @Override
@@ -149,6 +183,8 @@ public class CmsBlockServiceImpl implements ICmsBlockService
         target.setContent(hist.getContent());
         target.setImage(hist.getImage());
         target.setLink(hist.getLink());
+        target.setTemplate(hist.getTemplate());
+        target.setConfigJson(hist.getConfigJson());
         target.setVersion((existing.getVersion() == null ? 0L : existing.getVersion()) + 1);
         target.setUpdateBy(operator());
         target.setUpdateTime(new Date());
@@ -163,6 +199,8 @@ public class CmsBlockServiceImpl implements ICmsBlockService
             back.setContent(target.getContent());
             back.setImage(target.getImage());
             back.setLink(target.getLink());
+            back.setTemplate(target.getTemplate());
+            back.setConfigJson(target.getConfigJson());
             back.setUpdateBy(target.getUpdateBy());
             back.setUpdateTime(target.getUpdateTime());
             cmsBlockMapper.insertHistory(back);
