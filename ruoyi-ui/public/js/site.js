@@ -60,20 +60,35 @@ function safeCols(v) {
   if (!link || !/opc\.example\.com/i.test(link.href)) return;
   link.href = location.origin + location.pathname;
 })();
-// 导航防闪烁（站点设置排序即时生效）：脚本在 body 末尾同步执行、早于浏览器首绘——
-// 先把上次拉到的 site.nav 缓存同步渲染到 #navAnchors，再异步拉最新配置覆盖并更新缓存。
-// 效果：切换页面不再先闪一下静态 HTML 的旧顺序；仅首次访问（无缓存）有一次短暂静态显示
+// 导航防闪烁 + 高亮保持（站点设置排序即时生效）：
+// ① 缓存新鲜（≤60s）→ 同步渲染并重跑 initNav 高亮（脚本在 body 末尾执行、早于首绘，切页零闪烁）
+// ② 缓存缺失/过期 → 先隐藏静态导航（nav-pending，visibility:hidden 不占位抖动），
+//    配置到达后再显示——绝不闪一下"旧顺序"；请求失败 3.5s 后兜底恢复静态导航
 (function () {
-  try {
-    const cached = localStorage.getItem('opc_site_nav');
-    if (!cached) return;
-    const items = JSON.parse(cached);
-    if (!Array.isArray(items) || !items.length) return;
-    const box = document.getElementById('navAnchors');
-    if (!box) return;
+  const box = document.getElementById('navAnchors');
+  if (!box) return;
+  const render = (items) => {
     const html = items.map(n => '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
-    if (html && html !== box.innerHTML) box.innerHTML = html;
-  } catch (e) { /* 缓存损坏/隐私模式：忽略，走静态导航 */ }
+    if (html) box.innerHTML = html;
+    if (typeof initNav === 'function') initNav(); // 渲染后重跑 URL 高亮（替换 innerHTML 会丢 active 类）
+  };
+  try {
+    const raw = localStorage.getItem('opc_site_nav');
+    if (raw) {
+      let items = null, t = 0;
+      try {
+        const c = JSON.parse(raw);
+        if (Array.isArray(c)) { items = c; }               // 旧格式（无时间戳）：视为过期
+        else if (c && Array.isArray(c.items)) { items = c.items; t = c.t || 0; }
+      } catch (e) {}
+      if (Array.isArray(items) && items.length && Date.now() - t <= 60000) {
+        render(items);
+        return;
+      }
+    }
+  } catch (e) { /* 隐私模式等：走隐藏-兜底路径 */ }
+  box.classList.add('nav-pending');
+  setTimeout(function () { box.classList.remove('nav-pending'); }, 3500); // 兜底：请求失败恢复静态导航
 })();
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function toast(text) {
@@ -459,8 +474,10 @@ async function loadSiteConfig() {
       if (Array.isArray(items) && items.length && box) {
         box.innerHTML = items.map(n =>
           '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
-        // 写入本地缓存：下次切页时脚本同步渲染，消除"先显示静态旧顺序"的闪烁
-        try { localStorage.setItem('opc_site_nav', JSON.stringify(items)); } catch (e) {}
+        box.classList.remove('nav-pending'); // 配置已渲染：显示导航（同步块隐藏的在此恢复）
+        initNav(); // 渲染后重跑 URL 高亮（整体替换 innerHTML 会丢掉 active 类）
+        // 写入带时间戳的本地缓存：60s 内切页同步渲染零闪烁；过期不渲染旧顺序
+        try { localStorage.setItem('opc_site_nav', JSON.stringify({ t: Date.now(), items: items })); } catch (e) {}
       }
     } catch (e) { /* 导航配置损坏保留静态 */ }
   }
