@@ -83,3 +83,18 @@
 - [ ] 17. [待补] 邮箱 / 公众号 / 抖音号
 - [ ] 18. [待补] 场地照片（天安智谷产业园 B6栋、T1栋1105）
 - [ ] 19. [待补] 政策原文链接（政策.md 中部分为官网首页链接，需精确 URL）
+
+## 区块管理 v3：栏目页内容管理（2026-08-25 方案确认 + 审查升级为方案 B，次日开工）
+
+> 背景：现状只能改 title/subtitle/content 三段文字，且区块靠页面硬编码 CMS_BLOCK_SLOTS 槽位无法增减。
+> 审查结论（2026-08-25）：栏目页主体天然是 content-section 区块列表（4 页共 17 个），
+> 因此连前台一并改——栏目页主体模块化（方案 B）：正文区整体动态渲染 + 静态兜底，hero 骨架保留。
+> 模板集为阅读型文档流设计（.pblock 前缀，白卡/浅底 + 48px 间距 + 1140px 居中，无首页四色背景循环/吸附），渲染器与首页隔离。
+
+- [ ] 26. **升级脚本**：cms_block 加列 `template`（默认 ''=槽位区块；非空=内容区块）与 `config_json`；幂等（information_schema 补列模式）
+- [ ] 27. **后端**：CmsBlock 实体/Mapper/Service 补 template/config_json 字段；新增 move 排序接口（相邻 sort 交换，对齐 cmsPageSection.move）；publicList 按 sort 排序；编译重启
+- [ ] 28. **栏目页模板集（11 个）**：text 文本段落 / feature 图文并排（可换向，图上传）/ cards 图标卡片 / steps 步骤清单 / list 条目清单 / tags 标签墙 / timeline 时间线 / stats 数据亮点 / quote 金句引用 / cta 横幅 / **form 表单（join 入驻申请专用：渲染原 form-card，submitJoin() 按 id 兼容，字段固定，后台只控制显示/排序）**。不放 hero/contact/news（首页专属；栏目页联系信息用 list/contact 形态模板）
+- [ ] 29. **前台主体模块化**：4 页正文区（hero 下 footer 上）改为 `#pageSections` 动态容器 + 静态兜底（接口失败保留静态）；site.js 新增 loadPageSections(pageKey)/renderPageBlock（.pblock 前缀，独立于 renderSection 首页逻辑）；hero 骨架 + hero-sub 槽位保留；预览标注模式自动覆盖
+- [ ] 30. **种子迁移（17 个 content-section，素材取自现有静态页面）**：about=社区定位(cards)/合作模式(text)/区位优势(cards)/发展历程(timeline)/运营主体(text)/OPC法律税务(list)；join=两种入驻方式(cards)/首批入驻企业(tags)/入驻申请(form)/咨询信息(contact)；talent=高校合作(cards)/培训体系(cards)/教学工具(list)/人才生态(tags)；industry=三大赛道(cards)/首批入驻企业(tags)/产业融合(text)；各页尾部 cta 模板（about/talent/industry 槽位种子停用）
+- [ ] 31. **后台 block.vue 升级**：左列表两类（🔒 槽位区块 hero-sub / 内容区块，内容区块可删可上下移 + 新增按钮 + 模板选择弹窗）；中表单按模板渲染（槽位：title/subtitle/content；内容区块：模板专属表单，复用页面搭建逻辑）；右预览已有
+- [ ] 32. **打包实测**：新增/删除/排序/编辑/保存→预览联动/栏目页主体渲染/join 表单提交回归/首页功能回归（渲染器隔离验证）
