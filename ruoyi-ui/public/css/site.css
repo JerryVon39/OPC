@@ -764,3 +764,12 @@ textarea.form-input { resize: vertical; }
 .pblock-price tr:last-child td { border-bottom: 0; }
 .pblock-price-name { width: 34%; font-weight: 600; color: #1c2333; }
 .pblock-price-val { width: 22%; color: #d4880f; font-weight: 700; white-space: nowrap; }
+
+/* 分页条（新闻/政策共用：页码跳转） */
+.pager { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 22px; flex-wrap: wrap; }
+.pg-btn, .pg-num { min-width: 34px; height: 32px; padding: 0 10px; border: 1px solid var(--line); background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.pg-btn:hover, .pg-num:hover { border-color: var(--accent); color: var(--accent); }
+.pg-num.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: bold; }
+.pg-btn:disabled { opacity: .45; cursor: not-allowed; }
+.pg-info { font-size: 13px; color: #909399; margin-left: 10px; }
+.pg-ellipsis { color: #909399; padding: 0 2px; }

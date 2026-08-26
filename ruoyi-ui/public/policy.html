@@ -116,10 +116,8 @@
       <div class="info-grid" id="policyGrid">
         <div class="loading">加载中…</div>
       </div>
-      <div style="text-align:center;margin-top:18px">
-        <button class="btn-buy" id="policyMoreBtn" onclick="loadMorePolicy()" style="display:none">加载更多</button>
-        <div id="policyEnd" class="no-result" style="display:none;padding:14px 0;font-size:13px">已显示全部政策文件</div>
-      </div>
+      <!-- 页码分页（后端分页 + 页码跳转） -->
+      <div class="pager" id="libPager" style="display:none"></div>
       <div class="highlight-box" style="margin-top:14px">注：点击政策卡片可查看文号、核心要点与原文链接；政策内容以官方正式文件为准。</div>
     </div>
   </div>
@@ -131,6 +129,8 @@
       <div id="readList" class="info-grid">
         <div class="loading">加载中…</div>
       </div>
+      <!-- 页码分页 -->
+      <div class="pager" id="readPager" style="display:none"></div>
     </div>
   </div>
 
@@ -198,10 +198,10 @@
 
   // 政策卡片渲染（标题 + 栏目 + 级别 + 摘要；点击打开详情）
   // 栏目分流：名称含"解读"→政策解读 Tab；其余以"政策"开头 → 政策文件库（后台发文到政策类栏目即自动同步）
-  let libAllFull = [];  // 文件库全量（搜索过滤的基准）
-  let libAll = [];      // 文件库当前显示集（搜索后为过滤结果）
-  let libShown = 0;     // 已显示条数（本地分页）
-  const LIB_PAGE = 12;  // 每页条数
+  let libCatIds = [];   // 文件库栏目组（categoryIds 多栏目服务端分页，无条数上限）
+  let readCatIds = [];  // 解读栏目组
+  let libKw = '';       // 文件库搜索词（服务端 title 过滤）
+  const POLICY_PAGE = 12; // 每页条数
   const isReadCat = (name) => (name || '').indexOf('解读') >= 0;
 
   function renderPolicyCards(rows, isRead) {
@@ -221,24 +221,39 @@
     }).join('');
   }
 
-  // 文件库渲染当前页（本地分页：每页 LIB_PAGE 条 + 加载更多）
-  function renderPolicyPage() {
-    const grid = document.getElementById('policyGrid');
-    const moreBtn = document.getElementById('policyMoreBtn');
-    const end = document.getElementById('policyEnd');
-    const slice = libAll.slice(0, libShown + LIB_PAGE);
-    if (!slice.length) {
-      grid.innerHTML = '<div class="no-result"><div class="nr-icon">📚</div><div class="nr-title">未找到相关政策文件</div><div class="nr-desc">换个关键词试试</div></div>';
-      moreBtn.style.display = 'none'; end.style.display = 'none';
-      return;
+  // 页码条渲染（与 news.html 同款窗口逻辑；按目标分页条与跳转函数区分）
+  function renderPagerFor(id, total, page, gotoFn) {
+    const pager = document.getElementById(id);
+    const totalPages = Math.max(1, Math.ceil(total / POLICY_PAGE));
+    if (page > totalPages) page = totalPages;
+    const nums = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) nums.push(i);
+    } else {
+      nums.push(1);
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      if (start > 2) nums.push('…');
+      for (let i = start; i <= end; i++) nums.push(i);
+      if (end < totalPages - 1) nums.push('…');
+      nums.push(totalPages);
     }
-    grid.innerHTML = renderPolicyCards(slice, false);
-    const finished = slice.length >= libAll.length;
-    moreBtn.style.display = finished ? 'none' : 'inline-block';
-    end.style.display = finished ? 'block' : 'none';
+    let html = '<button class="pg-btn" onclick="' + gotoFn + '(1)"' + (page <= 1 ? ' disabled' : '') + '>首页</button>' +
+      '<button class="pg-btn" onclick="' + gotoFn + '(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>';
+    nums.forEach(function (n) {
+      html += n === '…'
+        ? '<span class="pg-ellipsis">…</span>'
+        : '<a class="pg-num' + (n === page ? ' active' : '') + '" onclick="' + gotoFn + '(' + n + ')">' + n + '</a>';
+    });
+    html += '<button class="pg-btn" onclick="' + gotoFn + '(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>下一页</button>' +
+      '<button class="pg-btn" onclick="' + gotoFn + '(' + totalPages + ')"' + (page >= totalPages ? ' disabled' : '') + '>末页</button>' +
+      '<span class="pg-info">共 ' + total + ' 篇 · 第 ' + page + '/' + totalPages + ' 页</span>';
+    pager.innerHTML = html;
+    pager.style.display = 'flex';
   }
 
-  function loadMorePolicy() { libShown += LIB_PAGE; renderPolicyPage(); }
+  function gotoLibPage(p) { if (p >= 1) loadPolicyPage(p); }
+  function gotoReadPage(p) { if (p >= 1) loadReadPage(p); }
 
   // Tab 切换（政策文件库 / 政策解读 / 省级蓝图）
   function switchPolicyTab(name) {
@@ -251,46 +266,85 @@
     });
   }
 
-  async function loadPolicyLib() {
+  // 栏目加载：拉一次栏目列表 → 按"解读"分流成两组栏目 ID（categoryIds 多栏目服务端分页）
+  async function loadPolicyCats() {
     const grid = document.getElementById('policyGrid');
     const readBox = document.getElementById('readList');
     try {
       const res = await fetch(CAT_API);
       const d = await res.json();
       const cats = (d.data || []).filter(c => c.categoryName && c.categoryName.indexOf('政策') === 0);
-      if (!cats.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
-      const all = [];
-      for (const cat of cats) {
-        const r2 = await fetch(LIST_API + '?pageNum=1&pageSize=100&categoryId=' + cat.categoryId);
-        const d2 = await r2.json();
-        (d2.rows || []).forEach(p => { p._catName = cat.categoryName; all.push(p); });
-      }
-      all.sort((a, b) => (b.publishTime || '').localeCompare(a.publishTime || ''));
-      libAllFull = all.filter(p => !isReadCat(p._catName));
-      libAll = libAllFull;
-      libShown = 0;
-      const reads = all.filter(p => isReadCat(p._catName));
-      if (!libAllFull.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; }
-      else renderPolicyPage();
-      readBox.innerHTML = reads.length
-        ? renderPolicyCards(reads, true)
-        : '<div class="no-result"><div class="nr-icon">📖</div><div class="nr-title">暂无政策解读</div><div class="nr-desc">政策解读文章发布后将在此展示</div></div>';
+      libCatIds = cats.filter(c => !isReadCat(c.categoryName)).map(c => c.categoryId);
+      readCatIds = cats.filter(c => isReadCat(c.categoryName)).map(c => c.categoryId);
     } catch (e) {
       grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
       readBox.innerHTML = '<div class="loading">政策解读加载失败：' + esc(e.message) + '</div>';
+      return;
+    }
+    loadPolicyPage(1);
+    loadReadPage(1);
+  }
+
+  // 文件库（服务端分页：categoryIds + pageNum/pageSize + title 搜索）
+  async function loadPolicyPage(page) {
+    const grid = document.getElementById('policyGrid');
+    const pager = document.getElementById('libPager');
+    grid.innerHTML = '<div class="loading">加载中…</div>';
+    pager.style.display = 'none';
+    try {
+      if (!libCatIds.length) { grid.innerHTML = '<div class="loading">政策文件库建设中…</div>'; return; }
+      const params = new URLSearchParams({ pageNum: page, pageSize: POLICY_PAGE, categoryIds: libCatIds.join(',') });
+      if (libKw) params.set('title', libKw);
+      const res = await fetch(LIST_API + '?' + params.toString());
+      const d = await res.json();
+      const rows = d.rows || [];
+      if (!rows.length) {
+        grid.innerHTML = libKw
+          ? '<div class="no-result"><div class="nr-icon">🔍</div><div class="nr-title">未找到相关政策文件</div><div class="nr-desc">换个关键词试试</div></div>'
+          : '<div class="loading">政策文件库建设中…</div>';
+        return;
+      }
+      grid.innerHTML = renderPolicyCards(rows, false);
+      renderPagerFor('libPager', d.total || 0, page, 'gotoLibPage');
+    } catch (e) {
+      grid.innerHTML = '<div class="loading">政策文件库加载失败：' + esc(e.message) + '</div>';
     }
   }
 
-  // 文件库搜索（前端过滤已加载数据，输入防抖 300ms）
+  // 政策解读（同款服务端分页）
+  async function loadReadPage(page) {
+    const box = document.getElementById('readList');
+    const pager = document.getElementById('readPager');
+    box.innerHTML = '<div class="loading">加载中…</div>';
+    pager.style.display = 'none';
+    try {
+      if (!readCatIds.length) {
+        box.innerHTML = '<div class="no-result"><div class="nr-icon">📖</div><div class="nr-title">暂无政策解读</div><div class="nr-desc">政策解读文章发布后将在此展示</div></div>';
+        return;
+      }
+      const params = new URLSearchParams({ pageNum: page, pageSize: POLICY_PAGE, categoryIds: readCatIds.join(',') });
+      const res = await fetch(LIST_API + '?' + params.toString());
+      const d = await res.json();
+      const rows = d.rows || [];
+      if (!rows.length) {
+        box.innerHTML = '<div class="no-result"><div class="nr-icon">📖</div><div class="nr-title">暂无政策解读</div><div class="nr-desc">政策解读文章发布后将在此展示</div></div>';
+        return;
+      }
+      box.innerHTML = renderPolicyCards(rows, true);
+      renderPagerFor('readPager', d.total || 0, page, 'gotoReadPage');
+    } catch (e) {
+      box.innerHTML = '<div class="loading">政策解读加载失败：' + esc(e.message) + '</div>';
+    }
+  }
+
+  // 文件库搜索（服务端 title 过滤，输入防抖 300ms 后回第 1 页）
   let policySearchTimer = null;
   document.getElementById('policySearch').addEventListener('input', function () {
     clearTimeout(policySearchTimer);
     const input = this;
     policySearchTimer = setTimeout(function () {
-      const kw = input.value.trim();
-      libShown = 0;
-      libAll = libAllFull.filter(p => !kw || (p.title || '').indexOf(kw) >= 0);
-      renderPolicyPage();
+      libKw = input.value.trim();
+      loadPolicyPage(1);
     }, 300);
   });
 
@@ -335,7 +389,7 @@
     var el = document.getElementById('footerYear');
     if (el) el.textContent = new Date().getFullYear();
   })();
-  loadPolicyLib();
+  loadPolicyCats();
 
   // ===== 共享：成员登录 / 注册 / 更多下拉（与 home.html 同一套公开接口）=====
       // ===== 找回密码（证号/手机号/邮箱 → 邮箱验证码 → 新密码）=====

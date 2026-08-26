@@ -57,12 +57,8 @@
     <div id="articleList" class="news-list">
       <div class="loading">加载中…</div>
     </div>
-    <div style="text-align:center;margin-top:22px">
-      <button class="btn-buy" id="loadMoreBtn" onclick="loadMore()" style="display:none">加载更多</button>
-      <div id="listEnd" class="no-result" style="display:none;padding:24px 0">
-        <div class="nr-title" style="font-size:14px">没有更多文章了</div>
-      </div>
-    </div>
+    <!-- 页码分页（后端分页 + 页码跳转） -->
+    <div class="pager" id="pager" style="display:none"></div>
   </div>
 
   <!-- 页脚（三栏） -->
@@ -131,18 +127,14 @@
     loadList();
   }
 
-  // ===== 文章列表（分页 pageNum/pageSize，"加载更多"追加）=====
+  // ===== 文章列表（后端分页 pageNum/pageSize + 页码跳转）=====
   async function loadList() {
     if (loading) return;
     loading = true;
     const box = document.getElementById('articleList');
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    const listEnd = document.getElementById('listEnd');
-    if (pageNum === 1) {
-      box.innerHTML = '<div class="loading">加载中…</div>';
-      loadMoreBtn.style.display = 'none';
-      listEnd.style.display = 'none';
-    }
+    const pager = document.getElementById('pager');
+    box.innerHTML = '<div class="loading">加载中…</div>';
+    pager.style.display = 'none';
     const params = new URLSearchParams({ pageNum: pageNum, pageSize: PAGE_SIZE });
     if (currentCat) params.set('categoryId', currentCat);
     else if (nonPolicyIds.length) params.set('categoryIds', nonPolicyIds.join(','));
@@ -152,39 +144,54 @@
       const d = await res.json();
       const rows = d.rows || [];
       total = d.total || 0;
-      if (pageNum === 1) {
-        articleList = rows;
-        if (!rows.length) {
-          box.innerHTML = '<div class="no-result"><div class="nr-icon">📰</div><div class="nr-title">暂无文章</div><div class="nr-desc">该栏目下还没有发布文章，敬请期待</div></div>';
-          listEnd.style.display = 'none';
-          loadMoreBtn.style.display = 'none';
-          return;
-        }
-        box.innerHTML = renderCards(rows);
-      } else {
-        articleList = articleList.concat(rows);
-        box.insertAdjacentHTML('beforeend', renderCards(rows));
+      if (!rows.length) {
+        box.innerHTML = '<div class="no-result"><div class="nr-icon">📰</div><div class="nr-title">暂无文章</div><div class="nr-desc">该栏目下还没有发布文章，敬请期待</div></div>';
+        return;
       }
-      // 已加载全部则隐藏"加载更多"，显示到底提示
-      if (articleList.length >= total) {
-        loadMoreBtn.style.display = 'none';
-        listEnd.style.display = 'block';
-      } else {
-        loadMoreBtn.style.display = 'inline-block';
-        listEnd.style.display = 'none';
-      }
+      box.innerHTML = renderCards(rows);
+      renderPager(total, pageNum);
     } catch (e) {
-      if (pageNum === 1) {
-        const hint = /Unexpected token/.test(e.message) ? '（页面可能为缓存旧版，请按 Ctrl+F5 强制刷新重试）' : '';
-        box.innerHTML = '<div class="loading">加载失败：' + esc(e.message) + hint + '</div>';
-      }
+      const hint = /Unexpected token/.test(e.message) ? '（页面可能为缓存旧版，请按 Ctrl+F5 强制刷新重试）' : '';
+      box.innerHTML = '<div class="loading">加载失败：' + esc(e.message) + hint + '</div>';
     } finally {
       loading = false;
     }
   }
 
-  function loadMore() {
-    pageNum += 1;
+  // 页码条渲染（窗口模式：≤7 页全显；>7 页显示 1 … 当前±1 … 末页）
+  function renderPager(total, page) {
+    const pager = document.getElementById('pager');
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (page > totalPages) page = totalPages;
+    const nums = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) nums.push(i);
+    } else {
+      nums.push(1);
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      if (start > 2) nums.push('…');
+      for (let i = start; i <= end; i++) nums.push(i);
+      if (end < totalPages - 1) nums.push('…');
+      nums.push(totalPages);
+    }
+    let html = '<button class="pg-btn" onclick="gotoPage(1)"' + (page <= 1 ? ' disabled' : '') + '>首页</button>' +
+      '<button class="pg-btn" onclick="gotoPage(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>';
+    nums.forEach(function (n) {
+      html += n === '…'
+        ? '<span class="pg-ellipsis">…</span>'
+        : '<a class="pg-num' + (n === page ? ' active' : '') + '" onclick="gotoPage(' + n + ')">' + n + '</a>';
+    });
+    html += '<button class="pg-btn" onclick="gotoPage(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>下一页</button>' +
+      '<button class="pg-btn" onclick="gotoPage(' + totalPages + ')"' + (page >= totalPages ? ' disabled' : '') + '>末页</button>' +
+      '<span class="pg-info">共 ' + total + ' 篇 · 第 ' + page + '/' + totalPages + ' 页</span>';
+    pager.innerHTML = html;
+    pager.style.display = 'flex';
+  }
+
+  function gotoPage(p) {
+    if (p < 1) p = 1;
+    pageNum = p;
     loadList();
   }
 
