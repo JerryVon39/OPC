@@ -364,9 +364,10 @@ if (document.readyState === 'loading') {
   initPage();
 }
 
-// ===== 站点配置：联系方式动态展示（第三批）=====
-// 后台「系统设置 → 参数设置」改 site_* 键，前台所有页面刷新即生效；配置为空/接口失败保留静态内容
-const SITE_KEYS = ['site_phone', 'site_email', 'site_address', 'site_wechat'];
+// ===== 站点配置：导航/页脚/联系方式动态展示（第三批 + 站点级内容进后台）=====
+// 后台「站点设置」改键，前台所有页面刷新即生效；配置为空/接口失败保留静态内容
+const SITE_KEYS = ['site_phone', 'site_email', 'site_address', 'site_wechat',
+  'site.nav', 'site.footer.about', 'site.footer.contact', 'site.footer.join'];
 
 async function loadSiteConfig() {
   const cfg = {};
@@ -382,7 +383,8 @@ async function loadSiteConfig() {
     }));
     clearTimeout(timer);
   } catch (e) { return; }
-  if (!cfg.site_phone && !cfg.site_address && !cfg.site_wechat) return;
+  if (!cfg.site_phone && !cfg.site_address && !cfg.site_wechat
+    && !cfg['site.nav'] && !cfg['site.footer.about'] && !cfg['site.footer.contact'] && !cfg['site.footer.join']) return;
 
   // 1) footer 联系列（全站统一结构：找到 h4 含"联系"的列，整段替换 地址/电话/公众号）
   document.querySelectorAll('footer .footer-col').forEach(col => {
@@ -409,6 +411,32 @@ async function loadSiteConfig() {
     else if (t.indexOf('公众号') !== -1) v = cfg.site_wechat ? cfg.site_wechat.split('｜')[0].trim() : null;
     else if (t.indexOf('视频号') !== -1) v = cfg.site_wechat && cfg.site_wechat.indexOf('｜') !== -1 ? cfg.site_wechat.split('｜')[1].trim() : null;
     if (v) value.textContent = v;
+  });
+
+  // 3) 导航菜单（site.nav JSON → #navAnchors；配置为空/损坏保留静态导航）
+  if (cfg['site.nav']) {
+    try {
+      const items = JSON.parse(cfg['site.nav']);
+      const box = document.getElementById('navAnchors');
+      if (Array.isArray(items) && items.length && box) {
+        box.innerHTML = items.map(n =>
+          '<a href="' + esc(n.link || '#') + '">' + esc(n.name || '') + '</a>').join('');
+      }
+    } catch (e) { /* 导航配置损坏保留静态 */ }
+  }
+
+  // 4) 页脚三栏（site.footer.* 按 h4 匹配替换，白名单 HTML；优先级高于 site_* 拼接）
+  const FOOTER_MAP = { 'site.footer.about': '关于我们', 'site.footer.contact': '联系我们', 'site.footer.join': '入驻与合作' };
+  Object.keys(FOOTER_MAP).forEach(key => {
+    if (!cfg[key]) return;
+    document.querySelectorAll('footer .footer-col').forEach(col => {
+      const h = col.querySelector('h4');
+      const p = col.querySelector('p');
+      if (h && p && (h.textContent || '').indexOf(FOOTER_MAP[key]) !== -1) {
+        // 存储为纯文本换行（RuoYi XSS 过滤会剥离 HTML 标签），渲染时转 <br> 后白名单净化
+        p.innerHTML = cmsSanitizeHtml(String(cfg[key]).replace(/\n/g, '<br>'));
+      }
+    });
   });
 }
 
