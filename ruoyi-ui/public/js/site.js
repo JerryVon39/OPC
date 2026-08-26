@@ -60,6 +60,21 @@ function safeCols(v) {
   if (!link || !/opc\.example\.com/i.test(link.href)) return;
   link.href = location.origin + location.pathname;
 })();
+// 导航防闪烁（站点设置排序即时生效）：脚本在 body 末尾同步执行、早于浏览器首绘——
+// 先把上次拉到的 site.nav 缓存同步渲染到 #navAnchors，再异步拉最新配置覆盖并更新缓存。
+// 效果：切换页面不再先闪一下静态 HTML 的旧顺序；仅首次访问（无缓存）有一次短暂静态显示
+(function () {
+  try {
+    const cached = localStorage.getItem('opc_site_nav');
+    if (!cached) return;
+    const items = JSON.parse(cached);
+    if (!Array.isArray(items) || !items.length) return;
+    const box = document.getElementById('navAnchors');
+    if (!box) return;
+    const html = items.map(n => '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
+    if (html && html !== box.innerHTML) box.innerHTML = html;
+  } catch (e) { /* 缓存损坏/隐私模式：忽略，走静态导航 */ }
+})();
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function toast(text) {
   const t = document.getElementById('toast');
@@ -444,6 +459,8 @@ async function loadSiteConfig() {
       if (Array.isArray(items) && items.length && box) {
         box.innerHTML = items.map(n =>
           '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
+        // 写入本地缓存：下次切页时脚本同步渲染，消除"先显示静态旧顺序"的闪烁
+        try { localStorage.setItem('opc_site_nav', JSON.stringify(items)); } catch (e) {}
       }
     } catch (e) { /* 导航配置损坏保留静态 */ }
   }
