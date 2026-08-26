@@ -88,7 +88,21 @@ function safeCols(v) {
     }
   } catch (e) { /* 隐私模式等：走隐藏-兜底路径 */ }
   box.classList.add('nav-pending');
-  setTimeout(function () { box.classList.remove('nav-pending'); }, 3500); // 兜底：请求失败恢复静态导航
+  // 兜底（请求失败/超时）：优先渲染任意缓存（即使过期——上次配置也好过静态初版顺序），
+  // 无缓存才恢复静态导航——任何情况下都不闪"静态初版"
+  setTimeout(function () {
+    let items = null;
+    try {
+      const raw = localStorage.getItem('opc_site_nav');
+      if (raw) { const c = JSON.parse(raw); items = Array.isArray(c) ? c : (c && Array.isArray(c.items) ? c.items : null); }
+    } catch (e) {}
+    if (Array.isArray(items) && items.length) {
+      const html = items.map(n => '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
+      if (html) box.innerHTML = html;
+      if (typeof initNav === 'function') initNav();
+    }
+    box.classList.remove('nav-pending');
+  }, 3500);
 })();
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function toast(text) {
@@ -472,10 +486,15 @@ async function loadSiteConfig() {
       const items = JSON.parse(cfg['site.nav']);
       const box = document.getElementById('navAnchors');
       if (Array.isArray(items) && items.length && box) {
-        box.innerHTML = items.map(n =>
+        const html = items.map(n =>
           '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
+        // 内容与现渲染一致时跳过 innerHTML 重写：省一次全量替换（切页卡顿主因）。
+        // 比较时忽略 active 类——initNav 会在渲染后打上当前页高亮，读回值必带 class 差异
+        if (box.innerHTML.replace(/\sclass="active"/g, '') !== html) {
+          box.innerHTML = html;
+          initNav(); // 重跑 URL 高亮（整体替换 innerHTML 会丢掉 active 类）
+        }
         box.classList.remove('nav-pending'); // 配置已渲染：显示导航（同步块隐藏的在此恢复）
-        initNav(); // 渲染后重跑 URL 高亮（整体替换 innerHTML 会丢掉 active 类）
         // 写入带时间戳的本地缓存：60s 内切页同步渲染零闪烁；过期不渲染旧顺序
         try { localStorage.setItem('opc_site_nav', JSON.stringify({ t: Date.now(), items: items })); } catch (e) {}
       }
@@ -721,17 +740,19 @@ async function loadHomeSections() {
   } catch (e) { revealStatic('homeStatic'); return; } // 失败/超时：保留静态模块（吸附已绑定静态）
   if (!list.length) { revealStatic('homeStatic'); return; }
   const html = renderHomeBlocks(list);
-  box.innerHTML = html;
-  // 写入带时间戳的本地缓存：切页时同步渲染防闪烁（60s 内新鲜）
-  try { localStorage.setItem('opc_blocks_home', JSON.stringify({ t: Date.now(), list: list })); } catch (e) {}
+  const cachedList = (() => { try { const c = JSON.parse(localStorage.getItem('opc_blocks_home')); return c && Array.isArray(c.list) ? c.list : null; } catch (e) { return null; } })();
   const stat = document.getElementById('homeStatic');
-  if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底（区块槽位重新定位到动态元素）
-  // 动态 hero：重新拉取轮播（复用 home.html 暴露的函数）
+  const sameAsCached = cachedList && JSON.stringify(cachedList) === JSON.stringify(list);
+  if (stat || !sameAsCached) {
+    box.innerHTML = html;
+    if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底（区块槽位重新定位到动态元素）
+    applyPreviewMarks();
+  }
+  // 动态 hero 轮播与滚动动画：无论是否重渲染都重绑（幂等；同步阶段内联脚本可能尚未定义）
   if (window.__loadBanners) window.__loadBanners();
-  // 首页内容已统一由页面搭建管理（home-* 区块已停用），无需再应用区块覆盖
-  // 滚动动画/全屏翻页重新绑定动态模块（home.html 暴露的可重跑函数）
   if (window.__initHomeAnimations) window.__initHomeAnimations();
-  applyPreviewMarks();
+  // 刷新缓存时间戳（无论是否重渲染）
+  try { localStorage.setItem('opc_blocks_home', JSON.stringify({ t: Date.now(), list: list })); } catch (e) {}
 }
 
 // ===== 后台预览标注模式（配合后台页面搭建/区块管理的实时预览 iframe）=====
@@ -909,12 +930,18 @@ async function loadPageSections(pageKey) {
     if (d.code === 200) list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
   } catch (e) { revealStatic('pageStatic'); return; }
   if (!list.length) { revealStatic('pageStatic'); return; } // 保留静态主体（页面永不白屏）
-  box.innerHTML = list.map((b, i) => renderPageBlock(b, i + 1)).join('');
-  // 写入带时间戳的本地缓存：切页时同步渲染防闪烁（60s 内新鲜）
-  try { localStorage.setItem('opc_blocks_' + pageKey, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {}
+  const cachedList = (() => { try { const c = JSON.parse(localStorage.getItem('opc_blocks_' + pageKey)); return c && Array.isArray(c.list) ? c.list : null; } catch (e) { return null; } })();
   const stat = document.getElementById('pageStatic');
-  if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底主体
-  applyPreviewMarks();
+  const sameAsCached = cachedList && JSON.stringify(cachedList) === JSON.stringify(list);
+  if (stat || !sameAsCached) {
+    // 同步块未渲染（静态还在）或后台内容有变：执行渲染；
+    // 内容一致且同步块已渲染：跳过全量 innerHTML（切页卡顿主因）
+    box.innerHTML = list.map((b, i) => renderPageBlock(b, i + 1)).join('');
+    if (stat) stat.parentNode.removeChild(stat); // 移除静态兜底主体
+    applyPreviewMarks();
+  }
+  // 刷新缓存时间戳（无论是否重渲染：保持"新鲜"窗口，下次切页走同步渲染）
+  try { localStorage.setItem('opc_blocks_' + pageKey, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {}
 }
 
 // ===== 区块内容防闪烁（区块管理保存的内容切页即显，不闪静态原版）=====
