@@ -66,6 +66,51 @@ export const BLOCK_TEMPLATES = [
     ]
   },
   {
+    value: 'banner', name: '大图横幅', icon: '🖼️', scene: 'both',
+    desc: '全宽横幅：背景图 + 标题 + 按钮（无图时用渐变底色）',
+    schema: [
+      { key: 'image', label: '背景图', type: 'image' },
+      { key: 'title', label: '主标题', type: 'text', placeholder: '横幅标题' },
+      { key: 'text', label: '正文', type: 'text', placeholder: '一句话说明' },
+      { key: 'btnText', label: '按钮文字', type: 'text', width: 200, placeholder: '如：立即入驻' },
+      { key: 'btnLink', label: '按钮链接', type: 'text', width: 300, placeholder: '如：join.html' }
+    ]
+  },
+  {
+    value: 'faq', name: '常见问题', icon: '❓', scene: 'both',
+    desc: '问答折叠列表（政策/入驻高频问题）',
+    schema: [
+      { key: 'items', label: '问答', type: 'list', itemLabel: '问答', fields: [
+        { key: 'q', label: '问题', type: 'text', width: 320, placeholder: '问题' },
+        { key: 'a', label: '回答', type: 'textarea', rows: 2, placeholder: '回答' }
+      ]}
+    ]
+  },
+  {
+    value: 'team', name: '成员/企业卡片', icon: '👥', scene: 'page',
+    desc: '带头像的成员或合作企业卡片网格',
+    schema: [
+      { key: 'cols', label: '每行列数', type: 'radio', options: [2, 3] },
+      { key: 'items', label: '成员', type: 'list', itemLabel: '成员', fields: [
+        { key: 'image', label: '头像 URL', type: 'text', width: 220, placeholder: '头像图片 URL（可留空用默认）' },
+        { key: 'name', label: '姓名/名称', type: 'text', width: 180, placeholder: '姓名/名称' },
+        { key: 'role', label: '身份/标签', type: 'text', width: 180, placeholder: '如：AI 内容创作者' },
+        { key: 'desc', label: '简介', type: 'textarea', rows: 2, placeholder: '一句话简介' }
+      ]}
+    ]
+  },
+  {
+    value: 'price', name: '费用/权益表', icon: '💰', scene: 'page',
+    desc: '表格展示费用项目与说明（入驻收费/服务清单）',
+    schema: [
+      { key: 'items', label: '行', type: 'list', itemLabel: '行', fields: [
+        { key: 'name', label: '项目', type: 'text', width: 220, placeholder: '项目（如：A 类免费合伙人）' },
+        { key: 'price', label: '费用', type: 'text', width: 150, placeholder: '费用（如：免费/¥299/月）' },
+        { key: 'desc', label: '说明', type: 'text', placeholder: '说明' }
+      ]}
+    ]
+  },
+  {
     value: 'steps', name: '步骤清单', icon: '🔢', scene: 'page',
     desc: '①②③ 编号步骤（入驻流程/申报流程）',
     schema: [
@@ -168,4 +213,62 @@ export function defaultCfgOf(template) {
     }
   })
   return cfg
+}
+
+/** 模板示例配置（创建弹窗「预览样式」用，展示真实渲染效果；字段与 schema 一一对应） */
+export const TEMPLATE_SAMPLES = {
+  hero: { title: '数智游民创新工场', subtitle: 'AI 一人公司生态社区', content: '让每一个热爱 AI 的人，都能在这里把热爱变成事业。' },
+  news: { count: 3 },
+  contact: { items: [{ date: '2026-06', title: '社区揭牌', desc: '首批入驻团队亮相' }] },
+  text: { subtitle: '社区简介', text: '<p>这里是文本段落模板的示例效果：支持<strong>加粗</strong>、<em>斜体</em>、列表等简单排版，保存后前台即生效。</p>' },
+  feature: { text: '<p>图文并排模板示例：配图（可留空）+ 说明文字 + 按钮，支持左右换向。</p>', btnText: '了解更多', btnLink: 'join.html' },
+  banner: { title: '与我们一起，共建 AI 游民社区', text: '入驻即享算力、政策与订单对接', btnText: '立即入驻', btnLink: 'join.html' },
+  cards: { cols: 3, subtitle: '三大赋能方向', cards: [
+    { icon: '🎨', title: 'AI 内容创作', text: '文旅推广、政务科普等文创订单对接' },
+    { icon: '💻', title: 'AI 技术应用', text: '应用出海与工具开发支持' },
+    { icon: '🎓', title: 'AI 技能培训', text: '面向本地企业的 AI 办公培训' }
+  ]},
+  steps: { steps: [
+    { title: '提交申请', desc: '填写入驻信息与项目简介' },
+    { title: '审核沟通', desc: '运营团队一对一对接' },
+    { title: '签约入驻', desc: '正式开启 AI 共创之旅' }
+  ]},
+  list: { items: [
+    { title: '咨询电话', desc: '0763-xxxxxxx' },
+    { title: '办公地址', desc: '清远市清城区（示例）' }
+  ]},
+  tags: { groups: [
+    { title: '合作共建方', tags: ['清城区政府', '星链科技', '顺拓集团', '星拓公司'] }
+  ]},
+  timeline: { items: [
+    { date: '2026-01', title: '项目启动', desc: '数智游民创新工场立项' },
+    { date: '2026-06', title: '社区揭牌', desc: '首批入驻团队亮相' }
+  ]},
+  stats: { items: [
+    { value: '21 天', label: '从签约到揭牌' },
+    { value: '3 家', label: '首批入驻企业' }
+  ], text: '<p>数据亮点模板：2-4 个数字 + 补充说明。</p>' },
+  quote: { text: '让热爱 AI 的人，把热爱变成事业。', author: '社区运营理念' },
+  faq: { items: [
+    { q: '入驻需要什么条件？', a: '有 AI 相关创业项目或技能的个人/团队均可申请，A 类合伙人免费入驻。' },
+    { q: '入驻后有什么支持？', a: '免费试用 70B 以内大模型一体机、政策对接与文创订单分发。' }
+  ]},
+  team: { cols: 3, items: [
+    { name: '周舟', role: '数字游民 · AI 内容创作', desc: '社区首批入驻成员，专注 AI 绘本与文旅短视频。' },
+    { name: '李想', role: '独立开发者', desc: '一人公司实践者，主打 AI 应用出海工具。' },
+    { name: '陈默', role: 'AI 培训师', desc: '面向本地企业开展 AI 办公技能培训。' }
+  ]},
+  price: { items: [
+    { name: 'A 类免费合伙人', price: '免费', desc: '有独立项目，贡献社区内容' },
+    { name: 'B 类付费成员', price: '¥299/月', desc: '共享工位 + 算力一体机试用' },
+    { name: '企业合作', price: '面议', desc: '定制化合作与联合项目' }
+  ]},
+  cta: { title: '准备好加入我们了吗？', text: '立即申请入驻，开启你的 AI 一人公司之旅', btnText: '立即入驻', btnLink: 'join.html' },
+  form: {}
+}
+
+/** 按模板值取示例配置（深拷贝，避免调用方修改污染注册表） */
+export function sampleCfgOf(value) {
+  const s = TEMPLATE_SAMPLES[value]
+  return s ? JSON.parse(JSON.stringify(s)) : {}
 }

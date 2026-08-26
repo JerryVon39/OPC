@@ -145,7 +145,18 @@
           <div class="tmpl-icon">{{ t.icon }}</div>
           <div class="tmpl-name">{{ t.name }}</div>
           <div class="tmpl-desc">{{ t.desc }}</div>
+          <div class="tmpl-actions">
+            <el-button size="mini" type="text" icon="el-icon-view" @click.stop="openTemplatePreview(t)">预览样式</el-button>
+            <el-button size="mini" type="text" icon="el-icon-plus" @click.stop="createFromTemplate(t)">使用此模板</el-button>
+          </div>
         </div>
+      </div>
+    </el-dialog>
+
+    <!-- 模板样式预览：复用前台真实渲染器（block-preview.html），示例数据见 blockTemplates.js TEMPLATE_SAMPLES -->
+    <el-dialog :title="'模板样式预览 · ' + tplPreviewName" :visible.sync="tplPreviewOpen" width="760px" append-to-body>
+      <div class="tpl-preview-wrap">
+        <iframe v-if="tplPreviewSrc" :key="tplPreviewTs" :src="tplPreviewSrc" class="tpl-preview-frame"></iframe>
       </div>
     </el-dialog>
 
@@ -171,7 +182,7 @@
 import { listBlock, addBlock, updateBlock, delBlock, moveBlock, listBlockHistory, rollbackBlock } from "@/api/system/cms"
 import { getConfigKey } from "@/api/system/config"
 import { getToken } from "@/utils/auth"
-import { BLOCK_TEMPLATES, templateOf, defaultCfgOf } from "./blockTemplates"
+import { BLOCK_TEMPLATES, templateOf, defaultCfgOf, sampleCfgOf } from "./blockTemplates"
 
 export default {
   name: "CmsBlock",
@@ -201,6 +212,10 @@ export default {
       historyList: [],
       currentBlockId: null,
       currentBlockTitle: '',
+      tplPreviewOpen: false,
+      tplPreviewSrc: '',
+      tplPreviewTs: 0,
+      tplPreviewName: '',
       templates: BLOCK_TEMPLATES // 模板注册表（Schema 驱动，见 blockTemplates.js）
     }
   },
@@ -306,6 +321,16 @@ export default {
       this.cfg[f.key].push(item)
     },
     openAdd() { this.addOpen = true },
+    /** 打开模板样式预览：用示例配置调前台真实渲染器（block-preview.html），所见即前台所得 */
+    openTemplatePreview(t) {
+      this.tplPreviewName = t.name
+      const sample = sampleCfgOf(t.value)
+      this.tplPreviewSrc = this.frontBase + '/block-preview.html?template=' + encodeURIComponent(t.value) +
+        '&scene=' + encodeURIComponent(t.scene) +
+        '&cfg=' + encodeURIComponent(JSON.stringify(sample)) + '&t=' + Date.now()
+      this.tplPreviewTs = Date.now()
+      this.tplPreviewOpen = true
+    },
     createFromTemplate(t) {
       this.addOpen = false
       const maxSort = this.contentBlocks.reduce((m, b) => Math.max(m, b.sort || 0), 0)
@@ -425,6 +450,9 @@ export default {
 .tmpl-icon { font-size: 26px; }
 .tmpl-name { font-weight: 600; margin: 6px 0 4px; }
 .tmpl-desc { color: #909399; font-size: 12px; line-height: 1.5; }
+.tmpl-actions { margin-top: 10px; display: flex; justify-content: center; gap: 6px; }
+.tpl-preview-wrap { height: 520px; }
+.tpl-preview-frame { width: 100%; height: 100%; border: 1px solid #ebeef5; border-radius: 6px; background: #f2f3f5; }
 .card-row { display: flex; gap: 8px; align-items: flex-start; width: 100%; }
 .card-row .el-input, .card-row .el-textarea { flex: 1; }
 </style>

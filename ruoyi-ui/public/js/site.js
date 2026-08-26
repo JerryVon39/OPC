@@ -39,12 +39,15 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-// 链接协议白名单（对齐 home.html goBannerLink）：仅放行 http(s)/相对路径/锚点/mailto，
-// 其余一律落 '#' —— esc() 只转义 HTML 字符，拦不住 javascript: 直通（H3 修复）
+// 链接协议白名单（对齐 home.html goBannerLink 思路）：放行 http(s)/绝对与相对路径/锚点/mailto，
+// 其余一律落 '#' —— esc() 只转义 HTML 字符，拦不住 javascript: 直通（H3 修复）。
+// 注意：相对路径（join.html、home.html#contact 等种子数据常用）无协议头，按"不含协议头即安全"放行
 function safeLink(link) {
   const s = String(link == null ? '' : link).trim();
-  if (!s || /^(https?:\/\/|\/|#|mailto:)/i.test(s)) return s || '#';
-  return '#';
+  if (!s) return '#';
+  if (/^(https?:\/\/|\/|#|mailto:)/i.test(s)) return s;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+  return '#'; // javascript:/data:/vbscript: 等危险协议一律拦截
 }
 // 正整数列数：非法值一律回退 3 —— 防 style 属性注入（H3 修复）
 function safeCols(v) {
@@ -718,7 +721,7 @@ window.addEventListener('message', function (e) {
 });
 
 // ===== 栏目页内容区块渲染（区块管理 v3：栏目页主体模块化）=====
-// 模板集（11 个）：text/feature/cards/steps/list/tags/timeline/stats/quote/cta/form
+// 模板集（15 个）：text/feature/cards/steps/list/tags/timeline/stats/quote/cta/form/banner/faq/team/price
 // 样式 .pblock 前缀（阅读型文档流：白卡/浅底 + 大间距 + 居中容器，与首页 renderSection 完全隔离）
 // 区块标题 = 后台区块的 title 字段（内容区块必填）；正文/配置来自 config_json
 function renderPageBlock(b, no) {
@@ -785,6 +788,40 @@ function renderPageBlock(b, no) {
   if (t === 'quote') {
     return inner('<div class="pblock-quote"><div class="pblock-quote-text">' + esc(cfg.text || '') + '</div>' +
       (cfg.author ? '<div class="pblock-quote-author">—— ' + esc(cfg.author) + '</div>' : '') + '</div>');
+  }
+  if (t === 'banner') {
+    // 大图横幅：背景图 + 标题 + 正文 + 按钮；无图时用渐变底色（样式 .pblock-banner-grad）
+    const bg = cfg.image ? ' style="background-image:url(' + esc(imgUrl(cfg.image)) + ')"' : '';
+    return '<section class="pblock pblock-banner' + (cfg.image ? '' : ' pblock-banner-grad') + '" data-section-key="' + esc(key) + '"' + bg + '><div class="pblock-banner-inner">' +
+      '<h3>' + esc(cfg.title || b.title || '') + '</h3>' +
+      (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
+      (cfg.btnText ? '<a class="btn-buy pblock-banner-btn" href="' + esc(safeLink(cfg.btnLink)) + '" style="text-decoration:none">' + esc(cfg.btnText) + '</a>' : '') +
+      '</div></section>';
+  }
+  if (t === 'faq') {
+    // 常见问题：details/summary 纯 CSS 折叠，无需 JS
+    const items = (cfg.items || []).map(it =>
+      '<details class="pblock-faq-item"><summary>' + esc(it.q || '') + '</summary>' +
+      '<div class="pblock-faq-a">' + esc(it.a || '') + '</div></details>').join('');
+    return inner(head(b.title) + '<div class="pblock-faq">' + items + '</div>');
+  }
+  if (t === 'team') {
+    // 成员/企业卡片：头像（可留空用默认）+ 姓名 + 身份 + 简介
+    const cards = (cfg.items || []).map(c =>
+      '<div class="pblock-team-card">' +
+      (c.image ? '<div class="pblock-team-avatar"><img src="' + esc(imgUrl(c.image)) + '" alt="" /></div>' : '<div class="pblock-team-avatar pblock-team-avatar-empty">👤</div>') +
+      '<div class="pblock-team-name">' + esc(c.name || '') + '</div>' +
+      (c.role ? '<div class="pblock-team-role">' + esc(c.role) + '</div>' : '') +
+      (c.desc ? '<div class="pblock-team-desc">' + esc(c.desc) + '</div>' : '') + '</div>').join('');
+    return inner(head(b.title) +
+      '<div class="pblock-team" style="grid-template-columns:repeat(' + safeCols(cfg.cols) + ',1fr)">' + cards + '</div>');
+  }
+  if (t === 'price') {
+    // 费用/权益表：项目 + 费用 + 说明 三列表格
+    const rows = (cfg.items || []).map(it =>
+      '<tr><td class="pblock-price-name">' + esc(it.name || '') + '</td><td class="pblock-price-val">' + esc(it.price || '') + '</td>' +
+      '<td>' + esc(it.desc || '') + '</td></tr>').join('');
+    return inner(head(b.title) + '<div class="pblock-table-wrap"><table class="pblock-price"><tbody>' + rows + '</tbody></table></div>');
   }
   if (t === 'cta') {
     return '<section class="pblock pblock-cta" data-section-key="' + esc(key) + '"><div class="pblock-cta-inner">' +
