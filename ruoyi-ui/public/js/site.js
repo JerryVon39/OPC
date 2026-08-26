@@ -573,10 +573,17 @@ function renderSection(s, no) {
         if (!rows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
         box.innerHTML = rows.map(a => {
           const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
-          return '<div class="news-card" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
-            '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">置顶</span> ' : '') + esc(a.title || '') + '</div>' +
-            '<div class="news-date">🕐 ' + esc(a.publishTime || '') + ' ｜ ' + esc(a.categoryName || '') + '</div>' +
-            '<div class="news-summary">' + esc(raw.slice(0, 120)) + (raw.length > 120 ? '…' : '') + '</div>' +
+          // 封面缩略图：有封面才显示（左图右文），无封面保持纯文字卡片
+          const cover = a.cover
+            ? '<img class="news-thumb" src="' + esc(/^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + a.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+            : '';
+          return '<div class="news-card' + (a.cover ? ' has-thumb' : '') + '" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
+            cover +
+            '<div class="news-body">' +
+              '<div class="news-title">' + (a.isTop === '1' ? '<span class="tag tag-off" style="background:#fdf0ec;color:#e2554b">置顶</span> ' : '') + esc(a.title || '') + '</div>' +
+              '<div class="news-date">🕐 ' + esc(a.publishTime || '') + ' ｜ ' + esc(a.categoryName || '') + '</div>' +
+              '<div class="news-summary">' + esc(raw.slice(0, 120)) + (raw.length > 120 ? '…' : '') + '</div>' +
+            '</div>' +
           '</div>';
         }).join('');
       } catch (e) {

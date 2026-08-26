@@ -17,6 +17,8 @@
   .article-crumb { font-size: 13px; color: var(--text-light); margin-bottom: 14px; }
   .article-crumb a { color: var(--accent); text-decoration: none; }
   .article-title { font-size: 26px; font-weight: bold; line-height: 1.5; margin-bottom: 12px; }
+  .article-cover-wrap { margin-bottom: 16px; }
+  .article-cover { width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; display: block; }
   .article-meta { font-size: 13px; color: var(--text-light); display: flex; gap: 16px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
   .article-meta .tag-sale { padding: 2px 10px; }
   .article-content { font-size: 15px; line-height: 2; color: var(--text); white-space: pre-wrap; word-break: break-word; }
@@ -56,6 +58,7 @@
     <div class="article-wrap">
       <div class="article-crumb"><a href="home.html">首页</a> › <a id="crumbList" href="news.html">新闻动态</a> › <span id="crumbCat">—</span></div>
       <h1 class="article-title" id="artTitle">加载中…</h1>
+      <div id="artCover" class="article-cover-wrap" style="display:none"></div>
       <div class="article-meta" id="artMeta"></div>
       <div id="artAttach" style="margin:16px 0;display:none"></div>
       <div class="article-content" id="artContent">加载中…</div>
@@ -189,6 +192,17 @@
       setMeta('keywords', a.keywords);
       setMeta('description', a.description);
       titleEl.textContent = a.title || '未命名文章';
+      // 封面大图（有封面才显示；相对路径补 /prod-api 前缀，加载失败自动隐藏不破版）
+      const coverEl = document.getElementById('artCover');
+      if (coverEl) {
+        if (a.cover) {
+          const coverSrc = /^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + a.cover;
+          coverEl.innerHTML = '<img class="article-cover" src="' + esc(coverSrc) + '" alt="' + esc(a.title || '') + '" onerror="this.style.display=\'none\'">';
+          coverEl.style.display = '';
+        } else {
+          coverEl.style.display = 'none';
+        }
+      }
       const cat = document.getElementById('crumbCat');
       cat.textContent = a.categoryName || '未分类';
       cat.style.color = 'var(--text)';
