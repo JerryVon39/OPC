@@ -71,151 +71,43 @@
                 <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
               </el-form-item>
 
-              <!-- hero 首页首屏 -->
-              <template v-if="form.template === 'hero'">
-                <el-form-item label="主标题"><el-input v-model="cfg.title" maxlength="60" placeholder="留空 = 使用默认首屏标题" /></el-form-item>
-                <el-form-item label="副标题"><el-input v-model="cfg.subtitle" maxlength="100" placeholder="留空 = 使用默认副标题" /></el-form-item>
-                <el-form-item label="正文"><el-input v-model="cfg.content" type="textarea" :rows="4" placeholder="留空 = 使用默认文案" /></el-form-item>
-                <el-form-item label="说明"><span style="color:#999;font-size:12px">首屏轮播图请到「官网轮播」维护；文案留空则前台用默认文案。</span></el-form-item>
-              </template>
-
-              <!-- news 新闻动态 -->
-              <template v-if="form.template === 'news'">
-                <el-form-item label="显示条数"><el-input-number v-model="cfg.count" :min="1" :max="12" /></el-form-item>
-              </template>
-
-              <!-- contact 联系区 -->
-              <template v-if="form.template === 'contact'">
-                <el-form-item v-for="(it, i) in cfg.items" :key="i" :label="'条目 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="it.date" placeholder="日期" style="width:130px" />
-                    <el-input v-model="it.title" placeholder="标题" style="width:150px" />
-                    <el-input v-model="it.desc" placeholder="描述" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.items.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.items.push({ date: '', title: '', desc: '' })">＋ 添加条目</el-button></el-form-item>
-                <el-form-item label="说明"><span style="color:#999;font-size:12px">contact 模板的联系方式自动读取站点配置（系统设置 → 参数设置）</span></el-form-item>
-              </template>
-
-              <!-- text 文本段落 -->
-              <template v-if="form.template === 'text'">
-                <el-form-item label="副标题"><el-input v-model="cfg.subtitle" placeholder="可选副标题" /></el-form-item>
-                <el-form-item label="正文"><el-input v-model="cfg.text" type="textarea" :rows="6" placeholder="正文（支持加粗/列表等简单排版）" /></el-form-item>
-              </template>
-
-              <!-- feature 图文并排 -->
-              <template v-if="form.template === 'feature'">
-                <el-form-item label="配图">
-                  <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="handleImageSuccess" accept="image/*">
-                    <img v-if="cfg.image" :src="imgUrl(cfg.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
-                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                  </el-upload>
-                </el-form-item>
-                <el-form-item label="正文"><el-input v-model="cfg.text" type="textarea" :rows="4" placeholder="正文" /></el-form-item>
-                <el-form-item label="按钮文字"><el-input v-model="cfg.btnText" placeholder="如：了解更多" style="width:200px" /></el-form-item>
-                <el-form-item label="按钮链接"><el-input v-model="cfg.btnLink" placeholder="如：join.html" style="width:300px" /></el-form-item>
-                <el-form-item label="图文换向">
-                  <el-switch v-model="cfg.reverse" active-value="1" inactive-value="0" active-text="图在右" inactive-text="图在左" />
+              <!-- 模板字段：按注册表 schema 自动生成（blockTemplates.js） -->
+              <template v-for="f in currentTpl.schema" v-if="currentTpl">
+                <el-form-item :key="f.key" :label="f.label">
+                  <template v-if="f.type === 'text'">
+                    <el-input v-model="cfg[f.key]" :maxlength="f.maxlength" :placeholder="f.placeholder" :style="f.width ? 'width:' + f.width + 'px' : ''" />
+                  </template>
+                  <template v-else-if="f.type === 'textarea' || f.type === 'html'">
+                    <el-input v-model="cfg[f.key]" type="textarea" :rows="f.rows || 3" :placeholder="f.placeholder" />
+                  </template>
+                  <template v-else-if="f.type === 'number'">
+                    <el-input-number v-model="cfg[f.key]" :min="f.min" :max="f.max" />
+                  </template>
+                  <template v-else-if="f.type === 'radio'">
+                    <el-radio-group v-model="cfg[f.key]">
+                      <el-radio v-for="opt in f.options" :key="opt" :label="opt">{{ opt }} 列</el-radio>
+                    </el-radio-group>
+                  </template>
+                  <template v-else-if="f.type === 'switch'">
+                    <el-switch v-model="cfg[f.key]" :active-value="f.activeValue" :inactive-value="f.inactiveValue" :active-text="f.activeText" :inactive-text="f.inactiveText" />
+                  </template>
+                  <template v-else-if="f.type === 'image'">
+                    <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="handleImageSuccess" accept="image/*">
+                      <img v-if="cfg.image" :src="imgUrl(cfg.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
+                      <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                  </template>
+                  <template v-else-if="f.type === 'list'">
+                    <div v-for="(item, i) in cfg[f.key]" :key="i" class="card-row" style="margin-bottom:8px">
+                      <el-input v-for="sf in f.fields" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' || sf.type === 'html' ? 'textarea' : undefined" :rows="sf.rows" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
+                      <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删</el-button>
+                    </div>
+                    <el-button type="primary" plain size="mini" @click="addListItem(f)">＋ 添加{{ f.itemLabel }}</el-button>
+                  </template>
                 </el-form-item>
               </template>
-
-              <!-- cards 图标卡片 -->
-              <template v-if="form.template === 'cards'">
-                <el-form-item label="每行列数">
-                  <el-radio-group v-model="cfg.cols"><el-radio :label="2">2 列</el-radio><el-radio :label="3">3 列</el-radio></el-radio-group>
-                </el-form-item>
-                <el-form-item label="引导语"><el-input v-model="cfg.subtitle" placeholder="可选：卡片上方的引导说明" /></el-form-item>
-                <el-form-item v-for="(c, i) in cfg.cards" :key="i" :label="'卡片 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="c.icon" placeholder="图标 emoji" style="width:90px" />
-                    <el-input v-model="c.title" placeholder="卡片标题" style="width:150px" />
-                    <el-input v-model="c.text" type="textarea" :rows="2" placeholder="卡片正文（支持简单排版）" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.cards.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.cards.push({ icon: '', title: '', text: '' })">＋ 添加卡片</el-button></el-form-item>
-              </template>
-
-              <!-- steps 步骤清单 -->
-              <template v-if="form.template === 'steps'">
-                <el-form-item v-for="(st, i) in cfg.steps" :key="i" :label="'步骤 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="st.title" placeholder="步骤标题" style="width:200px" />
-                    <el-input v-model="st.desc" placeholder="步骤说明" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.steps.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.steps.push({ title: '', desc: '' })">＋ 添加步骤</el-button></el-form-item>
-              </template>
-
-              <!-- list 条目清单 -->
-              <template v-if="form.template === 'list'">
-                <el-form-item v-for="(it, i) in cfg.items" :key="i" :label="'条目 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="it.title" placeholder="小标题（如：咨询电话）" style="width:200px" />
-                    <el-input v-model="it.desc" placeholder="描述" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.items.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.items.push({ title: '', desc: '' })">＋ 添加条目</el-button></el-form-item>
-              </template>
-
-              <!-- tags 标签墙 -->
-              <template v-if="form.template === 'tags'">
-                <el-form-item v-for="(g, i) in cfg.groups" :key="i" :label="'分组 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="g.title" placeholder="分组名（如：首批入驻企业）" style="width:220px" />
-                    <el-input v-model="g.tagsText" type="textarea" :rows="2" placeholder="标签，用中文逗号分隔" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.groups.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.groups.push({ title: '', tagsText: '' })">＋ 添加分组</el-button></el-form-item>
-              </template>
-
-              <!-- timeline 时间线 -->
-              <template v-if="form.template === 'timeline'">
-                <el-form-item v-for="(it, i) in cfg.items" :key="i" :label="'节点 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="it.date" placeholder="日期" style="width:130px" />
-                    <el-input v-model="it.title" placeholder="标题" style="width:150px" />
-                    <el-input v-model="it.desc" placeholder="描述" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.items.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.items.push({ date: '', title: '', desc: '' })">＋ 添加节点</el-button></el-form-item>
-              </template>
-
-              <!-- stats 数据亮点 -->
-              <template v-if="form.template === 'stats'">
-                <el-form-item v-for="(st, i) in cfg.items" :key="i" :label="'数据 ' + (i + 1)">
-                  <div class="card-row">
-                    <el-input v-model="st.value" placeholder="数值（如：21 天）" style="width:130px" />
-                    <el-input v-model="st.label" placeholder="说明（如：从签约到揭牌）" style="width:220px" />
-                    <el-button type="text" icon="el-icon-delete" @click="cfg.items.splice(i, 1)">删</el-button>
-                  </div>
-                </el-form-item>
-                <el-form-item><el-button type="primary" plain size="mini" @click="cfg.items.push({ value: '', label: '' })">＋ 添加数据</el-button></el-form-item>
-                <el-form-item label="补充说明"><el-input v-model="cfg.text" type="textarea" :rows="2" placeholder="可选：数据下方补充文字" /></el-form-item>
-              </template>
-
-              <!-- quote 金句引用 -->
-              <template v-if="form.template === 'quote'">
-                <el-form-item label="金句"><el-input v-model="cfg.text" type="textarea" :rows="3" placeholder="引语内容" /></el-form-item>
-                <el-form-item label="出处"><el-input v-model="cfg.author" placeholder="如：社区运营理念" style="width:260px" /></el-form-item>
-              </template>
-
-              <!-- cta 横幅 -->
-              <template v-if="form.template === 'cta'">
-                <el-form-item label="主标题"><el-input v-model="cfg.title" placeholder="留空则用区块名称" /></el-form-item>
-                <el-form-item label="正文"><el-input v-model="cfg.text" type="textarea" :rows="2" placeholder="引导文案" /></el-form-item>
-                <el-form-item label="按钮文字"><el-input v-model="cfg.btnText" placeholder="如：立即入驻" style="width:200px" /></el-form-item>
-                <el-form-item label="按钮链接"><el-input v-model="cfg.btnLink" placeholder="如：join.html" style="width:300px" /></el-form-item>
-              </template>
-
-              <!-- form 申请表单 -->
-              <el-form-item v-if="form.template === 'form'" label="说明">
-                <span style="color:#999;font-size:12px">入驻申请表单（字段固定：名称/联系人/邮箱/说明），提交后由运营团队处理。可在此调整区块名称与显示状态。</span>
+              <el-form-item v-if="currentTpl && currentTpl.tip" label="说明">
+                <span style="color:#999;font-size:12px">{{ currentTpl.tip }}</span>
               </el-form-item>
             </template>
 
@@ -246,10 +138,10 @@
       </div>
     </div>
 
-    <!-- 新增：模板选择 -->
+    <!-- 新增：模板选择（按当前页面场景过滤：首页 Tab 显示首页模板，栏目页 Tab 显示文档型模板） -->
     <el-dialog title="选择内容区块模板" :visible.sync="addOpen" width="720px" append-to-body>
       <div class="tmpl-grid">
-        <div v-for="t in templates" :key="t.value" class="tmpl-card" @click="createFromTemplate(t)">
+        <div v-for="t in sceneTemplates" :key="t.value" class="tmpl-card" @click="createFromTemplate(t)">
           <div class="tmpl-icon">{{ t.icon }}</div>
           <div class="tmpl-name">{{ t.name }}</div>
           <div class="tmpl-desc">{{ t.desc }}</div>
@@ -279,6 +171,7 @@
 import { listBlock, addBlock, updateBlock, delBlock, moveBlock, listBlockHistory, rollbackBlock } from "@/api/system/cms"
 import { getConfigKey } from "@/api/system/config"
 import { getToken } from "@/utils/auth"
+import { BLOCK_TEMPLATES, templateOf, defaultCfgOf } from "./blockTemplates"
 
 export default {
   name: "CmsBlock",
@@ -308,22 +201,7 @@ export default {
       historyList: [],
       currentBlockId: null,
       currentBlockTitle: '',
-      templates: [
-        { value: 'hero', name: '首屏（轮播+文案）', icon: '🎠', desc: '首页首屏：标题/副标题/正文（轮播走官网轮播管理）' },
-        { value: 'news', name: '新闻动态', icon: '📰', desc: '自动拉取最新新闻列表，可设条数（首页）' },
-        { value: 'contact', name: '联系区', icon: '📮', desc: '时间线 + 联系方式（联系方式自动读站点配置）' },
-        { value: 'text', name: '文本段落', icon: '📝', desc: '标题 + 长文段落（支持简单排版）' },
-        { value: 'feature', name: '图文并排', icon: '🖼️', desc: '配图 + 标题 + 正文 + 按钮，可左右换向' },
-        { value: 'cards', name: '图标卡片', icon: '🃏', desc: '2/3 列图标卡片（价值点/课程/企业）' },
-        { value: 'steps', name: '步骤清单', icon: '🔢', desc: '①②③ 编号步骤（入驻流程/申报流程）' },
-        { value: 'list', name: '条目清单', icon: '📋', desc: '圆点列表，每条小标题+描述（政策/权益）' },
-        { value: 'tags', name: '标签墙', icon: '🏷️', desc: '分组标签列表（机构/合作方）' },
-        { value: 'timeline', name: '时间线', icon: '📅', desc: '时间节点列表（发展历程）' },
-        { value: 'stats', name: '数据亮点', icon: '📊', desc: '2-4 个数字+说明（实力展示）' },
-        { value: 'quote', name: '金句引用', icon: '💬', desc: '大字号引语 + 出处' },
-        { value: 'cta', name: 'CTA 横幅', icon: '🎯', desc: '大按钮引导横幅（页尾引导）' },
-        { value: 'form', name: '申请表单', icon: '📮', desc: '入驻申请表单（join 页专用，字段固定）' }
-      ]
+      templates: BLOCK_TEMPLATES // 模板注册表（Schema 驱动，见 blockTemplates.js）
     }
   },
   computed: {
@@ -344,6 +222,16 @@ export default {
     isSlot() {
       const s = this.selected
       return s ? (!s.template || s.template === '') : false
+    },
+    currentTpl() {
+      // 当前选中内容区块的模板定义（Schema 驱动表单）
+      if (this.isSlot || !this.form.template) return null
+      return templateOf(this.form.template) || null
+    },
+    sceneTemplates() {
+      // 按当前页面场景过滤模板：home Tab → 首页模板（scene ≠ page）；栏目页 Tab → 文档型（scene ≠ home）
+      const isHome = this.activePage === 'home'
+      return this.templates.filter(t => isHome ? t.scene !== 'page' : t.scene !== 'home')
     },
     frontBase() {
       return (this.frontUrl && this.frontUrl !== 'http://localhost') ? this.frontUrl.replace(/\/+$/, '') : ''
@@ -409,20 +297,13 @@ export default {
       return cfg
     },
     defaultCfg(t) {
-      if (t === 'hero') return { title: '', subtitle: '', content: '' }
-      if (t === 'news') return { count: 6 }
-      if (t === 'contact') return { items: [{ date: '', title: '', desc: '' }] }
-      if (t === 'text') return { subtitle: '', text: '' }
-      if (t === 'feature') return { image: '', text: '', btnText: '', btnLink: '', reverse: '0' }
-      if (t === 'cards') return { cols: 3, subtitle: '', cards: [{ icon: '', title: '', text: '' }] }
-      if (t === 'steps') return { steps: [{ title: '', desc: '' }] }
-      if (t === 'list') return { items: [{ title: '', desc: '' }] }
-      if (t === 'tags') return { groups: [{ title: '', tagsText: '' }] }
-      if (t === 'timeline') return { items: [{ date: '', title: '', desc: '' }] }
-      if (t === 'stats') return { items: [{ value: '', label: '' }], text: '' }
-      if (t === 'quote') return { text: '', author: '' }
-      if (t === 'cta') return { title: '', text: '', btnText: '', btnLink: '' }
-      return {}
+      return defaultCfgOf(t) // 由模板 schema 推导
+    },
+    /** list 字段添加一项（按子字段 schema 生成空项） */
+    addListItem(f) {
+      const item = {}
+      f.fields.forEach(sf => { item[sf.key] = '' })
+      this.cfg[f.key].push(item)
     },
     openAdd() { this.addOpen = true },
     createFromTemplate(t) {
