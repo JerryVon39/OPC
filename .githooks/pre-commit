@@ -47,7 +47,7 @@ fi
 # ---------- 导出业务数据（REPLACE 模式，可重复导入） ----------
 # 注意：reader / book_purchase_req 含手机号/邮箱等个人隐私，快照一律排除，
 # 防止真实成员信息随 commit 自动推上（可能公开的）GitHub。
-TABLES="book borrow_record shop_order book_reserve sys_banner sys_notice sys_notice_read cms_category sys_dict_type sys_dict_data cms_block"
+TABLES="book borrow_record shop_order book_reserve sys_banner sys_notice sys_notice_read cms_category sys_dict_type sys_dict_data cms_block sys_menu sys_role_menu"
 # cms_article 单独导出（I3）：回收站行（del_flag='2'）不随快照进部署链，防止测试数据固化复发
 ART_FILTER="del_flag <> '2'"
 # sys_config 单独导出：站点设置随快照同步部署（否则 docker 全新部署缺运营配置，如验证码开关/导航/页脚）
