@@ -6,14 +6,16 @@
     <div ref="layout" class="sec-layout" :class="{ full: editFull }">
       <!-- 左：栏目 Tab + 区块列表（内容区块 / 固定槽位分区） -->
       <div class="sec-left">
-        <el-tabs v-model="activePage" @tab-click="onTabChange" class="block-tabs" :closable="true" @tab-remove="onTabRemove">
-          <el-tab-pane v-for="p in pages" :key="p.key" :label="p.name" :name="p.key" :closable="!!p.custom" />
-          <span slot="operations" class="page-ops">
-            <!-- 75：自定义前台页面管理（新增/改名/排序/停用） -->
+        <div class="block-tabs-row">
+          <el-tabs v-model="activePage" @tab-click="onTabChange" class="block-tabs" :closable="true" @tab-remove="onTabRemove">
+            <el-tab-pane v-for="p in pages" :key="p.key" :label="p.name" :name="p.key" :closable="!!p.custom" />
+          </el-tabs>
+          <!-- 75：自定义前台页面管理（Element UI 无 tabs 插槽，按钮放 tabs 右侧同行） -->
+          <div class="page-ops">
             <el-button type="text" icon="el-icon-document-add" size="mini" @click="openPageDlg" v-hasPermi="['system:cmsBlock:add']">＋ 新增页面</el-button>
             <el-button type="text" icon="el-icon-setting" size="mini" @click="pageMgrOpen = true" v-hasPermi="['system:cmsBlock:edit']">管理</el-button>
-          </span>
-        </el-tabs>
+          </div>
+        </div>
         <div class="sec-group-head">
           <span>内容区块</span>
           <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="openAdd" v-hasPermi="['system:cmsBlock:add']">新增</el-button>
@@ -737,8 +739,9 @@ export default {
 <style scoped>
 .sec-layout { display: flex; gap: 10px; height: calc(100vh - 170px); min-height: 500px; }
 .sec-left { width: 290px; flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 8px; }
-.block-tabs { margin-bottom: 4px; }
-.page-ops { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; }
+.block-tabs-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.block-tabs { flex: 1; margin-bottom: 0; }
+.page-ops { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .sec-group-head { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 13px; color: #606266; padding: 8px 4px 6px; border-top: 1px dashed #ebeef5; margin-top: 6px; }
 .sec-group-slot { border-top: 1px dashed #ebeef5; }
 .sec-empty { color: #909399; font-size: 13px; text-align: center; padding: 30px 0; }
