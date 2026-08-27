@@ -22,4 +22,7 @@ public interface CmsCategoryMapper
 
     /** 批量删除栏目 */
     public int deleteCmsCategoryByCategoryIds(Long[] categoryIds);
+
+    /** B：栏目文章数聚合（未删除文章按栏目分组） */
+    public java.util.List<java.util.Map<String, Object>> selectArticleCounts();
 }

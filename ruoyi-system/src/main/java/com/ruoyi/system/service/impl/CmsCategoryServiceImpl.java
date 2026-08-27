@@ -96,4 +96,11 @@ public class CmsCategoryServiceImpl implements ICmsCategoryService
         }
         return cmsCategoryMapper.deleteCmsCategoryByCategoryIds(categoryIds);
     }
+
+    /** B：栏目文章数聚合 */
+    @Override
+    public java.util.List<java.util.Map<String, Object>> selectArticleCounts()
+    {
+        return cmsCategoryMapper.selectArticleCounts();
+    }
 }

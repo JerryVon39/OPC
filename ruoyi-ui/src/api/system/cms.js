@@ -292,3 +292,8 @@ export function getCmsStats() {
 export function copyBlock(blockId) {
   return request({ url: '/system/cmsBlock/copy/' + blockId, method: 'post' })
 }
+
+// B：栏目文章数聚合（栏目管理统计列）
+export function getCategoryCounts() {
+  return request({ url: '/system/cmsCategory/articleCounts', method: 'get' })
+}

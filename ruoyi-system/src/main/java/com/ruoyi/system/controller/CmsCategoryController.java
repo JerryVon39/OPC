@@ -84,4 +84,12 @@ public class CmsCategoryController extends BaseController
     {
         return toAjax(cmsCategoryService.deleteCmsCategoryByCategoryIds(categoryIds));
     }
+
+    /** B：栏目文章数聚合（栏目管理页统计列） */
+    @PreAuthorize("@ss.hasPermi('system:cmsCategory:list')")
+    @GetMapping("/articleCounts")
+    public AjaxResult articleCounts()
+    {
+        return success(cmsCategoryService.selectArticleCounts());
+    }
 }

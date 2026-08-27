@@ -22,4 +22,7 @@ public interface ICmsCategoryService
 
     /** 批量删除栏目 */
     public int deleteCmsCategoryByCategoryIds(Long[] categoryIds);
+
+    /** B：栏目文章数聚合（报表列） */
+    public java.util.List<java.util.Map<String, Object>> selectArticleCounts();
 }
