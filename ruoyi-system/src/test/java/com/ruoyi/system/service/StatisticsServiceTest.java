@@ -39,6 +39,9 @@ public class StatisticsServiceTest
     @Mock
     private ConfigUtil configUtil;
 
+    @Mock
+    private com.ruoyi.system.mapper.CmsArticleMapper cmsArticleMapper;
+
     @InjectMocks
     private StatisticsService statisticsService;
 
@@ -76,12 +79,18 @@ public class StatisticsServiceTest
         when(borrowRecordMapper.selectDashboard()).thenReturn(map);
         when(configUtil.getInt("book.stock.warn", 3)).thenReturn(3);
         when(bookMapper.selectLowStockBooks(3, 10)).thenReturn(new ArrayList<Book>());
+        // CMS 文章维度（2026-08-27 工作台数据卡加入后测试同步）
+        java.util.Map<String, Object> cmsStats = new HashMap<>();
+        cmsStats.put("articleTotal", 15);
+        when(cmsArticleMapper.selectCmsArticleStats()).thenReturn(cmsStats);
 
         Map<String, Object> result = statisticsService.dashboard();
         assertEquals(map, result);
         assertNotNull(result.get("lowStockBooks"));
+        assertEquals(cmsStats, result.get("cmsArticle"));
         verify(borrowRecordMapper).selectDashboard();
         verify(bookMapper).selectLowStockBooks(3, 10);
+        verify(cmsArticleMapper).selectCmsArticleStats();
     }
 
     /** 失效：三个 key 全部删除 */
