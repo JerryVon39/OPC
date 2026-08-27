@@ -3,186 +3,194 @@
     <!-- 顶部说明：面向非程序员 -->
     <el-alert type="info" :closable="false" show-icon title="区块管理 = 全站页面内容管理（首页 + 4 个栏目页）：① 内容区块（可新增/删除/上下移，用模板填充卡片、列表、表单等）② 固定文本槽（🔒 页头副标语）。左侧选区块，中间改内容，右侧实时预览对应页面效果；保存后预览自动刷新，改错了可在「历史版本」回滚。" />
 
-    <div ref="layout" class="sec-layout" :class="{ full: editFull }">
-      <!-- 左：栏目 Tab + 区块列表（内容区块 / 固定槽位分区） -->
-      <div class="sec-left">
-        <div class="block-tabs-row">
-          <el-tabs v-model="activePage" @tab-click="onTabChange" class="block-tabs" :closable="true" @tab-remove="onTabRemove">
-            <el-tab-pane v-for="p in pages" :key="p.key" :label="p.name" :name="p.key" :closable="!!p.custom" />
-          </el-tabs>
-          <!-- 75：自定义前台页面管理（Element UI 无 tabs 插槽，按钮放 tabs 右侧同行） -->
-          <div class="page-ops">
-            <el-button type="text" icon="el-icon-document-add" size="mini" @click="openPageDlg" v-hasPermi="['system:cmsBlock:add']">＋ 新增页面</el-button>
-            <el-button type="text" icon="el-icon-setting" size="mini" @click="pageMgrOpen = true" v-hasPermi="['system:cmsBlock:edit']">管理</el-button>
-          </div>
-        </div>
-        <div class="sec-group-head">
-          <span>内容区块</span>
-          <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="openAdd" v-hasPermi="['system:cmsBlock:add']">新增</el-button>
-        </div>
-        <div v-if="!contentBlocks.length && !loading" class="sec-empty">暂无内容区块，点「新增」用模板搭建栏目内容</div>
-        <div v-for="(b, i) in contentBlocks" :key="b.blockId" class="sec-item" :class="{ active: selectedId === b.blockId }" @click="select(b)">
-          <div class="sec-item-top">
-            <span class="tmpl-tag">{{ templateName(b.template) }}</span>
-            <el-switch v-model="b.visible" active-value="0" inactive-value="1" size="mini" @change="handleVisible(b)" @click.native.stop />
-          </div>
-          <div class="sec-item-title">{{ b.title || b.blockKey }}</div>
-          <div class="sec-item-ops">
-            <el-button size="mini" type="text" icon="el-icon-top" @click.stop="handleMove(b, 'up', i)" :disabled="i === 0" v-hasPermi="['system:cmsBlock:edit']">上移</el-button>
-            <el-button size="mini" type="text" icon="el-icon-bottom" @click.stop="handleMove(b, 'down', i)" :disabled="i === contentBlocks.length - 1" v-hasPermi="['system:cmsBlock:edit']">下移</el-button>
-            <!-- 2：跨页面复用同款区块 -->
-            <el-button size="mini" type="text" icon="el-icon-document-copy" @click.stop="handleCopy(b)" v-hasPermi="['system:cmsBlock:add']">复制</el-button>
-            <el-button size="mini" type="text" icon="el-icon-delete" class="danger-text" @click.stop="handleDelete(b)" v-hasPermi="['system:cmsBlock:remove']">删除</el-button>
-          </div>
-        </div>
-
-        <div class="sec-group-head sec-group-slot">固定文本槽 🔒</div>
-        <div v-for="b in slotBlocks" :key="b.blockId" class="sec-item sec-item-slot" :class="{ active: selectedId === b.blockId }" @click="select(b)">
-          <div class="sec-item-top">
-            <span class="sec-item-title">{{ b.title || b.blockKey }}</span>
-            <el-tag size="mini" :type="b.visible === '0' ? 'success' : 'info'">{{ b.visible === '0' ? '显示中' : '已隐藏' }}</el-tag>
-          </div>
-          <div class="sec-item-sub">v{{ b.version }} · {{ b.updateTime || '未编辑' }}</div>
+    <!-- ===== ① 页面选择视图（卡片网格）===== -->
+    <div v-if="viewMode === 'pages'" class="page-picker">
+      <div class="picker-head">
+        <span class="picker-title">选择要编辑的页面</span>
+        <div>
+          <el-button type="primary" plain icon="el-icon-document-add" size="mini" @click="openPageDlg" v-hasPermi="['system:cmsBlock:add']">＋ 新增页面</el-button>
+          <el-button type="text" icon="el-icon-setting" size="mini" @click="pageMgrOpen = true" v-hasPermi="['system:cmsBlock:edit']">管理自定义页面</el-button>
         </div>
       </div>
+      <div class="page-grid">
+        <div v-for="p in pages" :key="p.key" class="page-card" @click="goBlocks(p)">
+          <div class="page-card-name">{{ p.name }}</div>
+          <div class="page-card-sub">
+            <template v-if="p.custom">自定义页 · page.html?key={{ p.key }}</template>
+            <template v-else>内置页面 · {{ p.file }}</template>
+          </div>
+          <div class="page-card-count">{{ pageBlockCount(p.key) }} 个区块</div>
+          <div class="page-card-enter">进入编辑 →</div>
+        </div>
+      </div>
+    </div>
 
-      <!-- 中：编辑表单（按类型渲染：槽位 / 模板） -->
-      <div class="sec-mid" :style="editFull ? {} : { width: midWidth + 'px' }">
-        <template v-if="selectedId != null">
-          <div class="sec-mid-head">
-            <span class="sec-mid-title">{{ form.title || form.blockKey }}</span>
-            <el-tag size="mini" :type="isSlot ? 'info' : 'success'">{{ isSlot ? '固定文本槽' : templateName(form.template) }}</el-tag>
-            <!-- ② 放大编辑：隐藏左右栏，表单区占满整行，输入控件高度随视口放大 -->
-            <div class="sec-mid-head-right">
-              <!-- D：未保存也能看单区块真实渲染（新标签） -->
-              <el-button size="mini" icon="el-icon-view" @click="previewCurrent" title="用当前（含未保存）内容在浏览器新标签预览该区块">预览当前效果</el-button>
-              <el-button size="mini" :icon="editFull ? 'el-icon-close' : 'el-icon-full-screen'" @click="toggleFull">{{ editFull ? '退出放大' : '放大编辑' }}</el-button>
+    <!-- ===== ② 区块列表视图（整页）===== -->
+    <div v-else-if="viewMode === 'blocks'" class="blocks-view">
+      <div class="blocks-head">
+        <el-button type="text" icon="el-icon-back" @click="goPages">返回页面选择</el-button>
+        <span class="blocks-title">📄 {{ currentPage.name }} · 区块列表</span>
+        <div class="blocks-ops">
+          <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="openAdd" v-hasPermi="['system:cmsBlock:add']">＋ 新增区块</el-button>
+          <el-button type="text" icon="el-icon-setting" size="mini" @click="pageMgrOpen = true" v-hasPermi="['system:cmsBlock:edit']">页面管理</el-button>
+        </div>
+      </div>
+      <div class="blocks-body">
+        <div class="blocks-group">
+          <div class="blocks-group-head">内容区块 <span class="blocks-count">({{ contentBlocks.length }})</span></div>
+          <div v-if="!contentBlocks.length && !loading" class="sec-empty">暂无内容区块，点「＋ 新增区块」用模板搭建页面内容</div>
+          <div v-for="(b, i) in contentBlocks" :key="b.blockId" class="block-card" @click="select(b)">
+            <div class="block-card-main">
+              <span class="tmpl-tag">{{ templateName(b.template) }}</span>
+              <span class="block-card-title">{{ b.title || b.blockKey }}</span>
+              <el-switch v-model="b.visible" active-value="0" inactive-value="1" size="mini" @change="handleVisible(b)" @click.native.stop />
+            </div>
+            <div class="block-card-ops">
+              <el-button size="mini" type="text" icon="el-icon-edit" @click.stop="select(b)">编辑</el-button>
+              <el-button size="mini" type="text" icon="el-icon-top" @click.stop="handleMove(b, 'up', i)" :disabled="i === 0" v-hasPermi="['system:cmsBlock:edit']">上移</el-button>
+              <el-button size="mini" type="text" icon="el-icon-bottom" @click.stop="handleMove(b, 'down', i)" :disabled="i === contentBlocks.length - 1" v-hasPermi="['system:cmsBlock:edit']">下移</el-button>
+              <el-button size="mini" type="text" icon="el-icon-document-copy" @click.stop="handleCopy(b)" v-hasPermi="['system:cmsBlock:add']">复制</el-button>
+              <el-button size="mini" type="text" icon="el-icon-delete" class="danger-text" @click.stop="handleDelete(b)" v-hasPermi="['system:cmsBlock:remove']">删除</el-button>
             </div>
           </div>
-          <el-alert v-if="dirty" type="warning" :closable="false" show-icon class="mb8" title="内容已修改但未保存——保存后前台预览自动刷新" />
-          <el-form :model="form" label-width="90px" size="small">
-            <!-- 槽位区块：标题/副标题/内容 -->
-            <template v-if="isSlot">
-              <el-form-item label="标题">
-                <el-input v-model="form.title" maxlength="200" placeholder="标题（对应前台加粗标题）；留空 = 不覆盖" />
-              </el-form-item>
-              <el-form-item label="副标题">
-                <el-input v-model="form.subtitle" maxlength="200" placeholder="副标题（未使用的区块可留空）" />
-              </el-form-item>
-              <el-form-item label="内容">
-                <el-input v-model="form.content" type="textarea" :rows="editFull ? 14 : 8" placeholder="正文文案。留空 = 前台保持原样，不会覆盖" />
-              </el-form-item>
-              <el-form-item label="显示">
-                <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
-              </el-form-item>
-            </template>
+        </div>
+        <div class="blocks-group">
+          <div class="blocks-group-head">固定文本槽 <span class="blocks-count">({{ slotBlocks.length }})</span></div>
+          <div v-for="b in slotBlocks" :key="b.blockId" class="block-card block-card-slot" @click="select(b)">
+            <div class="block-card-main">
+              <span class="block-card-title">🔒 {{ b.title || b.blockKey }}</span>
+              <el-tag size="mini" :type="b.visible === '0' ? 'success' : 'info'">{{ b.visible === '0' ? '显示中' : '已隐藏' }}</el-tag>
+            </div>
+            <div class="block-card-sub">v{{ b.version }} · {{ b.updateTime || '未编辑' }} · 点击编辑</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            <!-- 内容区块通用：名称 + 显示 -->
-            <template v-if="!isSlot">
-              <el-form-item label="区块名称">
-                <el-input v-model="form.title" maxlength="50" placeholder="前台显示的区块标题（如：📍 社区定位）" />
-              </el-form-item>
-              <el-form-item label="显示">
-                <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
-              </el-form-item>
-
-              <!-- 模板字段：按注册表 schema 自动生成（blockTemplates.js） -->
-              <template v-for="f in currentTpl.schema" v-if="currentTpl">
-                <el-form-item :key="f.key" :label="f.label">
-                  <template v-if="f.type === 'text'">
-                    <el-input v-model="cfg[f.key]" :maxlength="f.maxlength" :placeholder="f.placeholder" :style="f.width ? 'width:' + f.width + 'px' : ''" />
-                  </template>
-                  <template v-else-if="f.type === 'textarea'">
-                    <el-input v-model="cfg[f.key]" type="textarea" :rows="editFull ? 10 : (f.rows || 5)" :placeholder="f.placeholder" />
-                  </template>
-                  <!-- 68：html 字段用 Quill 排版工具栏（加粗/列表/表格等可视化操作，无需手写标签） -->
-                  <!-- ③ 高度提升：260→340（矮字段 160→220）；放大编辑时 520 视口级 -->
-                  <template v-else-if="f.type === 'html'">
-                    <Editor v-model="cfg[f.key]" :height="editFull ? 520 : (f.rows && f.rows <= 2 ? 220 : 340)" />
-                  </template>
-                  <template v-else-if="f.type === 'number'">
-                    <el-input-number v-model="cfg[f.key]" :min="f.min" :max="f.max" />
-                  </template>
-                  <template v-else-if="f.type === 'radio'">
-                    <el-radio-group v-model="cfg[f.key]">
-                      <el-radio v-for="opt in f.options" :key="opt" :label="opt">{{ opt }} 列</el-radio>
-                    </el-radio-group>
-                  </template>
-                  <template v-else-if="f.type === 'switch'">
-                    <el-switch v-model="cfg[f.key]" :active-value="f.activeValue" :inactive-value="f.inactiveValue" :active-text="f.activeText" :inactive-text="f.inactiveText" />
-                  </template>
-                  <template v-else-if="f.type === 'image'">
-                    <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="handleImageSuccess" accept="image/*">
-                      <img v-if="cfg.image" :src="imgUrl(cfg.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
-                      <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                    </el-upload>
-                  </template>
-                  <!-- 70：站内页面下拉 + 自定义输入兜底（feature/cta 按钮链接，防手填错地址） -->
-                  <template v-else-if="f.type === 'link'">
-                    <el-select v-model="cfg[f.key]" filterable allow-create default-first-option placeholder="选择或输入页面地址" :style="f.width ? 'width:' + f.width + 'px' : ''">
-                      <el-option v-for="opt in f.options" :key="opt" :label="opt" :value="opt" />
-                    </el-select>
-                    <div style="color:#999;font-size:12px;margin-top:4px">下拉为站内页面；也可自行输入外部链接（http:// 开头）</div>
-                  </template>
-                  <template v-else-if="f.type === 'list'">
-                    <div v-for="(item, i) in cfg[f.key]" :key="i" class="card-row" style="margin-bottom:8px">
-                      <template v-for="sf in f.fields">
-                        <el-input v-if="sf.type !== 'html' && sf.type !== 'image'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows || 3" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
-                        <!-- 68：列表内 html 子字段同样用 Quill 工具栏（③ 高度 120→180，放大时 400） -->
-                        <div v-else-if="sf.type === 'html'" :key="sf.key" style="width:100%">
-                          <Editor v-model="item[sf.key]" :height="editFull ? 400 : 180" />
-                        </div>
-                        <!-- 71：列表内 image 子字段（如 team 头像）改为上传组件 -->
-                        <div v-else-if="sf.type === 'image'" :key="sf.key" style="display:flex;align-items:center;gap:8px">
-                          <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="(res) => handleImageSuccess(res, item, sf.key)" accept="image/*">
-                            <img v-if="item[sf.key]" :src="imgUrl(item[sf.key])" style="width:56px;height:56px;object-fit:cover;border-radius:50%" />
-                            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                          </el-upload>
-                          <el-button v-if="item[sf.key]" type="text" icon="el-icon-delete" @click="item[sf.key] = ''">清除</el-button>
-                        </div>
-                      </template>
-                      <!-- C：列表项行内排序（上移/下移/删除） -->
-                      <el-button type="text" icon="el-icon-top" @click="moveListItem(f, i, -1)">上移</el-button>
-                      <el-button type="text" icon="el-icon-bottom" @click="moveListItem(f, i, 1)">下移</el-button>
-                      <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删除</el-button>
-                    </div>
-                    <el-button type="primary" plain size="mini" @click="addListItem(f)">＋ 添加{{ f.itemLabel }}</el-button>
-                  </template>
+    <!-- ===== ③ 编辑视图（表单 + 实时预览双栏）===== -->
+    <div v-else ref="layout" class="edit-layout">
+      <div class="edit-head">
+        <el-button type="text" icon="el-icon-back" @click="goBlocksBack">返回区块列表</el-button>
+        <span class="edit-title">{{ currentPage.name }} · {{ form.title || form.blockKey || '未选择区块' }}</span>
+        <span v-if="selectedId != null" class="edit-tag"><el-tag size="mini" :type="isSlot ? 'info' : 'success'">{{ isSlot ? '固定文本槽' : templateName(form.template) }}</el-tag></span>
+        <div class="edit-ops">
+          <el-button v-if="selectedId != null" size="mini" type="primary" @click="handleSave" v-hasPermi="['system:cmsBlock:edit']">保存</el-button>
+          <el-button v-if="selectedId != null" size="mini" type="warning" plain @click="openHistory">历史版本</el-button>
+          <el-button v-if="selectedId != null" size="mini" icon="el-icon-view" @click="previewCurrent">预览当前效果</el-button>
+          <el-button v-if="selectedId != null" size="mini" :icon="editFull ? 'el-icon-close' : 'el-icon-full-screen'" @click="toggleFull">{{ editFull ? '退出放大' : '放大编辑' }}</el-button>
+          <el-button size="mini" type="text" icon="el-icon-refresh" @click="reloadPreview">刷新预览</el-button>
+          <el-button size="mini" type="text" icon="el-icon-full-screen" @click="openFront">新窗口打开前台</el-button>
+        </div>
+      </div>
+      <div class="edit-body">
+        <!-- 编辑表单（flex 弹性宽） -->
+        <div class="edit-form-area">
+          <template v-if="selectedId != null">
+            <el-alert v-if="dirty" type="warning" :closable="false" show-icon class="mb8" title="内容已修改但未保存——保存后前台预览自动刷新" />
+            <el-form :model="form" label-width="90px" size="small">
+              <template v-if="isSlot">
+                <el-form-item label="标题">
+                  <el-input v-model="form.title" maxlength="200" placeholder="标题（对应前台加粗标题）；留空 = 不覆盖" />
+                </el-form-item>
+                <el-form-item label="副标题">
+                  <el-input v-model="form.subtitle" maxlength="200" placeholder="副标题（未使用的区块可留空）" />
+                </el-form-item>
+                <el-form-item label="内容">
+                  <el-input v-model="form.content" type="textarea" :rows="editFull ? 14 : 8" placeholder="正文文案。留空 = 前台保持原样，不会覆盖" />
+                </el-form-item>
+                <el-form-item label="显示">
+                  <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
                 </el-form-item>
               </template>
-              <el-form-item v-if="currentTpl && currentTpl.tip" label="说明">
-                <span style="color:#999;font-size:12px">{{ currentTpl.tip }}</span>
-              </el-form-item>
-            </template>
 
-            <!-- ④ 操作条固定吸底：字段多时不用滚到底才能保存 -->
-            <div class="sec-actions">
-              <el-button type="primary" @click="handleSave" v-hasPermi="['system:cmsBlock:edit']">保存（保存后预览自动刷新）</el-button>
-              <el-button type="warning" plain @click="openHistory">历史版本</el-button>
-              <span class="sec-actions-tip" v-if="editFull">已放大编辑，退出后恢复分栏预览</span>
-            </div>
-          </el-form>
-        </template>
-        <el-empty v-else description="点击左侧区块开始编辑，右侧实时预览对应栏目页效果" />
-      </div>
+              <template v-if="!isSlot">
+                <el-form-item label="区块名称">
+                  <el-input v-model="form.title" maxlength="50" placeholder="前台显示的区块标题（如：📍 社区定位）" />
+                </el-form-item>
+                <el-form-item label="显示">
+                  <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
+                </el-form-item>
 
-      <!-- ① 拖拽条：调整编辑区宽度（480–900px，偏好存 localStorage） -->
-      <div ref="resizer" class="sec-resizer" title="拖拽调整编辑区宽度" @pointerdown="startResize"></div>
-
-      <!-- 右：实时预览 -->
-      <div class="sec-right">
-        <div class="preview-bar">
-          <span class="preview-title">前台实时预览 · {{ currentPage.name }}</span>
-          <el-tag v-if="selectedId != null" size="mini" type="success">正在定位：{{ form.blockKey }}</el-tag>
-          <el-tag v-else size="mini" type="info">未选中区块</el-tag>
-          <div class="preview-bar-right">
-            <el-button size="mini" icon="el-icon-refresh" @click="reloadPreview">刷新预览</el-button>
-            <el-button size="mini" type="text" icon="el-icon-full-screen" @click="openFront">新窗口打开前台</el-button>
-          </div>
+                <template v-for="f in currentTpl.schema" v-if="currentTpl">
+                  <el-form-item :key="f.key" :label="f.label">
+                    <template v-if="f.type === 'text'">
+                      <el-input v-model="cfg[f.key]" :maxlength="f.maxlength" :placeholder="f.placeholder" :style="f.width ? 'width:' + f.width + 'px' : ''" />
+                    </template>
+                    <template v-else-if="f.type === 'textarea'">
+                      <el-input v-model="cfg[f.key]" type="textarea" :rows="editFull ? 10 : (f.rows || 5)" :placeholder="f.placeholder" />
+                    </template>
+                    <template v-else-if="f.type === 'html'">
+                      <Editor v-model="cfg[f.key]" :height="editFull ? 520 : (f.rows && f.rows <= 2 ? 220 : 340)" />
+                    </template>
+                    <template v-else-if="f.type === 'number'">
+                      <el-input-number v-model="cfg[f.key]" :min="f.min" :max="f.max" />
+                    </template>
+                    <template v-else-if="f.type === 'radio'">
+                      <el-radio-group v-model="cfg[f.key]">
+                        <el-radio v-for="opt in f.options" :key="opt" :label="opt">{{ opt }} 列</el-radio>
+                      </el-radio-group>
+                    </template>
+                    <template v-else-if="f.type === 'switch'">
+                      <el-switch v-model="cfg[f.key]" :active-value="f.activeValue" :inactive-value="f.inactiveValue" :active-text="f.activeText" :inactive-text="f.inactiveText" />
+                    </template>
+                    <template v-else-if="f.type === 'image'">
+                      <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="handleImageSuccess" accept="image/*">
+                        <img v-if="cfg.image" :src="imgUrl(cfg.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
+                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                      </el-upload>
+                    </template>
+                    <template v-else-if="f.type === 'link'">
+                      <el-select v-model="cfg[f.key]" filterable allow-create default-first-option placeholder="选择或输入页面地址" :style="f.width ? 'width:' + f.width + 'px' : ''">
+                        <el-option v-for="opt in f.options" :key="opt" :label="opt" :value="opt" />
+                      </el-select>
+                      <div style="color:#999;font-size:12px;margin-top:4px">下拉为站内页面；也可自行输入外部链接（http:// 开头）</div>
+                    </template>
+                    <template v-else-if="f.type === 'list'">
+                      <div v-for="(item, i) in cfg[f.key]" :key="i" class="card-row" style="margin-bottom:8px">
+                        <template v-for="sf in f.fields">
+                          <el-input v-if="sf.type !== 'html' && sf.type !== 'image'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows || 3" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
+                          <div v-else-if="sf.type === 'html'" :key="sf.key" style="width:100%">
+                            <Editor v-model="item[sf.key]" :height="editFull ? 400 : 180" />
+                          </div>
+                          <div v-else-if="sf.type === 'image'" :key="sf.key" style="display:flex;align-items:center;gap:8px">
+                            <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="(res) => handleImageSuccess(res, item, sf.key)" accept="image/*">
+                              <img v-if="item[sf.key]" :src="imgUrl(item[sf.key])" style="width:56px;height:56px;object-fit:cover;border-radius:50%" />
+                              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            </el-upload>
+                            <el-button v-if="item[sf.key]" type="text" icon="el-icon-delete" @click="item[sf.key] = ''">清除</el-button>
+                          </div>
+                        </template>
+                        <el-button type="text" icon="el-icon-top" @click="moveListItem(f, i, -1)">上移</el-button>
+                        <el-button type="text" icon="el-icon-bottom" @click="moveListItem(f, i, 1)">下移</el-button>
+                        <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删除</el-button>
+                      </div>
+                      <el-button type="primary" plain size="mini" @click="addListItem(f)">＋ 添加{{ f.itemLabel }}</el-button>
+                    </template>
+                  </el-form-item>
+                </template>
+                <el-form-item v-if="currentTpl && currentTpl.tip" label="说明">
+                  <span style="color:#999;font-size:12px">{{ currentTpl.tip }}</span>
+                </el-form-item>
+              </template>
+            </el-form>
+          </template>
+          <el-empty v-else description="请先在区块列表中选择要编辑的区块" />
         </div>
-        <div class="preview-body">
-          <iframe v-if="previewSrc" :key="previewTs" :src="previewSrc" class="preview-frame" @load="previewLoading = false" />
-          <div v-if="previewLoading" class="preview-mask"><i class="el-icon-loading"></i> 预览加载中…</div>
+
+        <!-- 拖拽条：调整预览区宽度（360–900px，偏好记忆） -->
+        <div v-if="!editFull" ref="resizer" class="sec-resizer" title="拖拽调整预览区宽度" @pointerdown="startResize"></div>
+
+        <!-- 实时预览（同屏保留） -->
+        <div v-if="!editFull" class="preview-area" :style="{ width: previewWidth + 'px' }">
+          <div class="preview-bar">
+            <span class="preview-title">前台实时预览 · {{ currentPage.name }}</span>
+            <el-tag v-if="selectedId != null" size="mini" type="success">正在定位：{{ form.blockKey }}</el-tag>
+            <el-tag v-else size="mini" type="info">未选中区块</el-tag>
+          </div>
+          <div class="preview-body">
+            <iframe v-if="previewSrc" :key="previewTs" :src="previewSrc" class="preview-frame" @load="previewLoading = false" />
+            <div v-if="previewLoading" class="preview-mask"><i class="el-icon-loading"></i> 预览加载中…</div>
+          </div>
         </div>
       </div>
     </div>
@@ -321,13 +329,15 @@ export default {
       cfg: {},
       frontUrl: '',            // 前台地址（系统参数 site.front.url）；空/默认值 = 与后台同源，用相对路径
       // ① 编辑区宽度（可拖拽调宽，偏好存 localStorage；480–900 钳制）
-      midWidth: (function () {
+      viewMode: 'pages',       // 改版：pages=页面选择 / blocks=区块列表 / edit=编辑（表单+预览双栏）
+      previewWidth: (function () {
+        // 预览区宽度（360–900px，偏好记忆；默认 520 贴近前台栏目页实际）
         try {
-          const v = Number(localStorage.getItem('opc_block_mid_width'))
-          return v >= 480 && v <= 900 ? v : 640
-        } catch (e) { return 640 }
+          const v = Number(localStorage.getItem('opc_block_preview_width'))
+          return v >= 360 && v <= 900 ? v : 520
+        } catch (e) { return 520 }
       })(),
-      editFull: false,         // ② 放大编辑：隐藏左右栏，表单占满整行
+      editFull: false,         // ② 放大编辑：隐藏预览，表单占满整行
       saving: false,           // B：保存防重复提交（Ctrl+S 连按）
       previewTs: 0,
       previewLoading: true,
@@ -429,18 +439,7 @@ export default {
         if (withPreview) this.reloadPreview()
       }).finally(() => { this.loading = false })
     },
-    onTabChange() {
-      // A：未保存修改拦截——确认后才切换栏目
-      if (this.dirty) {
-        this.$modal.confirm('当前区块有未保存的修改，切换栏目后将丢失。确定切换吗？', '未保存修改').then(() => {
-          this.selectedId = null
-          this.getList(true)
-        }).catch(() => {})
-        return
-      }
-      this.selectedId = null
-      this.getList(true)
-    },
+
     select(b) {
       // A：未保存修改拦截——确认后才切换/重置区块（同区块重复点击也会重置表单）
       if (this.dirty) {
@@ -451,12 +450,49 @@ export default {
       }
       this.doSelect(b)
     },
+    /** 改版：进入页面区块列表（dirty 拦截） */
+    goBlocks(p) {
+      if (this.dirty) {
+        this.$modal.confirm('当前区块有未保存的修改，返回后将丢失。确定返回吗？', '未保存修改').then(() => {
+          this.switchToBlocks(p)
+        }).catch(() => {})
+        return
+      }
+      this.switchToBlocks(p)
+    },
+    switchToBlocks(p) {
+      this.selectedId = null
+      this.activePage = p.key
+      this.viewMode = 'blocks'
+      this.getList(true)
+    },
+    /** 改版：返回页面选择（dirty 拦截） */
+    goPages() {
+      if (this.dirty) {
+        this.$modal.confirm('当前区块有未保存的修改，返回后将丢失。确定返回吗？', '未保存修改').then(() => {
+          this.viewMode = 'pages'
+          this.selectedId = null
+        }).catch(() => {})
+        return
+      }
+      this.viewMode = 'pages'
+      this.selectedId = null
+    },
+    /** 改版：编辑视图返回区块列表（goBlocks 内含 dirty 拦截） */
+    goBlocksBack() {
+      this.goBlocks(this.currentPage)
+    },
+    /** 改版：页面卡片区块数 */
+    pageBlockCount(key) {
+      return this.blockList.filter(b => b.pageKey === key && b.template && b.template !== '').length
+    },
     doSelect(b) {
       this._suppressDirty = true
       this.selectedId = b.blockId
       this.form = b
       this.cfg = this.parseCfg(b.configJson, b.template)
       this.dirty = false
+      this.viewMode = 'edit'   // 改版：选中区块 → 编辑视图（表单+预览双栏）
       this.$nextTick(() => { this._suppressDirty = false })
       this.reloadPreview()
     },
@@ -610,18 +646,17 @@ export default {
       if (this._dragCleanup) this._dragCleanup() // 自愈：上次拖拽 pointerup 被 iframe 吞掉 → 先清理遗留状态
       const target = this.$refs.resizer
       e.preventDefault()
-      // 按下偏移：鼠标按在拖拽条上（含条宽与两侧 gap），宽度映射扣除按下点偏移才跟手
+      // 按下偏移：鼠标按在拖拽条上，预览宽度映射扣除按下点偏移才跟手
       const rect0 = this.$refs.layout.getBoundingClientRect()
-      const offset = (e.clientX - rect0.left) - this.midWidth
+      const offset = (rect0.right - e.clientX) - this.previewWidth
       let captured = true
       try { target.setPointerCapture(e.pointerId) } catch (err) { captured = false } // 合成事件等无活跃指针时回退 document 监听
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
       const onMove = (ev) => {
         const rect = this.$refs.layout.getBoundingClientRect()
-        // 上限自适应：窄视口下不让中栏溢出布局挤没预览栏
-        const maxW = Math.min(900, rect.width - 150)
-        this.midWidth = Math.min(maxW, Math.max(480, ev.clientX - rect.left - offset))
+        // 拖拽条在表单与预览之间：预览宽度 = 布局右缘 - 指针位置（镜像计算）
+        this.previewWidth = Math.min(900, Math.max(360, rect.right - ev.clientX))
       }
       const onEnd = () => {
         document.body.style.cursor = ''
@@ -633,7 +668,7 @@ export default {
         document.removeEventListener('pointerup', onEnd)
         document.removeEventListener('pointercancel', onEnd)
         if (this._dragCleanup === onEnd) this._dragCleanup = null
-        try { localStorage.setItem('opc_block_mid_width', String(this.midWidth)) } catch (err) {}
+        try { localStorage.setItem('opc_block_preview_width', String(this.previewWidth)) } catch (err) {}
       }
       this._dragCleanup = onEnd
       if (captured) {
@@ -737,44 +772,48 @@ export default {
 </script>
 
 <style scoped>
-.sec-layout { display: flex; gap: 10px; height: calc(100vh - 170px); min-height: 500px; }
-.sec-left { width: 290px; flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 8px; }
-.block-tabs-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
-.block-tabs { flex: 1; margin-bottom: 0; }
-.page-ops { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
-.sec-group-head { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 13px; color: #606266; padding: 8px 4px 6px; border-top: 1px dashed #ebeef5; margin-top: 6px; }
-.sec-group-slot { border-top: 1px dashed #ebeef5; }
-.sec-empty { color: #909399; font-size: 13px; text-align: center; padding: 30px 0; }
-.sec-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; margin-bottom: 6px; border: 1px solid transparent; }
-.sec-item:hover { background: #f5f7fa; }
-.sec-item.active { background: #ecf5ff; border-color: #409eff; }
-.sec-item-slot { background: #fafbfc; }
-.sec-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.sec-item-title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sec-item-sub { color: #909399; font-size: 12px; margin-top: 2px; }
-.sec-item-ops { display: flex; margin-top: 2px; }
-.sec-item-ops .el-button { padding: 0; margin-right: 10px; }
-.danger-text { color: #f56c6c; }
-.tmpl-tag { display: inline-block; background: #ecf5ff; color: #409EFF; border-radius: 4px; padding: 1px 8px; font-size: 12px; flex-shrink: 0; }
-.sec-mid { min-width: 480px; max-width: calc(100vw - 420px); flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 12px 16px; }
-.sec-mid-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.sec-mid-title { font-weight: 600; font-size: 15px; }
-.sec-mid-head-right { margin-left: auto; }
-.sec-resizer { width: 8px; flex-shrink: 0; cursor: col-resize; background: transparent; border-radius: 4px; touch-action: none; }
-.sec-resizer:hover, .sec-resizer:active { background: #d9ecff; }
-/* ② 放大编辑：隐藏左右栏与拖拽条，表单占满整行 */
-.sec-layout.full .sec-left, .sec-layout.full .sec-right, .sec-layout.full .sec-resizer { display: none; }
-.sec-layout.full .sec-mid { width: 100% !important; }
-/* ④ 操作条吸底（sticky 于中栏滚动容器；负 margin 抵消内边距让分隔线通栏） */
-.sec-actions { position: sticky; bottom: 0; background: #fff; margin: 12px -16px -12px; padding: 10px 16px; border-top: 1px solid #ebeef5; }
-.sec-actions-tip { color: #909399; font-size: 12px; margin-left: 8px; }
-.sec-right { flex: 1; display: flex; flex-direction: column; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; overflow: hidden; }
-.preview-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #ebeef5; flex-shrink: 0; }
-.preview-title { font-weight: 600; font-size: 14px; }
-.preview-bar-right { margin-left: auto; display: flex; align-items: center; }
-.preview-body { flex: 1; position: relative; background: #f2f3f5; }
-.preview-frame { width: 100%; height: 100%; border: 0; }
-.preview-mask { position: absolute; inset: 0; background: rgba(255,255,255,.65); display: flex; align-items: center; justify-content: center; color: #606266; font-size: 14px; z-index: 5; }
+.page-picker { background:#fff; border:1px solid #ebeef5; border-radius:8px; padding:20px 24px; min-height:500px; }
+.picker-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.picker-title { font-size:18px; font-weight:600; color:#303133; }
+.page-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+.page-card { border:1px solid #e4e7ed; border-radius:10px; padding:18px; cursor:pointer; transition:all .15s; position:relative; }
+.page-card:hover { border-color:#409EFF; box-shadow:0 4px 14px rgba(64,158,255,.15); transform:translateY(-2px); }
+.page-card-name { font-size:16px; font-weight:600; color:#303133; }
+.page-card-sub { color:#909399; font-size:12px; margin-top:6px; }
+.page-card-count { color:#606266; font-size:13px; margin-top:12px; }
+.page-card-enter { position:absolute; right:14px; bottom:14px; color:#409EFF; font-size:12px; }
+
+.blocks-view { background:#fff; border:1px solid #ebeef5; border-radius:8px; padding:16px 20px; min-height:500px; }
+.blocks-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; border-bottom:1px solid #f0f0f0; padding-bottom:12px; }
+.blocks-title { font-size:16px; font-weight:600; }
+.blocks-ops { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.blocks-body { max-width:900px; }
+.blocks-group { margin-bottom:20px; }
+.blocks-group-head { font-weight:600; font-size:14px; color:#606266; margin-bottom:10px; }
+.blocks-count { color:#909399; font-weight:400; }
+.block-card { border:1px solid #e4e7ed; border-radius:8px; padding:10px 14px; margin-bottom:8px; cursor:pointer; transition:all .15s; }
+.block-card:hover { border-color:#409EFF; background:#f5f9ff; }
+.block-card-slot { background:#fafbfc; }
+.block-card-main { display:flex; align-items:center; gap:10px; }
+.block-card-title { font-weight:600; font-size:14px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.block-card-ops { margin-top:6px; display:flex; gap:2px; }
+.block-card-sub { color:#909399; font-size:12px; margin-top:4px; }
+
+.edit-layout { display:flex; flex-direction:column; height:calc(100vh - 170px); min-height:500px; background:#fff; border:1px solid #ebeef5; border-radius:8px; overflow:hidden; }
+.edit-head { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid #ebeef5; flex-shrink:0; }
+.edit-title { font-weight:600; font-size:15px; }
+.edit-tag { flex-shrink:0; }
+.edit-ops { margin-left:auto; display:flex; align-items:center; gap:4px; }
+.edit-body { flex:1; display:flex; min-height:0; }
+.edit-form-area { flex:1; min-width:0; overflow-y:auto; padding:14px 20px; }
+.preview-area { flex-shrink:0; display:flex; flex-direction:column; border-left:1px solid #ebeef5; }
+.preview-bar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid #ebeef5; flex-shrink:0; }
+.preview-title { font-weight:600; font-size:14px; }
+.preview-body { flex:1; position:relative; background:#f2f3f5; }
+.preview-frame { width:100%; height:100%; border:0; }
+.preview-mask { position:absolute; inset:0; background:rgba(255,255,255,.65); display:flex; align-items:center; justify-content:center; color:#606266; font-size:14px; z-index:5; }
+.sec-resizer { width:8px; flex-shrink:0; cursor:col-resize; background:transparent; border-radius:4px; touch-action:none; }
+.sec-resizer:hover, .sec-resizer:active { background:#d9ecff; }
 .tmpl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .tmpl-card { border: 1px solid #e4e7ed; border-radius: 8px; padding: 14px; cursor: pointer; text-align: center; transition: all .15s; }
 .tmpl-card:hover { border-color: #409EFF; box-shadow: 0 2px 10px rgba(64,158,255,.15); }
