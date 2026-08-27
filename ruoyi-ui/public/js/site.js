@@ -1098,3 +1098,28 @@ if (document.readyState === 'loading') {
     }).catch(function () {});
   } catch (e) { /* 忽略：无容器或异常时保持静态 */ }
 })();
+
+// ===== 36：回到顶部按钮（全站：滚动超 400px 显示，点击平滑回顶）=====
+(function initBackTop() {
+  try {
+    const btn = document.createElement('div');
+    btn.id = 'opc-back-top';
+    btn.textContent = '↑';
+    btn.title = '回到顶部';
+    btn.style.cssText = 'position:fixed;right:24px;bottom:48px;width:40px;height:40px;line-height:40px;text-align:center;' +
+      'background:rgba(47,111,237,.9);color:#fff;border-radius:50%;font-size:18px;cursor:pointer;z-index:9999;' +
+      'box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;user-select:none;';
+    btn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    document.body.appendChild(btn);
+    const toggle = function () {
+      btn.style.display = (window.scrollY || document.documentElement.scrollTop) > 400 ? 'block' : 'none';
+    };
+    window.addEventListener('scroll', toggle, { passive: true });
+    toggle();
+  } catch (e) { /* 忽略：异常时无按钮，不影响页面 */ }
+})();
+
+// ===== 36：图片懒加载（全局原生 loading=lazy；首屏图浏览器自动立即加载，无闪烁）=====
+try {
+  document.querySelectorAll('img').forEach(function (img) { img.loading = 'lazy'; });
+} catch (e) { /* 忽略 */ }

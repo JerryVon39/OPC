@@ -70,7 +70,12 @@
                 and a.category_id in
                 <foreach item="cid" collection="categoryIds.split(',')" open="(" separator="," close=")">#{cid}</foreach>
             </if>
-            <if test="title != null and title != ''"> and a.title like concat('%', #{title}, '%')</if>
+            <!-- 54：前台搜索升级为全文检索（标题/摘要/正文三字段；文章量小，LIKE 成本可接受） -->
+            <if test="title != null and title != ''">
+                and (a.title like concat('%', #{title}, '%')
+                     or a.summary like concat('%', #{title}, '%')
+                     or a.content like concat('%', #{title}, '%'))
+            </if>
         </where>
         order by a.is_top desc, a.sort asc, a.publish_time desc, a.article_id desc
     </select>

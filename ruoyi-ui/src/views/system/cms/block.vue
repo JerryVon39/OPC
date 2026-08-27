@@ -187,6 +187,12 @@
         <div v-if="!editFull" class="preview-area" :style="{ width: previewWidth + 'px' }">
           <div class="preview-bar">
             <span class="preview-title">前台实时预览 · {{ currentPage.name }}</span>
+            <!-- 60：预览设备档位——手机/平板/桌面宽度一键切换（仍可拖拽微调） -->
+            <el-button-group class="preview-devices" size="mini">
+              <el-button size="mini" :type="previewWidth === 375 ? 'primary' : 'default'" title="手机宽度 375px" @click="setDeviceWidth(375)">📱 手机</el-button>
+              <el-button size="mini" :type="previewWidth === 768 ? 'primary' : 'default'" title="平板宽度 768px" @click="setDeviceWidth(768)">💻 平板</el-button>
+              <el-button size="mini" :type="previewWidth === 640 ? 'primary' : 'default'" title="桌面宽度 640px（拖拽条可微调）" @click="setDeviceWidth(640)">🖥 桌面</el-button>
+            </el-button-group>
             <el-tag v-if="selectedId != null" size="mini" type="success">正在定位：{{ form.blockKey }}</el-tag>
             <el-tag v-else size="mini" type="info">未选中区块</el-tag>
           </div>
@@ -721,6 +727,11 @@ export default {
         document.addEventListener('pointercancel', onEnd)
       }
     },
+    /** 60：预览设备档位——手机/平板/桌面宽度一键切换（写偏好，拖拽值仍可随时调整） */
+    setDeviceWidth(w) {
+      this.previewWidth = w
+      try { localStorage.setItem('opc_block_preview_width', String(w)) } catch (err) {}
+    },
     /** ② 放大编辑切换：隐藏左右栏表单占满；退出时重建预览防陈旧 */
     toggleFull() {
       this.editFull = !this.editFull
@@ -851,6 +862,7 @@ export default {
 .preview-area { flex-shrink:0; display:flex; flex-direction:column; border-left:1px solid #ebeef5; }
 .preview-bar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid #ebeef5; flex-shrink:0; }
 .preview-title { font-weight:600; font-size:14px; }
+.preview-devices { margin-left:auto; }
 .preview-body { flex:1; position:relative; background:#f2f3f5; }
 .preview-frame { width:100%; height:100%; border:0; }
 .preview-mask { position:absolute; inset:0; background:rgba(255,255,255,.65); display:flex; align-items:center; justify-content:center; color:#606266; font-size:14px; z-index:5; }
