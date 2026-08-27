@@ -297,3 +297,17 @@ export function copyBlock(blockId) {
 export function getCategoryCounts() {
   return request({ url: '/system/cmsCategory/articleCounts', method: 'get' })
 }
+
+// 75：自定义前台页面
+export function listCmsPage() {
+  return request({ url: '/system/cmsPage/list', method: 'get' })
+}
+export function addCmsPage(data) {
+  return request({ url: '/system/cmsPage', method: 'post', data: data })
+}
+export function updateCmsPage(data) {
+  return request({ url: '/system/cmsPage', method: 'put', data: data })
+}
+export function delCmsPage(pageId) {
+  return request({ url: '/system/cmsPage/' + pageId, method: 'delete' })
+}

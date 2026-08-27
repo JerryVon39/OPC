@@ -6,8 +6,13 @@
     <div ref="layout" class="sec-layout" :class="{ full: editFull }">
       <!-- 左：栏目 Tab + 区块列表（内容区块 / 固定槽位分区） -->
       <div class="sec-left">
-        <el-tabs v-model="activePage" @tab-click="onTabChange" class="block-tabs">
-          <el-tab-pane v-for="p in pages" :key="p.key" :label="p.name" :name="p.key" />
+        <el-tabs v-model="activePage" @tab-click="onTabChange" class="block-tabs" :closable="true" @tab-remove="onTabRemove">
+          <el-tab-pane v-for="p in pages" :key="p.key" :label="p.name" :name="p.key" :closable="!!p.custom" />
+          <span slot="operations" class="page-ops">
+            <!-- 75：自定义前台页面管理（新增/改名/排序/停用） -->
+            <el-button type="text" icon="el-icon-document-add" size="mini" @click="openPageDlg" v-hasPermi="['system:cmsBlock:add']">＋ 新增页面</el-button>
+            <el-button type="text" icon="el-icon-setting" size="mini" @click="pageMgrOpen = true" v-hasPermi="['system:cmsBlock:edit']">管理</el-button>
+          </span>
         </el-tabs>
         <div class="sec-group-head">
           <span>内容区块</span>
@@ -203,6 +208,56 @@
       </div>
     </el-dialog>
 
+    <!-- 75：自定义页面管理弹窗（新增 + 列表操作） -->
+    <el-dialog title="自定义页面" :visible.sync="pageMgrOpen" width="560px" append-to-body>
+      <div style="margin-bottom:12px;color:#909399;font-size:13px">自定义页面 = 前台新分页，用区块模板搭建内容；前台访问地址：<code>page.html?key=页面标识</code>。会出现在前台「☰ 更多」菜单。</div>
+      <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openPageDlg">新增页面</el-button>
+      <el-table :data="customPages" size="mini" style="margin-top:10px">
+        <el-table-column label="页面名称" min-width="130">
+          <template slot-scope="scope">{{ scope.row.pageName }} <el-tag v-if="scope.row.status === '1'" size="mini" type="info">停用</el-tag></template>
+        </el-table-column>
+        <el-table-column label="访问地址" min-width="180">
+          <template slot-scope="scope"><code style="font-size:12px">page.html?key={{ scope.row.pageKey }}</code></template>
+        </el-table-column>
+        <el-table-column label="操作" align="center" width="220">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" icon="el-icon-top" @click="moveCustomPage(scope.row, -1)">上移</el-button>
+            <el-button size="mini" type="text" icon="el-icon-bottom" @click="moveCustomPage(scope.row, 1)">下移</el-button>
+            <el-button size="mini" type="text" icon="el-icon-edit" @click="editPageDlg(scope.row)">改名</el-button>
+            <el-button size="mini" type="text" icon="el-icon-switch-button" @click="toggleCustomPage(scope.row)">{{ scope.row.status === '0' ? '停用' : '启用' }}</el-button>
+            <el-button size="mini" type="text" icon="el-icon-delete" class="danger-text" @click="delCustomPage(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div slot="footer"><el-button @click="pageMgrOpen = false">关 闭</el-button></div>
+    </el-dialog>
+
+    <!-- 75：新增/编辑页面弹窗 -->
+    <el-dialog :title="pageEditing ? '编辑页面' : '新增页面'" :visible.sync="pageDlgOpen" width="440px" append-to-body>
+      <el-form :model="pageForm" label-width="90px" size="small">
+        <el-form-item label="页面名称">
+          <el-input v-model="pageForm.pageName" maxlength="50" placeholder="如：活动专题（后台 Tab 与前台更多菜单显示）" />
+        </el-form-item>
+        <el-form-item v-if="!pageEditing" label="页面标识">
+          <el-input v-model="pageForm.pageKey" maxlength="50" placeholder="小写字母/数字/连字符，如 activity-2026" />
+          <div style="color:#909399;font-size:12px;margin-top:4px">前台访问地址：page.html?key=此处填写的内容</div>
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="pageForm.sort" :min="0" :max="999" size="small" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-radio-group v-model="pageForm.status">
+            <el-radio label="0">启用（前台可见）</el-radio>
+            <el-radio label="1">停用（前台隐藏）</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="pageDlgOpen = false">取 消</el-button>
+        <el-button type="primary" @click="savePage">确 定</el-button>
+      </div>
+    </el-dialog>
+
     <!-- 历史版本弹窗 -->
     <el-dialog :title="'历史版本 · ' + currentBlockTitle" :visible.sync="historyOpen" width="640px" append-to-body>
       <el-table :data="historyList" size="mini">
@@ -223,6 +278,7 @@
 
 <script>
 import { listBlock, addBlock, updateBlock, delBlock, moveBlock, listBlockHistory, rollbackBlock, copyBlock } from "@/api/system/cms"
+import { listCmsPage, addCmsPage, updateCmsPage, delCmsPage } from "@/api/system/cms"
 import { getConfigKey } from "@/api/system/config"
 import { getToken } from "@/utils/auth"
 import { BLOCK_TEMPLATES, templateOf, defaultCfgOf, sampleCfgOf } from "./blockTemplates"
@@ -242,13 +298,18 @@ export default {
   },
   data() {
     return {
-      pages: [
+      builtinPages: [
         { key: 'home', name: '首页', file: 'home.html' },
         { key: 'about', name: '走进社区', file: 'about.html' },
         { key: 'join', name: '入驻招商', file: 'join.html' },
         { key: 'talent', name: '人才培养', file: 'talent.html' },
         { key: 'industry', name: '产业生态', file: 'industry.html' }
       ],
+      customPages: [],          // 75：自定义页面（接口拉取，前台 page.html?key=xxx 动态渲染）
+      pageDlgOpen: false,       // 75：页面管理弹窗
+      pageForm: {},             // 75：新增/编辑页面表单
+      pageEditing: false,
+      pageMgrOpen: false,       // 75：自定义页面管理弹窗
       activePage: 'about',
       loading: false,
       blockList: [],
@@ -283,6 +344,13 @@ export default {
     }
   },
   computed: {
+    pages() {
+      // 75：内置页 + 自定义页合并（自定义页前台走 page.html?key=）
+      return [
+        ...this.builtinPages,
+        ...this.customPages.map(p => ({ key: p.pageKey, name: p.pageName, custom: true }))
+      ]
+    },
     currentPage() {
       return this.pages.find(p => p.key === this.activePage) || this.pages[0]
     },
@@ -329,6 +397,7 @@ export default {
   },
   created() {
     this.getList(true)
+    this.loadCustomPages()
     getConfigKey('site.front.url').then(res => {
       if (res && res.msg && res.msg !== 'http://localhost') this.frontUrl = res.msg
     }).catch(() => {})
@@ -582,6 +651,70 @@ export default {
       this.editFull = !this.editFull
       if (!this.editFull) this.reloadPreview()
     },
+    /** 75：加载自定义页面（区块管理 Tab 动态化） */
+    loadCustomPages() {
+      listCmsPage().then(res => {
+        this.customPages = res.data || []
+      }).catch(() => {})
+    },
+    openPageDlg() {
+      this.pageEditing = false
+      this.pageForm = { pageKey: '', pageName: '', sort: 0, status: '0' }
+      this.pageDlgOpen = true
+    },
+    editPageDlg(p) {
+      this.pageEditing = true
+      this.pageForm = { pageId: p.pageId, pageKey: p.pageKey, pageName: p.pageName, sort: p.sort, status: p.status }
+      this.pageDlgOpen = true
+    },
+    savePage() {
+      const f = this.pageForm
+      if (!f.pageName || !f.pageName.trim()) { this.$modal.msgWarning('请填写页面名称'); return }
+      if (!this.pageEditing && !/^[a-z0-9-]{1,50}$/.test(f.pageKey || '')) {
+        this.$modal.msgWarning('页面标识仅支持小写字母、数字、连字符（如 activity-2026）')
+        return
+      }
+      const req = this.pageEditing ? updateCmsPage(f) : addCmsPage(f)
+      req.then(() => {
+        this.$modal.msgSuccess(this.pageEditing ? '页面已更新' : '页面已创建——前台访问地址：page.html?key=' + f.pageKey)
+        this.pageDlgOpen = false
+        this.loadCustomPages()
+      }).catch(() => {})
+    },
+    delCustomPage(p) {
+      this.$modal.confirm('确认删除页面「' + p.pageName + '」吗？该页全部区块将一并删除，前台 page.html?key=' + p.pageKey + ' 将无法访问。').then(() => {
+        return delCmsPage(p.pageId)
+      }).then(() => {
+        this.$modal.msgSuccess('页面已删除')
+        if (this.activePage === p.pageKey) { this.selectedId = null; this.activePage = 'about' }
+        this.loadCustomPages()
+        this.getList(true)
+      }).catch(() => {})
+    },
+    /** 75：关闭自定义页 Tab（确认后删除页面） */
+    onTabRemove(key) {
+      const p = this.customPages.find(x => x.pageKey === key)
+      if (p) this.delCustomPage(p)
+    },
+    /** 75：启用/停用切换 */
+    toggleCustomPage(p) {
+      updateCmsPage({ pageId: p.pageId, status: p.status === '0' ? '1' : '0' }).then(() => {
+        this.$modal.msgSuccess(p.status === '0' ? '已停用（前台不可访问）' : '已启用')
+        this.loadCustomPages()
+      }).catch(() => {})
+    },
+    moveCustomPage(p, dir) {
+      const arr = this.customPages
+      const idx = arr.findIndex(x => x.pageId === p.pageId)
+      const o = arr[idx + dir]
+      if (!o) return
+      const tmp = p.sort
+      updateCmsPage({ pageId: p.pageId, sort: o.sort }).then(() =>
+        updateCmsPage({ pageId: o.pageId, sort: tmp })).then(() => {
+        this.$modal.msgSuccess('已调整顺序')
+        this.loadCustomPages()
+      }).catch(() => {})
+    },
     /** D：预览当前效果——把当前（含未保存）配置序列化，调前台单区块渲染器新标签打开 */
     previewCurrent() {
       const t = this.form.template
@@ -605,6 +738,7 @@ export default {
 .sec-layout { display: flex; gap: 10px; height: calc(100vh - 170px); min-height: 500px; }
 .sec-left { width: 290px; flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 8px; }
 .block-tabs { margin-bottom: 4px; }
+.page-ops { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; }
 .sec-group-head { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 13px; color: #606266; padding: 8px 4px 6px; border-top: 1px dashed #ebeef5; margin-top: 6px; }
 .sec-group-slot { border-top: 1px dashed #ebeef5; }
 .sec-empty { color: #909399; font-size: 13px; text-align: center; padding: 30px 0; }

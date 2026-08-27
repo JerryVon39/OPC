@@ -1,0 +1,30 @@
+package com.ruoyi.system.domain;
+
+import com.ruoyi.common.core.domain.BaseEntity;
+
+/** 75：自定义前台页面注册表 */
+public class CmsPage extends BaseEntity
+{
+    private static final long serialVersionUID = 1L;
+
+    private Long pageId;
+    /** 页面标识（前台 page.html?key=xxx；小写字母数字连字符） */
+    private String pageKey;
+    /** 页面名称（后台 Tab 与前台更多菜单显示） */
+    private String pageName;
+    /** 排序（越小越靠前） */
+    private Long sort;
+    /** 状态（0启用 1停用） */
+    private String status;
+
+    public Long getPageId() { return pageId; }
+    public void setPageId(Long pageId) { this.pageId = pageId; }
+    public String getPageKey() { return pageKey; }
+    public void setPageKey(String pageKey) { this.pageKey = pageKey; }
+    public String getPageName() { return pageName; }
+    public void setPageName(String pageName) { this.pageName = pageName; }
+    public Long getSort() { return sort; }
+    public void setSort(Long sort) { this.sort = sort; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}

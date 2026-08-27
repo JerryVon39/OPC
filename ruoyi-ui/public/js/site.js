@@ -1009,3 +1009,30 @@ async function loadPageSections(pageKey) {
     setTimeout(function () { revealStatic(statId); }, 3500); // 兜底：请求失败恢复静态
   }
 })();
+
+// ===== 75：自定义页面自动追加到「☰ 更多」菜单（拉 cms_page 启用列表，幂等去重）=====
+(function loadCustomPageMenu() {
+  try {
+    fetch('/prod-api/system/cmsPage/publicList').then(r => r.json()).then(d => {
+      const list = d.data || [];
+      if (!list.length) return;
+      const menu = document.getElementById('moreMenu');
+      if (!menu) return;
+      // 幂等：已追加过则跳过（缓存渲染会重复执行本函数）
+      if (menu.querySelector('.more-item-custom')) return;
+      const divider = document.createElement('div');
+      divider.className = 'more-item more-item-custom';
+      divider.style.cssText = 'border-top:1px solid #eee;margin:4px 0;padding-top:4px;font-size:12px;color:#999;';
+      divider.textContent = '📄 自定义页面';
+      menu.appendChild(divider);
+      list.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'more-item more-item-custom';
+        item.textContent = '📄 ' + p.pageName;
+        item.style.cursor = 'pointer';
+        item.onclick = function () { location.href = 'page.html?key=' + encodeURIComponent(p.pageKey); };
+        menu.appendChild(item);
+      });
+    }).catch(function () { /* 接口失败静默：自定义页菜单不展示，不影响页面 */ });
+  } catch (e) { /* 忽略 */ }
+})();
