@@ -1055,11 +1055,16 @@ window.__appendCustomNav = function () {
     }).catch(function () { /* 接口失败静默：自定义页入口不展示，不影响页面 */ });
   } catch (e) { /* 忽略 */ }
 };
-// 首屏兜底：DOM 就绪后执行一次（配置导航未渲染时也有入口）
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function () { window.__appendCustomNav(); });
-} else {
+// 首屏兜底：DOM 就绪后执行 + 延迟重试（配置导航渲染与自定义页 fetch 存在竞态，重试保证最终显示；幂等）
+function __customNavRetry() {
   window.__appendCustomNav();
+  setTimeout(window.__appendCustomNav, 1200);
+  setTimeout(window.__appendCustomNav, 3500);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', __customNavRetry);
+} else {
+  __customNavRetry();
 }
 
 // ===== 页头（hero）统一渲染：所有栏目页/自定义页的顶部大标题区由 cms_page 配置驱动 =====
