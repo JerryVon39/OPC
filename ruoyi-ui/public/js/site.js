@@ -635,7 +635,7 @@ function renderSection(s, no) {
   if (s.template === 'cards') {
     const cards = (cfg.cards || []).map(c =>
       '<div class="about-card"><div class="about-icon">' + esc(c.icon || '📄') + '</div>' +
-      '<div class="about-title">' + esc(c.title) + '</div><p>' + esc(c.text) + '</p></div>').join('');
+      '<div class="about-title">' + esc(c.title) + '</div><div class="about-card-text">' + cmsSanitizeHtml(c.text || '') + '</div></div>').join('');
     // 可选步骤条（cfg.steps：{title, desc} 数组，样式复用 home-steps）
     const steps = (cfg.steps || []).map((st, si) =>
       '<div class="hs-item"><span class="hs-no">' + ['①', '②', '③', '④', '⑤'][si] + '</span>' +
@@ -724,13 +724,13 @@ function renderSection(s, no) {
       ? '<img src="' + esc(imgUrl(cfg.image)) + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:14px" />' : '';
     return '<section class="home-cta"><div class="home-cta-inner">' + img +
       '<h3>' + esc(cfg.title || '') + '</h3>' +
-      (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
+      (cfg.text ? '<div class="home-cta-text">' + cmsSanitizeHtml(cfg.text) + '</div>' : '') +
       (cfg.btnText ? '<a class="btn-buy home-cta-btn" href="' + esc(safeLink(cfg.btnLink)) + '">' + esc(cfg.btnText) + '</a>' : '') +
       '</div></section>';
   }
-  // text：纯文本段落
+  // text：文本段落（text 模板正文为 html 类型，走白名单渲染——esc 会把 <p> 显示成字面标签）
   return '<section class="home-mod ' + bg + '"><div class="container">' + secHead(no, s.title) +
-    '<div style="font-size:15px;line-height:2;color:var(--text)">' + esc(cfg.text || '') + '</div></div></section>';
+    '<div style="font-size:15px;line-height:2;color:var(--text)">' + cmsSanitizeHtml(cfg.text || '') + '</div></div></section>';
 }
 
 /** 首页模块渲染（同步缓存渲染与异步拉取共用，保证两路输出一致） */

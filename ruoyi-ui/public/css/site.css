@@ -281,6 +281,9 @@
   .about-card .about-icon { font-size: 26px; margin-bottom: 8px; }
   .about-card .about-title { font-size: 15px; font-weight: bold; color: var(--primary); margin-bottom: 8px; }
   .about-card p { font-size: 13px; color: #666; line-height: 1.8; }
+  .about-card .about-card-text { font-size: 13px; color: #666; line-height: 1.8; }
+  .about-card .about-card-text p { margin: 0 0 8px; }
+  .about-card .about-card-text p:last-child { margin-bottom: 0; }
 
   /* ================= 联系我们 #contact ================= */
   .contact-list { display: grid; gap: 12px; max-width: 640px; }
@@ -465,6 +468,7 @@ textarea.form-input { resize: vertical; }
   .home-mod { padding: 34px 0 40px; }
   .home-mod .about-card .about-title { font-size: 18px; }
   .home-mod .about-card p { font-size: 14.5px; line-height: 1.95; }
+  .home-mod .about-card .about-card-text { font-size: 14.5px; line-height: 1.95; }
   .home-mod .scc-title { font-size: 18px; }
   .home-mod .scc-desc { font-size: 14px; line-height: 1.95; }
   .home-mod .tl-title { font-size: 16px; }
@@ -517,7 +521,9 @@ textarea.form-input { resize: vertical; }
   }
   .home-cta-inner { position: relative; z-index: 2; }
   .home-cta h3 { color: #fff; font-size: 26px; letter-spacing: 3px; margin-bottom: 10px; }
-  .home-cta p { color: rgba(255,255,255,0.85); font-size: 15px; margin-bottom: 20px; letter-spacing: 1px; }
+  .home-cta p, .home-cta .home-cta-text { color: rgba(255,255,255,0.85); font-size: 15px; margin-bottom: 20px; letter-spacing: 1px; }
+  .home-cta .home-cta-text p { margin: 0 0 8px; }
+  .home-cta .home-cta-text p:last-child { margin-bottom: 0; }
   .home-cta-btn { padding: 12px 40px; font-size: 15px; }
   @media (max-width: 768px) {
     .home-hero .banner { min-height: 72vh; }
