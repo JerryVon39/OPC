@@ -130,7 +130,7 @@
                           <el-button v-if="item[sf.key]" type="text" icon="el-icon-delete" @click="item[sf.key] = ''">清除</el-button>
                         </div>
                       </template>
-                      <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删</el-button>
+                      <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删除</el-button>
                     </div>
                     <el-button type="primary" plain size="mini" @click="addListItem(f)">＋ 添加{{ f.itemLabel }}</el-button>
                   </template>
@@ -469,6 +469,9 @@ export default {
       if (this._dragCleanup) this._dragCleanup() // 自愈：上次拖拽 pointerup 被 iframe 吞掉 → 先清理遗留状态
       const target = this.$refs.resizer
       e.preventDefault()
+      // 按下偏移：鼠标按在拖拽条上（含条宽与两侧 gap），宽度映射扣除按下点偏移才跟手
+      const rect0 = this.$refs.layout.getBoundingClientRect()
+      const offset = (e.clientX - rect0.left) - this.midWidth
       let captured = true
       try { target.setPointerCapture(e.pointerId) } catch (err) { captured = false } // 合成事件等无活跃指针时回退 document 监听
       document.body.style.cursor = 'col-resize'
@@ -477,7 +480,7 @@ export default {
         const rect = this.$refs.layout.getBoundingClientRect()
         // 上限自适应：窄视口下不让中栏溢出布局挤没预览栏
         const maxW = Math.min(900, rect.width - 150)
-        this.midWidth = Math.min(maxW, Math.max(480, ev.clientX - rect.left))
+        this.midWidth = Math.min(maxW, Math.max(480, ev.clientX - rect.left - offset))
       }
       const onEnd = () => {
         document.body.style.cursor = ''
