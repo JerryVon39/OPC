@@ -335,7 +335,9 @@ export default {
         { key: 'about', name: '走进社区', file: 'about.html' },
         { key: 'join', name: '入驻招商', file: 'join.html' },
         { key: 'talent', name: '人才培养', file: 'talent.html' },
-        { key: 'industry', name: '产业生态', file: 'industry.html' }
+        { key: 'industry', name: '产业生态', file: 'industry.html' },
+        { key: 'policy', name: '政策赋能', file: 'policy.html' },
+        { key: 'news', name: '新闻动态', file: 'news.html' }
       ],
       customPages: [],          // 75：自定义页面（接口拉取，前台 page.html?key=xxx 动态渲染）
       pageDlgOpen: false,       // 75：页面管理弹窗
@@ -380,9 +382,11 @@ export default {
   computed: {
     pages() {
       // 75：内置页 + 自定义页合并（自定义页前台走 page.html?key=）
+      // 内置页已注册进 cms_page（07 脚本）——customPages 需排除内置键，防页面卡片重复
+      const customOnly = this.customPages.filter(p => !this.builtinPages.some(b => b.key === p.pageKey))
       return [
         ...this.builtinPages,
-        ...this.customPages.map(p => ({ key: p.pageKey, name: p.pageName, custom: true }))
+        ...customOnly.map(p => ({ key: p.pageKey, name: p.pageName, custom: true }))
       ]
     },
     /** 页面管理弹窗全量列表（内置页已注册进 cms_page，与自定义页统一展示；内置页仅页头可编辑） */
