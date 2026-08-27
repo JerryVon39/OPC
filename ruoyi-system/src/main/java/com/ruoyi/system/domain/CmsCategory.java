@@ -30,6 +30,10 @@ public class CmsCategory extends BaseEntity
     @Excel(name = "状态(0启用 1停用)")
     private String status;
 
+    /** I：前台归属页面（news=资讯动态页 policy=政策赋能页，替代名称前缀硬编码） */
+    @Excel(name = "前台归属页面")
+    private String frontPage;
+
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public Long getCategoryId() { return categoryId; }
 
@@ -44,6 +48,8 @@ public class CmsCategory extends BaseEntity
 
     public void setStatus(String status) { this.status = status; }
     public String getStatus() { return status; }
+    public void setFrontPage(String frontPage) { this.frontPage = frontPage; }
+    public String getFrontPage() { return frontPage; }
 
     @Override
     public String toString() {

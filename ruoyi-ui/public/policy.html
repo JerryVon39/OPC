@@ -280,7 +280,7 @@
     try {
       const res = await fetch(CAT_API);
       const d = await res.json();
-      const cats = (d.data || []).filter(c => c.categoryName && c.categoryName.indexOf('政策') === 0);
+      const cats = (d.data || []).filter(c => c.frontPage === 'policy');
       libCatIds = cats.filter(c => !isReadCat(c.categoryName)).map(c => c.categoryId);
       readCatIds = cats.filter(c => isReadCat(c.categoryName)).map(c => c.categoryId);
     } catch (e) {

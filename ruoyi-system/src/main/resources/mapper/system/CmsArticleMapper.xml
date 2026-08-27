@@ -15,6 +15,7 @@
         <result property="views"       column="views"        />
         <result property="publishTime" column="publish_time" />
         <result property="offlineTime" column="offline_time" />
+        <result property="frontPage"   column="front_page"   />
         <result property="sort"        column="sort"         />
         <result property="attachment"  column="attachment"   />
         <result property="keywords"    column="keywords"     />
@@ -35,7 +36,7 @@
         select a.article_id, a.category_id, a.title, a.summary, a.cover, a.author, a.is_top, a.status,
                a.views, a.publish_time, a.offline_time, a.sort, a.attachment, a.keywords, a.description, a.version,
                a.del_flag, a.deleted_time, a.deleted_by, a.create_by, a.create_time, a.update_by, a.update_time,
-               c.category_name
+               c.category_name, c.front_page
         from cms_article a
         left join cms_category c on c.category_id = a.category_id
     </sql>
@@ -84,7 +85,7 @@
         select a.article_id, a.category_id, a.title, a.summary, a.content, a.cover, a.author, a.is_top,
                a.status, a.views, a.publish_time, a.offline_time, a.sort, a.attachment, a.keywords, a.description, a.version,
                a.del_flag, a.deleted_time, a.deleted_by, a.create_by, a.create_time, a.update_by, a.update_time,
-               c.category_name
+               c.category_name, c.front_page
         from cms_article a
         left join cms_category c on c.category_id = a.category_id
         where a.article_id = #{articleId} and a.del_flag = '0'

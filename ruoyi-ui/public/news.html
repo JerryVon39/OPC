@@ -114,7 +114,7 @@
       nonPolicyIds = [];
       list.forEach(c => {
         // 政策类栏目（名称以"政策"开头）由「政策赋能」页展示，资讯动态不重复
-        if (c.categoryName && c.categoryName.indexOf('政策') === 0) return;
+        if (c.frontPage === 'policy') return;
         nonPolicyIds.push(c.categoryId);
         html += '<a data-id="' + c.categoryId + '" onclick="switchCat(this)">' + esc(c.categoryName) + '</a>';
       });

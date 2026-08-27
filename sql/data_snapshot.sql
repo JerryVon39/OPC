@@ -1,5 +1,5 @@
 -- ============================================
--- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-27 10:29:24）
+-- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-27 10:38:57）
 -- 来源：数智游民创新工场官网数据库（ry-vue）业务数据
 -- 导入（可重复执行，REPLACE 模式）：
 --   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql
@@ -46,7 +46,7 @@ REPLACE INTO `sys_notice` VALUES (1,'清远首个人工智能 OPC 生态社区�
 /*!40000 ALTER TABLE `sys_notice_read` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `cms_category` DISABLE KEYS */;
-REPLACE INTO `cms_category` VALUES (1,'新闻动态',0,1,'0','admin','2026-08-21 09:45:13','',NULL),(2,'政策解读',0,2,'0','admin','2026-08-21 09:45:13','',NULL),(3,'活动报道',0,3,'0','admin','2026-08-21 09:45:13','',NULL),(4,'入驻故事',0,4,'0','admin','2026-08-21 09:45:13','',NULL),(5,'政策文件',0,5,'0','admin','2026-08-21 12:46:31','',NULL);
+REPLACE INTO `cms_category` VALUES (1,'新闻动态',0,1,'0','admin','2026-08-21 09:45:13','',NULL,'news'),(2,'政策解读',0,2,'0','admin','2026-08-21 09:45:13','',NULL,'policy'),(3,'活动报道',0,3,'0','admin','2026-08-21 09:45:13','',NULL,'news'),(4,'入驻故事',0,4,'0','admin','2026-08-21 09:45:13','',NULL,'news'),(5,'政策文件',0,5,'0','admin','2026-08-21 12:46:31','',NULL,'policy');
 /*!40000 ALTER TABLE `cms_category` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `sys_dict_type` DISABLE KEYS */;

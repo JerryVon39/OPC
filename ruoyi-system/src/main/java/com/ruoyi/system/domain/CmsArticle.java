@@ -62,6 +62,9 @@ public class CmsArticle extends BaseEntity
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date offlineTime;
 
+    /** I：栏目前台归属页面（news/policy，join cms_category，前台分流用） */
+    private String frontPage;
+
     /** 排序(越小越靠前，置顶之后生效) */
     private Long sort;
 
@@ -132,6 +135,8 @@ public class CmsArticle extends BaseEntity
     public Date getPublishTime() { return publishTime; }
     public void setOfflineTime(Date offlineTime) { this.offlineTime = offlineTime; }
     public Date getOfflineTime() { return offlineTime; }
+    public void setFrontPage(String frontPage) { this.frontPage = frontPage; }
+    public String getFrontPage() { return frontPage; }
 
     public void setSort(Long sort) { this.sort = sort; }
     public Long getSort() { return sort; }

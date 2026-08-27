@@ -230,7 +230,7 @@
         return;
       }
       const a = d.data;
-      const isPolicy = (a.categoryName === '政策文件' || a.categoryName === '政策解读');
+      const isPolicy = a.frontPage === 'policy';
       document.title = (a.title || '文章详情') + ' · 数智游民创新工场';
       setMeta('keywords', a.keywords);
       setMeta('description', a.description);

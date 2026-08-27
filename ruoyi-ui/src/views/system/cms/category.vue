@@ -83,6 +83,14 @@
             <el-radio label="1">停用（前台隐藏）</el-radio>
           </el-radio-group>
         </el-form-item>
+        <!-- I：前台归属页面可配置（替代名称前缀"政策"硬编码——新建栏目不再靠命名 hack 决定它在哪个页面） -->
+        <el-form-item label="前台页面" prop="frontPage">
+          <el-radio-group v-model="form.frontPage">
+            <el-radio label="news">资讯动态页（新闻动态）</el-radio>
+            <el-radio label="policy">政策赋能页</el-radio>
+          </el-radio-group>
+          <div class="field-tip" style="color:#909399;font-size:12px;line-height:1.6">决定该栏目文章出现在前台哪个页面；可随时修改。</div>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -181,7 +189,7 @@ export default {
     },
     /** E：前台归属页面（与文章列表 isPolicyCat 口径一致） */
     isPolicyCat(row) {
-      return row.categoryName && row.categoryName.indexOf('政策') === 0
+      return row.frontPage === 'policy'
     },
     /** F：同级上移/下移（交换 sort 后重新拉取） */
     canMove(row, dir) {
@@ -328,7 +336,7 @@ export default {
     },
     cancel() { this.open = false; this.reset() },
     reset() {
-      this.form = { categoryId: null, categoryName: null, parentId: 0, sort: 0, status: '0' }
+      this.form = { categoryId: null, categoryName: null, parentId: 0, sort: 0, status: '0', frontPage: 'news' }
       this.resetForm("form")
     }
   }

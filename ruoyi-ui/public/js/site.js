@@ -653,7 +653,7 @@ function renderSection(s, no) {
           clearTimeout(t2);
           const cd = await cr.json();
           // 注意：cmsCategory/publicList 返回 data 数组（非 rows），与 news.html loadCats 同款解析
-          const nonPolicy = (cd.data || []).filter(c => (c.categoryName || '').indexOf('政策') !== 0).map(c => c.categoryId);
+          const nonPolicy = (cd.data || []).filter(c => c.frontPage !== 'policy').map(c => c.categoryId);
           if (nonPolicy.length) catFilter = '&categoryIds=' + encodeURIComponent(nonPolicy.join(','));
         } catch (e) { /* 栏目接口失败：不过滤（与 news.html 同款降级） */ }
         const ctrl = new AbortController();

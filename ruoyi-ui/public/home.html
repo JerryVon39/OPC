@@ -520,13 +520,13 @@
       const res = await apiFetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=6');
       const d = await res.json();
       const rows = d.rows || [];
-      const policy = rows.find(a => (a.categoryName || '').indexOf('政策') === 0);
+      const policy = rows.find(a => a.frontPage === 'policy');
       if (topBox && policy) {
         topBox.href = 'article.html?id=' + policy.articleId;
         topBox.style.display = '';
       }
       // P1：主体列表与 news.html 口径一致——排除政策类（政策文章由「政策赋能」页与上方「政策速览」块展示）
-      const newsRows = rows.filter(a => (a.categoryName || '').indexOf('政策') !== 0);
+      const newsRows = rows.filter(a => a.frontPage !== 'policy');
       if (!newsRows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
       box.innerHTML = newsRows.slice(0, 3).map(a => {
         const raw = String(a.summary || '').replace(/<[^>]+>/g, '');

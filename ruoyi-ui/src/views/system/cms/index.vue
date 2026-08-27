@@ -193,7 +193,7 @@ export default {
         this.categoryOptions = rows
         // 树按前台页面分组：📰 资讯动态（news.html 页）📄 政策赋能（policy.html 页）
         // 组节点带 categoryIds（组内栏目列表），点击按多栏目查询
-        const isPolicy = r => r.categoryName && r.categoryName.indexOf('政策') === 0
+        const isPolicy = r => r.frontPage === 'policy'
         const newsCats = rows.filter(r => !isPolicy(r))
         const policyCats = rows.filter(r => isPolicy(r))
         this.treeOptions = [{
@@ -227,7 +227,7 @@ export default {
     },
     /** 文章所属前台页面（政策类栏目 → 政策赋能页，其余 → 资讯动态页） */
     isPolicyCat(row) {
-      return row.categoryName && row.categoryName.indexOf('政策') === 0
+      return row.frontPage === 'policy'
     },
     /** 跳到栏目管理页（路由 = 内容运营目录路径 content + 菜单路径 category） */
     goCategory() {
