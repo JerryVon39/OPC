@@ -85,7 +85,7 @@
       const res = await fetch('/prod-api/system/cmsBlock/publicList?pageKey=' + encodeURIComponent(key));
       const d = await res.json();
       const list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
-      if (!list.length) { box.innerHTML = '<div class="no-result">该页面不存在或已停用</div>'; return; }
+      if (!list.length) { box.innerHTML = '<div class="no-result">该页面尚未搭建内容或已停用</div>'; return; }
       document.getElementById('pageTitle').style.display = '';
       document.title = '自定义页面 · 数智游民创新工场';
       let html = '';

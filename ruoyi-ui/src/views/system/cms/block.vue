@@ -716,6 +716,10 @@ export default {
         this.$modal.msgSuccess(this.pageEditing ? '页面已更新' : '页面已创建——前台访问地址：page.html?key=' + f.pageKey)
         this.pageDlgOpen = false
         this.loadCustomPages()
+        if (!this.pageEditing) {
+          // 创建后自动进入新页面区块列表，直接开始搭建（不再停留在选择页）
+          this.switchToBlocks({ key: f.pageKey })
+        }
       }).catch(() => {})
     },
     delCustomPage(p) {
