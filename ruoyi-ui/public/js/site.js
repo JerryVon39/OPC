@@ -822,9 +822,10 @@ function renderPageBlock(b, no) {
   const head = (title) => (title ? '<h2 class="pblock-title">' + esc(title) + '</h2>' : '');
   const imgUrl = (u) => {
     const raw = u || '';
-    // 文件名中的字面 % 需先编码为 %25（encodeURI 不编码 %，未编码会形成非法转义 → 加载失败）
-    const esc = raw.indexOf('%') >= 0 ? raw.replace(/%/g, '%25') : raw;
-    return (/^https?:\/\//.test(raw) ? raw : '/prod-api' + encodeURI(esc));
+    // encodeURI 已自动把字面 % 编码为 %25（勿再手动替换，否则双重编码 %2525）
+    // encodeURI 不编码 ( ) —— 后端 Spring 对含括号路径 404，需在编码后补 %28/%29
+    const esc = encodeURI(raw).replace(/\(/g, '%28').replace(/\)/g, '%29');
+    return (/^https?:\/\//.test(raw) ? raw : '/prod-api' + esc);
   };
 
   if (t === 'text') {
