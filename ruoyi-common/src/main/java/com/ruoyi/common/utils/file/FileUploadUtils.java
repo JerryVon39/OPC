@@ -161,7 +161,12 @@ public class FileUploadUtils
      */
     public static final String extractFilename(MultipartFile file)
     {
-        return StringUtils.format("{}/{}_{}.{}", DateUtils.datePath(), FilenameUtils.getBaseName(file.getOriginalFilename()), Seq.getId(Seq.uploadSeqType), getExtension(file));
+        // 文件名安全化（2026-08-27）：% { } [ ] ` ~ 空格 等替换为 - ——
+        // 含这些字符的文件名 URL 编码后仍会被后端安全层 401 拦截（畸形路径），导致图片无法加载
+        String safeBase = FilenameUtils.getBaseName(file.getOriginalFilename())
+                .replaceAll("[%{}\\[\\]`~\\s]+", "-")
+                .replaceAll("-+", "-");
+        return StringUtils.format("{}/{}_{}.{}", DateUtils.datePath(), safeBase, Seq.getId(Seq.uploadSeqType), getExtension(file));
     }
 
     /**
