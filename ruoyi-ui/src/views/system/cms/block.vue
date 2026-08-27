@@ -153,7 +153,7 @@
       </div>
 
       <!-- ① 拖拽条：调整编辑区宽度（480–900px，偏好存 localStorage） -->
-      <div class="sec-resizer" title="拖拽调整编辑区宽度" @mousedown="startResize"></div>
+      <div ref="resizer" class="sec-resizer" title="拖拽调整编辑区宽度" @pointerdown="startResize"></div>
 
       <!-- 右：实时预览 -->
       <div class="sec-right">
@@ -460,24 +460,49 @@ export default {
       this.previewLoading = true
       this.previewTs = Date.now()
     },
-    /** ① 拖拽调整编辑区宽度（min 480 / max 900，松手存 localStorage） */
+    /** ① 拖拽调整编辑区宽度（min 480 / max 900，松手存 localStorage）
+     *  Pointer Events + setPointerCapture：指针移入预览 iframe 后 mouseup/mousemove 被 iframe
+     *  吞掉导致拖拽卡死（光标锁定、宽度无法缩小）——捕获后 pointer 事件强制派发回拖拽条，
+     *  即使指针在 iframe 内/窗口外松手也必达；pointercancel 兜底清理，_resizing 防监听器叠加 */
     startResize(e) {
+      if (!e.isPrimary || e.button !== 0) return
+      if (this._dragCleanup) this._dragCleanup() // 自愈：上次拖拽 pointerup 被 iframe 吞掉 → 先清理遗留状态
+      const target = this.$refs.resizer
       e.preventDefault()
+      let captured = true
+      try { target.setPointerCapture(e.pointerId) } catch (err) { captured = false } // 合成事件等无活跃指针时回退 document 监听
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
       const onMove = (ev) => {
         const rect = this.$refs.layout.getBoundingClientRect()
-        this.midWidth = Math.min(900, Math.max(480, ev.clientX - rect.left))
+        // 上限自适应：窄视口下不让中栏溢出布局挤没预览栏
+        const maxW = Math.min(900, rect.width - 150)
+        this.midWidth = Math.min(maxW, Math.max(480, ev.clientX - rect.left))
       }
-      const onUp = () => {
+      const onEnd = () => {
         document.body.style.cursor = ''
         document.body.style.userSelect = ''
-        document.removeEventListener('mousemove', onMove)
-        document.removeEventListener('mouseup', onUp)
+        target.removeEventListener('pointermove', onMove)
+        target.removeEventListener('pointerup', onEnd)
+        target.removeEventListener('pointercancel', onEnd)
+        document.removeEventListener('pointermove', onMove)
+        document.removeEventListener('pointerup', onEnd)
+        document.removeEventListener('pointercancel', onEnd)
+        if (this._dragCleanup === onEnd) this._dragCleanup = null
         try { localStorage.setItem('opc_block_mid_width', String(this.midWidth)) } catch (err) {}
       }
-      document.addEventListener('mousemove', onMove)
-      document.addEventListener('mouseup', onUp)
+      this._dragCleanup = onEnd
+      if (captured) {
+        // 指针捕获：pointer 事件强制派发回拖拽条，iframe 内/窗口外松手必达
+        target.addEventListener('pointermove', onMove)
+        target.addEventListener('pointerup', onEnd)
+        target.addEventListener('pointercancel', onEnd)
+      } else {
+        // 捕获失败兜底：document 级监听，指针移回文档任意处松手即结束
+        document.addEventListener('pointermove', onMove)
+        document.addEventListener('pointerup', onEnd)
+        document.addEventListener('pointercancel', onEnd)
+      }
     },
     /** ② 放大编辑切换：隐藏左右栏表单占满；退出时重建预览防陈旧 */
     toggleFull() {
@@ -509,11 +534,11 @@ export default {
 .sec-item-ops .el-button { padding: 0; margin-right: 10px; }
 .danger-text { color: #f56c6c; }
 .tmpl-tag { display: inline-block; background: #ecf5ff; color: #409EFF; border-radius: 4px; padding: 1px 8px; font-size: 12px; flex-shrink: 0; }
-.sec-mid { min-width: 480px; flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 12px 16px; }
+.sec-mid { min-width: 480px; max-width: calc(100vw - 420px); flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 12px 16px; }
 .sec-mid-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .sec-mid-title { font-weight: 600; font-size: 15px; }
 .sec-mid-head-right { margin-left: auto; }
-.sec-resizer { width: 8px; flex-shrink: 0; cursor: col-resize; background: transparent; border-radius: 4px; }
+.sec-resizer { width: 8px; flex-shrink: 0; cursor: col-resize; background: transparent; border-radius: 4px; touch-action: none; }
 .sec-resizer:hover, .sec-resizer:active { background: #d9ecff; }
 /* ② 放大编辑：隐藏左右栏与拖拽条，表单占满整行 */
 .sec-layout.full .sec-left, .sec-layout.full .sec-right, .sec-layout.full .sec-resizer { display: none; }
@@ -537,6 +562,8 @@ export default {
 .tmpl-actions { margin-top: 10px; display: flex; justify-content: center; gap: 6px; }
 .tpl-preview-wrap { height: 520px; }
 .tpl-preview-frame { width: 100%; height: 100%; border: 1px solid #ebeef5; border-radius: 6px; background: #f2f3f5; }
-.card-row { display: flex; gap: 8px; align-items: flex-start; width: 100%; }
-.card-row .el-input, .card-row .el-textarea { flex: 1; }
+/* 卡片行：尊重 schema 内联宽度（icon 90 / 标题 150 等），Quill/textarea 独占一行换行展示 */
+.card-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; width: 100%; }
+.card-row .el-input, .card-row .el-textarea { flex: 0 0 auto; }
+.card-row > div { flex-basis: 100%; } /* html(Quill)/image 子字段容器独占一行 */
 </style>
