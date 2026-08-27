@@ -49,6 +49,18 @@ function safeLink(link) {
   if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
   return '#'; // javascript:/data:/vbscript: 等危险协议一律拦截
 }
+// 图片 URL 统一编码（单一来源，挂 window 供各页面内联脚本复用）：
+// - 相对路径（/profile/...）补 /prod-api 前缀；http(s) 开头原样返回
+// - encodeURI 后补括号 %28/%29（后端 Spring 对含括号路径 404）——勿对 % 手动替换（会双重编码 %2525）
+// - 已带 /prod-api 前缀则不重复加前缀（防把 /prod-api/profile/... 拼成 /prod-api/prod-api/...）
+function imgUrl(u) {
+  const raw = String(u == null ? '' : u);
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const esc = encodeURI(raw).replace(/\(/g, '%28').replace(/\)/g, '%29');
+  return (/^\/prod-api/i.test(raw) ? '' : '/prod-api') + esc;
+}
+window.imgUrl = imgUrl;
 // 正整数列数：非法值一律回退 3 —— 防 style 属性注入（H3 修复）
 function safeCols(v) {
   return /^[1-9]\d*$/.test(String(v == null ? '' : v)) ? v : 3;
@@ -669,7 +681,7 @@ function renderSection(s, no) {
           const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
           // 封面缩略图：统一左图右文结构——有封面显示真实图，无封面显示占位块（保证标题起点对齐）
           const cover = a.cover
-            ? '<img class="news-thumb" src="' + esc(/^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + encodeURI(String(a.cover || '').replace(/%/g, '%25'))) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+            ? '<img class="news-thumb" src="' + esc(imgUrl(a.cover)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
             : '<div class="news-thumb news-thumb-ph">📰</div>';
           return '<div class="news-card has-thumb" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
             cover +
@@ -709,7 +721,7 @@ function renderSection(s, no) {
   }
   if (s.template === 'cta' || s.template === 'banner_text') {
     const img = s.template === 'banner_text' && cfg.image
-      ? '<img src="' + esc(/^https?:\/\//.test(cfg.image) ? cfg.image : '/prod-api' + cfg.image) + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:14px" />' : '';
+      ? '<img src="' + esc(imgUrl(cfg.image)) + '" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:14px" />' : '';
     return '<section class="home-cta"><div class="home-cta-inner">' + img +
       '<h3>' + esc(cfg.title || '') + '</h3>' +
       (cfg.text ? '<p>' + esc(cfg.text) + '</p>' : '') +
@@ -820,13 +832,7 @@ function renderPageBlock(b, no) {
   const key = b.blockKey || '';
   const inner = (body) => '<section class="pblock" data-section-key="' + esc(key) + '"><div class="pblock-inner">' + body + '</div></section>';
   const head = (title) => (title ? '<h2 class="pblock-title">' + esc(title) + '</h2>' : '');
-  const imgUrl = (u) => {
-    const raw = u || '';
-    // encodeURI 已自动把字面 % 编码为 %25（勿再手动替换，否则双重编码 %2525）
-    // encodeURI 不编码 ( ) —— 后端 Spring 对含括号路径 404，需在编码后补 %28/%29
-    const esc = encodeURI(raw).replace(/\(/g, '%28').replace(/\)/g, '%29');
-    return (/^https?:\/\//.test(raw) ? raw : '/prod-api' + esc);
-  };
+  const imgUrl = window.imgUrl; // 统一走全局编码（单一来源，含括号 %28/%29 处理）
 
   if (t === 'text') {
     return inner(head(b.title) +

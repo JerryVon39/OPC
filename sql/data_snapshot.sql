@@ -1,5 +1,5 @@
 -- ============================================
--- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-27 16:05:30）
+-- 数据快照：由 .githooks/pre-commit 自动生成（2026-08-27 16:20:15）
 -- 来源：数智游民创新工场官网数据库（ry-vue）业务数据
 -- 导入（可重复执行，REPLACE 模式）：
 --   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/data_snapshot.sql
@@ -43,6 +43,7 @@ REPLACE INTO `sys_notice` VALUES (1,'清远首个人工智能 OPC 生态社区�
 /*!40000 ALTER TABLE `sys_notice` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `sys_notice_read` DISABLE KEYS */;
+REPLACE INTO `sys_notice_read` VALUES (2,3,1,'2026-08-27 16:17:55'),(3,2,1,'2026-08-27 16:17:55'),(4,1,1,'2026-08-27 16:17:55');
 /*!40000 ALTER TABLE `sys_notice_read` ENABLE KEYS */;
 
 /*!40000 ALTER TABLE `cms_category` DISABLE KEYS */;

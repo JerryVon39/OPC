@@ -320,7 +320,7 @@
 
   <div id="toast" class="toast"></div>
 
-<script src="js/site.js?v=20260827k"></script>
+<script src="js/site.js?v=20260827l"></script>
 <script>
   loadHomeSections(); // 首页模块化渲染（页面搭建驱动；失败/空时静态模块兜底）
 
@@ -501,11 +501,8 @@
   // ===== 服务列表（keyword 搜索 + 分类 + 排序 + 加载骨架屏）=====
   // 封面地址：后台上传存的是 /profile/... 相对路径，浏览器需经 /prod-api 代理到后端才能加载
   function imgSrc(url) {
-    if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('/prod-api')) return url;
-    // 路径段 encodeURI：历史/异常文件名可能含 { } [ ] % 等 URL 特殊字符，不编码则浏览器请求失败
-    if (url.startsWith('/')) return '/prod-api' + encodeURI(url);
-    return url;
+    // 统一走 site.js 全局编码（补 /prod-api 前缀 + 括号 %28/%29，已带前缀不重复）；http(s) 原样返回
+    return window.imgUrl ? window.imgUrl(url) : (url || '');
   }
   // HTML 转义：服务名/主办方/成员名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
@@ -532,7 +529,7 @@
         const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
         // 封面缩略图：统一左图右文结构——有封面显示真实图，无封面显示占位块（保证标题起点对齐）
         const cover = a.cover
-          ? '<img class="news-thumb" src="' + esc(/^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + a.cover) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+          ? '<img class="news-thumb" src="' + esc(window.imgUrl(a.cover)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
           : '<div class="news-thumb news-thumb-ph">📰</div>';
         return '<div class="news-card has-thumb" onclick="location.href=\'article.html?id=' + a.articleId + '\'">' +
           cover +

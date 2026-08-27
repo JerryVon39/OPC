@@ -95,7 +95,7 @@
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-<script src="js/site.js?v=20260827k"></script>
+<script src="js/site.js?v=20260827l"></script>
 <script>
   // ===== 文章详情（新闻/政策共用，?id= 直达，URL 可分享刷新）=====
   const DETAIL_API = '/prod-api/system/cms/publicDetail/';
@@ -239,14 +239,15 @@
       const ogDesc = String(a.summary || a.description || '').replace(/<[^>]+>/g, '').slice(0, 120);
       setOg('og:description', ogDesc);
       setOg('og:type', 'article');
-      const ogImg = a.cover ? (/^https?:\/\//.test(a.cover) ? a.cover : location.origin + '/prod-api' + a.cover) : '';
+      const ogRel = a.cover ? window.imgUrl(a.cover) : '';
+      const ogImg = ogRel ? (/^https?:\/\//.test(ogRel) ? ogRel : location.origin + ogRel) : '';
       if (ogImg) setOg('og:image', ogImg);
       titleEl.textContent = a.title || '未命名文章';
       // 封面大图（有封面才显示；相对路径补 /prod-api 前缀，加载失败自动隐藏不破版）
       const coverEl = document.getElementById('artCover');
       if (coverEl) {
         if (a.cover) {
-          const coverSrc = /^https?:\/\//.test(a.cover) ? a.cover : '/prod-api' + encodeURI(a.cover);
+          const coverSrc = window.imgUrl(a.cover);
           coverEl.innerHTML = '<img class="article-cover" src="' + esc(coverSrc) + '" alt="' + esc(a.title || '') + '" onerror="this.style.display=\'none\'">';
           coverEl.style.display = '';
         } else {
