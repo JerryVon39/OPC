@@ -71,6 +71,7 @@ function safeCols(v) {
     const html = items.map(n => '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
     if (html) box.innerHTML = html;
     if (typeof initNav === 'function') initNav(); // 渲染后重跑 URL 高亮（替换 innerHTML 会丢 active 类）
+    if (typeof window.__appendCustomNav === 'function') window.__appendCustomNav(); // 配置重绘后补自定义导航项（防被冲掉）
   };
   window.__navConfigRendered = false; // 异步配置渲染完成后置位：取消兜底，防旧缓存"旧盖新"
   try {
@@ -103,6 +104,7 @@ function safeCols(v) {
       const html = items.map(n => '<a href="' + esc(safeLink(n.link)) + '">' + esc(n.name || '') + '</a>').join('');
       if (html) box.innerHTML = html;
       if (typeof initNav === 'function') initNav();
+      if (typeof window.__appendCustomNav === 'function') window.__appendCustomNav();
     }
     box.classList.remove('nav-pending');
   }, 3500);
@@ -1010,29 +1012,50 @@ async function loadPageSections(pageKey) {
   }
 })();
 
-// ===== 75：自定义页面自动追加到「☰ 更多」菜单（拉 cms_page 启用列表，幂等去重）=====
-(function loadCustomPageMenu() {
+// ===== 75：自定义页面入口（menu_pos 分流：nav=主导航 / more=更多菜单，幂等）=====
+window.__appendCustomNav = function () {
   try {
     fetch('/prod-api/system/cmsPage/publicList').then(r => r.json()).then(d => {
       const list = d.data || [];
-      if (!list.length) return;
+      const navs = list.filter(p => p.menuPos === 'nav');
+      const mores = list.filter(p => p.menuPos !== 'nav');
+      // 主导航：追加到 #navAnchors 末尾（幂等：按 data-custom 标记去重）
+      const navBox = document.getElementById('navAnchors');
+      if (navBox) {
+        navBox.querySelectorAll('a[data-custom-page]').forEach(a => a.remove());
+        navs.forEach(p => {
+          const a = document.createElement('a');
+          a.href = 'page.html?key=' + encodeURIComponent(p.pageKey);
+          a.textContent = p.pageName;
+          a.setAttribute('data-custom-page', '1');
+          navBox.appendChild(a);
+        });
+        if (typeof initNav === 'function') initNav();
+      }
+      // 更多菜单：分组标题 + 链接（幂等：按标记去重）
       const menu = document.getElementById('moreMenu');
-      if (!menu) return;
-      // 幂等：已追加过则跳过（缓存渲染会重复执行本函数）
-      if (menu.querySelector('.more-item-custom')) return;
-      const divider = document.createElement('div');
-      divider.className = 'more-item more-item-custom';
-      divider.style.cssText = 'border-top:1px solid #eee;margin:4px 0;padding-top:4px;font-size:12px;color:#999;';
-      divider.textContent = '📄 自定义页面';
-      menu.appendChild(divider);
-      list.forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'more-item more-item-custom';
-        item.textContent = '📄 ' + p.pageName;
-        item.style.cursor = 'pointer';
-        item.onclick = function () { location.href = 'page.html?key=' + encodeURIComponent(p.pageKey); };
-        menu.appendChild(item);
-      });
-    }).catch(function () { /* 接口失败静默：自定义页菜单不展示，不影响页面 */ });
+      if (menu && mores.length) {
+        menu.querySelectorAll('.more-item-custom').forEach(el => el.remove());
+        const divider = document.createElement('div');
+        divider.className = 'more-item more-item-custom';
+        divider.style.cssText = 'border-top:1px solid #eee;margin:4px 0;padding-top:4px;font-size:12px;color:#999;';
+        divider.textContent = '📄 自定义页面';
+        menu.appendChild(divider);
+        mores.forEach(p => {
+          const item = document.createElement('div');
+          item.className = 'more-item more-item-custom';
+          item.textContent = '📄 ' + p.pageName;
+          item.style.cursor = 'pointer';
+          item.onclick = function () { location.href = 'page.html?key=' + encodeURIComponent(p.pageKey); };
+          menu.appendChild(item);
+        });
+      }
+    }).catch(function () { /* 接口失败静默：自定义页入口不展示，不影响页面 */ });
   } catch (e) { /* 忽略 */ }
-})();
+};
+// 首屏兜底：DOM 就绪后执行一次（配置导航未渲染时也有入口）
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function () { window.__appendCustomNav(); });
+} else {
+  window.__appendCustomNav();
+}

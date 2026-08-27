@@ -261,6 +261,12 @@
             <el-radio label="1">停用（前台隐藏）</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="前台入口">
+          <el-radio-group v-model="pageForm.menuPos">
+            <el-radio label="more">「☰ 更多」菜单</el-radio>
+            <el-radio label="nav">页面顶部导航栏</el-radio>
+          </el-radio-group>
+        </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="pageDlgOpen = false">取 消</el-button>
@@ -396,6 +402,10 @@ export default {
     },
     previewSrc() {
       const hl = this.selected ? '&highlight=' + encodeURIComponent(this.selected.blockKey || '') : ''
+      // 自定义页无静态文件：预览走动态页 page.html?key=（同样支持预览高亮）
+      if (this.currentPage.custom) {
+        return this.frontBase + '/page.html?key=' + encodeURIComponent(this.activePage) + '&preview=1' + hl + '&t=' + this.previewTs
+      }
       return this.frontBase + '/' + this.currentPage.file + '?preview=1' + hl + '&t=' + this.previewTs
     }
   },
@@ -696,12 +706,12 @@ export default {
     },
     openPageDlg() {
       this.pageEditing = false
-      this.pageForm = { pageKey: '', pageName: '', sort: 0, status: '0' }
+      this.pageForm = { pageKey: '', pageName: '', sort: 0, status: '0', menuPos: 'more' }
       this.pageDlgOpen = true
     },
     editPageDlg(p) {
       this.pageEditing = true
-      this.pageForm = { pageId: p.pageId, pageKey: p.pageKey, pageName: p.pageName, sort: p.sort, status: p.status }
+      this.pageForm = { pageId: p.pageId, pageKey: p.pageKey, pageName: p.pageName, sort: p.sort, status: p.status, menuPos: p.menuPos || 'more' }
       this.pageDlgOpen = true
     },
     savePage() {

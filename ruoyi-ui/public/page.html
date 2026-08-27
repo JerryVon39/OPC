@@ -39,15 +39,9 @@
   </div>
 
   <!-- 栏目页头部 -->
-  <div class="page-hero">
-    <h1>走进<span>社区</span></h1>
-    <p>清远市首个人工智能 OPC（一人公司）生态社区 —— 让"一个人 + AI"也能轻松创业</p>
+  
   </div>
 
-  <div id="pageSections"></div>
-  <div id="pageStatic">
-  <!-- 社区定位 -->
-  
   <!-- 75：自定义页面动态容器（区块管理新增页面 → 按 ?key= 渲染该页区块） -->
   <div class="content-section">
     <div class="container">
@@ -73,7 +67,7 @@
     </div>
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
-<script src="js/site.js?v=20260827"></script>
+<script src="js/site.js?v=20260827b"></script>
 <script>
   // ===== 75：自定义页面渲染（page.html?key=xxx → cms_block 该页区块）=====
   (async function () {
@@ -86,8 +80,17 @@
       const d = await res.json();
       const list = (d.data || []).filter(b => b.template && b.template !== '' && b.visible === '0');
       if (!list.length) { box.innerHTML = '<div class="no-result">该页面尚未搭建内容或已停用</div>'; return; }
-      document.getElementById('pageTitle').style.display = '';
       document.title = '自定义页面 · 数智游民创新工场';
+      // 页面名：从注册表拉取（后台可改），非写死
+      try {
+        const pr = await fetch('/prod-api/system/cmsPage/publicList').then(r => r.json());
+        const pg = (pr.data || []).find(x => x.pageKey === key);
+        if (pg && pg.pageName) {
+          document.getElementById('pageTitle').textContent = pg.pageName;
+          document.title = pg.pageName + ' · 数智游民创新工场';
+        }
+      } catch (e) {}
+      document.getElementById('pageTitle').style.display = '';
       let html = '';
       list.forEach((b, i) => { try { html += renderPageBlock(b, i + 1); } catch (e) {} });
       box.innerHTML = html || '<div class="no-result">页面内容为空</div>';

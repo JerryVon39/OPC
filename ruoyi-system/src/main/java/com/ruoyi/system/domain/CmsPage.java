@@ -16,6 +16,8 @@ public class CmsPage extends BaseEntity
     private Long sort;
     /** 状态（0启用 1停用） */
     private String status;
+    /** 前台入口位置（more=更多菜单 nav=顶部主导航） */
+    private String menuPos;
 
     public Long getPageId() { return pageId; }
     public void setPageId(Long pageId) { this.pageId = pageId; }
@@ -27,4 +29,6 @@ public class CmsPage extends BaseEntity
     public void setSort(Long sort) { this.sort = sort; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getMenuPos() { return menuPos; }
+    public void setMenuPos(String menuPos) { this.menuPos = menuPos; }
 }
