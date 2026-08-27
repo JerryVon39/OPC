@@ -3,7 +3,7 @@
     <!-- 顶部说明：面向非程序员 -->
     <el-alert type="info" :closable="false" show-icon title="区块管理 = 全站页面内容管理（首页 + 4 个栏目页）：① 内容区块（可新增/删除/上下移，用模板填充卡片、列表、表单等）② 固定文本槽（🔒 页头副标语）。左侧选区块，中间改内容，右侧实时预览对应页面效果；保存后预览自动刷新，改错了可在「历史版本」回滚。" />
 
-    <div class="sec-layout">
+    <div ref="layout" class="sec-layout" :class="{ full: editFull }">
       <!-- 左：栏目 Tab + 区块列表（内容区块 / 固定槽位分区） -->
       <div class="sec-left">
         <el-tabs v-model="activePage" @tab-click="onTabChange" class="block-tabs">
@@ -38,11 +38,15 @@
       </div>
 
       <!-- 中：编辑表单（按类型渲染：槽位 / 模板） -->
-      <div class="sec-mid">
+      <div class="sec-mid" :style="editFull ? {} : { width: midWidth + 'px' }">
         <template v-if="selectedId != null">
           <div class="sec-mid-head">
             <span class="sec-mid-title">{{ form.title || form.blockKey }}</span>
             <el-tag size="mini" :type="isSlot ? 'info' : 'success'">{{ isSlot ? '固定文本槽' : templateName(form.template) }}</el-tag>
+            <!-- ② 放大编辑：隐藏左右栏，表单区占满整行，输入控件高度随视口放大 -->
+            <div class="sec-mid-head-right">
+              <el-button size="mini" :icon="editFull ? 'el-icon-close' : 'el-icon-full-screen'" @click="toggleFull">{{ editFull ? '退出放大' : '放大编辑' }}</el-button>
+            </div>
           </div>
           <el-alert v-if="dirty" type="warning" :closable="false" show-icon class="mb8" title="内容已修改但未保存——保存后前台预览自动刷新" />
           <el-form :model="form" label-width="90px" size="small">
@@ -55,7 +59,7 @@
                 <el-input v-model="form.subtitle" maxlength="200" placeholder="副标题（未使用的区块可留空）" />
               </el-form-item>
               <el-form-item label="内容">
-                <el-input v-model="form.content" type="textarea" :rows="6" placeholder="正文文案。留空 = 前台保持原样，不会覆盖" />
+                <el-input v-model="form.content" type="textarea" :rows="editFull ? 14 : 8" placeholder="正文文案。留空 = 前台保持原样，不会覆盖" />
               </el-form-item>
               <el-form-item label="显示">
                 <el-switch v-model="form.visible" active-value="0" inactive-value="1" active-text="显示" inactive-text="隐藏" />
@@ -78,11 +82,12 @@
                     <el-input v-model="cfg[f.key]" :maxlength="f.maxlength" :placeholder="f.placeholder" :style="f.width ? 'width:' + f.width + 'px' : ''" />
                   </template>
                   <template v-else-if="f.type === 'textarea'">
-                    <el-input v-model="cfg[f.key]" type="textarea" :rows="f.rows || 3" :placeholder="f.placeholder" />
+                    <el-input v-model="cfg[f.key]" type="textarea" :rows="editFull ? 10 : (f.rows || 5)" :placeholder="f.placeholder" />
                   </template>
                   <!-- 68：html 字段用 Quill 排版工具栏（加粗/列表/表格等可视化操作，无需手写标签） -->
+                  <!-- ③ 高度提升：260→340（矮字段 160→220）；放大编辑时 520 视口级 -->
                   <template v-else-if="f.type === 'html'">
-                    <Editor v-model="cfg[f.key]" :height="f.rows && f.rows <= 2 ? 160 : 260" />
+                    <Editor v-model="cfg[f.key]" :height="editFull ? 520 : (f.rows && f.rows <= 2 ? 220 : 340)" />
                   </template>
                   <template v-else-if="f.type === 'number'">
                     <el-input-number v-model="cfg[f.key]" :min="f.min" :max="f.max" />
@@ -111,10 +116,10 @@
                   <template v-else-if="f.type === 'list'">
                     <div v-for="(item, i) in cfg[f.key]" :key="i" class="card-row" style="margin-bottom:8px">
                       <template v-for="sf in f.fields">
-                        <el-input v-if="sf.type !== 'html' && sf.type !== 'image'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
-                        <!-- 68：列表内 html 子字段同样用 Quill 工具栏 -->
+                        <el-input v-if="sf.type !== 'html' && sf.type !== 'image'" :key="sf.key" v-model="item[sf.key]" :placeholder="sf.placeholder" :type="sf.type === 'textarea' ? 'textarea' : undefined" :rows="sf.rows || 3" :style="sf.width ? 'width:' + sf.width + 'px' : ''" />
+                        <!-- 68：列表内 html 子字段同样用 Quill 工具栏（③ 高度 120→180，放大时 400） -->
                         <div v-else-if="sf.type === 'html'" :key="sf.key" style="width:100%">
-                          <Editor v-model="item[sf.key]" :height="120" />
+                          <Editor v-model="item[sf.key]" :height="editFull ? 400 : 180" />
                         </div>
                         <!-- 71：列表内 image 子字段（如 team 头像）改为上传组件 -->
                         <div v-else-if="sf.type === 'image'" :key="sf.key" style="display:flex;align-items:center;gap:8px">
@@ -136,14 +141,19 @@
               </el-form-item>
             </template>
 
-            <el-form-item>
+            <!-- ④ 操作条固定吸底：字段多时不用滚到底才能保存 -->
+            <div class="sec-actions">
               <el-button type="primary" @click="handleSave" v-hasPermi="['system:cmsBlock:edit']">保存（保存后预览自动刷新）</el-button>
               <el-button type="warning" plain @click="openHistory">历史版本</el-button>
-            </el-form-item>
+              <span class="sec-actions-tip" v-if="editFull">已放大编辑，退出后恢复分栏预览</span>
+            </div>
           </el-form>
         </template>
         <el-empty v-else description="点击左侧区块开始编辑，右侧实时预览对应栏目页效果" />
       </div>
+
+      <!-- ① 拖拽条：调整编辑区宽度（480–900px，偏好存 localStorage） -->
+      <div class="sec-resizer" title="拖拽调整编辑区宽度" @mousedown="startResize"></div>
 
       <!-- 右：实时预览 -->
       <div class="sec-right">
@@ -232,6 +242,14 @@ export default {
       form: {},
       cfg: {},
       frontUrl: '',            // 前台地址（系统参数 site.front.url）；空/默认值 = 与后台同源，用相对路径
+      // ① 编辑区宽度（可拖拽调宽，偏好存 localStorage；480–900 钳制）
+      midWidth: (function () {
+        try {
+          const v = Number(localStorage.getItem('opc_block_mid_width'))
+          return v >= 480 && v <= 900 ? v : 640
+        } catch (e) { return 640 }
+      })(),
+      editFull: false,         // ② 放大编辑：隐藏左右栏，表单占满整行
       previewTs: 0,
       previewLoading: true,
       addOpen: false,
@@ -442,6 +460,30 @@ export default {
       this.previewLoading = true
       this.previewTs = Date.now()
     },
+    /** ① 拖拽调整编辑区宽度（min 480 / max 900，松手存 localStorage） */
+    startResize(e) {
+      e.preventDefault()
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+      const onMove = (ev) => {
+        const rect = this.$refs.layout.getBoundingClientRect()
+        this.midWidth = Math.min(900, Math.max(480, ev.clientX - rect.left))
+      }
+      const onUp = () => {
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+        try { localStorage.setItem('opc_block_mid_width', String(this.midWidth)) } catch (err) {}
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
+    },
+    /** ② 放大编辑切换：隐藏左右栏表单占满；退出时重建预览防陈旧 */
+    toggleFull() {
+      this.editFull = !this.editFull
+      if (!this.editFull) this.reloadPreview()
+    },
     openFront() {
       window.open(this.frontBase + '/' + this.currentPage.file, '_blank', 'noopener')
     }
@@ -467,9 +509,18 @@ export default {
 .sec-item-ops .el-button { padding: 0; margin-right: 10px; }
 .danger-text { color: #f56c6c; }
 .tmpl-tag { display: inline-block; background: #ecf5ff; color: #409EFF; border-radius: 4px; padding: 1px 8px; font-size: 12px; flex-shrink: 0; }
-.sec-mid { width: 460px; flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 12px 16px; }
+.sec-mid { min-width: 480px; flex-shrink: 0; overflow-y: auto; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; padding: 12px 16px; }
 .sec-mid-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .sec-mid-title { font-weight: 600; font-size: 15px; }
+.sec-mid-head-right { margin-left: auto; }
+.sec-resizer { width: 8px; flex-shrink: 0; cursor: col-resize; background: transparent; border-radius: 4px; }
+.sec-resizer:hover, .sec-resizer:active { background: #d9ecff; }
+/* ② 放大编辑：隐藏左右栏与拖拽条，表单占满整行 */
+.sec-layout.full .sec-left, .sec-layout.full .sec-right, .sec-layout.full .sec-resizer { display: none; }
+.sec-layout.full .sec-mid { width: 100% !important; }
+/* ④ 操作条吸底（sticky 于中栏滚动容器；负 margin 抵消内边距让分隔线通栏） */
+.sec-actions { position: sticky; bottom: 0; background: #fff; margin: 12px -16px -12px; padding: 10px 16px; border-top: 1px solid #ebeef5; }
+.sec-actions-tip { color: #909399; font-size: 12px; margin-left: 8px; }
 .sec-right { flex: 1; display: flex; flex-direction: column; background: #fff; border: 1px solid #ebeef5; border-radius: 6px; overflow: hidden; }
 .preview-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #ebeef5; flex-shrink: 0; }
 .preview-title { font-weight: 600; font-size: 14px; }
