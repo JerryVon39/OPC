@@ -23,6 +23,8 @@
           <div class="sec-item-ops">
             <el-button size="mini" type="text" icon="el-icon-top" @click.stop="handleMove(b, 'up', i)" :disabled="i === 0" v-hasPermi="['system:cmsBlock:edit']">上移</el-button>
             <el-button size="mini" type="text" icon="el-icon-bottom" @click.stop="handleMove(b, 'down', i)" :disabled="i === contentBlocks.length - 1" v-hasPermi="['system:cmsBlock:edit']">下移</el-button>
+            <!-- 2：跨页面复用同款区块 -->
+            <el-button size="mini" type="text" icon="el-icon-document-copy" @click.stop="handleCopy(b)" v-hasPermi="['system:cmsBlock:add']">复制</el-button>
             <el-button size="mini" type="text" icon="el-icon-delete" class="danger-text" @click.stop="handleDelete(b)" v-hasPermi="['system:cmsBlock:remove']">删除</el-button>
           </div>
         </div>
@@ -220,7 +222,7 @@
 </template>
 
 <script>
-import { listBlock, addBlock, updateBlock, delBlock, moveBlock, listBlockHistory, rollbackBlock } from "@/api/system/cms"
+import { listBlock, addBlock, updateBlock, delBlock, moveBlock, listBlockHistory, rollbackBlock, copyBlock } from "@/api/system/cms"
 import { getConfigKey } from "@/api/system/config"
 import { getToken } from "@/utils/auth"
 import { BLOCK_TEMPLATES, templateOf, defaultCfgOf, sampleCfgOf } from "./blockTemplates"
@@ -484,6 +486,15 @@ export default {
         e.preventDefault()
         if (this.selectedId != null) this.handleSave()
       }
+    },
+    /** 2：一键复制区块（克隆为新区块，可在新栏目页复用同款样式与内容） */
+    handleCopy(b) {
+      this.$modal.confirm('复制区块「' + (b.title || b.blockKey) + '」？复制后会在当前页面生成一个同名副本，可在新页面复用。').then(() => {
+        return copyBlock(b.blockId)
+      }).then(() => {
+        this.$modal.msgSuccess("已复制（新副本在当前页面底部，可上移调整位置）")
+        this.getList(true)
+      }).catch(() => {})
     },
     handleDelete(b) {
       this.$modal.confirm('确认删除内容区块「' + (b.title || b.blockKey) + '」吗？前台该栏目页将不再显示此区块。').then(() => {

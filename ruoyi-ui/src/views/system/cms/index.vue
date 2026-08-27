@@ -57,6 +57,10 @@
             <el-button type="danger" plain icon="el-icon-download" size="mini" :disabled="multiple" @click="handleBatchOffline" v-hasPermi="['system:cms:edit']">批量下线</el-button>
           </el-col>
           <el-col :span="1.5">
+            <!-- 6：批量移动栏目 -->
+            <el-button type="primary" plain icon="el-icon-sort" size="mini" :disabled="multiple" @click="openMoveCategory" v-hasPermi="['system:cms:edit']">移动栏目</el-button>
+          </el-col>
+          <el-col :span="1.5">
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['system:cms:remove']">删除</el-button>
           </el-col>
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -95,8 +99,9 @@
           </el-table-column>
           <el-table-column label="状态" align="center" width="85">
             <template slot-scope="scope">
-              <!-- P2：预约发布（发布时间在未来）标「待发布」，避免运营误以为已上线 -->
+              <!-- P2：预约发布（发布时间在未来）标「待发布」；1：定时下线（已过 offline_time）标「已定时下线」 -->
               <el-tag v-if="scope.row.status === '0' && scope.row.publishTime && new Date(String(scope.row.publishTime).replace(/-/g, '/')) > new Date()" type="warning" size="mini">待发布</el-tag>
+              <el-tag v-else-if="scope.row.status === '0' && scope.row.offlineTime && new Date(String(scope.row.offlineTime).replace(/-/g, '/')) < new Date()" type="info" size="mini">已定时下线</el-tag>
               <el-tag v-else-if="scope.row.status === '0'" type="success" size="mini">已发布</el-tag>
               <el-tag v-else-if="scope.row.status === '1'" type="warning" size="mini">草稿</el-tag>
               <el-tag v-else type="info" size="mini">已下线</el-tag>
@@ -106,6 +111,8 @@
           <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="230">
             <template slot-scope="scope">
               <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:cms:edit']">修改</el-button>
+              <!-- 2：一键复制（克隆为草稿） -->
+              <el-button size="mini" type="text" icon="el-icon-document-copy" @click="handleCopy(scope.row)" v-hasPermi="['system:cms:add']">复制</el-button>
               <el-button size="mini" type="text" icon="el-icon-top" @click="handleTop(scope.row)" v-hasPermi="['system:cms:edit']">{{ scope.row.isTop === '1' ? '取消置顶' : '置顶' }}</el-button>
               <el-button v-if="scope.row.status !== '0'" size="mini" type="text" icon="el-icon-upload2" @click="handlePublish(scope.row)" v-hasPermi="['system:cms:publish']">发布</el-button>
               <el-button v-if="scope.row.status === '0'" size="mini" type="text" icon="el-icon-download" @click="handleOffline(scope.row)" v-hasPermi="['system:cms:edit']">下线</el-button>
@@ -118,11 +125,21 @@
       </el-col>
     </el-row>
 
+    <!-- 6：批量移动栏目弹窗 -->
+    <el-dialog title="移动到栏目" :visible.sync="moveCategoryOpen" width="400px" append-to-body>
+      <el-select v-model="moveCategoryId" placeholder="请选择目标栏目" style="width:100%">
+        <el-option v-for="c in categoryOptions" :key="c.categoryId" :label="c.categoryName" :value="c.categoryId" />
+      </el-select>
+      <div slot="footer">
+        <el-button @click="moveCategoryOpen = false">取 消</el-button>
+        <el-button type="primary" @click="confirmMoveCategory">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listArticle, delArticle, changeArticleStatus, publishArticle, updateArticle, listCategory, batchTop, batchStatus, batchSort } from "@/api/system/cms"
+import { listArticle, delArticle, changeArticleStatus, publishArticle, updateArticle, listCategory, batchTop, batchStatus, batchSort, copyArticle, batchMoveCategory } from "@/api/system/cms"
 
 export default {
   name: "CmsArticle",
@@ -136,7 +153,9 @@ export default {
       articleList: [],
       categoryOptions: [],
       treeOptions: [],
-      queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, categoryIds: null, status: null }
+      queryParams: { pageNum: 1, pageSize: 10, title: null, categoryId: null, categoryIds: null, status: null },
+      moveCategoryOpen: false,  // 6：批量移动栏目弹窗
+      moveCategoryId: null
     }
   },
   created() {
@@ -305,6 +324,30 @@ export default {
       }).then(() => {
         this.getList()
         this.$modal.msgSuccess("已移入回收站")
+      }).catch(() => {})
+    },
+    /** 2：一键复制——克隆为草稿，提示进入编辑 */
+    handleCopy(row) {
+      this.$modal.confirm('复制「' + (row.title || '').slice(0, 20) + '」为草稿副本？复制后可在列表找到并编辑。').then(() => {
+        return copyArticle(row.articleId)
+      }).then(res => {
+        this.$modal.msgSuccess("已复制为草稿")
+        this.getList()
+      }).catch(() => {})
+    },
+    /** 6：批量移动栏目弹窗 */
+    openMoveCategory() {
+      if (!this.ids.length) { this.$modal.msgWarning("请先勾选文章"); return }
+      this.moveCategoryOpen = true
+    },
+    confirmMoveCategory() {
+      if (!this.moveCategoryId) { this.$modal.msgWarning("请选择目标栏目"); return }
+      this.$modal.confirm('确认将选中的 ' + this.ids.length + ' 篇文章移动到「' + (this.categoryOptions.find(c => c.categoryId === this.moveCategoryId) || {}).categoryName + '」？').then(() => {
+        return batchMoveCategory({ articleIds: this.ids, categoryId: this.moveCategoryId })
+      }).then(() => {
+        this.$modal.msgSuccess("已移动")
+        this.moveCategoryOpen = false
+        this.getList()
       }).catch(() => {})
     }
   }

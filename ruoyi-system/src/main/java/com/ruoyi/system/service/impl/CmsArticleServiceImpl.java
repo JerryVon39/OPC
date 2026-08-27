@@ -76,6 +76,11 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             throw new ServiceException("文章未发布");
         }
+        // 定时下线（1）：到点后详情同样拦截（列表已过滤，防 URL 直达仍可读）
+        if (!preview && article.getOfflineTime() != null && article.getOfflineTime().before(new Date()))
+        {
+            throw new ServiceException("文章已下线");
+        }
         // 浏览量自增（防刷：同一 IP + 文章 10 分钟内只计一次；Redis 异常降级为照常自增）
         // 预览模式不计浏览量（编辑页每次保存都会刷新 iframe，避免刷虚）
         if (!preview && viewNotCounted(articleId))
@@ -84,6 +89,8 @@ public class CmsArticleServiceImpl implements ICmsArticleService
             {
                 cmsArticleMapper.increaseArticleViews(articleId);
                 article.setViews(article.getViews() == null ? 1 : article.getViews() + 1);
+                // 5：同步日浏览量表（报表趋势数据；失败不影响阅读）
+                cmsArticleMapper.insertDailyView(articleId);
             }
             catch (Exception e)
             {
@@ -458,5 +465,57 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         int rows = cmsArticleMapper.publishCmsArticle(article);
         statisticsService.evictAll();
         return rows;
+    }
+
+    /** 2：一键复制——克隆为草稿（标题加"-副本"，清发布信息/浏览量/置顶），返回新文章ID */
+    @Override
+    public Long copyCmsArticle(Long articleId)
+    {
+        CmsArticle src = cmsArticleMapper.selectCmsArticleByArticleId(articleId);
+        if (src == null)
+        {
+            throw new ServiceException("文章不存在或已删除");
+        }
+        CmsArticle copy = new CmsArticle();
+        copy.setCategoryId(src.getCategoryId());
+        copy.setTitle((src.getTitle() == null ? "未命名" : src.getTitle()) + "-副本");
+        copy.setSummary(src.getSummary());
+        copy.setContent(src.getContent());
+        copy.setCover(src.getCover());
+        copy.setAuthor(src.getAuthor());
+        copy.setStatus("1"); // 复制一律为草稿，防误发布
+        copy.setSort(0L);
+        copy.setAttachment(src.getAttachment());
+        copy.setKeywords(src.getKeywords());
+        copy.setDescription(src.getDescription());
+        int rows = cmsArticleMapper.insertCmsArticle(copy);
+        statisticsService.evictAll();
+        return rows > 0 ? copy.getArticleId() : null;
+    }
+
+    /** 6：批量移动栏目（多篇文章改 categoryId） */
+    @Override
+    public int batchMoveCategory(Long[] articleIds, Long categoryId)
+    {
+        if (articleIds == null || articleIds.length == 0)
+        {
+            throw new ServiceException("请先选择文章");
+        }
+        if (categoryId == null)
+        {
+            throw new ServiceException("请选择目标栏目");
+        }
+        return cmsArticleMapper.batchMoveCategory(articleIds, categoryId);
+    }
+
+    /** 5：浏览量报表——Top20 + 栏目分布 + 近30天趋势 */
+    @Override
+    public java.util.Map<String, Object> selectStats()
+    {
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("topArticles", cmsArticleMapper.selectTopArticles(20));
+        stats.put("byCategory", cmsArticleMapper.selectViewsByCategory());
+        stats.put("trend", cmsArticleMapper.selectViewsTrend());
+        return stats;
     }
 }

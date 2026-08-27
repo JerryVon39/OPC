@@ -14,6 +14,7 @@
         <result property="status"      column="status"       />
         <result property="views"       column="views"        />
         <result property="publishTime" column="publish_time" />
+        <result property="offlineTime" column="offline_time" />
         <result property="sort"        column="sort"         />
         <result property="attachment"  column="attachment"   />
         <result property="keywords"    column="keywords"     />
@@ -32,7 +33,7 @@
     <!-- 后台列表查询列（含正文之外的展示字段 + 栏目名；正文 content 单独走详情查询，避免列表传输过重） -->
     <sql id="selectCmsArticleListVo">
         select a.article_id, a.category_id, a.title, a.summary, a.cover, a.author, a.is_top, a.status,
-               a.views, a.publish_time, a.sort, a.attachment, a.keywords, a.description, a.version,
+               a.views, a.publish_time, a.offline_time, a.sort, a.attachment, a.keywords, a.description, a.version,
                a.del_flag, a.deleted_time, a.deleted_by, a.create_by, a.create_time, a.update_by, a.update_time,
                c.category_name
         from cms_article a
@@ -62,6 +63,7 @@
         <include refid="selectCmsArticleListVo"/>
         <where>
             a.status = '0' and a.del_flag = '0' and a.publish_time &lt;= NOW()
+            and (a.offline_time is null or a.offline_time &gt; NOW())
             <if test="categoryId != null"> and a.category_id = #{categoryId}</if>
             <if test="categoryIds != null and categoryIds != ''">
                 and a.category_id in
@@ -80,7 +82,7 @@
     <!-- 详情（含正文与栏目名）：后台编辑回显 + 前台公开详情共用，仅未删除 -->
     <select id="selectCmsArticleByArticleId" parameterType="Long" resultMap="CmsArticleResult">
         select a.article_id, a.category_id, a.title, a.summary, a.content, a.cover, a.author, a.is_top,
-               a.status, a.views, a.publish_time, a.sort, a.attachment, a.keywords, a.description, a.version,
+               a.status, a.views, a.publish_time, a.offline_time, a.sort, a.attachment, a.keywords, a.description, a.version,
                a.del_flag, a.deleted_time, a.deleted_by, a.create_by, a.create_time, a.update_by, a.update_time,
                c.category_name
         from cms_article a
@@ -106,6 +108,7 @@
             <if test="status != null">status,</if>
             <if test="views != null">views,</if>
             <if test="publishTime != null">publish_time,</if>
+            <if test="offlineTime != null">offline_time,</if>
             <if test="sort != null">sort,</if>
             <if test="attachment != null">attachment,</if>
             <if test="keywords != null">keywords,</if>
@@ -126,6 +129,7 @@
             <if test="status != null">#{status},</if>
             <if test="views != null">#{views},</if>
             <if test="publishTime != null">#{publishTime},</if>
+            <if test="offlineTime != null">#{offlineTime},</if>
             <if test="sort != null">#{sort},</if>
             <if test="attachment != null">#{attachment},</if>
             <if test="keywords != null">#{keywords},</if>
@@ -150,6 +154,7 @@
             <if test="status != null">status = #{status},</if>
             <if test="views != null">views = #{views},</if>
             <if test="publishTime != null">publish_time = #{publishTime},</if>
+            <if test="offlineTime != null">offline_time = #{offlineTime},</if>
             <if test="sort != null">sort = #{sort},</if>
             <if test="attachment != null">attachment = #{attachment},</if>
             <if test="keywords != null">keywords = #{keywords},</if>
@@ -324,4 +329,45 @@
             ) t
           )
     </delete>
+
+    <!-- 批量移动栏目（6：多篇文章一键改栏目） -->
+    <update id="batchMoveCategory">
+        update cms_article set category_id = #{categoryId}, update_time = now()
+        where article_id in
+        <foreach item="id" collection="articleIds" open="(" separator="," close=")">#{id}</foreach>
+    </update>
+
+    <!-- 日浏览量 upsert（5：报表趋势数据，随前台详情访问累加） -->
+    <insert id="insertDailyView">
+        insert into article_views_daily (article_id, view_date, view_count)
+        values (#{articleId}, CURDATE(), 1)
+        on duplicate key update view_count = view_count + 1
+    </insert>
+
+    <!-- 浏览量 Top N（5：报表） -->
+    <select id="selectTopArticles" resultType="map">
+        select a.article_id as articleId, a.title, a.views, c.category_name as categoryName
+        from cms_article a left join cms_category c on c.category_id = a.category_id
+        where a.del_flag = '0' and a.views > 0
+        order by a.views desc
+        limit #{limit}
+    </select>
+
+    <!-- 栏目浏览量分布（5：报表） -->
+    <select id="selectViewsByCategory" resultType="map">
+        select c.category_name as categoryName, sum(a.views) as totalViews, count(a.article_id) as articleCount
+        from cms_article a left join cms_category c on c.category_id = a.category_id
+        where a.del_flag = '0' and c.category_id is not null
+        group by c.category_id, c.category_name
+        order by totalViews desc
+    </select>
+
+    <!-- 近 30 天浏览量趋势（5：报表；无访问记录的天无行） -->
+    <select id="selectViewsTrend" resultType="map">
+        select v.view_date as viewDate, sum(v.view_count) as viewCount
+        from article_views_daily v
+        where v.view_date &gt;= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+        group by v.view_date
+        order by v.view_date
+    </select>
 </mapper>

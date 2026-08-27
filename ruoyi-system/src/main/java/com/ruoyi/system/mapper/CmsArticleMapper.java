@@ -77,4 +77,19 @@ public interface CmsArticleMapper
 
     /** 历史：清理该文章超限最旧版本 */
     public int trimArticleHistory(@Param("articleId") Long articleId, @Param("keep") int keep);
+
+    /** 6：批量移动栏目 */
+    public int batchMoveCategory(@Param("articleIds") Long[] articleIds, @Param("categoryId") Long categoryId);
+
+    /** 5：日浏览量 upsert（报表趋势） */
+    public int insertDailyView(@Param("articleId") Long articleId);
+
+    /** 5：浏览量 Top N */
+    public java.util.List<java.util.Map<String, Object>> selectTopArticles(@Param("limit") int limit);
+
+    /** 5：栏目浏览量分布 */
+    public java.util.List<java.util.Map<String, Object>> selectViewsByCategory();
+
+    /** 5：近 30 天趋势 */
+    public java.util.List<java.util.Map<String, Object>> selectViewsTrend();
 }

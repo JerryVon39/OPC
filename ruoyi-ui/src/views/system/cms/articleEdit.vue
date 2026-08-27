@@ -62,6 +62,10 @@
               <el-form-item label="发布时间" prop="publishTime">
                 <el-date-picker v-model="form.publishTime" type="datetime" placeholder="留空 = 立即发布（预约发布：填未来时间则到点才在前台展示）" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
               </el-form-item>
+              <!-- 1：定时下线——到点前台自动隐藏（活动/政策到期不用手动下架） -->
+              <el-form-item label="定时下线" prop="offlineTime">
+                <el-date-picker v-model="form.offlineTime" type="datetime" placeholder="留空 = 长期有效（填未来时间则到点自动从前台隐藏）" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
+              </el-form-item>
               <el-form-item label="置顶" prop="isTop">
                 <el-switch v-model="form.isTop" active-value="1" inactive-value="0" active-text="置顶" inactive-text="普通" />
               </el-form-item>
@@ -149,7 +153,7 @@ export default {
   data() {
     return {
       // P0：新增默认草稿（防手滑保存即上线）；发布需显式点「发布」或右侧状态切为已发布
-      form: { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '1', sort: 0, attachment: null, keywords: null, description: null },
+      form: { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '1', sort: 0, attachment: null, keywords: null, description: null, offlineTime: null },
       rules: {
         title: [{ required: true, message: "文章标题不能为空", trigger: "blur" }],
         categoryId: [{ required: true, message: "请选择栏目", trigger: "change" }]

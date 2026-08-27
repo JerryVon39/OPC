@@ -27,6 +27,9 @@ public interface ICmsBlockService
     /** 删除区块（含其历史） */
     public int deleteCmsBlockByBlockIds(Long[] blockIds);
 
+    /** 2：一键复制区块（同页面克隆为新区块，标题加"-副本"） */
+    public Long copyCmsBlock(Long blockId);
+
     /** 内容区块上下移（相邻 sort 交换，仅模板化区块参与排序） */
     public int moveCmsBlock(Long blockId, String dir);
 

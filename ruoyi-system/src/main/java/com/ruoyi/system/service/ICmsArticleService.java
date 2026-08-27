@@ -62,4 +62,13 @@ public interface ICmsArticleService
 
     /** 发布：草稿/已下线 → 已发布，首次发布写入发布时间 */
     public int publishArticle(Long articleId);
+
+    /** 2：一键复制——克隆为草稿（标题加"-副本"，清发布信息/浏览量/置顶），返回新文章ID */
+    public Long copyCmsArticle(Long articleId);
+
+    /** 6：批量移动栏目（多篇文章改 categoryId） */
+    public int batchMoveCategory(Long[] articleIds, Long categoryId);
+
+    /** 5：浏览量报表——Top20 + 栏目分布 + 近30天趋势 */
+    public java.util.Map<String, Object> selectStats();
 }

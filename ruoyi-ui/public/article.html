@@ -196,6 +196,13 @@
     if (!m) { m = document.createElement('meta'); m.setAttribute('name', name); document.head.appendChild(m); }
     m.setAttribute('content', content);
   }
+  /** 3：OG 分享标签（property 命名空间） */
+  function setOg(prop, content) {
+    if (!content) return;
+    let m = document.querySelector('meta[property="' + prop + '"]');
+    if (!m) { m = document.createElement('meta'); m.setAttribute('property', prop); document.head.appendChild(m); }
+    m.setAttribute('content', content);
+  }
 
   async function loadArticle() {
     const qs = new URLSearchParams(location.search);
@@ -227,6 +234,13 @@
       document.title = (a.title || '文章详情') + ' · 数智游民创新工场';
       setMeta('keywords', a.keywords);
       setMeta('description', a.description);
+      // 3：OG 分享卡片（微信/朋友圈分享预览用；封面缺失时用站点默认图，无默认图则省略 image）
+      setOg('og:title', (a.title || '文章详情') + ' · 数智游民创新工场');
+      const ogDesc = String(a.summary || a.description || '').replace(/<[^>]+>/g, '').slice(0, 120);
+      setOg('og:description', ogDesc);
+      setOg('og:type', 'article');
+      const ogImg = a.cover ? (/^https?:\/\//.test(a.cover) ? a.cover : location.origin + '/prod-api' + a.cover) : '';
+      if (ogImg) setOg('og:image', ogImg);
       titleEl.textContent = a.title || '未命名文章';
       // 封面大图（有封面才显示；相对路径补 /prod-api 前缀，加载失败自动隐藏不破版）
       const coverEl = document.getElementById('artCover');

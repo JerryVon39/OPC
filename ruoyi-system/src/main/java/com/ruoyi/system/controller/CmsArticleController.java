@@ -30,6 +30,9 @@ public class CmsArticleController extends BaseController
     @Autowired
     private ICmsArticleService cmsArticleService;
 
+    @Autowired
+    private com.ruoyi.system.service.ISysConfigService configService; // 3：sitemap 用 site.front.url 拼绝对 URL
+
     /** 前台公开文章列表（匿名）：仅已发布，置顶优先、发布时间倒序，支持栏目筛选与分页（pageNum/pageSize） */
     @Anonymous
     @GetMapping("/publicList")
@@ -191,5 +194,59 @@ public class CmsArticleController extends BaseController
     public AjaxResult batchSort(@RequestBody java.util.List<CmsArticle> list)
     {
         return toAjax(cmsArticleService.batchSort(list));
+    }
+
+    /** 2：一键复制（克隆为草稿，返回新文章ID） */
+    @PreAuthorize("@ss.hasPermi('system:cms:add')")
+    @Log(title = "CMS文章", businessType = BusinessType.INSERT)
+    @PostMapping("/copy/{articleId}")
+    public AjaxResult copy(@PathVariable("articleId") Long articleId)
+    {
+        return success(cmsArticleService.copyCmsArticle(articleId));
+    }
+
+    /** 6：批量移动栏目 */
+    @PreAuthorize("@ss.hasPermi('system:cms:edit')")
+    @Log(title = "CMS文章", businessType = BusinessType.UPDATE)
+    @PutMapping("/batchMoveCategory")
+    public AjaxResult batchMoveCategory(@RequestBody com.ruoyi.system.domain.CmsArticle req)
+    {
+        return toAjax(cmsArticleService.batchMoveCategory(req.getArticleIds(), req.getCategoryId()));
+    }
+
+    /** 5：浏览量报表统计 */
+    @PreAuthorize("@ss.hasPermi('system:cms:list')")
+    @GetMapping("/stats")
+    public AjaxResult stats()
+    {
+        return success(cmsArticleService.selectStats());
+    }
+
+    /** 3：sitemap.xml（匿名，供搜索引擎收录；仅已发布且未定时下线的文章） */
+    @Anonymous
+    @GetMapping(value = "/sitemap.xml", produces = "application/xml;charset=UTF-8")
+    public String sitemap()
+    {
+        java.util.List<CmsArticle> list = cmsArticleService.selectPublicArticleList(new CmsArticle());
+        String base = configService.selectConfigByKey("site.front.url");
+        if (base == null || base.trim().isEmpty() || "http://localhost".equals(base.trim()))
+        {
+            base = ""; // 未配置前台域名：输出相对路径（部署时配置 site.front.url 后即完整 URL）
+        }
+        else
+        {
+            base = base.trim().replaceAll("/+$", "") + "/";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        sb.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        for (CmsArticle a : list)
+        {
+            sb.append("  <url><loc>").append(base).append("article.html?id=").append(a.getArticleId()).append("</loc>");
+            if (a.getPublishTime() != null) sb.append("<lastmod>").append(a.getPublishTime()).append("</lastmod>");
+            sb.append("</url>\n");
+        }
+        sb.append("</urlset>");
+        return sb.toString();
     }
 }

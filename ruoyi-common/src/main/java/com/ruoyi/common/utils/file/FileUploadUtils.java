@@ -139,6 +139,24 @@ public class FileUploadUtils
     }
 
     /**
+     * 4：按字节写入上传文件（图片压缩链路用：controller 压缩后以字节落盘），校验规则与 transferTo 版一致
+     */
+    public static final String upload(String baseDir, MultipartFile file, byte[] bytes, String[] allowedExtension)
+            throws FileSizeLimitExceededException, IOException, FileNameLengthLimitExceededException,
+            InvalidExtensionException
+    {
+        int fileNameLength = Objects.requireNonNull(file.getOriginalFilename()).length();
+        if (fileNameLength > FileUploadUtils.DEFAULT_FILE_NAME_LENGTH)
+        {
+            throw new FileNameLengthLimitExceededException(FileUploadUtils.DEFAULT_FILE_NAME_LENGTH);
+        }
+        assertAllowed(file, allowedExtension);
+        String fileName = extractFilename(file);
+        java.nio.file.Files.write(Paths.get(getAbsoluteFile(baseDir, fileName).getAbsolutePath()), bytes);
+        return getPathFileName(baseDir, fileName);
+    }
+
+    /**
      * 编码文件名(日期格式目录 + 原文件名 + 序列值 + 后缀)
      */
     public static final String extractFilename(MultipartFile file)

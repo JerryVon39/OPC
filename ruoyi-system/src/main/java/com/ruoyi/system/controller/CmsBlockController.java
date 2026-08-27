@@ -109,4 +109,13 @@ public class CmsBlockController extends BaseController
     {
         return toAjax(cmsBlockService.rollbackCmsBlock(blockId, version));
     }
+
+    /** 2：一键复制区块（克隆为新区块，返回新ID） */
+    @PreAuthorize("@ss.hasPermi('system:cmsBlock:add')")
+    @Log(title = "CMS区块", businessType = BusinessType.INSERT)
+    @PostMapping("/copy/{blockId}")
+    public AjaxResult copy(@PathVariable("blockId") Long blockId)
+    {
+        return success(cmsBlockService.copyCmsBlock(blockId));
+    }
 }

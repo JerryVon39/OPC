@@ -272,3 +272,23 @@ export function delSection(sectionIds) {
 export function moveSection(sectionId, dir) {
   return request({ url: '/system/cmsSection/move/' + sectionId + '/' + dir, method: 'put' })
 }
+
+// 2：一键复制文章（克隆为草稿）
+export function copyArticle(articleId) {
+  return request({ url: '/system/cms/copy/' + articleId, method: 'post' })
+}
+
+// 6：批量移动栏目
+export function batchMoveCategory(data) {
+  return request({ url: '/system/cms/batchMoveCategory', method: 'put', data: data })
+}
+
+// 5：浏览量报表
+export function getCmsStats() {
+  return request({ url: '/system/cms/stats', method: 'get' })
+}
+
+// 2：一键复制区块
+export function copyBlock(blockId) {
+  return request({ url: '/system/cmsBlock/copy/' + blockId, method: 'post' })
+}

@@ -58,6 +58,10 @@ public class CmsArticle extends BaseEntity
     @Excel(name = "发布时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date publishTime;
 
+    /** 定时下线时间（NULL=长期有效，到点前台自动隐藏） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date offlineTime;
+
     /** 排序(越小越靠前，置顶之后生效) */
     private Long sort;
 
@@ -95,6 +99,11 @@ public class CmsArticle extends BaseEntity
     public String getCategoryIds() { return categoryIds; }
     public void setCategoryIds(String categoryIds) { this.categoryIds = categoryIds; }
 
+    /** 6：批量移动栏目目标文章集合（批量接口入参） */
+    private Long[] articleIds;
+    public Long[] getArticleIds() { return articleIds; }
+    public void setArticleIds(Long[] articleIds) { this.articleIds = articleIds; }
+
     public void setTitle(String title) { this.title = title; }
     public String getTitle() { return title; }
 
@@ -121,6 +130,8 @@ public class CmsArticle extends BaseEntity
 
     public void setPublishTime(Date publishTime) { this.publishTime = publishTime; }
     public Date getPublishTime() { return publishTime; }
+    public void setOfflineTime(Date offlineTime) { this.offlineTime = offlineTime; }
+    public Date getOfflineTime() { return offlineTime; }
 
     public void setSort(Long sort) { this.sort = sort; }
     public Long getSort() { return sort; }

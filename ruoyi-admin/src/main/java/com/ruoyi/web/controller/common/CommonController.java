@@ -18,6 +18,8 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.file.FileUtils;
+import com.ruoyi.common.utils.file.ImageUtils;
+import com.ruoyi.common.utils.file.MimeTypeUtils;
 import com.ruoyi.framework.config.ServerConfig;
 
 /**
@@ -78,8 +80,15 @@ public class CommonController
         {
             // 上传文件路径
             String filePath = RuoYiConfig.getUploadPath();
+            // 4：图片自动压缩（>2MB 且宽>2000px 等比缩放，小图原样保持清晰度）
+            byte[] bytes = file.getBytes();
+            String contentType = file.getContentType() == null ? "" : file.getContentType();
+            if (contentType.startsWith("image/") && bytes.length > 2 * 1024 * 1024)
+            {
+                bytes = ImageUtils.compress(bytes, 2000, 0.8f);
+            }
             // 上传并返回新文件名称
-            String fileName = FileUploadUtils.upload(filePath, file);
+            String fileName = FileUploadUtils.upload(filePath, file, bytes, MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION);
             String url = serverConfig.getUrl() + fileName;
             AjaxResult ajax = AjaxResult.success();
             ajax.put("url", url);

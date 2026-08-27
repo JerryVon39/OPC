@@ -217,4 +217,25 @@ public class CmsBlockServiceImpl implements ICmsBlockService
         try { return SecurityUtils.getUsername(); }
         catch (Exception e) { return ""; }
     }
+
+    /** 2：一键复制区块（同页面克隆，标题加"-副本"，blockKey 时间戳唯一） */
+    @Override
+    public Long copyCmsBlock(Long blockId)
+    {
+        CmsBlock src = cmsBlockMapper.selectCmsBlockByBlockId(blockId);
+        if (src == null)
+        {
+            throw new ServiceException("区块不存在");
+        }
+        CmsBlock copy = new CmsBlock();
+        copy.setBlockKey("pb-" + System.currentTimeMillis());
+        copy.setPageKey(src.getPageKey());
+        copy.setTitle((src.getTitle() == null ? "未命名" : src.getTitle()) + "-副本");
+        copy.setTemplate(src.getTemplate());
+        copy.setConfigJson(src.getConfigJson());
+        copy.setSort(src.getSort() == null ? 0L : src.getSort() + 1L);
+        copy.setVisible("0");
+        int rows = insertCmsBlock(copy);
+        return rows > 0 ? copy.getBlockId() : null;
+    }
 }
