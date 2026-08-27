@@ -525,8 +525,10 @@
         topBox.href = 'article.html?id=' + policy.articleId;
         topBox.style.display = '';
       }
-      if (!rows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
-      box.innerHTML = rows.slice(0, 3).map(a => {
+      // P1：主体列表与 news.html 口径一致——排除政策类（政策文章由「政策赋能」页与上方「政策速览」块展示）
+      const newsRows = rows.filter(a => (a.categoryName || '').indexOf('政策') !== 0);
+      if (!newsRows.length) { box.innerHTML = '<div class="no-result">暂无新闻</div>'; return; }
+      box.innerHTML = newsRows.slice(0, 3).map(a => {
         const raw = String(a.summary || '').replace(/<[^>]+>/g, '');
         // 封面缩略图：统一左图右文结构——有封面显示真实图，无封面显示占位块（保证标题起点对齐）
         const cover = a.cover

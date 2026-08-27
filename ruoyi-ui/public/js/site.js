@@ -644,9 +644,21 @@ function renderSection(s, no) {
       const box = document.getElementById('newsList');
       if (!box) return;
       try {
+        // 与 news.html 口径一致：排除政策类栏目（政策文章由「政策赋能」页展示，避免首页/新闻页重复混排）
+        let catFilter = '';
+        try {
+          const ctrl2 = new AbortController();
+          const t2 = setTimeout(() => ctrl2.abort(), 3000);
+          const cr = await fetch('/prod-api/system/cmsCategory/publicList', { signal: ctrl2.signal });
+          clearTimeout(t2);
+          const cd = await cr.json();
+          // 注意：cmsCategory/publicList 返回 data 数组（非 rows），与 news.html loadCats 同款解析
+          const nonPolicy = (cd.data || []).filter(c => (c.categoryName || '').indexOf('政策') !== 0).map(c => c.categoryId);
+          if (nonPolicy.length) catFilter = '&categoryIds=' + encodeURIComponent(nonPolicy.join(','));
+        } catch (e) { /* 栏目接口失败：不过滤（与 news.html 同款降级） */ }
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 3000);
-        const res = await fetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=' + count, { signal: ctrl.signal });
+        const res = await fetch('/prod-api/system/cms/publicList?pageNum=1&pageSize=' + count + catFilter, { signal: ctrl.signal });
         clearTimeout(timer);
         const d = await res.json();
         const rows = d.rows || [];

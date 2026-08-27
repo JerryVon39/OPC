@@ -95,7 +95,9 @@
           </el-table-column>
           <el-table-column label="状态" align="center" width="85">
             <template slot-scope="scope">
-              <el-tag v-if="scope.row.status === '0'" type="success" size="mini">已发布</el-tag>
+              <!-- P2：预约发布（发布时间在未来）标「待发布」，避免运营误以为已上线 -->
+              <el-tag v-if="scope.row.status === '0' && scope.row.publishTime && new Date(String(scope.row.publishTime).replace(/-/g, '/')) > new Date()" type="warning" size="mini">待发布</el-tag>
+              <el-tag v-else-if="scope.row.status === '0'" type="success" size="mini">已发布</el-tag>
               <el-tag v-else-if="scope.row.status === '1'" type="warning" size="mini">草稿</el-tag>
               <el-tag v-else type="info" size="mini">已下线</el-tag>
             </template>
@@ -166,7 +168,8 @@ export default {
       this.$router.push({ path: '/content/article-edit/index/' + articleId, query })
     },
     loadCategoryOptions() {
-      listCategory({ pageNum: 1, pageSize: 100 }).then(response => {
+      // P2：上限放宽（100 → 1000），栏目多于 100 个时不丢树节点
+      listCategory({ pageNum: 1, pageSize: 1000 }).then(response => {
         const rows = response.rows || []
         this.categoryOptions = rows
         // 树按前台页面分组：📰 资讯动态（news.html 页）📄 政策赋能（policy.html 页）
@@ -229,8 +232,11 @@ export default {
       this.multiple = !selection.length
     },
     handleAdd() {
-      // 跳到独立编辑页（新增：articleId=0，预选栏目带 query）
-      this.goEdit(0)
+      // 跳到独立编辑页（新增：articleId=0）
+      // P1：预选当前选中栏目（树节点点击设置了 categoryId；组节点/全部不预选）
+      const query = {}
+      if (this.queryParams.categoryId) query.categoryId = this.queryParams.categoryId
+      this.$router.push({ path: '/content/article-edit/index/0', query })
     },
     handleUpdate(row) {
       this.goEdit(row.articleId)
@@ -253,21 +259,26 @@ export default {
         this.getList()
       }).catch(() => {})
     },
-    // 批量下线（已发布 → 已下线）
+    // 批量下线（已发布 → 已下线；P1：选中含草稿时明示——草稿本就不展示，避免"被下线"误解）
     handleBatchOffline() {
       if (!this.ids.length) { this.$modal.msgWarning("请先勾选文章"); return }
-      this.$modal.confirm('确认将选中的 ' + this.ids.length + ' 篇文章下线？下线后前台不再展示。').then(() => {
+      const draftCount = this.articleList.filter(a => this.ids.includes(a.articleId) && a.status === '1').length
+      const tip = draftCount > 0 ? '（其中 ' + draftCount + ' 篇为草稿，草稿本就不在前台展示）' : ''
+      this.$modal.confirm('确认将选中的 ' + this.ids.length + ' 篇文章下线？下线后前台不再展示。' + tip).then(() => {
         return batchStatus(this.ids, '2')
       }).then(() => {
         this.$modal.msgSuccess("已下线")
         this.getList()
       }).catch(() => {})
     },
-    // 列表内改排序：即时保存
+    // 列表内改排序：即时保存（P2：300ms 防抖——连点数字框不再连发请求）
     handleSortChange(row) {
-      batchSort([{ articleId: row.articleId, sort: row.sort }]).then(() => {
-        this.$modal.msgSuccess("排序已保存")
-      })
+      clearTimeout(this._sortTimer)
+      this._sortTimer = setTimeout(() => {
+        batchSort([{ articleId: row.articleId, sort: row.sort }]).then(() => {
+          this.$modal.msgSuccess("排序已保存")
+        })
+      }, 300)
     },
     // 发布：草稿/已下线 → 已发布（首次发布自动写入发布时间）
     handlePublish(row) {

@@ -16,7 +16,8 @@
         <el-button v-if="isEdit && previewUrl" size="mini" icon="el-icon-view" @click="openFront" title="新窗口打开前台真实页面">前台查看</el-button>
         <el-button v-if="isEdit" size="mini" type="warning" plain icon="el-icon-refresh-left" @click="openHistory">历史版本</el-button>
         <el-button size="mini" icon="el-icon-document-checked" :disabled="saving" @click="handleSave(false)" v-hasPermi="['system:cms:edit']">保存</el-button>
-        <el-button v-if="form.status !== '0'" size="mini" type="primary" icon="el-icon-upload2" :disabled="saving" @click="handleSave(true)" v-hasPermi="['system:cms:publish']">发布</el-button>
+        <!-- P2：发布前确认（与列表页发布按钮行为一致，防手滑误发布） -->
+        <el-button v-if="form.status !== '0'" size="mini" type="primary" icon="el-icon-upload2" :disabled="saving" @click="confirmPublish" v-hasPermi="['system:cms:publish']">发布</el-button>
       </div>
     </div>
 
@@ -78,7 +79,8 @@
                 <el-input v-model="form.author" placeholder="请输入作者" />
               </el-form-item>
               <el-form-item label="摘要" prop="summary">
-                <el-input v-model="form.summary" type="textarea" :rows="3" placeholder="前台列表展示，选填" />
+                <!-- P2：摘要过长前台截断且列表错位——限制 300 字 -->
+                <el-input v-model="form.summary" type="textarea" :rows="3" maxlength="300" show-word-limit placeholder="前台列表展示，选填" />
               </el-form-item>
               <el-form-item label="封面" prop="cover">
                 <el-upload
@@ -102,7 +104,8 @@
               </el-form-item>
               <el-divider content-position="left">SEO</el-divider>
               <el-form-item label="关键词" prop="keywords">
-                <el-input v-model="form.keywords" placeholder="选填，多个关键词用英文逗号分隔" />
+                <!-- P2：关键词用于 SEO meta，限制 200 字 -->
+                <el-input v-model="form.keywords" maxlength="200" show-word-limit placeholder="选填，多个关键词用英文逗号分隔" />
               </el-form-item>
               <el-form-item label="描述" prop="description">
                 <el-input v-model="form.description" type="textarea" :rows="2" placeholder="选填，前台详情页 meta description" />
@@ -145,7 +148,8 @@ export default {
   components: { Editor },
   data() {
     return {
-      form: { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '0', sort: 0, attachment: null, keywords: null, description: null },
+      // P0：新增默认草稿（防手滑保存即上线）；发布需显式点「发布」或右侧状态切为已发布
+      form: { articleId: null, categoryId: null, title: null, summary: null, content: null, cover: null, author: null, isTop: '0', status: '1', sort: 0, attachment: null, keywords: null, description: null },
       rules: {
         title: [{ required: true, message: "文章标题不能为空", trigger: "blur" }],
         categoryId: [{ required: true, message: "请选择栏目", trigger: "change" }]
@@ -221,10 +225,16 @@ export default {
     window.removeEventListener('beforeunload', this._onBeforeUnload)
     this._clearAutoSave()
   },
-  /** 离开页面：已存在文章且有改动 → 静默存草稿（不阻塞导航）；新增未保存 → 确认 */
+  /** 离开页面：已存在文章且有改动 → 明示自动保存（P0：不再静默，防运营以为"离开=丢弃修改"或误判保存失败）；新增未保存 → 确认 */
   beforeRouteLeave(to, from, next) {
     if (!this.dirty) { next(); return }
-    if (this.isEdit) { this._doAutoSave(); next(); return }
+    if (this.isEdit) {
+      this.$modal.confirm('有未保存的修改，离开后将自动保存（不改变当前发布状态）。确定离开吗？', '未保存修改').then(() => {
+        this._doAutoSave()
+        next()
+      }).catch(() => next(false))
+      return
+    }
     if (window.confirm('文章尚未保存，确定离开吗？')) { next() } else { next(false) }
   },
   methods: {
@@ -276,6 +286,12 @@ export default {
       const d = new Date()
       return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)
     },
+    /** P2：发布前确认（与列表页一致） */
+    confirmPublish() {
+      this.$modal.confirm('确认发布该文章吗？发布后前台对应页面可见。').then(() => {
+        this.handleSave(true)
+      }).catch(() => {})
+    },
     /** 保存（forcePublish=true 时强制存为已发布；否则按右侧状态保存） */
     handleSave(forcePublish) {
       if (this.saving) return
@@ -309,8 +325,10 @@ export default {
           }
           this.previewTs = Date.now()
           this.$nextTick(() => { this._suppressDirty = false })
-          this.$modal.msgSuccess(this.isEdit ? (forcePublish ? '已发布' : '保存成功') : '创建成功，可在右侧预览前台效果')
+          // P0：提示明示发布状态——新增默认草稿，不再让"创建成功"误导为已上线
+          this.$modal.msgSuccess(this.isEdit ? (forcePublish ? '已发布，前台可见' : '保存成功') : (this.form.status === '0' ? '创建成功并已发布，前台可见' : '已存为草稿，前台暂不展示'))
         }).catch(() => {
+          // 错误提示已由 request.js 拦截器统一弹出（不重复弹窗）
           this.saveStatus = '保存失败'
           this.saveStatusError = true
         }).finally(() => { this.saving = false })

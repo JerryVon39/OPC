@@ -1,5 +1,7 @@
 <template>
   <div class="app-container sec-app">
+    <!-- P0：本页数据（cms_page_section）已迁移至区块管理（cms_block），前台不再消费——保留只读提示 -->
+    <el-alert type="warning" :closable="false" show-icon title="此页面已停用：首页模块已迁移至「内容运营 → 区块管理」管理，本页修改不再生效。请前往区块管理操作（本页保留仅供历史数据查阅）。" />
     <el-alert type="info" :closable="false" show-icon title="页面搭建 = 首页模块管理：左侧选模块，中间改内容，右侧实时预览前台效果。增删模块、上下移排序、开关显示都即时生效；表单内容需点「保存」后生效（保存后预览自动刷新）。" />
 
     <div class="sec-layout">

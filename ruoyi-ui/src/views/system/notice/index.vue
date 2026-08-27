@@ -84,7 +84,9 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.status"/>
+          <!-- P2：已过失效时间的公告标「已过期」（首页公告条已按时间窗下架，列表明示防误判） -->
+          <el-tag v-if="scope.row.status === '0' && scope.row.endTime && new Date(String(scope.row.endTime).replace(/-/g, '/')) < new Date()" type="info" size="mini">已过期</el-tag>
+          <dict-tag v-else :options="dict.type.sys_notice_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="创建者" align="center" prop="createBy" width="100" />
@@ -304,6 +306,11 @@ export default {
     },
     /** 提交按钮 */
     submitForm() {
+      // P2：失效时间不得早于生效时间（否则公告条时间窗为空，永不展示）
+      if (this.form.beginTime && this.form.endTime && new Date(String(this.form.endTime).replace(/-/g, '/')) < new Date(String(this.form.beginTime).replace(/-/g, '/'))) {
+        this.$modal.msgWarning("失效时间不能早于生效时间")
+        return
+      }
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.noticeId != undefined) {

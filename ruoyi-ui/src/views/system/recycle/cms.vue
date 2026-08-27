@@ -134,7 +134,7 @@ export default {
     /** 还原：del_flag 置 '0'，重新对前台/列表可见 */
     handleRestore(row) {
       const ids = row.articleId != null ? [row.articleId] : this.ids
-      this.$modal.confirm('确认还原选中的 ' + ids.length + ' 篇文章？还原后出现在文章列表中。').then(() => {
+      this.$modal.confirm('确认还原选中的 ' + ids.length + ' 篇文章？还原后出现在文章列表中，原已发布的文章将重新在前台展示。').then(() => {
         return restoreArticle(ids.join(','))
       }).then(() => {
         this.$modal.msgSuccess('还原成功')

@@ -13,6 +13,7 @@
     </el-row>
 
     <el-table
+      ref="catTable"
       v-if="refreshTable"
       v-loading="loading"
       :data="treeList"
@@ -46,7 +47,8 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="上级栏目" prop="parentId">
           <el-select v-model="form.parentId" placeholder="留空为一级栏目" clearable style="width:100%">
-            <el-option v-for="c in flatOptions" :key="c.categoryId" :label="c.categoryName" :value="c.categoryId" />
+            <!-- F6：编辑时自身及子孙禁选为上级（防树环） -->
+            <el-option v-for="c in flatOptions" :key="c.categoryId" :label="c.categoryName" :value="c.categoryId" :disabled="disabledCatIds.includes(c.categoryId)" />
           </el-select>
         </el-form-item>
         <el-form-item label="栏目名称" prop="categoryName">
@@ -81,6 +83,7 @@ export default {
       refreshTable: true,
       treeList: [],
       flatOptions: [{ categoryId: 0, categoryName: "一级栏目" }],
+      disabledCatIds: [],  // F6：编辑时不可选为上级的栏目 id 集（自身+子孙）
       title: "",
       open: false,
       form: {},
@@ -123,6 +126,7 @@ export default {
     },
     handleAdd(row) {
       this.reset()
+      this.disabledCatIds = [] // 新增：上级可选任意栏目
       if (row && row.categoryId) {
         this.form.parentId = row.categoryId
         this.title = "在「" + row.categoryName + "」下添加子栏目"
@@ -133,11 +137,52 @@ export default {
     },
     handleUpdate(row) {
       this.reset()
+      // F6：编辑时自身及子孙不可选为上级（防树环）
+      this.disabledCatIds = this.collectSelfAndDesc(row.categoryId)
       getCategory(row.categoryId).then(response => {
         this.form = response.data
         this.title = "修改栏目"
         this.open = true
       })
+    },
+    /** F6：收集自身及全部子孙 id */
+    collectSelfAndDesc(id) {
+      const ids = new Set([id])
+      let root = null
+      const find = (nodes) => {
+        for (const n of nodes) {
+          if (n.categoryId === id) { root = n; return }
+          if (n.children && n.children.length) find(n.children)
+        }
+      }
+      find(this.treeList)
+      if (root) {
+        const addSub = (n) => { if (n.children) n.children.forEach(c => { ids.add(c.categoryId); addSub(c) }) }
+        addSub(root)
+      }
+      return [...ids]
+    },
+    /** 递归查找行（parentId+名称匹配新增栏目） */
+    findRow(nodes, match) {
+      for (const n of nodes) {
+        if (match(n)) return n
+        if (n.children && n.children.length) { const r = this.findRow(n.children, match); if (r) return r }
+      }
+      return null
+    },
+    /** P2：树定位到指定栏目（展开祖先链 + 高亮当前行） */
+    revealCategory(categoryId) {
+      const table = this.$refs.catTable
+      if (!table) return
+      const parentOf = {}
+      const walk = (nodes) => nodes.forEach(n => { if (n.children) n.children.forEach(c => { parentOf[c.categoryId] = n.categoryId; walk([c]) }) })
+      walk(this.treeList)
+      const chain = []
+      let cur = categoryId
+      while (parentOf[cur]) { chain.push(parentOf[cur]); cur = parentOf[cur] }
+      chain.forEach(k => { const node = table.store.nodesMap[k]; if (node) node.expanded = true })
+      const node = table.store.nodesMap[categoryId]
+      if (node) table.setCurrentRow(node.data)
     },
     submitForm() {
       this.$refs["form"].validate(valid => {
@@ -149,10 +194,16 @@ export default {
               this.getList()
             })
           } else {
+            const parentId = this.form.parentId
+            const catName = this.form.categoryName
             addCategory(this.form).then(() => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
-              this.getList()
+              this.getList().then(() => {
+                // P2：定位新增栏目（展开祖先链 + 高亮），不再"新增完找不到"
+                const row = this.findRow(this.treeList, r => r.parentId === parentId && r.categoryName === catName)
+                if (row) this.$nextTick(() => this.revealCategory(row.categoryId))
+              })
             })
           }
         }

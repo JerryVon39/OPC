@@ -71,6 +71,11 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         {
             throw new ServiceException("文章未发布");
         }
+        // 预约发布（P0）：列表已按 publish_time <= NOW() 过滤，详情同样拦截——防 URL 直达提前泄露未公开内容
+        if (!preview && article.getPublishTime() != null && article.getPublishTime().after(new Date()))
+        {
+            throw new ServiceException("文章未发布");
+        }
         // 浏览量自增（防刷：同一 IP + 文章 10 分钟内只计一次；Redis 异常降级为照常自增）
         // 预览模式不计浏览量（编辑页每次保存都会刷新 iframe，避免刷虚）
         if (!preview && viewNotCounted(articleId))
@@ -94,6 +99,11 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         if (cmsArticle == null || cmsArticle.getTitle() == null || cmsArticle.getTitle().trim().isEmpty())
         {
             throw new ServiceException("文章标题不能为空");
+        }
+        // P2：无栏目文章前台永不展示——后端同样拦截（与前端表单必填一致，防接口直调绕过）
+        if (cmsArticle.getCategoryId() == null)
+        {
+            throw new ServiceException("请选择文章栏目");
         }
         // 新建即为已发布状态时，自动写入发布时间（前台按发布时间倒序展示）
         if ("0".equals(cmsArticle.getStatus()) && cmsArticle.getPublishTime() == null)
@@ -122,7 +132,15 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         // 状态切为已发布且尚无发布时间时自动补写（草稿编辑后直接发布场景）
         if ("0".equals(cmsArticle.getStatus()) && cmsArticle.getPublishTime() == null)
         {
-            cmsArticle.setPublishTime(new Date());
+            if (existing.getPublishTime() != null)
+            {
+                // P1：已发布文章被清空发布时间 → 保留原时间，防止文章跳到列表最前造成排行错乱
+                cmsArticle.setPublishTime(existing.getPublishTime());
+            }
+            else
+            {
+                cmsArticle.setPublishTime(new Date());
+            }
         }
         // 保存前写当前版本进历史（回滚基线），再更新主表 version+1（批次 A：文章版本历史）
         saveHistory(existing);
@@ -201,7 +219,8 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         target.setCover(hist.getCover());
         target.setAuthor(hist.getAuthor());
         target.setIsTop(hist.getIsTop());
-        target.setStatus(hist.getStatus());
+        // P1：回滚保留当前发布状态——防回滚到发布前版本导致线上文章被静默下线
+        target.setStatus(existing.getStatus());
         target.setSort(hist.getSort());
         target.setAttachment(hist.getAttachment());
         target.setKeywords(hist.getKeywords());

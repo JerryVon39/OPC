@@ -288,8 +288,8 @@ export default {
       return this.blockList.filter(b => b.template && b.template !== '')
     },
     slotBlocks() {
-      // 仅显示启用中的固定文本槽（停用旧区块不展示，避免干扰）
-      return this.blockList.filter(b => (!b.template || b.template === '') && b.visible === '0')
+      // P1：显示全部固定文本槽（含已隐藏）——隐藏的槽位也要能选中恢复，防止"隐藏后永久消失只能改库"
+      return this.blockList.filter(b => (!b.template || b.template === ''))
     },
     selected() {
       if (this.selectedId == null) return null

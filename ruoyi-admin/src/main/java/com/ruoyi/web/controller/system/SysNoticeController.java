@@ -20,6 +20,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.domain.SysNotice;
 import com.ruoyi.system.service.ISysNoticeReadService;
 import com.ruoyi.system.service.ISysNoticeService;
@@ -78,6 +79,7 @@ public class SysNoticeController extends BaseController
     @PostMapping
     public AjaxResult add(@Validated @RequestBody SysNotice notice)
     {
+        checkTimeWindow(notice);
         notice.setCreateBy(getUsername());
         return toAjax(noticeService.insertNotice(notice));
     }
@@ -90,8 +92,19 @@ public class SysNoticeController extends BaseController
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysNotice notice)
     {
+        checkTimeWindow(notice);
         notice.setUpdateBy(getUsername());
         return toAjax(noticeService.updateNotice(notice));
+    }
+
+    /** P2：失效时间不得早于生效时间（否则公告条时间窗为空永不展示）；前端已校验，此处防接口直调绕过 */
+    private void checkTimeWindow(SysNotice notice)
+    {
+        if (notice == null || notice.getBeginTime() == null || notice.getEndTime() == null) return;
+        if (notice.getEndTime().before(notice.getBeginTime()))
+        {
+            throw new ServiceException("失效时间不能早于生效时间");
+        }
     }
 
     /**
