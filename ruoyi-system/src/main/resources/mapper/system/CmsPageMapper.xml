@@ -9,6 +9,9 @@
         <result property="sort"       column="sort"        />
         <result property="status"     column="status"      />
         <result property="menuPos"    column="menu_pos"    />
+        <result property="heroTitle"  column="hero_title"   />
+        <result property="heroSubtitle" column="hero_subtitle" />
+        <result property="heroBg"     column="hero_bg"      />
         <result property="createBy"   column="create_by"   />
         <result property="createTime" column="create_time" />
         <result property="updateBy"   column="update_by"   />
@@ -16,7 +19,7 @@
     </resultMap>
 
     <sql id="selectCmsPageVo">
-        select page_id, page_key, page_name, sort, status, menu_pos, create_by, create_time, update_by, update_time
+        select page_id, page_key, page_name, sort, status, menu_pos, hero_title, hero_subtitle, hero_bg, create_by, create_time, update_by, update_time
         from cms_page
     </sql>
 
@@ -51,6 +54,9 @@
             <if test="sort != null">sort = #{sort},</if>
             <if test="status != null">status = #{status},</if>
             <if test="menuPos != null">menu_pos = #{menuPos},</if>
+            <if test="heroTitle != null">hero_title = #{heroTitle},</if>
+            <if test="heroSubtitle != null">hero_subtitle = #{heroSubtitle},</if>
+            <if test="heroBg != null">hero_bg = #{heroBg},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>

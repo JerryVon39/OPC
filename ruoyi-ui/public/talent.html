@@ -40,24 +40,7 @@
   </div>
 
   <!-- 栏目页头部 -->
-  <div class="page-hero">
-    <h1>人才<span>培养</span></h1>
-    <p>从高校到实战，从技能培训到创业训练营，构建覆盖全周期的 AI 人才培养体系</p>
-  </div>
-
-  <div id="pageSections"></div>
-  <div id="pageStatic">
-  <!-- 高校合作 -->
-  <div class="content-section">
-    <div class="sub-title">🎓 高校合作 · 校外实践教学基地</div>
-    <div class="company-grid">
-      <div class="company-card">
-        <div class="cc-icon">🏫</div>
-        <div>
-          <h4>广东财贸职业学院</h4>
-          <p>共建校外实践教学基地、AI 实训基地，联合培养应用型 AI 人才</p>
-        </div>
-      </div>
+  <div id="pageHero" class="page-hero page-hero-dyn" style="display:none"><h1 id="heroTitle"></h1><p id="heroSubtitle"></p></div>
       <div class="company-card">
         <div class="cc-icon">🏫</div>
         <div>
@@ -152,11 +135,10 @@
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-<script src="js/site.js?v=20260827b"></script>
+<script src="js/site.js?v=20260827e"></script>
 <script>
   // CMS 区块槽位声明（第二批）：后台「区块管理」可改；内容留空则保持静态原样
   window.CMS_BLOCK_SLOTS = {
-    'talent-hero-sub': [{ field: 'content', sel: '.page-hero p' }],
     'talent-cta': [{ field: 'content', sel: '.cta-box p' }]
   };
   loadCmsBlocks('talent');

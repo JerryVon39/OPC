@@ -18,6 +18,12 @@ public class CmsPage extends BaseEntity
     private String status;
     /** 前台入口位置（more=更多菜单 nav=顶部主导航） */
     private String menuPos;
+    /** 页头大标题（空=不显示页头） */
+    private String heroTitle;
+    /** 页头副标题 */
+    private String heroSubtitle;
+    /** 页头背景（图片URL或CSS色值，空=默认深蓝渐变） */
+    private String heroBg;
 
     public Long getPageId() { return pageId; }
     public void setPageId(Long pageId) { this.pageId = pageId; }
@@ -31,4 +37,10 @@ public class CmsPage extends BaseEntity
     public void setStatus(String status) { this.status = status; }
     public String getMenuPos() { return menuPos; }
     public void setMenuPos(String menuPos) { this.menuPos = menuPos; }
+    public String getHeroTitle() { return heroTitle; }
+    public void setHeroTitle(String heroTitle) { this.heroTitle = heroTitle; }
+    public String getHeroSubtitle() { return heroSubtitle; }
+    public void setHeroSubtitle(String heroSubtitle) { this.heroSubtitle = heroSubtitle; }
+    public String getHeroBg() { return heroBg; }
+    public void setHeroBg(String heroBg) { this.heroBg = heroBg; }
 }

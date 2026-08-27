@@ -40,21 +40,7 @@
   </div>
 
   <!-- 栏目页头部 -->
-  <div class="page-hero">
-    <h1>产业<span>生态</span></h1>
-    <p>聚焦 AI 内容创作、AI 技术应用、AI 硬件与场景生态链三大赛道，构建"平台 + 培训 + 订单 + 运营"一体化产业生态</p>
-  </div>
-
-  <div id="pageSections"></div>
-  <div id="pageStatic">
-  <!-- 行业背景数据条 -->
-  <div class="content-section">
-    <div class="stat-band">
-      <div class="stat-item"><span class="stat-num">1200 亿+</span><span class="stat-label">2025 年国内 AI 视频市场规模突破</span></div>
-      <div class="stat-item"><span class="stat-num">5800 亿</span><span class="stat-label">预计 2030 年市场规模达</span></div>
-      <div class="stat-item"><span class="stat-num">95%+</span><span class="stat-label">2026 年 Q1 上新微短剧 AI 制作占比</span></div>
-      <div class="stat-item"><span class="stat-num">400 亿</span><span class="stat-label">2026 年 AI 短剧市场规模预计冲击</span></div>
-    </div>
+  <div id="pageHero" class="page-hero page-hero-dyn" style="display:none"><h1 id="heroTitle"></h1><p id="heroSubtitle"></p></div>
   </div>
 
   <!-- 三大赛道 -->
@@ -199,11 +185,10 @@
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-<script src="js/site.js?v=20260827b"></script>
+<script src="js/site.js?v=20260827e"></script>
 <script>
   // CMS 区块槽位声明（第二批）：后台「区块管理」可改；内容留空则保持静态原样
   window.CMS_BLOCK_SLOTS = {
-    'industry-hero-sub': [{ field: 'content', sel: '.page-hero p' }],
     'industry-cta': [{ field: 'content', sel: '.cta-box p' }]
   };
   loadCmsBlocks('industry');

@@ -222,20 +222,26 @@
     <el-dialog title="自定义页面" :visible.sync="pageMgrOpen" width="560px" append-to-body>
       <div style="margin-bottom:12px;color:#909399;font-size:13px">自定义页面 = 前台新分页，用区块模板搭建内容；前台访问地址：<code>page.html?key=页面标识</code>。会出现在前台「☰ 更多」菜单。</div>
       <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openPageDlg">新增页面</el-button>
-      <el-table :data="customPages" size="mini" style="margin-top:10px">
-        <el-table-column label="页面名称" min-width="130">
-          <template slot-scope="scope">{{ scope.row.pageName }} <el-tag v-if="scope.row.status === '1'" size="mini" type="info">停用</el-tag></template>
-        </el-table-column>
-        <el-table-column label="访问地址" min-width="180">
-          <template slot-scope="scope"><code style="font-size:12px">page.html?key={{ scope.row.pageKey }}</code></template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" width="220">
+      <el-table :data="allPages" size="mini" style="margin-top:10px">
+        <el-table-column label="页面名称" min-width="120">
           <template slot-scope="scope">
-            <el-button size="mini" type="text" icon="el-icon-top" @click="moveCustomPage(scope.row, -1)">上移</el-button>
-            <el-button size="mini" type="text" icon="el-icon-bottom" @click="moveCustomPage(scope.row, 1)">下移</el-button>
-            <el-button size="mini" type="text" icon="el-icon-edit" @click="editPageDlg(scope.row)">改名</el-button>
-            <el-button size="mini" type="text" icon="el-icon-switch-button" @click="toggleCustomPage(scope.row)">{{ scope.row.status === '0' ? '停用' : '启用' }}</el-button>
-            <el-button size="mini" type="text" icon="el-icon-delete" class="danger-text" @click="delCustomPage(scope.row)">删除</el-button>
+            {{ scope.row.pageName }}
+            <el-tag v-if="!scope.row.custom" size="mini" type="info">内置</el-tag>
+            <el-tag v-else-if="scope.row.status === '1'" size="mini" type="warning">停用</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="页头标题" min-width="100">
+          <template slot-scope="scope">{{ scope.row.heroTitle || '—' }}</template>
+        </el-table-column>
+        <el-table-column label="操作" align="center" width="230">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" icon="el-icon-edit" @click="editPageDlg(scope.row)">{{ scope.row.custom ? '编辑' : '页头设置' }}</el-button>
+            <template v-if="scope.row.custom">
+              <el-button size="mini" type="text" icon="el-icon-top" @click="moveCustomPage(scope.row, -1)">上移</el-button>
+              <el-button size="mini" type="text" icon="el-icon-bottom" @click="moveCustomPage(scope.row, 1)">下移</el-button>
+              <el-button size="mini" type="text" icon="el-icon-switch-button" @click="toggleCustomPage(scope.row)">{{ scope.row.status === '0' ? '停用' : '启用' }}</el-button>
+              <el-button size="mini" type="text" icon="el-icon-delete" class="danger-text" @click="delCustomPage(scope.row)">删除</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -266,6 +272,16 @@
             <el-radio label="more">「☰ 更多」菜单</el-radio>
             <el-radio label="nav">页面顶部导航栏</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-divider content-position="left">页头（顶部大标题区）</el-divider>
+        <el-form-item label="页头标题">
+          <el-input v-model="pageForm.heroTitle" maxlength="100" placeholder="留空 = 不显示页头（页面直接从内容开始）" />
+        </el-form-item>
+        <el-form-item label="副标题">
+          <el-input v-model="pageForm.heroSubtitle" type="textarea" :rows="2" maxlength="200" placeholder="页头下方的说明文字（可留空）" />
+        </el-form-item>
+        <el-form-item label="背景">
+          <el-input v-model="pageForm.heroBg" maxlength="255" placeholder="图片 URL 或 CSS 色值（如 #0f1b2d）；留空 = 默认深蓝渐变" />
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -368,6 +384,10 @@ export default {
         ...this.builtinPages,
         ...this.customPages.map(p => ({ key: p.pageKey, name: p.pageName, custom: true }))
       ]
+    },
+    /** 页面管理弹窗全量列表（内置页已注册进 cms_page，与自定义页统一展示；内置页仅页头可编辑） */
+    allPages() {
+      return this.customPages.map(p => ({ ...p, custom: !this.builtinPages.some(b => b.key === p.pageKey) }))
     },
     currentPage() {
       return this.pages.find(p => p.key === this.activePage) || this.pages[0]
@@ -706,12 +726,12 @@ export default {
     },
     openPageDlg() {
       this.pageEditing = false
-      this.pageForm = { pageKey: '', pageName: '', sort: 0, status: '0', menuPos: 'more' }
+      this.pageForm = { pageKey: '', pageName: '', sort: 0, status: '0', menuPos: 'more', heroTitle: '', heroSubtitle: '', heroBg: '' }
       this.pageDlgOpen = true
     },
     editPageDlg(p) {
       this.pageEditing = true
-      this.pageForm = { pageId: p.pageId, pageKey: p.pageKey, pageName: p.pageName, sort: p.sort, status: p.status, menuPos: p.menuPos || 'more' }
+      this.pageForm = { pageId: p.pageId, pageKey: p.pageKey, pageName: p.pageName, sort: p.sort, status: p.status, menuPos: p.menuPos || 'more', heroTitle: p.heroTitle || '', heroSubtitle: p.heroSubtitle || '', heroBg: p.heroBg || '' }
       this.pageDlgOpen = true
     },
     savePage() {

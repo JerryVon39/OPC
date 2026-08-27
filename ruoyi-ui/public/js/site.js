@@ -1015,7 +1015,7 @@ async function loadPageSections(pageKey) {
 // ===== 75：自定义页面入口（menu_pos 分流：nav=主导航 / more=更多菜单，幂等）=====
 window.__appendCustomNav = function () {
   try {
-    fetch('/prod-api/system/cmsPage/publicList').then(r => r.json()).then(d => {
+    fetch('/prod-api/system/cmsPage/publicList', { cache: 'no-store' }).then(r => r.json()).then(d => {
       const list = d.data || [];
       const navs = list.filter(p => p.menuPos === 'nav');
       const mores = list.filter(p => p.menuPos !== 'nav');
@@ -1059,3 +1059,29 @@ if (document.readyState === 'loading') {
 } else {
   window.__appendCustomNav();
 }
+
+// ===== 页头（hero）统一渲染：所有栏目页/自定义页的顶部大标题区由 cms_page 配置驱动 =====
+// 容器：#pageHero（h1#heroTitle / p#heroSubtitle），按当前页面 pageKey 取配置；
+// 配置缺标题 → 隐藏页头（页面直接从内容开始）；背景支持图片 URL 或 CSS 色值
+(function renderPageHero() {
+  try {
+    const box = document.getElementById('pageHero');
+    if (!box) return;
+    // 当前页面 key：静态页按文件名；自定义页按 ?key= 参数
+    const qs = new URLSearchParams(location.search);
+    const pageKey = qs.get('key') || location.pathname.split('/').pop().replace('.html', '');
+    fetch('/prod-api/system/cmsPage/publicList', { cache: 'no-store' }).then(r => r.json()).then(d => {
+      const pg = (d.data || []).find(x => x.pageKey === pageKey);
+      if (!pg || !pg.heroTitle) return; // 无配置/无标题：保持隐藏
+      const t = document.getElementById('heroTitle');
+      const sub = document.getElementById('heroSubtitle');
+      if (t) t.textContent = pg.heroTitle;
+      if (sub) {
+        if (pg.heroSubtitle) { sub.textContent = pg.heroSubtitle; sub.style.display = ''; }
+        else sub.style.display = 'none';
+      }
+      if (pg.heroBg) box.style.background = /^(#|rgb|linear|radial|url)/i.test(pg.heroBg) ? pg.heroBg : 'url(' + pg.heroBg + ') center/cover no-repeat';
+      box.style.display = '';
+    }).catch(function () {});
+  } catch (e) { /* 忽略：无容器或异常时保持静态 */ }
+})();
