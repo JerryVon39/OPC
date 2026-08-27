@@ -45,6 +45,8 @@
             <el-tag size="mini" :type="isSlot ? 'info' : 'success'">{{ isSlot ? '固定文本槽' : templateName(form.template) }}</el-tag>
             <!-- ② 放大编辑：隐藏左右栏，表单区占满整行，输入控件高度随视口放大 -->
             <div class="sec-mid-head-right">
+              <!-- D：未保存也能看单区块真实渲染（新标签） -->
+              <el-button size="mini" icon="el-icon-view" @click="previewCurrent" title="用当前（含未保存）内容在浏览器新标签预览该区块">预览当前效果</el-button>
               <el-button size="mini" :icon="editFull ? 'el-icon-close' : 'el-icon-full-screen'" @click="toggleFull">{{ editFull ? '退出放大' : '放大编辑' }}</el-button>
             </div>
           </div>
@@ -130,6 +132,9 @@
                           <el-button v-if="item[sf.key]" type="text" icon="el-icon-delete" @click="item[sf.key] = ''">清除</el-button>
                         </div>
                       </template>
+                      <!-- C：列表项行内排序（上移/下移/删除） -->
+                      <el-button type="text" icon="el-icon-top" @click="moveListItem(f, i, -1)">上移</el-button>
+                      <el-button type="text" icon="el-icon-bottom" @click="moveListItem(f, i, 1)">下移</el-button>
                       <el-button type="text" icon="el-icon-delete" @click="cfg[f.key].splice(i, 1)">删除</el-button>
                     </div>
                     <el-button type="primary" plain size="mini" @click="addListItem(f)">＋ 添加{{ f.itemLabel }}</el-button>
@@ -225,6 +230,14 @@ import Editor from "@/components/Editor"
 export default {
   name: "CmsBlock",
   components: { Editor },
+  // A：离开本路由时未保存修改拦截（点其他菜单/关闭页签）
+  beforeRouteLeave(to, from, next) {
+    if (this.dirty) {
+      this.$modal.confirm('当前区块有未保存的修改，离开后将丢失。确定离开吗？', '未保存修改').then(() => next()).catch(() => next(false))
+    } else {
+      next()
+    }
+  },
   data() {
     return {
       pages: [
@@ -250,6 +263,7 @@ export default {
         } catch (e) { return 640 }
       })(),
       editFull: false,         // ② 放大编辑：隐藏左右栏，表单占满整行
+      saving: false,           // B：保存防重复提交（Ctrl+S 连按）
       previewTs: 0,
       previewLoading: true,
       addOpen: false,
@@ -316,6 +330,11 @@ export default {
     getConfigKey('site.front.url').then(res => {
       if (res && res.msg && res.msg !== 'http://localhost') this.frontUrl = res.msg
     }).catch(() => {})
+    // B：Ctrl+S 保存（编辑长文时快速保存）
+    window.addEventListener('keydown', this.onKeydown)
+  },
+  beforeDestroy() {
+    window.removeEventListener('keydown', this.onKeydown)
   },
   methods: {
     templateName(v) {
@@ -338,10 +357,28 @@ export default {
       }).finally(() => { this.loading = false })
     },
     onTabChange() {
+      // A：未保存修改拦截——确认后才切换栏目
+      if (this.dirty) {
+        this.$modal.confirm('当前区块有未保存的修改，切换栏目后将丢失。确定切换吗？', '未保存修改').then(() => {
+          this.selectedId = null
+          this.getList(true)
+        }).catch(() => {})
+        return
+      }
       this.selectedId = null
       this.getList(true)
     },
     select(b) {
+      // A：未保存修改拦截——确认后才切换/重置区块（同区块重复点击也会重置表单）
+      if (this.dirty) {
+        this.$modal.confirm('当前区块有未保存的修改，切换后将丢失。确定切换吗？', '未保存修改').then(() => {
+          this.doSelect(b)
+        }).catch(() => {})
+        return
+      }
+      this.doSelect(b)
+    },
+    doSelect(b) {
       this._suppressDirty = true
       this.selectedId = b.blockId
       this.form = b
@@ -366,6 +403,15 @@ export default {
       const item = {}
       f.fields.forEach(sf => { item[sf.key] = '' })
       this.cfg[f.key].push(item)
+    },
+    /** C：列表项行内上移/下移（splice 触发 Vue 响应式 + dirty watch） */
+    moveListItem(f, i, dir) {
+      const arr = this.cfg[f.key]
+      const j = i + dir
+      if (j < 0 || j >= arr.length) return
+      const t = arr[i]
+      arr.splice(i, 1)
+      arr.splice(j, 0, t)
     },
     openAdd() { this.addOpen = true },
     /** 打开模板样式预览：用示例配置调前台真实渲染器（block-preview.html），所见即前台所得 */
@@ -415,6 +461,9 @@ export default {
       }
     },
     handleSave() {
+      // B：防重复提交（Ctrl+S 连按/双击保存）
+      if (this.saving) return
+      this.saving = true
       // 序列化配置（tags 的 tagsText 转数组）
       const cfg = JSON.parse(JSON.stringify(this.cfg))
       if (cfg.groups) cfg.groups.forEach(g => { g.tags = (g.tagsText || '').split('，').map(s => s.trim()).filter(Boolean); delete g.tagsText })
@@ -424,7 +473,17 @@ export default {
         this.dirty = false
         this.getList(false)
         this.reloadPreview()
-      })
+      }).catch(() => {
+        // B：保存失败明确提示（修改仍保留在表单，可重试）
+        this.$modal.msgError("保存失败，请稍后重试（你的修改仍保留在表单中）")
+      }).finally(() => { this.saving = false })
+    },
+    /** B：Ctrl+S 保存快捷键 */
+    onKeydown(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault()
+        if (this.selectedId != null) this.handleSave()
+      }
     },
     handleDelete(b) {
       this.$modal.confirm('确认删除内容区块「' + (b.title || b.blockKey) + '」吗？前台该栏目页将不再显示此区块。').then(() => {
@@ -511,6 +570,18 @@ export default {
     toggleFull() {
       this.editFull = !this.editFull
       if (!this.editFull) this.reloadPreview()
+    },
+    /** D：预览当前效果——把当前（含未保存）配置序列化，调前台单区块渲染器新标签打开 */
+    previewCurrent() {
+      const t = this.form.template
+      if (!t) { this.$modal.msgWarning('固定文本槽无模板预览，保存后可在整页预览查看'); return }
+      const cfg = JSON.parse(JSON.stringify(this.cfg))
+      if (cfg.groups) cfg.groups.forEach(g => { g.tags = (g.tagsText || '').split('，').map(s => s.trim()).filter(Boolean); delete g.tagsText })
+      const scene = this.currentTpl ? this.currentTpl.scene : ''
+      const url = this.frontBase + '/block-preview.html?template=' + encodeURIComponent(t) +
+        '&scene=' + encodeURIComponent(scene) +
+        '&cfg=' + encodeURIComponent(JSON.stringify(cfg)) + '&t=' + Date.now()
+      window.open(url, '_blank', 'noopener')
     },
     openFront() {
       window.open(this.frontBase + '/' + this.currentPage.file, '_blank', 'noopener')
