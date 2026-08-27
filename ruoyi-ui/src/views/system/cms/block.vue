@@ -139,6 +139,8 @@
                         <img v-if="cfg.image" :src="imgUrl(cfg.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
                         <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                       </el-upload>
+                      <!-- 清除配图（已上传时显示） -->
+                      <el-button v-if="cfg.image" type="text" icon="el-icon-delete" size="mini" @click="cfg.image = ''">清除配图</el-button>
                     </template>
                     <template v-else-if="f.type === 'link'">
                       <el-select v-model="cfg[f.key]" filterable allow-create default-first-option placeholder="选择或输入页面地址" :style="f.width ? 'width:' + f.width + 'px' : ''">
