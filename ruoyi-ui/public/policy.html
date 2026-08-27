@@ -51,6 +51,15 @@
   <!-- 栏目页头部 -->
   <div id="pageHero" class="page-hero page-hero-dyn" style="display:none"><h1 id="heroTitle"></h1><p id="heroSubtitle"></p></div>
 
+  <!-- Tab 导航：文件库（默认）｜政策解读｜省级蓝图 -->
+  <div class="content-section" style="padding-bottom:8px">
+    <div class="type-tabs" id="policyTabs">
+      <a class="active" data-tab="lib" onclick="switchPolicyTab('lib')">📚 政策文件库</a>
+      <a data-tab="read" onclick="switchPolicyTab('read')">📖 政策解读</a>
+      <a data-tab="blueprint" onclick="switchPolicyTab('blueprint')">📜 省级蓝图</a>
+    </div>
+  </div>
+
   <!-- Tab1 政策文件库：三大赋能概览 + 政策一览表 + 动态文件库（可搜索） -->
   <div id="pt-lib">
     <div class="content-section">
@@ -169,7 +178,7 @@
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-<script src="js/site.js?v=20260827e"></script>
+<script src="js/site.js?v=20260827f"></script>
 <script>
   // ===== 政策文件库：CMS 动态加载（匿名公开接口，与 news.html 同前缀）=====
   const CAT_API = '/prod-api/system/cmsCategory/publicList';

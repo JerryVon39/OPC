@@ -41,6 +41,41 @@
 
   <!-- 栏目页头部 -->
   <div id="pageHero" class="page-hero page-hero-dyn" style="display:none"><h1 id="heroTitle"></h1><p id="heroSubtitle"></p></div>
+
+  <div id="pageSections"></div>
+  <div id="pageStatic">
+  <!-- 两种入驻方式 -->
+  <div class="content-section">
+    <div class="sub-title">🏠 两种入驻方式</div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="ic-icon">🌟</div>
+        <h3>A 类：免费入驻 · 成为 OPC 合伙人</h3>
+        <p><b>条件：</b>获得社区老板认可</p>
+        <p><b>合伙人权益：</b></p>
+        <ul>
+          <li>房租、水电、高速宽带全免</li>
+          <li>注册代办、纳税申报服务</li>
+          <li>本地 Token 免费使用</li>
+          <li>可申请试用 70B 以内大模型一体机</li>
+          <li>超高规格办公装修</li>
+          <li>多间高规格会议室</li>
+          <li>工会和党建公共空间</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🪑</div>
+        <h3>B 类：付费入驻 · 普通成员</h3>
+        <p><b>适用：</b>暂未获社区认可、或不愿受股权约束的创业者</p>
+        <p><b>费用：</b>支付小额租金，分摊水电网络费</p>
+        <ul>
+          <li>共享社区工位与高速网络</li>
+          <li>使用公共会议室与公共空间</li>
+          <li>参与社区课程、赛事与订单对接</li>
+          <li>可随时申请转为 OPC 合伙人</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
   <!-- 首批入驻企业 -->
@@ -109,10 +144,11 @@
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-<script src="js/site.js?v=20260827e"></script>
+<script src="js/site.js?v=20260827f"></script>
 <script>
   // CMS 区块槽位声明（第二批）：后台「区块管理」可改；内容留空则保持静态原样
   window.CMS_BLOCK_SLOTS = {
+    'join-hero-sub': [{ field: 'content', sel: '.page-hero p' }]
   };
   loadCmsBlocks('join');
   loadPageSections('join');

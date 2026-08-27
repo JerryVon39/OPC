@@ -41,6 +41,24 @@
 
   <!-- 栏目页头部 -->
   <div id="pageHero" class="page-hero page-hero-dyn" style="display:none"><h1 id="heroTitle"></h1><p id="heroSubtitle"></p></div>
+
+  <div id="pageSections"></div>
+  <div id="pageStatic">
+  <!-- 社区定位 -->
+  <div class="content-section">
+    <div class="sub-title">📍 社区定位</div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="ic-icon">🏢</div>
+        <h3>OPC 新内涵</h3>
+        <p>一人公司（One Person Company）不只是法律意义上的"一人公司"载体，更是 AI 时代的"生产力引擎"——以最低合规成本注册经营主体，再以 AI 深度协同放大个人产出。</p>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🧑‍💻</div>
+        <h3>什么是"数智游民"</h3>
+        <p>"数智游民"= 一个人 + 一台高性能 AI 电脑即可创业：不依赖场地、不依赖团队规模，只要有创意与 AI 工具，就能承接内容创作、技术开发、创意设计等订单。</p>
+      </div>
+    </div>
   </div>
 
   <!-- 合作模式 -->
@@ -176,10 +194,11 @@
     <div class="footer-bottom">© <span id="footerYear">2026</span> 数智游民创新工场 · 清远 AI 一人公司生态社区</div>
   </footer>
 
-<script src="js/site.js?v=20260827e"></script>
+<script src="js/site.js?v=20260827f"></script>
 <script>
   // CMS 区块槽位声明（第二批）：后台「区块管理」可改；内容留空则保持静态原样
   window.CMS_BLOCK_SLOTS = {
+    'about-hero-sub': [{ field: 'content', sel: '.page-hero p' }],
     'about-cta': [{ field: 'content', sel: '.cta-box p' }]
   };
   loadCmsBlocks('about');

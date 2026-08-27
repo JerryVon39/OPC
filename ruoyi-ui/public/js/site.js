@@ -1017,7 +1017,9 @@ window.__appendCustomNav = function () {
   try {
     fetch('/prod-api/system/cmsPage/publicList', { cache: 'no-store' }).then(r => r.json()).then(d => {
       const list = d.data || [];
-      const navs = list.filter(p => p.menuPos === 'nav');
+      // 内置页已存在于静态/配置导航——只追加自定义页（内置页注册行虽 menu_pos=nav 也不追加，防重复按钮）
+      const BUILTIN_KEYS = ['home', 'about', 'join', 'talent', 'industry', 'news', 'policy', 'article', 'profile', 'page'];
+      const navs = list.filter(p => p.menuPos === 'nav' && BUILTIN_KEYS.indexOf(p.pageKey) === -1);
       const mores = list.filter(p => p.menuPos !== 'nav');
       // 主导航：追加到 #navAnchors 末尾（幂等：按 data-custom 标记去重）
       const navBox = document.getElementById('navAnchors');
