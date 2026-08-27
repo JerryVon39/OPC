@@ -85,8 +85,8 @@ export default {
         { label: '文章总数', value: 0, color: '#67C23A', path: '/content/article' },
         { label: '今日发文', value: 0, color: '#409EFF', path: '/content/article' },
         { label: '草稿', value: 0, color: '#E6A23C', path: '/content/article?status=1' },
-        { label: '回收站', value: 0, color: '#F56C6C', path: '/recycle/cms' },
-        { label: '待审核申请', value: 0, color: '#E2554B', path: '/purchase' }
+        { label: '回收站', value: 0, color: '#F56C6C', path: '/ops-aux/recycle/cms' },
+        { label: '待审核申请', value: 0, color: '#E2554B', path: '/member/purchase' }
       ],
       recentArticles: [], // 最近编辑文章 5 条
       recentBlocks: [],   // 最近编辑区块 5 条
