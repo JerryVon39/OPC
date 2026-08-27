@@ -134,7 +134,8 @@
                       <el-switch v-model="cfg[f.key]" :active-value="f.activeValue" :inactive-value="f.inactiveValue" :active-text="f.activeText" :inactive-text="f.inactiveText" />
                     </template>
                     <template v-else-if="f.type === 'image'">
-                      <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="handleImageSuccess" accept="image/*">
+                      <!-- on-success 须用箭头函数：直接绑定会把 (res, file, fileList) 的 fileList 误当 key 参数，导致 cfg.image 不更新 -->
+                      <el-upload class="avatar-uploader" :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" :on-success="(res) => handleImageSuccess(res)" accept="image/*">
                         <img v-if="cfg.image" :src="imgUrl(cfg.image)" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px" />
                         <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                       </el-upload>
@@ -599,7 +600,8 @@ export default {
     // 71：支持列表内子字段图片上传（target+key 传入时写子字段；顶层调用保持 cfg.image）
     handleImageSuccess(res, target, key) {
       if (res.code === 200) {
-        if (key) { target[key] = res.fileName || res.url } else { this.cfg.image = res.fileName || res.url }
+        // key 仅当为字符串时是子字段路径（el-upload on-success 的 fileList 数组不能误当 key）
+        if (key && typeof key === 'string') { target[key] = res.fileName || res.url } else { this.cfg.image = res.fileName || res.url }
         this.$modal.msgSuccess("图片上传成功")
       }
     },
