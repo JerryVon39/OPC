@@ -67,9 +67,9 @@ if "%NEED_SECRET%"=="1" (
 
 REM 3. Start all services (first run pulls images and initializes the database)
 echo [start-all] Starting MySQL / Redis / backend / frontend ...
-docker image inspect jerryvon/opc-backend:v2.4 >nul 2>&1
+docker image inspect jerryvon/opc-backend:v2.5 >nul 2>&1
 if errorlevel 1 (
-  echo [start-all] v2.4 image not found locally - building from source, takes a few minutes...
+  echo [start-all] v2.5 image not found locally - building from source, takes a few minutes...
   docker compose build
   if errorlevel 1 (echo [start-all] Build failed & pause & exit /b 1)
 )
