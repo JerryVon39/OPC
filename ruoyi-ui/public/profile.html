@@ -309,7 +309,17 @@
   }
 
   // ===== 我的资料 =====
-  function initProfile() {
+  // F-6 fix: localStorage 不再含手机/邮箱（登录态仅存最小字段），
+  // 资料页从 /me 接口拉取全量（登录态内存使用，刷新页面即重新获取）
+  async function refreshMe() {
+    try {
+      const res = await apiFetch('/prod-api/system/reader/me');
+      const d = await res.json();
+      if (d.code === 200 && d.data) currentUser = d.data;
+    } catch (e) { /* 保持现有缓存 */ }
+  }
+  async function initProfile() {
+    if (currentUser) await refreshMe();
     if (!currentUser) {
       document.getElementById('loginPrompt').style.display = 'block';
       document.getElementById('loginPrompt').classList.add('active');

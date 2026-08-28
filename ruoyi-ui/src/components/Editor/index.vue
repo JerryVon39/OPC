@@ -167,7 +167,8 @@ export default {
     },
     // 上传前校检格式和大小
     handleBeforeUpload(file) {
-      const type = ["image/jpeg", "image/jpg", "image/png", "image/svg"]
+      // F-7 fix: 移除 image/svg——SVG 可含脚本（存储型 XSS 跳板），后端白名单亦不含 svg
+      const type = ["image/jpeg", "image/jpg", "image/png"]
       const isJPG = type.includes(file.type)
       // 检验文件格式
       if (!isJPG) {

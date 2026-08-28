@@ -80,7 +80,7 @@ scripts\start-all.bat        # Windows（Linux/macOS: ./scripts/start-all.sh）
 
 - 管理后台：`http://localhost/index.html`
 - 官网前台：`http://localhost/home.html`
-- ⚠️ **admin 初始口令**：本地与 Docker 全新部署统一为 `admin123`（`upgrade_20260828_01` 幂等统一，方便部署方使用）。**首次登录请立即修改**（登录验证码在 docker 部署默认开启，可在系统设置关闭）
+- ⚠️ **admin 初始口令**：本地与 Docker 全新部署统一为 `admin123`（`upgrade_20260828_01` 幂等统一，方便部署方使用）。**首次登录请立即修改**（登录验证码默认关闭——快照配置 `sys.account.captchaEnabled=false`，可在系统设置开启）
 - 停止：`scripts\stop-all.bat`（数据保留，重跑即恢复）
 
 > 🐳 **镜像版本**：当前 `jerryvon/opc-backend:v2.3` + `jerryvon/opc-frontend:v2.3`（已推送 Docker Hub；`scripts\publish-docker.bat` 发布新版本并同步 compose）。
@@ -96,12 +96,25 @@ scripts\start-local.bat      # Windows（Linux/macOS: ./scripts/start-local.sh�
 
 脚本自动：启动/复用本机 MySQL 与 Redis → 全新库自动初始化（`sql/` 全量 + 升级脚本通配执行）→ 启动后端（8080）→ 前端 dev server（8081）。
 
+**前置环境**（`scripts\check-env.bat` 可一键自检）：JDK 17、Maven 3.8+（首次构建）、MySQL 8（root 口令与 `.env` 的 `DB_PASSWORD` 一致）、Redis 5+、Node.js **16 或 18**（Vue CLI 4/webpack4 在 Node 17+ 报 `ERR_OSSL_EVP_UNSUPPORTED`；`ruoyi-ui/.nvmrc` 已固定 16，`nvm use` 即可）。不想装环境直接用上面的 Docker 一键路径。
+
 - 管理后台：`http://localhost:8081/index.html`（admin 口令同上说明）
 - 官网前台：`http://localhost:8081/`（根路径直达首页）
 - 停止：`scripts\stop-local.bat`；服务管理：`scripts\svc.bat start|stop|status|restart`
 - 手动初始化（可选）：按 `docker/mysql-init.sh` 的顺序执行 `sql/ry_20260417.sql` → `quartz.sql` → `business_init.sql` → `role_init.sql` → **全部 `upgrade_*.sql`**（通配扫描，文件名序=执行序，幂等）→ `data_snapshot.sql`
 
 > 💡 **部署链单一来源**：升级脚本统一由通配扫描执行（`docker/mysql-init.sh` / `start-local.bat` / `start-all.bat` 同源），命名 `upgrade_YYYYMMDD_NN_描述.sql`，NN 保证同日内依赖顺序；**不要在后台/脚本外手工建菜单或改配置**——人工改动无法随部署同步（详见「部署对齐」节）。
+
+## 🔧 首次使用 / 故障排查（U-8）
+
+| 现象 | 处理 |
+|---|---|
+| Docker 一键 80 端口被占（IIS/Skype 等） | `.env` 设 `FE_PORT=8080` 后重跑 `start-all`（compose 与就绪探测已联动） |
+| 本地上传图片后前台不显示 | Windows 无 D: 盘时检查 `%USERPROFILE%\ruoyi\uploadPath`（start-local 已自动注入 `RUOYI_PROFILE`） |
+| 数据库口令对不上 | `.env` 只改 `MYSQL_ROOT_PASSWORD` 即可——`DB_PASSWORD` 留空自动跟随（compose/备份脚本均已联动） |
+| 前端 `npm run dev` 报 `ERR_OSSL_EVP_UNSUPPORTED` | Node 版本过高：用 Node 16/18（`.nvmrc`）或 `NODE_OPTIONS=--openssl-legacy-provider` |
+| Maven/npm 拉依赖极慢或失败 | 海外/内网换源：Maven 改 settings.xml 镜像；前端 `docker build --build-arg NPM_REGISTRY=https://registry.npmjs.org` |
+| 公网部署 | **必须启用 HTTPS**（nginx.conf 443 段取消注释/外部 TLS 终结）——否则管理员 JWT、读者会话、口令明文过网 |
 
 ## 📁 项目结构
 

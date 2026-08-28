@@ -26,6 +26,14 @@ window.PREVIEW_HIGHLIGHT = new URLSearchParams(location.search).get('highlight')
 
 // ===== 登录态（localStorage 持久化）=====
 let currentUser = null;
+// F-6 fix: 落 localStorage 前剥离手机/邮箱等敏感字段（防任意 XSS 全量盗取）；
+// 个人主页等需全量资料的场景经 /system/reader/me 接口（登录态内存）拉取
+function stripSensitive(u) {
+  const s = {};
+  ['readerId', 'readerName', 'cardNo', 'readerType', 'status', 'emailVerified', 'sessionToken']
+    .forEach(k => { if (u && u[k] !== undefined) s[k] = u[k]; });
+  return s;
+}
 try {
   const saved = localStorage.getItem('shopUser');
   if (saved) currentUser = JSON.parse(saved);
@@ -180,7 +188,7 @@ async function submitLogin() {
     const d = await res.json();
     if (d.code === 200 && d.data) {
       currentUser = d.data;
-      localStorage.setItem('shopUser', JSON.stringify(currentUser));
+      localStorage.setItem('shopUser', JSON.stringify(stripSensitive(currentUser)));
       renderLoginState();
       closeModal('loginModal');
       msg.textContent = '';
@@ -352,7 +360,8 @@ async function updateMyInfo() {
     const d = await res.json();
     if (d.code === 200) {
       currentUser.phone = phone;
-      localStorage.setItem('shopUser', JSON.stringify(currentUser));
+      // F-6 fix: 手机号不落 localStorage（内存更新即可，刷新后个人主页经 /me 拉取）
+      localStorage.setItem('shopUser', JSON.stringify(stripSensitive(currentUser)));
       msg.textContent = '手机号修改成功';
       msg.style.color = '#4f8a62';
     } else {

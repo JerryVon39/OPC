@@ -19,6 +19,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.SysConfig;
 import com.ruoyi.system.service.ISysConfigService;
@@ -68,13 +69,40 @@ public class SysConfigController extends BaseController
     }
 
     /**
-     * 根据参数键名查询参数值（匿名：前台读取库存预警阈值等公开参数）
+     * 根据参数键名查询参数值（匿名：仅放行公开键白名单——F-3 fix: 原全量 @Anonymous
+     * 可匿名枚举 sys.user.initPassword / sys.login.blackIPList 等敏感键；登录用户
+     * （后台参数管理「查看」任意键）不受限）
      */
     @Anonymous
     @GetMapping(value = "/configKey/{configKey}")
     public AjaxResult getConfigKey(@PathVariable String configKey)
     {
+        if (isAnonymousRequest() && !isPublicConfigKey(configKey))
+        {
+            return error("无权访问该参数");
+        }
         return success(configService.selectConfigByKey(configKey));
+    }
+
+    /** 匿名请求判定：SecurityUtils.getLoginUser() 在未登录时抛异常 */
+    private boolean isAnonymousRequest()
+    {
+        try
+        {
+            SecurityUtils.getLoginUser();
+            return false;
+        }
+        catch (Exception e)
+        {
+            return true;
+        }
+    }
+
+    /** 匿名可读的公开配置键：站点展示类（site.* / site_*）与库存预警阈值 */
+    private boolean isPublicConfigKey(String key)
+    {
+        return key != null && (key.startsWith("site.") || key.startsWith("site_")
+                || "book.stock.warn".equals(key));
     }
 
     /**

@@ -5,3 +5,4 @@
 
 # pre-commit 钩子（无扩展名）：必须 LF——CRLF 下 shebang/参数解析异常
 pre-commit text eol=lf
+.nvmrc text eol=lf

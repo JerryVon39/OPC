@@ -55,9 +55,9 @@ bash docker/mysql-upgrade.sh
 command -v curl >/dev/null 2>&1 || { echo "[start-all] 未检测到 curl，无法探测后端就绪状态"; exit 1; }
 echo "[start-all] 等待后端启动中 ..."
 READY=0
-for i in $(seq 1 90); do
+for ((i=1; i<=90; i++)); do
   # 后端不再映射宿主机 8080（nginx 反代 /prod-api 到 backend），改经 80 端口探测后端是否已响应
-  code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/prod-api/ 2>/dev/null)
+  code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${FE_PORT:-80}/prod-api/ 2>/dev/null)
   if [ "$code" != "000" ] && [ "$code" != "502" ] && [ "$code" != "503" ] && [ "$code" != "504" ]; then
     READY=1
     break

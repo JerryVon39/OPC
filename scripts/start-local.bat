@@ -23,6 +23,8 @@ for /f "eol=# delims=" %%a in (.env) do set "%%a"
 if "%DB_PASSWORD%"=="" set "DB_PASSWORD=password"
 if "%FE_PORT%"=="" set "FE_PORT=8081"
 if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
+REM U-2 fix: 显式注入上传目录（yml 默认 D:/ruoyi 在无 D: 盘机器写入失败）
+if "%RUOYI_PROFILE%"=="" set "RUOYI_PROFILE=%USERPROFILE%\ruoyi\uploadPath"
 if not exist logs mkdir logs
 
 REM 0b. TOKEN_SECRET 守卫：后端拒绝用仓库默认密钥启动（checkSecretNotDefault）。

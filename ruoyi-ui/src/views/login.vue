@@ -37,7 +37,7 @@
           <img :src="codeUrl" @click="getCode" class="login-code-img"/>
         </div>
       </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
+      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住用户名</el-checkbox>
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -75,8 +75,8 @@ export default {
       footerContent: defaultSettings.footerContent,
       codeUrl: "",
       loginForm: {
-        username: "admin",
-        password: "admin123",
+        username: "",
+        password: "",
         rememberMe: false,
         code: "",
         uuid: ""
@@ -121,12 +121,12 @@ export default {
       })
     },
     getCookie() {
+      // F-4 fix: 仅回填用户名——不再存储/回填密码（jsencrypt 私钥内嵌前端可还原，改存登录态而非口令）
       const username = Cookies.get("username")
-      const password = Cookies.get("password")
       const rememberMe = Cookies.get('rememberMe')
       this.loginForm = {
         username: username === undefined ? this.loginForm.username : username,
-        password: password === undefined ? this.loginForm.password : decrypt(password),
+        password: "",
         rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
       }
     },
@@ -135,8 +135,8 @@ export default {
         if (valid) {
           this.loading = true
           if (this.loginForm.rememberMe) {
+            // F-4 fix: 仅记住用户名（口令不进 cookie——原 encrypt 私钥内嵌前端 bundle 可还原）
             Cookies.set("username", this.loginForm.username, { expires: 30 })
-            Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 })
             Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 })
           } else {
             Cookies.remove("username")

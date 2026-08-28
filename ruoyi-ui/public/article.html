@@ -102,6 +102,14 @@
   // 后台鉴权预览接口（preview=1 时使用，需编辑页 iframe 传入 admin token）
   const PREVIEW_API = '/prod-api/system/cms/preview/';
 
+  // F-2 fix: 预览令牌经 postMessage 同源接收（编辑页 iframe load 后发送；校验 origin 与消息类型）
+  let previewToken = '';
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin) return;
+    const d = e.data;
+    if (d && d.type === 'opc-preview-token' && typeof d.token === 'string') previewToken = d.token;
+  });
+
   // HTML 转义：标题/栏目名等库数据插值前必须过 esc（前台匿名页面，防存储型 XSS）
   
 
@@ -208,9 +216,18 @@
     const qs = new URLSearchParams(location.search);
     const id = qs.get('id');
     // 预览模式（后台编辑页 iframe）：preview=1 时改调后台鉴权预览接口（需 admin 会话，草稿/下线可见）
-    // 令牌由编辑页拼进 iframe URL（token 参数），本页仅转发——无令牌的匿名请求永远只能看到已发布文章
+    // F-2 fix: 令牌改经 postMessage 同源传递（编辑页 iframe load 后发送），URL 不再携带
+    // token（防落 nginx access log 与浏览器历史）；旧 URL 的 token 参数仍兼容
     const isPreview = qs.get('preview') === '1';
-    const token = isPreview ? (qs.get('token') || '') : '';
+    let token = isPreview ? (qs.get('token') || previewToken || '') : '';
+    // postMessage 可能晚于本页 DOMContentLoaded——预览模式无令牌时等待（最多 3 秒）后重试
+    if (isPreview && !token) {
+      const deadline = Date.now() + 3000;
+      while (!previewToken && Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+      token = previewToken;
+    }
     const titleEl = document.getElementById('artTitle');
     const metaEl = document.getElementById('artMeta');
     const contentEl = document.getElementById('artContent');

@@ -104,7 +104,7 @@ echo [start-all] Waiting for backend ...
 set /a ok=0
 for /l %%i in (1,1,90) do (
   rem 后端不再映射宿主机 8080，改经 80 端口 nginx /prod-api 探测后端响应
-  for /f "delims=" %%c in ('curl -s -o nul -w "%%{http_code}" --max-time 3 http://localhost/prod-api/') do (
+  for /f "delims=" %%c in ('curl -s -o nul -w "%%{http_code}" --max-time 3 http://localhost:%FE_PORT%/prod-api/') do (
     if not "%%c"=="000" if not "%%c"=="502" if not "%%c"=="503" if not "%%c"=="504" (
       set /a ok=1
       goto ready

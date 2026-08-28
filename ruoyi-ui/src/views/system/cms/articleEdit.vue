@@ -36,7 +36,7 @@
         <el-tabs v-model="sideTab" class="side-tabs">
           <el-tab-pane label="前台预览" name="preview">
             <div v-if="previewUrl" class="preview-box">
-              <iframe :src="previewUrl" class="preview-frame" frameborder="0"></iframe>
+              <iframe ref="previewFrame" :src="previewUrl" class="preview-frame" frameborder="0" @load="sendPreviewToken"></iframe>
               <div class="preview-bar">
                 <span class="hint">预览 = 真实前台详情页；草稿/下线文章仅预览可见，发布后才对访客公开</span>
                 <el-button size="mini" icon="el-icon-refresh" @click="refreshPreview">刷新</el-button>
@@ -194,11 +194,16 @@ export default {
     /** 前台预览地址（真实 article.html 详情页；preview=1 + 后台令牌调鉴权预览接口，草稿/下线可见） */
     previewUrl() {
       if (!this.isEdit) return ''
-      // 修复：token 必须取自 Cookie（若依登录态存 Cookie，utils/auth.getToken 即 Cookie 读取）；
-      // 原 localStorage 读取恒为空 → 草稿/下线文章预览永远"文章不存在或未发布"
-      const token = getToken() || ''
-      return this.frontOrigin + '/article.html?id=' + this.articleId + '&preview=1&token=' +
-        encodeURIComponent(token) + '&t=' + this.previewTs
+      // F-2 fix: token 不再拼进 URL（防落 nginx access log 与浏览器历史），
+      // 改由 iframe load 后 postMessage 同源传递（见 sendPreviewToken）
+      return this.frontOrigin + '/article.html?id=' + this.articleId + '&preview=1&t=' + this.previewTs
+    },
+    sendPreviewToken() {
+      // F-2 fix: 预览鉴权令牌经 postMessage 传给 iframe（同源，校验交给接收端）
+      const frame = this.$refs.previewFrame
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({ type: 'opc-preview-token', token: getToken() || '' }, this.frontOrigin)
+      }
     }
   },
   watch: {

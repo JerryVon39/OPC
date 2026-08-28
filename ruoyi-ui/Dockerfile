@@ -6,7 +6,9 @@
 FROM node:18-alpine AS builder
 WORKDIR /build
 COPY ruoyi-ui/package*.json ./
-RUN npm install --registry=https://registry.npmmirror.com
+# U-4 fix: 镜像源可覆盖（海外/内网构建用 docker build --build-arg NPM_REGISTRY=https://registry.npmjs.org）
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+RUN npm install --registry=$NPM_REGISTRY
 COPY ruoyi-ui ./
 RUN npm run build:prod
 

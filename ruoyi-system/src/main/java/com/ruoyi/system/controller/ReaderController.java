@@ -688,6 +688,33 @@ public class ReaderController extends BaseController
 
     /** 前台修改个人信息：短期成员会话 + 姓名/证号校验后更新手机号 */
     @Anonymous
+    /** 当前成员详情（F-6：个人主页经此接口拉取手机/邮箱等全量资料——登录响应与
+     * localStorage 均不再携带敏感字段，防 XSS 全量盗取；仅登录会话可访问） */
+    @GetMapping("/me")
+    public AjaxResult me(jakarta.servlet.http.HttpServletRequest request)
+    {
+        String cardNo = readerSessionService.resolveFromRequest(request);
+        if (cardNo == null)
+        {
+            return error("登录已失效，请重新登录");
+        }
+        Reader auth = readerService.findAuthByAccount(cardNo);
+        if (auth == null)
+        {
+            return error("成员不存在");
+        }
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("readerId", auth.getReaderId());
+        result.put("readerName", auth.getReaderName());
+        result.put("cardNo", auth.getCardNo());
+        result.put("readerType", auth.getReaderType());
+        result.put("status", auth.getStatus());
+        result.put("emailVerified", "1".equals(auth.getEmailVerified()));
+        result.put("phone", auth.getPhone() == null ? "" : auth.getPhone());
+        result.put("email", auth.getEmail() == null ? "" : auth.getEmail());
+        return success(result);
+    }
+
     @PostMapping("/updateMyInfo")
     public AjaxResult updateMyInfo(String cardNo, String sessionToken, String readerName, String phone, String email, jakarta.servlet.http.HttpServletRequest request)
     {

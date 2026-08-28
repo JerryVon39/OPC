@@ -66,7 +66,7 @@ elif command -v mysqld >/dev/null 2>&1; then
   echo "[3/5] Starting native MySQL ..."
   mysqld --daemonize 2>/dev/null || true
   echo "      if mysqld did not start, start it manually (systemctl start mysql)"
-  for _ in $(seq 1 20); do mysql_ready && break; sleep 2; done
+  for ((_i=1; _i<=20; _i++)); do mysql_ready && break; sleep 2; done
 else
   echo "[3/5] 未找到原生 MySQL。Docker 容器方式不适合本地开发：compose 的 mysql 仅暴露容器内网"
   echo "      （无宿主 3306 映射），本地后端连不上。请安装原生 MySQL，或改用 scripts/start-all.sh（Docker 全家桶）。"
@@ -91,7 +91,7 @@ if [ "$DB_EXISTS" != "0" ] && [ "$TABLE_COUNT" = "3" ]; then
   for f in $UPGRADES; do
     if [ -f "$f" ]; then
       echo "      executing $f"
-      mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }
+      mysql --default-character-set=utf8mb4 -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }
     fi
   done
 else
@@ -125,7 +125,7 @@ else
 fi
 echo "[5/5] Starting backend ..."
 (cd ruoyi-admin && nohup java -jar target/ruoyi-admin.jar > ../logs/backend.log 2>&1 &)
-for _ in $(seq 1 20); do curl -s -o /dev/null http://localhost:8080/ && break; sleep 2; done
+for ((_i=1; _i<=20; _i++)); do curl -s -o /dev/null http://localhost:8080/ && break; sleep 2; done
 curl -s -o /dev/null http://localhost:8080/ || { echo "[5/5] Backend not ready in 40s - check logs/backend.log"; exit 1; }
 echo "[5/5] Backend ready"
 
@@ -136,7 +136,7 @@ if [ ! -d ruoyi-ui/node_modules ]; then
 fi
 echo "[6/5] Starting frontend (port $FE_PORT) ..."
 (cd ruoyi-ui && nohup npm run dev -- --no-open --port="$FE_PORT" > ../logs/frontend.log 2>&1 &)
-for _ in $(seq 1 30); do curl -s --max-time 3 "http://localhost:$FE_PORT/prod-api/captchaImage" | grep -q code && break; sleep 2; done
+for ((_i=1; _i<=30; _i++)); do curl -s --max-time 3 "http://localhost:$FE_PORT/prod-api/captchaImage" | grep -q code && break; sleep 2; done
 curl -s --max-time 3 "http://localhost:$FE_PORT/prod-api/captchaImage" | grep -q code || { echo "[6/5] Frontend not ready in 60s - check logs/frontend.log"; exit 1; }
 echo "[6/5] Frontend ready"
 

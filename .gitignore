@@ -57,3 +57,7 @@ dump.rdb
 # Python 测试脚本缓存
 __pycache__/
 *.pyc
+
+# Redis 残留
+*.rdb
+zz_*.bat
