@@ -114,7 +114,7 @@ scripts\start-local.bat      # Windows（Linux/macOS: ./scripts/start-local.sh�
 ├── ruoyi-quartz       # 定时任务框架
 ├── ruoyi-ui           # 前端（views/system/cms 内容运营、public/ 官网静态页）
 ├── scripts            # 运维脚本（svc / start-local / start-all / backup-db / export-data）
-├── docs               # 文档（开发文档/部署指南/官网内容库/审查记录/交接须知）
+├── docs               # 文档（开发文档/部署指南/官网内容库/审查记录）
 └── sql                # 数据库脚本（business_init.sql + 幂等升级链 upgrade_*.sql + 数据快照）
 ```
 
@@ -140,7 +140,7 @@ scripts\start-local.bat      # Windows（Linux/macOS: ./scripts/start-local.sh�
 
 - [《部署指南》](docs/部署指南.md)：本机启动 / 正式部署 / Docker / 初始化 / **升级回滚**（含 docker 旧卷升级陷阱说明）
 - [《数据库备份脚本》](scripts/backup-db.bat)：一键 mysqldump 备份
-- [《交接须知》](docs/交接须知.md)：接手必读红线清单（命名映射/口令/自检）
+- [《开发文档》](docs/开发文档.md)：技术指南 + 红线清单/命名映射/自检（第十五节）
 - [《开发文档》](docs/开发文档.md)：面向接手开发者的完整指南
 - [《审查记录》](docs/审查记录.md)：历史审查问题与修复状态
 
