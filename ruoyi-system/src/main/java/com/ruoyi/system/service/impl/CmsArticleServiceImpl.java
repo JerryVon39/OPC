@@ -13,7 +13,9 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.ServletUtils;
 import com.ruoyi.system.domain.CmsArticle;
 import com.ruoyi.system.domain.CmsArticleHistory;
+import com.ruoyi.system.domain.CmsCategory;
 import com.ruoyi.system.mapper.CmsArticleMapper;
+import com.ruoyi.system.mapper.CmsCategoryMapper;
 import com.ruoyi.system.service.ICmsArticleService;
 import com.ruoyi.system.service.StatisticsService;
 
@@ -32,6 +34,9 @@ public class CmsArticleServiceImpl implements ICmsArticleService
 
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private CmsCategoryMapper cmsCategoryMapper;
 
     @Override
     public CmsArticle selectCmsArticleByArticleId(Long articleId)
@@ -504,6 +509,16 @@ public class CmsArticleServiceImpl implements ICmsArticleService
         if (categoryId == null)
         {
             throw new ServiceException("请选择目标栏目");
+        }
+        // P1：目标栏目存在性/状态校验（防无效 ID 静默 UPDATE 0 行而前端误报成功）
+        CmsCategory target = cmsCategoryMapper.selectCmsCategoryByCategoryId(categoryId);
+        if (target == null)
+        {
+            throw new ServiceException("目标栏目不存在或已删除");
+        }
+        if ("1".equals(target.getStatus()))
+        {
+            throw new ServiceException("目标栏目已停用，无法移入文章");
         }
         return cmsArticleMapper.batchMoveCategory(articleIds, categoryId);
     }

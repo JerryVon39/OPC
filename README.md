@@ -80,7 +80,7 @@ scripts\start-all.bat        # Windows（Linux/macOS: ./scripts/start-all.sh）
 
 - 管理后台：`http://localhost/index.html`
 - 官网前台：`http://localhost/home.html`
-- ⚠️ **admin 初始口令**：Docker 全新部署为 `Ee606EcUQsgj`（基础库原始值）；本地开发库已人工改为 `admin123`。**首次登录请立即修改**（登录验证码在 docker 部署默认开启，可在系统设置关闭）
+- ⚠️ **admin 初始口令**：本地与 Docker 全新部署统一为 `admin123`（`upgrade_20260828_01` 幂等统一，方便部署方使用）。**首次登录请立即修改**（登录验证码在 docker 部署默认开启，可在系统设置关闭）
 - 停止：`scripts\stop-all.bat`（数据保留，重跑即恢复）
 
 > 💡 可选配置（`.env`）：数据库口令、`TOKEN_SECRET`（JWT 密钥，生产务必设置）、邮件（`MAIL_USERNAME`/`MAIL_AUTH_CODE`，QQ 邮箱 SMTP 授权码）。生产部署务必修改默认口令。
