@@ -163,12 +163,7 @@ CREATE TABLE IF NOT EXISTS `sys_banner` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`banner_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='前台轮播图';
-INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time)
-SELECT '数智游民创新工场', '清远首个 AI 一人公司生态社区 ｜ 一个人，也可以是一家公司', '', 1, '0', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_banner WHERE title='数智游民创新工场');
-INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time)
-SELECT 'AI 课程与服务', 'AI 技能课程 / 共享工位 / 孵化服务，一站式支持 OPC 成长', '', 2, '0', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_banner WHERE title='AI 课程与服务');
-INSERT INTO sys_banner (title, subtitle, link, sort, status, create_by, create_time)
-SELECT '欢迎入驻', '一个人 + AI，在清远开启你的数智游民之旅', '', 3, '0', 'admin', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM sys_banner WHERE title='欢迎入驻');
+-- 注：轮播种子数据已移除——由 data_snapshot.sql（快照）全量提供，避免与快照 REPLACE 合并产生重复行
 
 -- ---------- 公告 → 新闻动态（3 条；正文用纯文本，规避前台 textContent 渲染的富文本降级） ----------
 UPDATE sys_dict_data SET dict_label='新闻动态' WHERE dict_type='sys_notice_type' AND dict_value='1';
