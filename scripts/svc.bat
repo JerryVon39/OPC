@@ -16,7 +16,9 @@ netstat -an | findstr /C:":%1 " | findstr LISTENING >nul
 if errorlevel 1 (exit /b 1) else (exit /b 0)
 
 :kill_port
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort %1 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
+REM G-5 fix: 进程名白名单（mysqld/redis-server/java/node）——保留「停本项目服务」语义，
+REM 避免误杀占用同端口的其他业务进程
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort %1 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_); if ($p -and $p.Name -match 'mysqld|redis-server|java|node') { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; Write-Host ('  stopped PID ' + $_ + ' (' + $p.Name + ')') } }"
 exit /b 0
 
 :env

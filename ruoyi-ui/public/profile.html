@@ -315,7 +315,9 @@
     try {
       const res = await apiFetch('/prod-api/system/reader/me');
       const d = await res.json();
-      if (d.code === 200 && d.data) currentUser = d.data;
+      // G-1 fix: 合并而非整体替换——/me 不含 sessionToken，整体替换会丢会话令牌
+      // （所有鉴权请求不再带 X-Session-Token → 被后端判「登录已失效」踢出）
+      if (d.code === 200 && d.data) currentUser = Object.assign({}, currentUser, d.data);
     } catch (e) { /* 保持现有缓存 */ }
   }
   async function initProfile() {
@@ -354,7 +356,8 @@
       const d = await res.json();
       if (d.code === 200) {
         currentUser.phone = phone;
-        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        // G-2 fix: 写回前剥离敏感字段（当前 currentUser 含 /me 拉取的全量，裸写会绕过 F-6）
+        localStorage.setItem('shopUser', JSON.stringify(stripSensitive(currentUser)));
         document.getElementById('fPhone').textContent = phone;
         msg.style.color = '#4f8a62';
         msg.textContent = '保存成功';
@@ -496,7 +499,8 @@
       const d = await res.json();
       if (d.code === 200) {
         currentUser.email = email;
-        localStorage.setItem('shopUser', JSON.stringify(currentUser));
+        // G-2 fix: 写回前剥离敏感字段（同 saveMyInfo）
+        localStorage.setItem('shopUser', JSON.stringify(stripSensitive(currentUser)));
         document.getElementById('fEmail').textContent = email;
         msg.style.color = '#4f8a62';
         msg.textContent = '邮箱修改成功';

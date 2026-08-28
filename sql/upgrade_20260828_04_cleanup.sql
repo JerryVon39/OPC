@@ -11,12 +11,13 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260828_04_cleanup.sql
 -- ============================================
 
--- ① 孤儿菜单兜底清除（parent 不存在的非顶层菜单；先清授权再删菜单，JOIN 避开 1093）
-DELETE rm FROM sys_role_menu rm
-WHERE rm.menu_id NOT IN (SELECT menu_id FROM sys_menu);
+-- ① 孤儿菜单兜底清除（parent 不存在的非顶层菜单；G-4 fix: 顺序改为先删菜单再清授权——
+--    原「先清授权」时孤儿菜单尚在，NOT IN 不命中 → 菜单删除后 role_menu 悬空行残留）
 DELETE m FROM sys_menu m
 LEFT JOIN sys_menu p ON p.menu_id = m.parent_id
 WHERE m.parent_id <> 0 AND p.menu_id IS NULL;
+DELETE rm FROM sys_role_menu rm
+WHERE rm.menu_id NOT IN (SELECT menu_id FROM sys_menu);
 
 -- ② 快照脏数据：测试页及其测试区块、内容错位文章（按内容特征，任何库序安全）
 DELETE FROM cms_block WHERE page_key = 'test';
