@@ -9,7 +9,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_ops_workbench.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. 站点配置键（前台 footer/联系区通过 /system/config/configKey/{key} 匿名读取）

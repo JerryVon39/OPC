@@ -7,7 +7,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_section_fix2.sql
 -- ============================================
 
-USE ry-vue;
 
 UPDATE cms_page_section SET config_json = JSON_OBJECT('cols', 2, 'cards', JSON_ARRAY(
   JSON_OBJECT('icon', '🏢', 'title', 'OPC 新内涵', 'text', '一人公司（One Person Company）不只是法律意义上的企业形态，更是 AI 时代的“生产力引擎”：以最低合规成本注册经营主体，再以 AI 深度协同放大个人产出，实现“单人成军”的轻量化创业。'),

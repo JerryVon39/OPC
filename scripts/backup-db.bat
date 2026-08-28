@@ -1,36 +1,48 @@
 @echo off
+chcp 65001 >nul
 rem =====================================================
-rem  ÍòÊÂÎİ Êı¾İ¿âÒ»¼ü±¸·İ½Å±¾
-rem  ÓÃ·¨£ºË«»÷ÔËĞĞ£¨»áµ¯³ö´°¿Ú£¬±¸·İÍê°´ÈÎÒâ¼ü¹Ø±Õ£©
-rem  ÅäºÏ"ÈÎÎñ¼Æ»®³ÌĞò"¿É¶¨Ê±×Ô¶¯±¸·İ
-rem  ±¸·İÎÄ¼ş£ºbackup\ry-vue_YYYYMMDD_HHMM.sql
+rem  æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœº Â· æ•°æ®åº“ä¸€é”®å¤‡ä»½è„šæœ¬
+rem  ç”¨æ³•ï¼šåŒå‡»è¿è¡Œï¼›é…åˆã€Œä»»åŠ¡è®¡åˆ’ç¨‹åºã€å¯å®šæ—¶è‡ªåŠ¨å¤‡ä»½
+rem  å¤‡ä»½æ–‡ä»¶ï¼šbackup\ry-vue_YYYYMMDD_HHMM.sql
+rem  R14 fix: åŸç¡¬ç¼–ç  C:\Users\1\tools + DB_PASS=password æ¢æœºå³å¤±æ•ˆï¼›
+rem          ç°è¯»å– .envï¼ˆDB_PASSWORD/TOOLS_HOMEï¼‰ï¼Œæ—¶é—´æˆ³æ”¹ PowerShell ç”Ÿæˆï¼ˆæ— ç©ºæ ¼ï¼‰
 rem =====================================================
+setlocal
+cd /d "%~dp0.."
 
-rem ---- ÅäÖÃÇø£¨°´Êµ¼Ê»·¾³ĞŞ¸Ä£©----
-set MYSQL_BIN=C:\Users\1\tools\mysql-8.4.9-winx64\bin
-set DB_USER=root
-set DB_PASS=password
-set DB_NAME=ry-vue
-rem ±¸·İÄ¿Â¼£¨½Å±¾ËùÔÚÄ¿Â¼µÄÉÏÒ»¼¶µÄ backup ÎÄ¼ş¼Ğ£©
-set BACKUP_DIR=%~dp0..\backup
-rem ---------------------------------
+rem ---- è¯»å– .envï¼ˆç¼ºçœç”¨æ¼”ç¤ºé»˜è®¤å€¼ï¼‰ ----
+if not exist ".env" copy .env.example .env >nul
+for /f "eol=# delims=" %%a in (.env) do set "%%a"
+if "%DB_PASSWORD%"=="" set "DB_PASSWORD=password"
+if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
 
-if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
-
-rem Éú³ÉÈÕÆÚÊ±¼ä´Á£º20260813_0945
-set STAMP=%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%
-set FILE=%BACKUP_DIR%\ry-vue_%STAMP%.sql
-
-echo [1/2] ÕıÔÚ±¸·İÊı¾İ¿â %DB_NAME% ...
-"%MYSQL_BIN%\mysqldump.exe" -u%DB_USER% -p%DB_PASS% --default-character-set=utf8mb4 --single-transaction %DB_NAME% > "%FILE%"
-
-if %errorlevel%==0 (
-  echo [OK] ±¸·İ³É¹¦£º%FILE%
-) else (
-  echo [FAIL] ±¸·İÊ§°Ü£¡Çë¼ì²é£º
-  echo       1. MySQL ·şÎñÊÇ·ñÒÑÆô¶¯
-  echo       2. ÉÏ·½ÅäÖÃÇøµÄÕËºÅÃÜÂëÊÇ·ñÕıÈ·
+rem ---- å®šä½ mysqldumpï¼ˆPATH ä¼˜å…ˆï¼Œå…¶æ¬¡ TOOLS_HOMEï¼‰ ----
+set "MYSQLDUMP="
+where mysqldump >nul 2>&1
+if not errorlevel 1 set "MYSQLDUMP=mysqldump"
+if "%MYSQLDUMP%"=="" if exist "%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqldump.exe" set "MYSQLDUMP=%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqldump.exe"
+if "%MYSQLDUMP%"=="" (
+  echo [FAIL] mysqldump æœªæ‰¾åˆ°ï¼šè¯·å°† MySQL bin åŠ å…¥ PATHï¼Œæˆ–åœ¨ .env è®¾ç½® TOOLS_HOME
+  pause & exit /b 1
 )
 
+rem ---- æ—¶é—´æˆ³ï¼ˆPowerShell ç”Ÿæˆï¼Œå°æ—¶<10 ä¹Ÿæ— ç©ºæ ¼ï¼‰ ----
+for /f "delims=" %%s in ('powershell -NoProfile -Command "Get-Date -Format 'yyyyMMdd_HHmm'"') do set "STAMP=%%s"
+set "BACKUP_DIR=%~dp0..\backup"
+if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+set "FILE=%BACKUP_DIR%\ry-vue_%STAMP%.sql"
+
+echo [1/2] æ­£åœ¨å¤‡ä»½æ•°æ®åº“ ry-vue ...
+"%MYSQLDUMP%" -uroot -p%DB_PASSWORD% --default-character-set=utf8mb4 --single-transaction ry-vue > "%FILE%" 2>nul
+
+if errorlevel 1 (
+  echo [FAIL] å¤‡ä»½å¤±è´¥ï¼Œè¯·æ£€æŸ¥ï¼š
+  echo       1. MySQL æ˜¯å¦æ­£åœ¨è¿è¡Œ
+  echo       2. .env ä¸­çš„ DB_PASSWORD æ˜¯å¦æ­£ç¡®
+  echo       3. mysqldump ç‰ˆæœ¬ä¸ MySQL ç‰ˆæœ¬æ˜¯å¦ä¸€è‡´
+  pause & exit /b 1
+)
+
+echo [OK] å¤‡ä»½æˆåŠŸï¼š%FILE%
 echo.
 pause

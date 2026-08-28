@@ -9,7 +9,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_section_fix.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 区块种子 title 清空（仅种子 key；运营后续填写的内容不受影响）
 UPDATE cms_block SET title = NULL, update_by = 'admin', update_time = NOW()

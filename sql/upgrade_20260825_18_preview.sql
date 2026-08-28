@@ -6,7 +6,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_preview.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 前台站点地址（默认 http://localhost，对齐 docker nginx 80 端口；部署到服务器后改这里或系统参数设置）
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)

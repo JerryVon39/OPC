@@ -9,7 +9,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_cms_unify.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 停用首页区块（首页内容统一由页面搭建管理；栏目页文本槽不受影响）
 UPDATE cms_block SET visible = '1', update_by = 'admin', update_time = NOW()

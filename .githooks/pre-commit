@@ -10,11 +10,12 @@
 # 说明：数据库未运行时自动跳过（不阻塞提交）；导出为 REPLACE 模式，可重复导入
 # ============================================
 
-# ---------- 定位工具 ----------
+# ---------- 定位工具（R18 fix: 原写死作者路径 /c/Users/1/tools，换机失效；改动态探测） ----------
 MYSQL_DUMP=""
 for cand in "$(command -v mysqldump 2>/dev/null)" \
-            "$HOME/tools/mysql-8.4.9-winx64/bin/mysqldump.exe" \
-            "/c/Users/1/tools/mysql-8.4.9-winx64/bin/mysqldump.exe"; do
+            "$TOOLS_HOME/mysql-8.4.9-winx64/bin/mysqldump.exe" \
+            "${USERPROFILE:-$HOME}/tools/mysql-8.4.9-winx64/bin/mysqldump.exe" \
+            "$HOME/tools/mysql-8.4.9-winx64/bin/mysqldump.exe"; do
   if [ -n "$cand" ] && [ -x "$cand" ]; then MYSQL_DUMP="$cand"; break; fi
 done
 if [ -z "$MYSQL_DUMP" ]; then
@@ -34,6 +35,7 @@ if [ -f ".env" ]; then
       DB_PASSWORD) DB_PASS="$v" ;;
       DB_HOST)     DB_HOST="$v" ;;
       DB_PORT)     DB_PORT="$v" ;;
+      TOOLS_HOME)  TOOLS_HOME="$v" ;;
     esac
   done < .env
 fi

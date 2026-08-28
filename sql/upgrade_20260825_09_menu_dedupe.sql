@@ -8,7 +8,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_menu_dedupe.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 先删角色关联（operator/editor 对该目录与子页的授权）
 DELETE FROM sys_role_menu WHERE menu_id IN (

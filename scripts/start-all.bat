@@ -37,17 +37,35 @@ if errorlevel 1 (
   echo [start-all] Docker Desktop is ready.
 )
 
-REM 2. Generate .env on first run (defaults work out of the box)
+REM 2. Generate .env on first run
 if not exist ".env" (
   copy .env.example .env >nul
-  echo [start-all] .env generated with default values. Edit MAIL_* to enable email notifications.
+  echo [start-all] .env generated. Edit MAIL_* to enable email notifications.
+)
+REM Load .env (DB password needed for the incremental upgrade step below)
+for /f "eol=# delims=" %%a in (.env) do set "%%a"
+if "%DB_PASSWORD%"=="" set "DB_PASSWORD=%MYSQL_ROOT_PASSWORD%"
+
+REM 2b. TOKEN_SECRET guard: backend refuses to start with the repo-default key
+REM      (TokenService.checkSecretNotDefault). Auto-generate a strong random one
+REM      when missing or equal to the repo default - otherwise docker compose
+REM      injects the default key and the backend crash-loops (B1 fix).
+set NEED_SECRET=0
+if "%TOKEN_SECRET%"=="" set NEED_SECRET=1
+if "%TOKEN_SECRET%"=="25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c" set NEED_SECRET=1
+if "%NEED_SECRET%"=="1" (
+  echo [start-all] TOKEN_SECRET empty or default - generating a strong random one...
+  for /f "delims=" %%k in ('powershell -NoProfile -Command "$h='';1..64|%{$h+=(''{0:x}'' -f (Get-Random -Max 16))};$h"') do set "NEW_SECRET=%%k"
+  powershell -NoProfile -Command "(Get-Content .env -Raw) -replace '(?m)^TOKEN_SECRET=.*$','TOKEN_SECRET=%NEW_SECRET%' | Set-Content .env -Encoding ASCII"
+  for /f "eol=# delims=" %%a in (.env) do set "%%a"
+  echo [start-all] TOKEN_SECRET generated and saved to .env
 )
 
 REM 3. Start all services (first run pulls images and initializes the database)
 echo [start-all] Starting MySQL / Redis / backend / frontend ...
-docker image inspect jerryvon/opc-backend:v2.2 >nul 2>&1
+docker image inspect jerryvon/opc-backend:v2.3 >nul 2>&1
 if errorlevel 1 (
-  echo [start-all] v2.2 image not found locally - building from source, takes a few minutes...
+  echo [start-all] v2.3 image not found locally - building from source, takes a few minutes...
   docker compose build
   if errorlevel 1 (echo [start-all] Build failed & pause & exit /b 1)
 )
@@ -64,9 +82,16 @@ REM    scripts are re-applied to align schema with new code (del_flag/reader_id
 REM    columns etc.), otherwise login/list fails with "Unknown column".
 REM    (I1: wildcard scan sql\upgrade_*.sql - filename order = execution order;
 REM    single source is the sql/ directory itself)
+REM    B2 fix: 原 \"$MYSQL_ROOT_PASSWORD\" 转义被 cmd/sh 双重扭曲导致密码带引号
+REM    → 认证静默失败；改经宿主机 %DB_PASSWORD%（.env）直连并检查 errorlevel
 echo [start-all] Running DB incremental upgrades for existing volume (idempotent)...
 for /f "delims=" %%f in ('dir /b /on sql\upgrade_*.sql') do (
-  type "sql\%%f" | docker exec -i opc-mysql sh -c "mysql --default-character-set=utf8mb4 -uroot -p\"$MYSQL_ROOT_PASSWORD\" ry-vue" >nul 2>&1
+  echo   [start-all] applying sql\%%f
+  type "sql\%%f" | docker exec -i opc-mysql mysql --default-character-set=utf8mb4 -uroot -p%DB_PASSWORD% ry-vue >nul 2>&1
+  if errorlevel 1 (
+    echo [start-all] ERROR: upgrade %%f failed - check DB_PASSWORD in .env or: docker compose logs mysql
+    pause & exit /b 1
+  )
 )
 echo [start-all] DB incremental upgrades done
 
@@ -94,7 +119,7 @@ echo [start-all] Backend is ready.
 echo.
 echo ============================================
 echo   Startup complete!
-echo   Admin:  http://localhost/index.html   (login with the randomized admin password from deployment handover)
+echo   Admin:  http://localhost/index.html   (admin / admin123, 首次登录请修改)
 echo   Reader: http://localhost/home.html
 echo   Stop:   scripts\stop-all.bat
 echo ============================================

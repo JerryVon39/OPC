@@ -13,7 +13,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260824_menu_cleanup.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 删孤儿菜单的角色关联
 DELETE rm FROM sys_role_menu rm

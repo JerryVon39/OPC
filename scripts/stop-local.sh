@@ -7,8 +7,9 @@
 # ============================================
 cd "$(dirname "$0")/.."
 
-# backend: java -jar ruoyi-admin
-pkill -f "ruoyi-admin/target/ruoyi-admin.jar" 2>/dev/null && echo "backend stopped" || echo "backend not running"
+# backend: java -jar ruoyi-admin（B5 fix: 实际 cmdline 是 target/ruoyi-admin.jar，
+# 旧模式 "ruoyi-admin/target/..." 匹配不到，后端停不掉、8080 残留）
+pkill -f "ruoyi-admin.jar" 2>/dev/null && echo "backend stopped" || echo "backend not running"
 # frontend: vue-cli-service dev server
 pkill -f "vue-cli-service" 2>/dev/null && echo "frontend stopped" || echo "frontend not running"
 

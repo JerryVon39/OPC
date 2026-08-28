@@ -7,7 +7,6 @@
 --   mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260822_cms.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. 栏目表 cms_category

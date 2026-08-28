@@ -8,7 +8,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_operator_block.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. operator 授「内容运营」目录（父链完整，菜单树才能显示其下有权限的子项）
 INSERT INTO sys_role_menu (role_id, menu_id)

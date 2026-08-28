@@ -7,7 +7,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_home_fill.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 品牌理念：2 卡 + 三步走步骤条（真实流程：注册 OPC → 搭建 AI 工具矩阵 → 承接订单变现）
 UPDATE cms_page_section SET config_json = JSON_OBJECT('cols', 2, 'cards', JSON_ARRAY(

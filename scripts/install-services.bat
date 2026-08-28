@@ -1,27 +1,32 @@
 @echo off
 chcp 65001 >nul
 REM ============================================
-REM ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡ ¡¤ Windows ·şÎñ»¯°²×°£¨·½°¸ B£ºnssm£©
-REM °Ñ MySQL / Redis / ºó¶Ë×¢²áÎª Windows ·şÎñ£º
-REM   - ¿ª»ú×ÔÆô£¨SERVICE_AUTO_START£©
-REM   - ±ÀÀ£×Ô¶¯ÖØÆô£¨AppExit Default Restart£©
-REM   - ¶ÀÁ¢ÓÚÖÕ¶Ë»á»°£¬ÈÕÖ¾Ğ´Èë logs\
-REM ÓÃ·¨: ÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ scripts\install-services.bat
-REM Ğ¶ÔØ: scripts\uninstall-services.bat£¨Í¬ÑùĞè¹ÜÀíÔ±£©
-REM ¹ÜÀí: net start/stop wanshiwu-mysql|wanshiwu-redis|wanshiwu-backend
+REM æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœº Â· Windows æœåŠ¡åŒ–å®‰è£…è„šæœ¬ï¼ˆåŸºäº nssmï¼‰
+REM æŠŠ MySQL / Redis / åç«¯æ³¨å†Œä¸º Windows æœåŠ¡
+REM   - éšç³»ç»Ÿè‡ªå¯ï¼ˆSERVICE_AUTO_STARTï¼‰
+REM   - å´©æºƒè‡ªåŠ¨æ‹‰èµ·ï¼ˆAppExit Default Restartï¼‰
+REM   - æ—¥å¿—å†™åˆ° logs\
+REM ç”¨æ³•: ä»¥ç®¡ç†å‘˜èº«ä»½è¿è¡Œ scripts\install-services.bat
+REM å¸è½½: scripts\uninstall-services.batï¼ˆåŒæ ·éœ€ç®¡ç†å‘˜ï¼‰
+REM ç®¡ç†: net start/stop wanshiwu-mysql|wanshiwu-redis|wanshiwu-backend
+REM R13 fix: â‘ MySQL æœåŠ¡å¯åŠ¨å‰å…ˆåˆå§‹åŒ– datadirï¼ˆmysqld --initialize-insecureï¼‰ï¼Œ
+REM          åŸè„šæœ¬ç›´æ¥æŒ‡å‘å¯èƒ½ä¸ºç©ºçš„ datadir å¯¼è‡´æœåŠ¡èµ·ä¸æ¥
+REM          â‘¡åç«¯æœåŠ¡æ³¨å…¥ DB/Redis/JWT ç¯å¢ƒå˜é‡ï¼ˆåŸè„šæœ¬ä¸æ³¨å…¥ï¼Œ
+REM          æ”¹ .env å¯†ç åæœåŠ¡ä»ç”¨ jar é»˜è®¤å€¼è¿ä¸ä¸Šï¼‰
 REM ============================================
 setlocal
 cd /d "%~dp0.."
 
-REM ---------- ¹ÜÀíÔ±È¨ÏŞ¼ì²é ----------
+REM ---------- ç®¡ç†å‘˜æƒé™æ£€æŸ¥ ----------
 net session >nul 2>&1
 if errorlevel 1 (
-  echo [´íÎó] ÇëÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ±¾½Å±¾£¨ÓÒ¼ü - ÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ£©
+  echo [é”™è¯¯] éœ€è¦ç®¡ç†å‘˜æƒé™ï¼šè¯·å³é”®æœ¬è„šæœ¬ - ä»¥ç®¡ç†å‘˜èº«ä»½è¿è¡Œ
   pause & exit /b 1
 )
 
 if not exist ".env" copy .env.example .env >nul
 for /f "eol=# delims=" %%a in (.env) do set "%%a"
+if "%DB_PASSWORD%"=="" set "DB_PASSWORD=password"
 if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
 if not exist logs mkdir logs
 
@@ -29,28 +34,34 @@ set "NSSM_DIR=%TOOLS_HOME%\nssm"
 set "NSSM=%NSSM_DIR%\nssm.exe"
 set "ROOT=%CD%"
 
-REM ---------- ×¼±¸ nssm£¨²»´æÔÚÔò×Ô¶¯ÏÂÔØ½âÑ¹£© ----------
+REM ---------- å‡†å¤‡ nssmï¼ˆç¼ºå¤±åˆ™è‡ªåŠ¨ä¸‹è½½è§£å‹ï¼‰ ----------
 if not exist "%NSSM%" (
-  echo [1/4] nssm Î´ÕÒµ½£¬×Ô¶¯ÏÂÔØ nssm 2.24 ...
+  echo [1/4] nssm æœªæ‰¾åˆ°ï¼Œè‡ªåŠ¨ä¸‹è½½ nssm 2.24 ...
   powershell -NoProfile -Command "Invoke-WebRequest -Uri 'https://nssm.cc/release/nssm-2.24.zip' -OutFile '%TOOLS_HOME%\nssm.zip' -UseBasicParsing"
-  if errorlevel 1 (echo [´íÎó] nssm ÏÂÔØÊ§°Ü£¬ÇëÊÖ¶¯ÏÂÔØ https://nssm.cc/release/nssm-2.24.zip ½âÑ¹µ½ %TOOLS_HOME%\nssm\ & pause & exit /b 1)
+  if errorlevel 1 (echo [é”™è¯¯] nssm ä¸‹è½½å¤±è´¥ï¼Œè¯·æ‰‹åŠ¨ä¸‹è½½ https://nssm.cc/release/nssm-2.24.zip è§£å‹åˆ° %TOOLS_HOME%\nssm\ & pause & exit /b 1)
   powershell -NoProfile -Command "Expand-Archive -Path '%TOOLS_HOME%\nssm.zip' -DestinationPath '%TOOLS_HOME%' -Force; New-Item -ItemType Directory -Force -Path '%NSSM_DIR%' | Out-Null; Move-Item '%TOOLS_HOME%\nssm-2.24\win64\nssm.exe' '%NSSM%' -Force; Remove-Item '%TOOLS_HOME%\nssm.zip' -Force; Remove-Item '%TOOLS_HOME%\nssm-2.24' -Recurse -Force -ErrorAction SilentlyContinue"
-  if errorlevel 1 (echo [´íÎó] nssm ½âÑ¹Ê§°Ü & pause & exit /b 1)
+  if errorlevel 1 (echo [é”™è¯¯] nssm è§£å‹å¤±è´¥ & pause & exit /b 1)
 )
-if not exist "%NSSM%" (echo [´íÎó] nssm.exe ²»´æÔÚÓÚ %NSSM% & pause & exit /b 1)
-echo [1/4] nssm ¾ÍĞ÷: %NSSM%
+if not exist "%NSSM%" (echo [é”™è¯¯] nssm.exe æœªæ‰¾åˆ°ï¼š%NSSM% & pause & exit /b 1)
+echo [1/4] nssm å°±ç»ª: %NSSM%
 
-REM ---------- ·şÎñÃû³åÍ»¼ì²é ----------
-sc query wanshiwu-mysql >nul 2>&1 && (echo [´íÎó] ·şÎñ wanshiwu-mysql ÒÑ´æÔÚ£¬ÇëÏÈĞ¶ÔØ & pause & exit /b 1)
-sc query wanshiwu-redis >nul 2>&1 && (echo [´íÎó] ·şÎñ wanshiwu-redis ÒÑ´æÔÚ£¬ÇëÏÈĞ¶ÔØ & pause & exit /b 1)
-sc query wanshiwu-backend >nul 2>&1 && (echo [´íÎó] ·şÎñ wanshiwu-backend ÒÑ´æÔÚ£¬ÇëÏÈĞ¶ÔØ & pause & exit /b 1)
+REM ---------- æœåŠ¡å†²çªæ£€æŸ¥ ----------
+sc query wanshiwu-mysql >nul 2>&1 && (echo [é”™è¯¯] æœåŠ¡ wanshiwu-mysql å·²å­˜åœ¨ï¼Œè¯·å…ˆå¸è½½ & pause & exit /b 1)
+sc query wanshiwu-redis >nul 2>&1 && (echo [é”™è¯¯] æœåŠ¡ wanshiwu-redis å·²å­˜åœ¨ï¼Œè¯·å…ˆå¸è½½ & pause & exit /b 1)
+sc query wanshiwu-backend >nul 2>&1 && (echo [é”™è¯¯] æœåŠ¡ wanshiwu-backend å·²å­˜åœ¨ï¼Œè¯·å…ˆå¸è½½ & pause & exit /b 1)
 
-REM ---------- 1. MySQL ·şÎñ ----------
-echo [2/4] ×¢²á MySQL ·şÎñ ...
+REM ---------- 1. MySQL æœåŠ¡ ----------
+echo [2/4] æ³¨å†Œ MySQL æœåŠ¡ ...
+REM R13 fix: datadir æœªåˆå§‹åŒ–åˆ™å…ˆ initialize-insecureï¼ˆroot ç©ºå¯†ç ï¼Œåç»­ç”¨ DB_PASSWORD å»ºåº“ï¼‰
+if not exist "%TOOLS_HOME%\mysql-data" (
+  echo       åˆå§‹åŒ– MySQL æ•°æ®ç›®å½• %TOOLS_HOME%\mysql-data ...
+  "%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqld.exe" --initialize-insecure --basedir="%TOOLS_HOME%\mysql-8.4.9-winx64" --datadir="%TOOLS_HOME%\mysql-data"
+  if errorlevel 1 (echo [é”™è¯¯] MySQL datadir åˆå§‹åŒ–å¤±è´¥ & pause & exit /b 1)
+)
 "%NSSM%" install wanshiwu-mysql "%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqld.exe" --basedir="%TOOLS_HOME%\mysql-8.4.9-winx64" --datadir="%TOOLS_HOME%\mysql-data" --port=3306
 "%NSSM%" set wanshiwu-mysql AppDirectory "%TOOLS_HOME%\mysql-8.4.9-winx64\bin"
-"%NSSM%" set wanshiwu-mysql DisplayName "wanshiwu MySQL (ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡)"
-"%NSSM%" set wanshiwu-mysql Description "ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡¹ÙÍøÊı¾İ¿â MySQL 8"
+"%NSSM%" set wanshiwu-mysql DisplayName "wanshiwu MySQL (æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœº)"
+"%NSSM%" set wanshiwu-mysql Description "æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœºå®˜ç½‘æ•°æ®åº“ MySQL 8"
 "%NSSM%" set wanshiwu-mysql AppStdout "%ROOT%\logs\mysql.log"
 "%NSSM%" set wanshiwu-mysql AppStderr "%ROOT%\logs\mysql.err.log"
 "%NSSM%" set wanshiwu-mysql AppRotateFiles 1
@@ -58,12 +69,12 @@ echo [2/4] ×¢²á MySQL ·şÎñ ...
 "%NSSM%" set wanshiwu-mysql AppExit Default Restart
 "%NSSM%" set wanshiwu-mysql Start SERVICE_AUTO_START
 
-REM ---------- 2. Redis ·şÎñ ----------
-echo [3/4] ×¢²á Redis ·şÎñ ...
+REM ---------- 2. Redis æœåŠ¡ ----------
+echo [3/4] æ³¨å†Œ Redis æœåŠ¡ ...
 "%NSSM%" install wanshiwu-redis "%TOOLS_HOME%\redis\redis-server.exe" --port 6379
 "%NSSM%" set wanshiwu-redis AppDirectory "%TOOLS_HOME%\redis"
-"%NSSM%" set wanshiwu-redis DisplayName "wanshiwu Redis (ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡)"
-"%NSSM%" set wanshiwu-redis Description "ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡¹ÙÍø»º´æ Redis"
+"%NSSM%" set wanshiwu-redis DisplayName "wanshiwu Redis (æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœº)"
+"%NSSM%" set wanshiwu-redis Description "æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœºå®˜ç½‘ç¼“å­˜ Redis"
 "%NSSM%" set wanshiwu-redis AppStdout "%ROOT%\logs\redis.log"
 "%NSSM%" set wanshiwu-redis AppStderr "%ROOT%\logs\redis.err.log"
 "%NSSM%" set wanshiwu-redis AppRotateFiles 1
@@ -71,41 +82,33 @@ echo [3/4] ×¢²á Redis ·şÎñ ...
 "%NSSM%" set wanshiwu-redis AppExit Default Restart
 "%NSSM%" set wanshiwu-redis Start SERVICE_AUTO_START
 
-REM ---------- 3. ºó¶Ë·şÎñ ----------
-echo [4/4] ×¢²áºó¶Ë·şÎñ ...
+REM ---------- 3. åç«¯æœåŠ¡ ----------
+echo [4/4] æ³¨å†Œåç«¯æœåŠ¡ ...
 if not exist "%ROOT%\ruoyi-admin\target\ruoyi-admin.jar" (
-  echo [¾¯¸æ] ruoyi-admin.jar ²»´æÔÚ£¬ÇëÏÈ¹¹½¨: mvn -pl ruoyi-admin -am package -DskipTests
+  echo [è­¦å‘Š] ruoyi-admin.jar ä¸å­˜åœ¨ï¼Œè¯·å…ˆæ„å»º: mvn -pl ruoyi-admin -am package -DskipTests
 )
 "%NSSM%" install wanshiwu-backend "java" -jar "%ROOT%\ruoyi-admin\target\ruoyi-admin.jar"
 "%NSSM%" set wanshiwu-backend AppDirectory "%ROOT%"
-"%NSSM%" set wanshiwu-backend DisplayName "wanshiwu Backend (ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡¹ÙÍøºó¶Ë)"
-"%NSSM%" set wanshiwu-backend Description "ÊıÖÇÓÎÃñ´´ĞÂ¹¤³¡¹ÙÍøºó¶Ë Spring Boot"
+"%NSSM%" set wanshiwu-backend DisplayName "wanshiwu Backend (æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœº)"
+"%NSSM%" set wanshiwu-backend Description "æ•°æ™ºæ¸¸æ°‘åˆ›æ–°å·¥åœºå®˜ç½‘åç«¯ Spring Boot"
 "%NSSM%" set wanshiwu-backend AppStdout "%ROOT%\logs\backend.log"
 "%NSSM%" set wanshiwu-backend AppStderr "%ROOT%\logs\backend.err.log"
 "%NSSM%" set wanshiwu-backend AppRotateFiles 1
 "%NSSM%" set wanshiwu-backend AppRotateBytes 10485760
 "%NSSM%" set wanshiwu-backend AppExit Default Restart
 "%NSSM%" set wanshiwu-backend Start SERVICE_AUTO_START
+REM R13 fix: æ³¨å…¥ DB/Redis/JWT ç¯å¢ƒå˜é‡ï¼ˆä¸ docker-compose ç­‰ä»·ï¼‰ï¼Œæ”¹ .env åæœåŠ¡è‡ªåŠ¨ç”Ÿæ•ˆ
+"%NSSM%" set wanshiwu-backend AppEnvironmentExtra DB_HOST=localhost DB_PORT=3306 DB_USERNAME=root DB_PASSWORD=%DB_PASSWORD% REDIS_HOST=localhost REDIS_PORT=6379 REDIS_PASSWORD=%REDIS_PASSWORD% TOKEN_SECRET=%TOKEN_SECRET% RUOYI_PROFILE=%ROOT%\uploadPath
 
-REM ---------- Æô¶¯·şÎñ ----------
-echo Æô¶¯·şÎñÖĞ...
+REM ---------- å¯åŠ¨ ----------
+echo å¯åŠ¨æœåŠ¡ ...
 net start wanshiwu-mysql >nul 2>&1
 net start wanshiwu-redis >nul 2>&1
 net start wanshiwu-backend >nul 2>&1
 
 echo.
-echo ============================================
-echo   ·şÎñ»¯°²×°Íê³É£¡
-echo   ÒÑ×¢²á²¢Æô¶¯:
-echo     wanshiwu-mysql    (MySQL 3306)
-echo     wanshiwu-redis    (Redis 6379)
-echo     wanshiwu-backend  (ºó¶Ë 8080, ¿ª»ú×ÔÆô)
-echo.
-echo   ³£ÓÃ¹ÜÀí:
-echo     net start/stop wanshiwu-mysql^|wanshiwu-redis^|wanshiwu-backend
-echo     ·şÎñ¹ÜÀíÆ÷: services.msc ËÑË÷ wanshiwu
-echo   Ç°¶ËÈÔÓÃ¿ª·¢Ä£Ê½: scripts\svc.bat start
-echo   Ğ¶ÔØ·şÎñ: scripts\uninstall-services.bat
-echo ============================================
+echo [å®Œæˆ] ä¸‰ä¸ªæœåŠ¡å·²æ³¨å†Œå¹¶å¯åŠ¨ï¼š
+echo   wanshiwu-mysql / wanshiwu-redis / wanshiwu-backend
+echo   ç®¡ç†: net start/stop wanshiwu-xxxï¼›å¸è½½: scripts\uninstall-services.bat
+echo   æ³¨æ„: é¦–æ¬¡å¯åŠ¨ MySQL åéœ€æ‰§è¡Œ scripts\start-local.bat åˆå§‹åŒ–æ•°æ®åº“ï¼ˆå»ºåº“+å¯¼å…¥ï¼‰
 pause
-exit /b 0

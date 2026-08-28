@@ -6,7 +6,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260826_banner_style.sql
 -- ============================================
 
-USE ry-vue;
 
 SET @c1 = (SELECT COUNT(*) FROM information_schema.COLUMNS
            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_banner' AND COLUMN_NAME = 'bg_color');

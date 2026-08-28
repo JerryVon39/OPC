@@ -15,6 +15,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
       MYSQL_DATABASE: ry-vue
+      # 健康检查与 mysql-init.sh 均使用 $MYSQL_ROOT_PASSWORD（容器内），与宿主 .env 一致
       TZ: Asia/Shanghai
     command:
       - --character-set-server=utf8mb4
@@ -63,7 +64,7 @@ services:
   # ---------- 后端 ----------
   backend:
     # 线上镜像（Docker Hub）：部署方无需源码直接拉取；build 保留供本地重新构建
-    image: jerryvon/opc-backend:v2.2
+    image: jerryvon/opc-backend:v2.3
     build:
       context: .
       dockerfile: Dockerfile
@@ -73,18 +74,20 @@ services:
       DB_HOST: mysql
       DB_PORT: "3306"
       DB_USERNAME: root
-      DB_PASSWORD: ${DB_PASSWORD:-password}
+      # R11 fix: DB_PASSWORD 默认跟随 MYSQL_ROOT_PASSWORD（只改一个也能生效）
+      DB_PASSWORD: ${DB_PASSWORD:-${MYSQL_ROOT_PASSWORD:-password}}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      # JWT 签名密钥：必须传非空默认——Spring 的 ${VAR:默认} 对空字符串不回退，
-      # 若传空串会得到空密钥，登录后所有带 token 的请求报 signing key cannot be null
-      # （.env 设置 TOKEN_SECRET 后覆盖此默认值）
-      TOKEN_SECRET: ${TOKEN_SECRET:-25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c}
+      # JWT 签名密钥：必填（:? 缺失即报错）——后端拒绝用仓库默认密钥启动
+      # （TokenService.checkSecretNotDefault，B1）；start-all 脚本会自动生成写入 .env
+      TOKEN_SECRET: ${TOKEN_SECRET:?未设置 TOKEN_SECRET——请运行 scripts\start-all 自动生成，或在 .env 设置强随机值}
       # 邮件通知：docker compose 自动读取本目录 .env 文件（MAIL_USERNAME=发件邮箱、MAIL_AUTH_CODE=授权码；MAIL_ENABLED=false 可关）
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_AUTH_CODE: ${MAIL_AUTH_CODE:-}
       MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      # 授权码 AES 加密密钥（R5 fix: 补注入；未设置时后台保存授权码会被拒绝）
+      MAIL_SECRET_KEY: ${MAIL_SECRET_KEY:-}
       # 上传文件目录（容器内，持久化到 upload 卷）
       RUOYI_PROFILE: /home/ruoyi/uploadPath
       TZ: Asia/Shanghai
@@ -103,7 +106,7 @@ services:
   # ---------- 前端（Nginx 托管 + 代理 /prod-api 与 /profile） ----------
   frontend:
     # 线上镜像（Docker Hub）：部署方无需源码直接拉取；build 保留供本地重新构建
-    image: jerryvon/opc-frontend:v2.2
+    image: jerryvon/opc-frontend:v2.3
     build:
       context: .
       dockerfile: ruoyi-ui/Dockerfile

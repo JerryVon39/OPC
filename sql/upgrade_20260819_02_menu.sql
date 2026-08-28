@@ -5,7 +5,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260819_menu.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ---------- 1. 插入 3 个二级目录（图书管理/读者服务/经营管理） ----------
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)

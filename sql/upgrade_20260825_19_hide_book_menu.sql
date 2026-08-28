@@ -7,7 +7,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_hide_book_menu.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 停用服务业务菜单（数据保留可随时恢复）：
 --    服务信息（内容运营下）、服务回收站（回收站目录下）

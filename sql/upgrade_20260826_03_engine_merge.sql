@@ -12,7 +12,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260826_engine_merge.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 首页模块迁入 cms_block（按 sort 重新编号）
 SET @rn := 0;

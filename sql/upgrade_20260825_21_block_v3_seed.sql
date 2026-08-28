@@ -7,7 +7,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_block_v3_seed.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ==================== about 走进社区 ====================
 INSERT INTO cms_block (block_key, page_key, title, template, config_json, sort, visible, version, update_by, update_time)

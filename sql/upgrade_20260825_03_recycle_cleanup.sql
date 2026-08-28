@@ -10,7 +10,6 @@
 -- 幂等：DROP TABLE IF EXISTS / DELETE 天然幂等；sys_role_menu 关联一并清理。
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 删除三态快照死表（无任何代码引用；若需恢复三态快照可重新建表）
 DROP TABLE IF EXISTS `book_recycle`;

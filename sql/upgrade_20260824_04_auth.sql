@@ -13,7 +13,6 @@
 -- 安全：SMTP 授权码由后端 AES-GCM 加密入库（密钥 MAIL_SECRET_KEY 环境变量，未设置则明文+页面警告）
 -- ============================================
 
-USE `ry-vue`;
 
 -- ---------- 1. mail_config（单行 SMTP 配置） ----------
 CREATE TABLE IF NOT EXISTS `mail_config` (
@@ -82,31 +81,31 @@ INSERT INTO `mail_template` (`code`, `name`, `subject`, `content`, `status`, `re
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `remark` = VALUES(`remark`);
 
 -- ---------- 3. reader 加认证列（幂等，INFORMATION_SCHEMA 判断） ----------
-SET @has_password_hash := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='ry-vue' AND TABLE_NAME='reader' AND COLUMN_NAME='password_hash');
+SET @has_password_hash := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='reader' AND COLUMN_NAME='password_hash');
 SET @ddl_a1 := IF(@has_password_hash = 0,
     'ALTER TABLE `reader` ADD COLUMN `password_hash` varchar(100) DEFAULT NULL COMMENT ''BCrypt 密码哈希（NULL=未设置密码）'' AFTER `email`',
     'SELECT ''reader.password_hash 已存在，跳过''');
 PREPARE s FROM @ddl_a1; EXECUTE s; DEALLOCATE PREPARE s;
 
-SET @has_pwd_set := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='ry-vue' AND TABLE_NAME='reader' AND COLUMN_NAME='pwd_set');
+SET @has_pwd_set := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='reader' AND COLUMN_NAME='pwd_set');
 SET @ddl_a2 := IF(@has_pwd_set = 0,
     'ALTER TABLE `reader` ADD COLUMN `pwd_set` char(1) NOT NULL DEFAULT ''0'' COMMENT ''是否已设置密码(0未设置 1已设置)'' AFTER `password_hash`',
     'SELECT ''reader.pwd_set 已存在，跳过''');
 PREPARE s FROM @ddl_a2; EXECUTE s; DEALLOCATE PREPARE s;
 
-SET @has_email_verified := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='ry-vue' AND TABLE_NAME='reader' AND COLUMN_NAME='email_verified');
+SET @has_email_verified := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='reader' AND COLUMN_NAME='email_verified');
 SET @ddl_a3 := IF(@has_email_verified = 0,
     'ALTER TABLE `reader` ADD COLUMN `email_verified` char(1) NOT NULL DEFAULT ''0'' COMMENT ''邮箱已验证(0未验证 1已验证)'' AFTER `pwd_set`',
     'SELECT ''reader.email_verified 已存在，跳过''');
 PREPARE s FROM @ddl_a3; EXECUTE s; DEALLOCATE PREPARE s;
 
-SET @has_phone_verified := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='ry-vue' AND TABLE_NAME='reader' AND COLUMN_NAME='phone_verified');
+SET @has_phone_verified := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='reader' AND COLUMN_NAME='phone_verified');
 SET @ddl_a4 := IF(@has_phone_verified = 0,
     'ALTER TABLE `reader` ADD COLUMN `phone_verified` char(1) NOT NULL DEFAULT ''0'' COMMENT ''手机已验证(0未验证 1已验证，短信通道预留)'' AFTER `email_verified`',
     'SELECT ''reader.phone_verified 已存在，跳过''');
 PREPARE s FROM @ddl_a4; EXECUTE s; DEALLOCATE PREPARE s;
 
-SET @has_last_login := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='ry-vue' AND TABLE_NAME='reader' AND COLUMN_NAME='last_login_time');
+SET @has_last_login := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='reader' AND COLUMN_NAME='last_login_time');
 SET @ddl_a5 := IF(@has_last_login = 0,
     'ALTER TABLE `reader` ADD COLUMN `last_login_time` datetime DEFAULT NULL COMMENT ''最近登录时间（个人主页展示）'' AFTER `status`',
     'SELECT ''reader.last_login_time 已存在，跳过''');
@@ -137,7 +136,7 @@ JOIN (
 ) dup ON r1.`email` = dup.`email` AND r1.`reader_id` <> dup.keep_id
 SET r1.`email` = NULL, r1.`update_time` = NOW();
 
-SET @has_uk_email := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA='ry-vue' AND TABLE_NAME='reader' AND INDEX_NAME='uk_email');
+SET @has_uk_email := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='reader' AND INDEX_NAME='uk_email');
 SET @ddl_a6 := IF(@has_uk_email = 0,
     'ALTER TABLE `reader` ADD UNIQUE INDEX `uk_email` (`email`)',
     'SELECT ''reader.uk_email 已存在，跳过''');

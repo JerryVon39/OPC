@@ -13,7 +13,6 @@
 --           全新库由 docker/mysql-init.sh 调用，旧卷由 docker/mysql-upgrade.sh 调用。
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 补建缺失的按钮权限菜单（menu_type='F'，幂等）
 -- 1.1 服务信息按钮（挂「服务信息」下；perms 与 BookController 注解一致）

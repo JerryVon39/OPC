@@ -17,13 +17,25 @@ cd "$(dirname "$0")/.."
 
 # ---------- 0. Load .env (create from example on first run) ----------
 [ -f .env ] || cp .env.example .env
-set -a; . ./.env; set +a
+# R19 fix: .env 若为 CRLF 行尾（Windows 编辑器保存），DB_PASSWORD 会带 \r 导致认证失败——先剥回车
+set -a; . <(sed 's/\r$//' .env); set +a
 DB_PASSWORD=${DB_PASSWORD:-password}
 FE_PORT=${FE_PORT:-8081}
 # 上传目录：Linux 默认家目录下（application.yml 的 Windows 盘符默认值在 Linux 会落到 <cwd>/D:/ruoyi/uploadPath）
-RUOYI_PROFILE=${RUOYI_PROFILE:-$HOME/ruoyi/uploadPath}
+# R3 fix: 必须 export——否则 (cd ruoyi-admin && java ...) 子进程拿不到该变量
+export RUOYI_PROFILE=${RUOYI_PROFILE:-$HOME/ruoyi/uploadPath}
 mkdir -p "$RUOYI_PROFILE"
 mkdir -p logs
+
+# 0b. TOKEN_SECRET 守卫：后端拒绝用仓库默认密钥启动（checkSecretNotDefault）。
+#     缺失/默认时自动生成强随机值写入 .env（B1 修复），否则本地后端直接拒启
+if [ -z "$TOKEN_SECRET" ] || [ "$TOKEN_SECRET" = "25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c" ]; then
+  echo "[1/5] TOKEN_SECRET empty or default - generating a strong random one..."
+  TOKEN_SECRET=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+  sed -i "s/^TOKEN_SECRET=.*/TOKEN_SECRET=$TOKEN_SECRET/" .env
+  set -a; . <(sed 's/\r$//' .env); set +a
+  echo "[1/5] TOKEN_SECRET generated and saved to .env"
+fi
 
 # ---------- 1. Prerequisite check ----------
 command -v java >/dev/null 2>&1 || { echo "[1/5] JDK 17+ not found in PATH. Install: https://adoptium.net/"; exit 1; }
@@ -39,12 +51,10 @@ elif command -v redis-server >/dev/null 2>&1; then
   echo "[2/5] Starting native Redis ..."
   redis-server --daemonize yes
   sleep 1
-elif command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  echo "[2/5] No native Redis, starting container ..."
-  docker compose up -d redis >/dev/null
-  sleep 2
 else
-  echo "[2/5] Redis unavailable: install redis-server or Docker"; exit 1
+  echo "[2/5] 未找到原生 Redis。Docker 容器方式不适合本地开发：compose 的 redis 仅暴露容器内网"
+  echo "      （无宿主 6379 映射），本地后端连不上。请安装原生 Redis，或改用 scripts/start-all.sh（Docker 全家桶）。"
+  exit 1
 fi
 redis-cli ping 2>/dev/null | grep -q PONG || { echo "[2/5] Redis not ready in time"; exit 1; }
 echo "[2/5] Redis ready"
@@ -57,12 +67,10 @@ elif command -v mysqld >/dev/null 2>&1; then
   mysqld --daemonize 2>/dev/null || true
   echo "      if mysqld did not start, start it manually (systemctl start mysql)"
   for _ in $(seq 1 20); do mysql_ready && break; sleep 2; done
-elif command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  echo "[3/5] No native MySQL, starting container (first start initializes DB) ..."
-  docker compose up -d mysql >/dev/null
-  for _ in $(seq 1 30); do mysql_ready && break; sleep 2; done
 else
-  echo "[3/5] MySQL unavailable: install MySQL or Docker"; exit 1
+  echo "[3/5] 未找到原生 MySQL。Docker 容器方式不适合本地开发：compose 的 mysql 仅暴露容器内网"
+  echo "      （无宿主 3306 映射），本地后端连不上。请安装原生 MySQL，或改用 scripts/start-all.sh（Docker 全家桶）。"
+  exit 1
 fi
 mysql_ready || { echo "[3/5] MySQL not ready - check DB_PASSWORD in .env"; exit 1; }
 echo "[3/5] MySQL ready"
@@ -88,22 +96,22 @@ if [ "$DB_EXISTS" != "0" ] && [ "$TABLE_COUNT" = "3" ]; then
   done
 else
   echo "[4/5] Fresh DB detected. Creating database and importing init scripts..."
-  mysql -uroot -p"$DB_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`ry-vue\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci" || exit 1
+  mysql --default-character-set=utf8mb4 -uroot -p"$DB_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`ry-vue\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci" || exit 1
   for f in sql/ry_20260417.sql sql/quartz.sql sql/business_init.sql sql/role_init.sql; do
     echo "      importing $f"
-    mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] import $f failed"; exit 1; }
+    mysql --default-character-set=utf8mb4 -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] import $f failed"; exit 1; }
   done
   # 全新库与 Docker 首次初始化对齐：补跑全部幂等升级（del_flag/password_hash/CMS/菜单等）+ 业务数据快照
   echo "      applying idempotent upgrades..."
   for f in $UPGRADES; do
     if [ -f "$f" ]; then
       echo "      applying $f"
-      mysql -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }
+      mysql --default-character-set=utf8mb4 -uroot -p"$DB_PASSWORD" ry-vue < "$f" || { echo "[4/5] upgrade $f failed"; exit 1; }
     fi
   done
   if [ -f sql/data_snapshot.sql ]; then
     echo "      applying sql/data_snapshot.sql"
-    mysql -uroot -p"$DB_PASSWORD" ry-vue < sql/data_snapshot.sql || { echo "[4/5] data_snapshot failed"; exit 1; }
+    mysql --default-character-set=utf8mb4 -uroot -p"$DB_PASSWORD" ry-vue < sql/data_snapshot.sql || { echo "[4/5] data_snapshot failed"; exit 1; }
   fi
 fi
 
@@ -128,8 +136,8 @@ if [ ! -d ruoyi-ui/node_modules ]; then
 fi
 echo "[6/5] Starting frontend (port $FE_PORT) ..."
 (cd ruoyi-ui && nohup npm run dev -- --no-open --port="$FE_PORT" > ../logs/frontend.log 2>&1 &)
-for _ in $(seq 1 30); do curl -s --max-time 3 "http://localhost:$FE_PORT/dev-api/captchaImage" | grep -q code && break; sleep 2; done
-curl -s --max-time 3 "http://localhost:$FE_PORT/dev-api/captchaImage" | grep -q code || { echo "[6/5] Frontend not ready in 60s - check logs/frontend.log"; exit 1; }
+for _ in $(seq 1 30); do curl -s --max-time 3 "http://localhost:$FE_PORT/prod-api/captchaImage" | grep -q code && break; sleep 2; done
+curl -s --max-time 3 "http://localhost:$FE_PORT/prod-api/captchaImage" | grep -q code || { echo "[6/5] Frontend not ready in 60s - check logs/frontend.log"; exit 1; }
 echo "[6/5] Frontend ready"
 
 echo

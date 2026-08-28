@@ -44,6 +44,14 @@ public class MailConfigServiceImpl implements IMailConfigService, MailConfigProv
     @Override
     public MailSettings get()
     {
+        // 环境总开关（MAIL_ENABLED=false）优先：库配置 enabled='1' 时也不发送——
+        // 否则用户按 .env 关掉邮件仍会发真实邮件（数据库优先的兜底只应发生在总开关开启时）
+        if (!envEnabled)
+        {
+            MailSettings s = new MailSettings();
+            s.setEnabled(false);
+            return s;
+        }
         MailConfig cfg = mailConfigMapper.selectConfig();
         MailSettings s = new MailSettings();
         if (cfg == null)

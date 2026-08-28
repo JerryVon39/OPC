@@ -25,6 +25,19 @@ if "%FE_PORT%"=="" set "FE_PORT=8081"
 if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
 if not exist logs mkdir logs
 
+REM 0b. TOKEN_SECRET 守卫：后端拒绝用仓库默认密钥启动（checkSecretNotDefault）。
+REM     缺失/默认时自动生成强随机值写入 .env（B1 修复），否则本地后端直接拒启
+set NEED_SECRET=0
+if "%TOKEN_SECRET%"=="" set NEED_SECRET=1
+if "%TOKEN_SECRET%"=="25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c" set NEED_SECRET=1
+if "%NEED_SECRET%"=="1" (
+  echo [1/5] TOKEN_SECRET empty or default - generating a strong random one...
+  for /f "delims=" %%k in ('powershell -NoProfile -Command "$h='';1..64|%{$h+=(''{0:x}'' -f (Get-Random -Max 16))};$h"') do set "NEW_SECRET=%%k"
+  powershell -NoProfile -Command "(Get-Content .env -Raw) -replace '(?m)^TOKEN_SECRET=.*$','TOKEN_SECRET=%NEW_SECRET%' | Set-Content .env -Encoding ASCII"
+  for /f "eol=# delims=" %%a in (.env) do set "%%a"
+  echo [1/5] TOKEN_SECRET generated and saved to .env
+)
+
 REM ---------- 1. Prerequisite check ----------
 where java >nul 2>&1
 if errorlevel 1 (echo [1/5] JDK 17+ not found in PATH. Install: https://adoptium.net/ & goto :fail)
@@ -33,9 +46,11 @@ if errorlevel 1 (echo [1/5] Node.js not found in PATH. Install: https://nodejs.o
 where npm >nul 2>&1
 if errorlevel 1 (echo [1/5] npm not found in PATH & goto :fail)
 
-REM ---------- 2. Clean leftover processes on our ports (never touch Docker Desktop) ----------
-echo [2/5] Cleaning ports 8080/8081/3306/6379 ...
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8080,8081,3306,6379 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_); if ($p -and $p.Name -notmatch 'com.docker.backend|docker-proxy|dockerd') { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; Write-Host ('  stopped PID ' + $_ + ' (' + $p.Name + ')') } }"
+REM ---------- 2. Clean leftover backend/frontend processes on 8080/8081 ----------
+REM R12 fix: 原清扫 3306/6379 会误杀占用这些端口的其他业务进程（MySQL/Redis 若
+REM 已运行，第 3/4 步会直接复用，无需清扫）；现仅清理 8080/8081 上的 java/node
+echo [2/5] Cleaning leftover backend/frontend on 8080/8081 ...
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8080,8081 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_); if ($p -and $p.Name -match 'java|node') { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; Write-Host ('  stopped PID ' + $_ + ' (' + $p.Name + ')') } }"
 ping -n 3 127.0.0.1 >nul
 
 REM ---------- 3. Redis (port 6379): running? -> native -> docker -> fail ----------
@@ -48,23 +63,10 @@ if not errorlevel 1 set "REDIS_BIN=redis-server"
 if "%REDIS_BIN%"=="" if exist "%TOOLS_HOME%\redis\redis-server.exe" set "REDIS_BIN=%TOOLS_HOME%\redis\redis-server.exe"
 if not "%REDIS_BIN%"=="" goto :redis_native
 
-where docker >nul 2>&1
-if errorlevel 1 (echo [3/5] Redis unavailable: install Redis, or install Docker & goto :fail)
-docker info >nul 2>&1
-if errorlevel 1 (echo [3/5] Docker not running. Start Docker Desktop, or install Redis & goto :fail)
-echo [3/5] No native Redis, starting container ...
-docker compose up -d redis >nul 2>&1
-if errorlevel 1 (echo [3/5] Docker redis start failed & goto :fail)
-set REDIS_READY=0
-for /l %%i in (1,1,10) do (
-  netstat -an | findstr /C:":6379 " | findstr LISTENING >nul
-  if not errorlevel 1 (set REDIS_READY=1 & goto redis_ok)
-  ping -n 2 127.0.0.1 >nul
-)
-:redis_ok
-if "%REDIS_READY%"=="0" (echo [3/5] redis container not ready in 20s & goto :fail)
-echo [3/5] Redis ready - container
-goto :redis_done
+echo [3/5] No native Redis found. Docker-only Redis is NOT supported for local dev:
+echo       compose 的 redis 容器仅暴露容器内网（无宿主 6379 映射），本地后端连不上。
+echo       请安装原生 Redis，或改用 scripts\start-all.bat（Docker 全家桶方式）。
+goto :fail
 
 :redis_native
 echo [3/5] Starting native Redis ...
@@ -94,14 +96,10 @@ if not errorlevel 1 set "MYSQLD=mysqld"
 if "%MYSQLD%"=="" if exist "%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqld.exe" set "MYSQLD=%TOOLS_HOME%\mysql-8.4.9-winx64\bin\mysqld.exe"
 if not "%MYSQLD%"=="" goto :mysql_native
 
-where docker >nul 2>&1
-if errorlevel 1 (echo [4/5] MySQL unavailable: install MySQL, or install Docker & goto :fail)
-docker info >nul 2>&1
-if errorlevel 1 (echo [4/5] Docker not running. Start Docker Desktop, or install MySQL & goto :fail)
-echo [4/5] No native MySQL, starting container - first start initializes DB ...
-docker compose up -d mysql >nul 2>&1
-if errorlevel 1 (echo [4/5] Docker mysql start failed & goto :fail)
-goto :mysql_wait_docker
+echo [4/5] No native MySQL found. Docker-only MySQL is NOT supported for local dev:
+echo       compose 的 mysql 容器仅暴露容器内网（无宿主 3306 映射），本地后端连不上。
+echo       请安装原生 MySQL，或改用 scripts\start-all.bat（Docker 全家桶方式）。
+goto :fail
 
 :mysql_native
 echo [4/5] Starting native MySQL ...
@@ -243,7 +241,7 @@ echo [7/5] Frontend ready
 echo.
 echo ============================================
 echo   All services started!
-echo   Admin:  %FE_URL%/              admin / Ee606EcUQsgj�:	
+echo   Admin:  %FE_URL%/              admin / admin123（首次登录请修改）
 echo   Reader: %FE_URL%/home.html
 echo   Stop:   scripts\stop-local.bat
 echo ============================================

@@ -10,7 +10,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260824_roles.sql
 -- ============================================
 
-USE `ry-vue`;
 
 -- ---------- 1. 内容编辑角色：librarian → editor（保留 role_id 与已授权菜单） ----------
 -- 存量库：librarian(role_id=100) 已授予 CMS/服务/成员等全套内容菜单，直接更名，

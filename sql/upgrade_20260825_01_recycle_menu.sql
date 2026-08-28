@@ -10,7 +10,6 @@
 -- 执行顺序：必须在 upgrade_20260824_menu_cleanup.sql 之后（防孤儿清理先于重建）。
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 恢复停用的三菜单（若存在）
 UPDATE sys_menu SET status='0' WHERE menu_name='回收站' AND menu_type='M';

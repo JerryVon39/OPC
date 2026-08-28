@@ -7,7 +7,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260826_article_history.sql
 -- ============================================
 
-USE ry-vue;
 
 -- 1. cms_article 补 version 列
 SET @c = (SELECT COUNT(*) FROM information_schema.COLUMNS

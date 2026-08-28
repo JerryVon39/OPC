@@ -10,7 +10,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260826_site_settings.sql
 -- ============================================
 
-USE ry-vue;
 
 INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
 SELECT '前台导航菜单', 'site.nav',

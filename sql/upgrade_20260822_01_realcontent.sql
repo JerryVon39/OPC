@@ -6,7 +6,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260822_realcontent.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. 服务分类字典 → 三大产业赛道（值 1/2/3 不变，仅标签）

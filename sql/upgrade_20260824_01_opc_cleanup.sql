@@ -5,7 +5,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260824_opc_cleanup.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. 删除"若依官网"外链菜单（先清角色关联）

@@ -10,7 +10,6 @@
 -- 执行顺序：可重复执行；在 recycle_cleanup 之后（cleanup 先删旧名，本脚本重建新名）。
 -- ============================================
 
-USE ry-vue;
 
 -- 0. 旧名对齐（存量库若还有旧名菜单，直接改名，避免重复创建）
 UPDATE sys_menu SET menu_name='服务回收站' WHERE menu_name='图书回收站';

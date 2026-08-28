@@ -17,7 +17,6 @@
 -- 执行顺序：可与 upgrade_20260825_recycle_menu.sql 任意先后（本脚本自包含回收站恢复逻辑）。
 -- ============================================
 
-USE ry-vue;
 
 -- 1. 新建三个业务顶层菜单（幂等）并缓存父级 id
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)

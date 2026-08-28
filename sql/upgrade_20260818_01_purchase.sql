@@ -5,7 +5,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260818_purchase.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 CREATE TABLE IF NOT EXISTS `book_purchase_req` (

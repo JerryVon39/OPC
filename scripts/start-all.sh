@@ -18,18 +18,28 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
-# 2. 生成 .env（仅首次；默认值可直接启动，邮件通知需填写 MAIL_* 后重启）
+# 2. 生成 .env（仅首次；邮件通知需填写 MAIL_* 后重启）
 if [ ! -f .env ]; then
   cp .env.example .env
-  echo "[start-all] 已生成 .env（默认配置可直接启动；如需邮件通知请编辑 .env 的 MAIL_* 后重跑）"
+  echo "[start-all] 已生成 .env（如需邮件通知请编辑 .env 的 MAIL_* 后重跑）"
+fi
+# 2b. TOKEN_SECRET 守卫：后端拒绝用仓库默认密钥启动（TokenService.checkSecretNotDefault），
+#     缺失/默认时自动生成强随机值写入 .env（B1 修复）
+set -a; . ./.env; set +a
+if [ -z "$TOKEN_SECRET" ] || [ "$TOKEN_SECRET" = "25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c" ]; then
+  echo "[start-all] TOKEN_SECRET 缺失或为默认值，自动生成强随机密钥..."
+  TOKEN_SECRET=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+  sed -i "s/^TOKEN_SECRET=.*/TOKEN_SECRET=$TOKEN_SECRET/" .env
+  set -a; . ./.env; set +a
+  echo "[start-all] TOKEN_SECRET 已生成并写入 .env"
 fi
 
 # 3. 检查本地镜像；缺失（或代码更新后 tag 提升）则用源码构建
-#    注意：本项目镜像不推 Docker Hub，本地无对应 tag 镜像时 compose 拉取会失败，
-#    必须先 docker compose build（首次需几分钟，后续有层缓存较快）
-if ! docker image inspect jerryvon/opc-backend:v2.1 >/dev/null 2>&1; then
-  echo "[start-all] 未找到本地 v2.1 镜像，用源码构建（首次需几分钟）..."
-  docker compose build
+#    镜像已推送 Docker Hub（jerryvon/opc-backend/opc-frontend:v2.2+），
+#    本地无对应 tag 时 compose 可直接拉取；强制构建用 docker compose build
+if ! docker image inspect jerryvon/opc-backend:v2.3 >/dev/null 2>&1; then
+  echo "[start-all] 未找到本地 v2.3 镜像，尝试从 Docker Hub 拉取..."
+  docker pull jerryvon/opc-backend:v2.3 || { echo "[start-all] 拉取失败（网络受限？），改用源码构建（首次需几分钟）..."; docker compose build; }
 fi
 
 # 4. 启动全部服务（首次自动初始化数据库）
@@ -42,6 +52,7 @@ docker compose up -d
 bash docker/mysql-upgrade.sh
 
 # 4. 等待后端就绪（首次拉镜像 + 初始化数据库较慢，最多约 3 分钟）
+command -v curl >/dev/null 2>&1 || { echo "[start-all] 未检测到 curl，无法探测后端就绪状态"; exit 1; }
 echo "[start-all] 等待后端启动中 ..."
 READY=0
 for i in $(seq 1 90); do

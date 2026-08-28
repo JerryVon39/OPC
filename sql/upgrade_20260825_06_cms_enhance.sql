@@ -2,13 +2,12 @@
 -- 升级脚本：CMS 文章管理增强 v20260825（第一批 · 文章管理闭环）
 -- 内容：cms_article 加列（sort 排序 / attachment 附件 / keywords+description SEO / del_flag+deleted_* 软删回收站）
 --       + 后台菜单（栏目管理 C 页 + F 权限点、文章回收站 C 页）+ editor 角色关联
--- 适用：存量库（在 upgrade_20260826_policy.sql 之后执行）；全新库直接执行
+-- 适用：存量库（在 upgrade_20260825_05_editor_fix.sql 之后执行（命名序 _25_06 早于 _26_01））；全新库直接执行
 -- 幂等：可重复执行；列按 information_schema 判存补齐，菜单/角色 INSERT...SELECT WHERE NOT EXISTS，
 --       序号顺延 UPDATE 带 NOT EXISTS 守卫（存在「栏目管理」时不再顺延）
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_cms_enhance.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. cms_article 幂等补列（与 upgrade_20260822_cms.sql 同一 information_schema 模式）

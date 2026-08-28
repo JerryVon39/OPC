@@ -6,7 +6,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260826_recycle_purge_job.sql
 -- ============================================
 
-USE ry-vue;
 
 INSERT INTO sys_job (job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, remark)
 SELECT '回收站过期清理','SYSTEM','cmsArticleServiceImpl.purgeRecycleBinExpired()','0 30 3 * * ?','3','1','0','admin',NOW(),'每天3:30自动永久删除回收站中超过30天的文章'

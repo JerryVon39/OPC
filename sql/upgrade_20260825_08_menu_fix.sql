@@ -11,7 +11,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_menu_fix.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. 顶层目录 path 冲突修复

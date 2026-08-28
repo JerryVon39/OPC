@@ -27,8 +27,12 @@ UPGRADES="$(ls sql/upgrade_*.sql 2>/dev/null | sort)"
 for f in $UPGRADES; do
   if [ -f "$f" ]; then
     echo "[mysql-upgrade] 执行 ${f} ..."
-    docker exec -i "$CONTAINER" sh -c 'mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" ry-vue' < "$f" >/dev/null 2>&1 \
-      || echo "[mysql-upgrade] 警告：${f} 执行出错（多为已存在/幂等跳过，可忽略）"
+    # R8 fix: 原 >/dev/null 吞输出 + 任意错误都继续——全部 upgrade 均幂等且带守卫，
+    # 正常执行不会报错，失败=结构性问题，应停止并暴露错误（与 start-local.sh 的 || exit 1 语义一致）
+    if ! docker exec -i "$CONTAINER" sh -c 'mysql --default-character-set=utf8mb4 -uroot -p"$MYSQL_ROOT_PASSWORD" ry-vue' < "$f"; then
+      echo "[mysql-upgrade] 错误：${f} 执行失败（upgrade 脚本均幂等，失败=结构性问题，请检查上方错误信息）"
+      exit 1
+    fi
   fi
 done
 

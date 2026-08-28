@@ -9,7 +9,6 @@
 -- 执行：mysql --default-character-set=utf8mb4 -uroot -p ry-vue < sql/upgrade_20260825_cms_block.sql
 -- ============================================
 
-USE ry-vue;
 
 -- ============================================
 -- 1. 区块表 cms_block
