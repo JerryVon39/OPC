@@ -21,13 +21,15 @@ WHERE m.parent_id <> 0 AND p.menu_id IS NULL;
 -- ② 快照脏数据：测试页及其测试区块、内容错位文章（按内容特征，任何库序安全）
 DELETE FROM cms_block WHERE page_key = 'test';
 DELETE FROM cms_page WHERE page_key = 'test';
+-- R-N5 fix: 删除加 content 守卫——错位文正文是揭牌报道（content 含「揭牌运营」），
+-- 真政策正文是【政策名称】…粤发改高技…；不加守卫会在存量库日后发布同标题真政策时误删
 DELETE FROM cms_article_history
 WHERE article_id IN (SELECT article_id FROM cms_article
                      WHERE title = '《广东省支持人工智能 OPC 创新发展行动方案（2026—2028年）》'
-                       AND category_id = 8);
+                       AND category_id = 8 AND content LIKE '%揭牌运营%');
 DELETE FROM cms_article
 WHERE title = '《广东省支持人工智能 OPC 创新发展行动方案（2026—2028年）》'
-  AND category_id = 8;
+  AND category_id = 8 AND content LIKE '%揭牌运营%';
 
 -- ②b. 本地遗留停用菜单清理（服务管理/成员服务/合作经营：status='1' 停用，
 --       仅存在于历史演化库，部署链不产生——全新库无此菜单，清理以保部署一致）
@@ -37,14 +39,15 @@ WHERE rm.menu_id IN (SELECT menu_id FROM sys_menu
 DELETE FROM sys_menu
 WHERE menu_name IN ('服务管理','成员服务','合作经营') AND status = '1';
 
--- ②c. 重复揭牌文章清理（upgrade 链插入 id=1 与快照 id=18 同标题重复——
---       本地历史 id=1 被错位文章占用，快照不含 id=1；保留较大 id 与快照一致）
-DELETE a1 FROM cms_article a1
-JOIN cms_article a2 ON a1.title = a2.title AND a1.article_id < a2.article_id
-WHERE a1.title = '清远首个人工智能 OPC 生态社区正式揭牌运营'
-  AND a1.del_flag <> '2' AND a2.del_flag <> '2';
-DELETE h FROM cms_article_history h
-WHERE h.article_id NOT IN (SELECT article_id FROM cms_article);
+-- ②c. 升级链种子遗留的重复揭牌文章（N-2 回归修复：upgrade 链在「新闻动态」cat=1 插入的
+--       揭牌报道，与快照「社区要闻」cat=7 的正式揭牌文章同标题——本脚本执行于快照导入前，
+--       当时无第二行可 JOIN（旧版 JOIN 去重失效，实测全新库终态 16 条重复）；
+--       改按「标题+栏目」精确删除种子行，快照的 cat=7 文章不受影响）
+DELETE FROM cms_article_history
+WHERE article_id IN (SELECT article_id FROM cms_article
+                     WHERE title = '清远首个人工智能 OPC 生态社区正式揭牌运营' AND category_id = 1);
+DELETE FROM cms_article
+WHERE title = '清远首个人工智能 OPC 生态社区正式揭牌运营' AND category_id = 1;
 
 -- ②d. editor 补授「运营辅助」父级（R7：原只授「回收站」目录未授父级，buildMenuTree
 --       把回收站当顶层渲染，editor 侧边栏树结构走样——补父级后回收站正确挂运营辅助下）
@@ -57,7 +60,10 @@ WHERE r.role_key='editor' AND m.menu_name='运营辅助' AND m.menu_type='M'
 UPDATE sys_config SET config_name = '页脚-联系我们'
 WHERE config_id = 121 AND config_key = 'site.footer.contact';
 
--- ④ sys_config 唯一索引（幂等守卫：已存在则跳过）
+-- ④ sys_config 唯一索引（R-N6 fix: 加去重仲裁——存量库若已有重复 config_key，
+--    ADD UNIQUE 会报 Duplicate entry 中断整条升级链；先删重复（保留最小 id）再加索引）
+DELETE c1 FROM sys_config c1
+JOIN sys_config c2 ON c1.config_key = c2.config_key AND c1.config_id > c2.config_id;
 SET @has_uk := (SELECT COUNT(*) FROM information_schema.statistics
                 WHERE table_schema = DATABASE() AND table_name = 'sys_config' AND index_name = 'uk_config_key');
 SET @ddl := IF(@has_uk = 0, 'ALTER TABLE sys_config ADD UNIQUE KEY uk_config_key (config_key)', 'SELECT 1');

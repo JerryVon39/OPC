@@ -18,7 +18,7 @@ REM let the process trees die before scanning ports (avoids a race where a
 REM listener is mid-teardown and the scan below misses it)
 ping -n 3 127.0.0.1 >nul
 REM cleanup leftovers on our ports (never touch Docker Desktop)
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8080,8081,3306,6379 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_); if ($p -and $p.Name -notmatch 'com.docker.backend|docker-proxy|dockerd') { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; Write-Host ('  stopped PID ' + $_ + ' (' + $p.Name + ')') } }"
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8080,8081 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_); if ($p -and $p.Name -match 'java|node') { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; Write-Host ('  stopped PID ' + $_ + ' (' + $p.Name + ')') } }"
 echo.
 echo Done. Database data kept - run scripts\start-local.bat to resume.
 pause

@@ -55,8 +55,12 @@ if "%TOKEN_SECRET%"=="" set NEED_SECRET=1
 if "%TOKEN_SECRET%"=="25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c" set NEED_SECRET=1
 if "%NEED_SECRET%"=="1" (
   echo [start-all] TOKEN_SECRET empty or default - generating a strong random one...
-  for /f "delims=" %%k in ('powershell -NoProfile -Command "$h='';1..64|%{$h+=(''{0:x}'' -f (Get-Random -Max 16))};$h"') do set "NEW_SECRET=%%k"
-  powershell -NoProfile -Command "(Get-Content .env -Raw) -replace '(?m)^TOKEN_SECRET=.*$','TOKEN_SECRET=%NEW_SECRET%' | Set-Content .env -Encoding ASCII"
+  REM N-1 fix: 原 PowerShell 生成命令含 %{ 与 ''{0:x}''（cmd % 展开破坏 + PS 语法错误，
+  REM 实测 NEW_SECRET 恒空）；改用 node（项目必有）生成 64 hex，实测通过
+  for /f "delims=" %%k in ('node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"') do set "NEW_SECRET=%%k"
+  REM N-8 fix: 写回用 UTF-8 无 BOM（原 -Encoding ASCII 会把中文替换成 ?）；
+  REM 兼容 .env 无 TOKEN_SECRET 行的情况（追加而非仅替换）
+  powershell -NoProfile -Command "$p=(Join-Path (Get-Location) '.env'); $c=[IO.File]::ReadAllText($p); if ($c -match '(?m)^TOKEN_SECRET=.*$') { $c=[regex]::Replace($c,'(?m)^TOKEN_SECRET=.*$','TOKEN_SECRET=%NEW_SECRET%') } else { $c += [Environment]::NewLine + 'TOKEN_SECRET=%NEW_SECRET%' + [Environment]::NewLine }; [IO.File]::WriteAllText($p,$c,(New-Object System.Text.UTF8Encoding($false)))"
   for /f "eol=# delims=" %%a in (.env) do set "%%a"
   echo [start-all] TOKEN_SECRET generated and saved to .env
 )

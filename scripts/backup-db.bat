@@ -13,6 +13,7 @@ cd /d "%~dp0.."
 rem ---- 读取 .env（缺省用演示默认值） ----
 if not exist ".env" copy .env.example .env >nul
 for /f "eol=# delims=" %%a in (.env) do set "%%a"
+if "%DB_PASSWORD%"=="" set "DB_PASSWORD=%MYSQL_ROOT_PASSWORD%"
 if "%DB_PASSWORD%"=="" set "DB_PASSWORD=password"
 if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
 

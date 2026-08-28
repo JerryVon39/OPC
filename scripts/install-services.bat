@@ -26,9 +26,20 @@ if errorlevel 1 (
 
 if not exist ".env" copy .env.example .env >nul
 for /f "eol=# delims=" %%a in (.env) do set "%%a"
+if "%DB_PASSWORD%"=="" set "DB_PASSWORD=%MYSQL_ROOT_PASSWORD%"
 if "%DB_PASSWORD%"=="" set "DB_PASSWORD=password"
 if "%TOOLS_HOME%"=="" set "TOOLS_HOME=%USERPROFILE%\tools"
 if not exist logs mkdir logs
+
+REM R-N7 fix: TOKEN_SECRET 缺失/默认时生成（否则后端服务注入空密钥被守卫拒启）
+if "%TOKEN_SECRET%"=="" set NEED_SECRET=1
+if "%TOKEN_SECRET%"=="25a96a6099a0cc7c37fa1d412ab9712479d32e0b5d9e470e8f6f522271ab2c7c" set NEED_SECRET=1
+if "%NEED_SECRET%"=="1" (
+  echo [init] TOKEN_SECRET empty or default - generating...
+  for /f "delims=" %%k in ('node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"') do set "NEW_SECRET=%%k"
+  powershell -NoProfile -Command "$p=(Join-Path (Get-Location) '.env'); $c=[IO.File]::ReadAllText($p); if ($c -match '(?m)^TOKEN_SECRET=.*$') { $c=[regex]::Replace($c,'(?m)^TOKEN_SECRET=.*$','TOKEN_SECRET=%NEW_SECRET%') } else { $c += [Environment]::NewLine + 'TOKEN_SECRET=%NEW_SECRET%' + [Environment]::NewLine }; [IO.File]::WriteAllText($p,$c,(New-Object System.Text.UTF8Encoding($false)))"
+  for /f "eol=# delims=" %%a in (.env) do set "%%a"
+)
 
 set "NSSM_DIR=%TOOLS_HOME%\nssm"
 set "NSSM=%NSSM_DIR%\nssm.exe"
