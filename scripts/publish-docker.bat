@@ -2,7 +2,7 @@
 REM ============================================
 REM ���������¹��� �� Docker ���񷢲��ű���һ������ + ���ͣ�
 REM
-REM �÷�: scripts\publish-docker.bat [�汾��]     Ĭ�ϰ汾�� v2.1
+REM �÷�: scripts\publish-docker.bat [�汾��]     Ĭ�ϰ汾�� v2.2
 REM ǰ��: 1) �� docker login���� Read&Write Ȩ�޵� token��ֻ�� token ���ͻᱻ�ܣ�
 REM       2) �ɷ��� Docker Hub�������������� Docker Desktop ���ô�����
 REM Ч��: ���¹��� backend/frontend �� �� tag �� ���� Docker Hub �� ͬ�� docker-compose.yml �汾��
@@ -10,7 +10,7 @@ REM ============================================
 setlocal enabledelayedexpansion
 
 set "VERSION=%1"
-if "%VERSION%"=="" set "VERSION=v2.1"
+if "%VERSION%"=="" set "VERSION=v2.2"
 
 echo ============================================
 echo  [1/5] ���¹������񣨵�ǰ�汾 %VERSION%��

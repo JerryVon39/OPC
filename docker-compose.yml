@@ -63,7 +63,7 @@ services:
   # ---------- 后端 ----------
   backend:
     # 线上镜像（Docker Hub）：部署方无需源码直接拉取；build 保留供本地重新构建
-    image: jerryvon/opc-backend:v2.1
+    image: jerryvon/opc-backend:v2.2
     build:
       context: .
       dockerfile: Dockerfile
@@ -103,7 +103,7 @@ services:
   # ---------- 前端（Nginx 托管 + 代理 /prod-api 与 /profile） ----------
   frontend:
     # 线上镜像（Docker Hub）：部署方无需源码直接拉取；build 保留供本地重新构建
-    image: jerryvon/opc-frontend:v2.1
+    image: jerryvon/opc-frontend:v2.2
     build:
       context: .
       dockerfile: ruoyi-ui/Dockerfile
