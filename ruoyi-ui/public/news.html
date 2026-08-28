@@ -53,6 +53,14 @@
     <div class="type-tabs" id="catTabs">
       <a class="active" data-id="" onclick="switchCat(this)">全部</a>
     </div>
+    <!-- 二级子栏目条（选中父栏目后出现；"全部"即父栏目汇总，点击子栏目精确过滤） -->
+    <div class="sub-cat-bar" id="subCatBar" style="display:none"></div>
+    <style>
+      .sub-cat-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 8px 12px; background: #f0f4fb; border-radius: 8px; }
+      .sub-cat-bar a { font-size: 13px; color: var(--text-light); padding: 4px 12px; border-radius: 14px; background: #fff; border: 1px solid var(--line); cursor: pointer; text-decoration: none; }
+      .sub-cat-bar a:hover { color: var(--accent); border-color: var(--accent-light); }
+      .sub-cat-bar a.active { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    </style>
     <div id="articleList" class="news-list">
       <div class="loading">加载中…</div>
     </div>
@@ -87,7 +95,18 @@
   const PAGE_SIZE = 10;
 
   // ===== 全局状态 =====
-  let currentCat = '';      // 当前栏目ID（'' 全部）
+  // 收集栏目自身 + 全部子孙 ID（广度遍历 subCatMap，栏目深度 ≤3）
+  function collectCatWithDesc(id) {
+    const ids = [id];
+    const queue = subCatMap[id] ? subCatMap[id].slice() : [];
+    while (queue.length) {
+      const c = queue.shift();
+      ids.push(c.categoryId);
+      (subCatMap[c.categoryId] || []).forEach(x => queue.push(x));
+    }
+    return ids;
+  }
+  let currentCat = '';      // 当前一级栏目ID（'' 全部）
   let nonPolicyIds = [];    // 非政策类栏目ID（"全部"Tab 用：政策类由「政策赋能」页展示，避免重复）
   let pageNum = 1;
   let total = 0;
@@ -101,29 +120,63 @@
   
 
   // ===== 栏目 Tab 动态加载（后台栏目管理维护，前台自动出现）=====
+  // 两级导航：一级 Tab 只显示顶层栏目；选中父栏目后出现二级子栏目条（父汇总 + 子细分）
+  let allCats = [];      // 全部非政策栏目
+  let topCats = [];      // 顶层栏目（parentId 为空）
+  let subCatMap = {};    // parentId -> 子栏目数组
+  let currentSub = '';   // 二级选中的子栏目 ID（'' = 父栏目汇总）
   async function loadCats() {
     try {
       const res = await fetch(CAT_API);
       const d = await res.json();
       const list = d.data || [];
+      // 政策类栏目由「政策赋能」页展示，资讯动态不重复
+      allCats = list.filter(c => c.frontPage !== 'policy');
+      topCats = allCats.filter(c => !c.parentId);
+      subCatMap = {};
+      allCats.forEach(c => {
+        if (c.parentId) (subCatMap[c.parentId] = subCatMap[c.parentId] || []).push(c);
+      });
       const tabs = document.getElementById('catTabs');
       let html = '<a class="active" data-id="" onclick="switchCat(this)">全部</a>';
-      nonPolicyIds = [];
-      list.forEach(c => {
-        // 政策类栏目（名称以"政策"开头）由「政策赋能」页展示，资讯动态不重复
-        if (c.frontPage === 'policy') return;
-        nonPolicyIds.push(c.categoryId);
-        html += '<a data-id="' + c.categoryId + '" onclick="switchCat(this)">' + esc(c.categoryName) + '</a>';
+      topCats.forEach(c => {
+        const hasSub = (subCatMap[c.categoryId] || []).length > 0;
+        html += '<a data-id="' + c.categoryId + '" onclick="switchCat(this)">' + esc(c.categoryName) + (hasSub ? ' ▾' : '') + '</a>';
       });
       tabs.innerHTML = html;
+      nonPolicyIds = allCats.map(c => c.categoryId);
     } catch (e) { }
   }
 
-  // ===== 栏目切换（重置分页后重新加载）=====
+  // ===== 一级栏目切换（重置分页后重新加载；父栏目显示二级条）=====
   function switchCat(el) {
     document.querySelectorAll('#catTabs a').forEach(a => a.classList.remove('active'));
     el.classList.add('active');
     currentCat = el.dataset.id || '';
+    currentSub = '';
+    renderSubBar();
+    pageNum = 1;
+    loadList();
+  }
+
+  // ===== 二级子栏目条渲染（选中父栏目且有子栏目时显示）=====
+  function renderSubBar() {
+    const bar = document.getElementById('subCatBar');
+    if (!bar) return;
+    const subs = currentCat ? (subCatMap[currentCat] || []) : [];
+    if (!currentCat || !subs.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+    const parent = allCats.find(c => c.categoryId === currentCat);
+    let html = '<a class="active" data-id="" onclick="switchSubCat(this)">📁 ' + esc(parent ? parent.categoryName : '全部') + '（全部）</a>';
+    subs.forEach(s => { html += '<a data-id="' + s.categoryId + '" onclick="switchSubCat(this)">' + esc(s.categoryName) + '</a>'; });
+    bar.innerHTML = html;
+    bar.style.display = '';
+  }
+
+  // ===== 二级子栏目切换（精确过滤该子栏目文章）=====
+  function switchSubCat(el) {
+    document.querySelectorAll('#subCatBar a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    currentSub = el.dataset.id || '';
     pageNum = 1;
     loadList();
   }
@@ -136,8 +189,11 @@
     box.innerHTML = '<div class="loading">加载中…</div>';
     pager.style.display = 'none';
     const params = new URLSearchParams({ pageNum: pageNum, pageSize: PAGE_SIZE });
-    if (currentCat) params.set('categoryId', currentCat);
-    else if (nonPolicyIds.length) params.set('categoryIds', nonPolicyIds.join(','));
+    if (currentCat) {
+      // 父栏目：汇总自身 + 全部子孙栏目；二级子栏目：精确过滤
+      const ids = currentSub ? [currentSub] : collectCatWithDesc(currentCat);
+      params.set('categoryIds', ids.join(','));
+    } else if (nonPolicyIds.length) params.set('categoryIds', nonPolicyIds.join(','));
     if (keyword) params.set('title', keyword);
     try {
       const res = await fetch(LIST_API + '?' + params.toString());
