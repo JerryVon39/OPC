@@ -151,6 +151,7 @@ scripts\start-local.bat      # Windows（Linux/macOS: ./scripts/start-local.sh�
 
 ## 🛡️ 部署与运维
 
+- [《后台功能说明》](docs/后台功能说明.md)：面向运营人员的后台功能速查（登录/各菜单用途/日常操作）
 - [《部署指南》](docs/部署指南.md)：本机启动 / 正式部署 / Docker / 初始化 / **升级回滚**（含 docker 旧卷升级陷阱说明）
 - [《数据库备份脚本》](scripts/backup-db.bat)：一键 mysqldump 备份
 - [《开发文档》](docs/开发文档.md)：技术指南 + 红线清单/命名映射/自检（第十五节）
