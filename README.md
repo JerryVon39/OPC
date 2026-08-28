@@ -83,7 +83,7 @@ scripts\start-all.bat        # Windows（Linux/macOS: ./scripts/start-all.sh）
 - ⚠️ **admin 初始口令**：本地与 Docker 全新部署统一为 `admin123`（`upgrade_20260828_01` 幂等统一，方便部署方使用）。**首次登录请立即修改**（登录验证码默认关闭——快照配置 `sys.account.captchaEnabled=false`，可在系统设置开启）
 - 停止：`scripts\stop-all.bat`（数据保留，重跑即恢复）
 
-> 🐳 **镜像版本**：当前 `jerryvon/opc-backend:v2.3` + `jerryvon/opc-frontend:v2.3`（已推送 Docker Hub；`scripts\publish-docker.bat` 发布新版本并同步 compose）。
+> 🐳 **镜像版本**：当前 `jerryvon/opc-backend:v2.4` + `jerryvon/opc-frontend:v2.4`（已推送 Docker Hub；`scripts\publish-docker.bat` 发布新版本并同步 compose）。
 > ✅ **全新部署一致性已验证（2026-08-28）**：用全新数据卷模拟完整部署，10 张核心表与本地逐项一致（cms_page 7 / cms_block 43 / cms_article 15 / sys_menu 153 / sys_role_menu 68 等），菜单图标零缺失、hero/admin 口令正常——业务数据全部经快照继承，菜单/角色由幂等升级脚本按名称定位（不依赖 menu_id，跨库安全）。
 
 > 💡 可选配置（`.env`）：数据库口令、邮件（`MAIL_USERNAME`/`MAIL_AUTH_CODE`，QQ 邮箱 SMTP 授权码）。`TOKEN_SECRET`（JWT 密钥）留空时 `start-all`/`start-local` 脚本自动生成强随机值（后端拒绝使用仓库默认密钥启动）。生产部署务必修改默认口令。

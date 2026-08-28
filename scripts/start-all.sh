@@ -35,11 +35,11 @@ if [ -z "$TOKEN_SECRET" ] || [ "$TOKEN_SECRET" = "25a96a6099a0cc7c37fa1d412ab971
 fi
 
 # 3. 检查本地镜像；缺失（或代码更新后 tag 提升）则用源码构建
-#    镜像已推送 Docker Hub（jerryvon/opc-backend/opc-frontend:v2.3+），
+#    镜像已推送 Docker Hub（jerryvon/opc-backend/opc-frontend:v2.4+），
 #    本地无对应 tag 时 compose 可直接拉取；强制构建用 docker compose build
-if ! docker image inspect jerryvon/opc-backend:v2.3 >/dev/null 2>&1; then
-  echo "[start-all] 未找到本地 v2.3 镜像，尝试从 Docker Hub 拉取..."
-  docker pull jerryvon/opc-backend:v2.3 || { echo "[start-all] 拉取失败（网络受限？），改用源码构建（首次需几分钟）..."; docker compose build; }
+if ! docker image inspect jerryvon/opc-backend:v2.4 >/dev/null 2>&1; then
+  echo "[start-all] 未找到本地 v2.4 镜像，尝试从 Docker Hub 拉取..."
+  docker pull jerryvon/opc-backend:v2.4 || { echo "[start-all] 拉取失败（网络受限？），改用源码构建（首次需几分钟）..."; docker compose build; }
 fi
 
 # 4. 启动全部服务（首次自动初始化数据库）
