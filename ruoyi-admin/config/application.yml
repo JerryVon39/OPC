@@ -1,4 +1,0 @@
-# 外置配置：覆盖 jar 内配置（Spring Boot 加载顺序: ./config/ 高于 jar 内）
-# 学习环境关闭登录验证码，方便练习
-captcha:
-  enabled: false

@@ -46,6 +46,13 @@ WHERE a1.title = '清远首个人工智能 OPC 生态社区正式揭牌运营'
 DELETE h FROM cms_article_history h
 WHERE h.article_id NOT IN (SELECT article_id FROM cms_article);
 
+-- ②d. editor 补授「运营辅助」父级（R7：原只授「回收站」目录未授父级，buildMenuTree
+--       把回收站当顶层渲染，editor 侧边栏树结构走样——补父级后回收站正确挂运营辅助下）
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT r.role_id, m.menu_id FROM sys_role r, sys_menu m
+WHERE r.role_key='editor' AND m.menu_name='运营辅助' AND m.menu_type='M'
+  AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id=r.role_id AND rm.menu_id=m.menu_id);
+
 -- ③ sys_config 修复：config_id=121「页脚-联系我们」名称乱码（历史导出损坏，hex 3F3F3F2DEFBFBD...）
 UPDATE sys_config SET config_name = '页脚-联系我们'
 WHERE config_id = 121 AND config_key = 'site.footer.contact';
